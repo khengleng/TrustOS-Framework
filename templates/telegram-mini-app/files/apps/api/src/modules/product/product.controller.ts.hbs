@@ -1,0 +1,111 @@
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '@trustos/auth';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import type { ActorContext } from '@trustos/shared-types';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { MINIAPP_PERMISSIONS } from '{{packageName}}-product-domain';
+import {
+  ProductService,
+  type MiniAppSession,
+  type TaskRow,
+  type TelegramProfileRow,
+} from './product.service';
+
+const idSchema = z.string().trim().min(1).max(64);
+
+const openSessionSchema = z.object({
+  // Length-bounded because it is an untrusted string that gets parsed and
+  // HMAC'd; an unbounded body is free CPU for an attacker.
+  initData: z.string().min(1).max(4096),
+});
+
+const createTaskSchema = z.object({
+  telegramProfileId: idSchema,
+  title: z.string().trim().min(1).max(200),
+});
+
+const taskStatusSchema = z.object({
+  status: z.enum(['TODO', 'DOING', 'DONE']),
+});
+
+@ApiTags('miniapp')
+@ApiBearerAuth('access-token')
+@Controller('miniapp')
+export class MiniAppController {
+  constructor(private readonly product: ProductService) {}
+
+  @Post('session')
+  @RequirePermissions(MINIAPP_PERMISSIONS.TASK_READ.key)
+  @ApiOperation({
+    summary: 'Validate Telegram initData and open a session',
+    description:
+      'The signature, and the age of the launch, are both checked. The bot token comes from ' +
+      'configuration — never from the request.',
+  })
+  openSession(
+    @CurrentUser() actor: ActorContext,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(openSessionSchema)) body: z.infer<typeof openSessionSchema>,
+  ): Promise<MiniAppSession> {
+    // TELEGRAM_BOT_TOKEN is read through the application's configuration.
+    // Extend @trustos/config's schema in your product rather than reading
+    // process.env here.
+    const botToken = process.env.TELEGRAM_BOT_TOKEN ?? '';
+    return this.product.openSession(body.initData, botToken, organizationId, actor.userId);
+  }
+
+  @Get('profiles')
+  @RequirePermissions(MINIAPP_PERMISSIONS.PROFILE_READ.key)
+  @ApiOperation({ summary: 'List Telegram profiles in the current organization' })
+  listProfiles(): Promise<TelegramProfileRow[]> {
+    return this.product.listProfiles();
+  }
+}
+
+@ApiTags('tasks')
+@ApiBearerAuth('access-token')
+@Controller('tasks')
+export class TasksController {
+  constructor(private readonly product: ProductService) {}
+
+  @Get()
+  @RequirePermissions(MINIAPP_PERMISSIONS.TASK_READ.key)
+  @ApiOperation({ summary: 'List tasks, optionally for one profile' })
+  list(@Query('profileId') profileId?: string): Promise<TaskRow[]> {
+    return this.product.listTasks(profileId);
+  }
+
+  @Get('profile/:profileId')
+  @RequirePermissions(MINIAPP_PERMISSIONS.TASK_READ.key)
+  @ApiOperation({ summary: 'Tasks for one profile' })
+  forProfile(
+    @Param('profileId') profileId: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<TaskRow[]> {
+    return this.product.tasksForProfile(profileId, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(MINIAPP_PERMISSIONS.TASK_CREATE.key)
+  @ApiOperation({ summary: 'Create a task' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createTaskSchema)) body: z.infer<typeof createTaskSchema>,
+  ): Promise<TaskRow> {
+    return this.product.createTask(body, organizationId);
+  }
+
+  @Put(':id/status')
+  @RequirePermissions(MINIAPP_PERMISSIONS.TASK_UPDATE.key)
+  @ApiOperation({ summary: 'Move a task between states' })
+  updateStatus(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(taskStatusSchema)) body: z.infer<typeof taskStatusSchema>,
+  ): Promise<TaskRow> {
+    return this.product.updateTaskStatus(id, body.status, organizationId);
+  }
+}

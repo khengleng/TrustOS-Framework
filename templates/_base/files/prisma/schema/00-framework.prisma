@@ -1,0 +1,272 @@
+// =============================================================================
+// Framework schema — TrustOS foundation models.
+//
+// COPIED FROM @trustos/database. Prisma has no cross-package schema import, so
+// a generated application carries its own copy of the framework models. Keep
+// it in sync when you upgrade the framework: the migration notes for each
+// release say whether this file changed.
+//
+// Product models live beside this file in 10-product.prisma. Prisma loads
+// every .prisma file in this directory, so the two compose without either one
+// editing the other.
+//
+// Do not edit the models below to fit a product. Add product models instead.
+// =============================================================================
+
+// =============================================================================
+// TrustOS Framework — foundation schema
+//
+// Conventions enforced across every model:
+//   * `id`        cuid primary key
+//   * `createdAt` / `updatedAt` on every mutable model
+//   * `deletedAt` on every model that can be retired (soft-delete readiness);
+//                 rows are never hard-deleted by application code
+//   * tenant-owned rows carry `organizationId` and index it first, because
+//     every legitimate query filters on it
+//
+// AuditLog is deliberately different: append-only, no `updatedAt`, no
+// `deletedAt`, and no foreign keys. See the comment on the model.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  // Generated into a directory this repository owns, rather than into
+  // node_modules/@prisma/client.
+  //
+  // The framework packages are linked from a checkout that has its own
+  // @prisma/client, generated from the framework schema alone. Sharing the
+  // default location makes which one wins a function of npm hoisting, and the
+  // loser is a client that has never heard of this product's models. An
+  // explicit output path removes the ambiguity entirely.
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Identity
+// -----------------------------------------------------------------------------
+
+model User {
+  id           String    @id @default(cuid())
+  /// Stored lowercase; normalization happens in @trustos/validation.
+  email        String    @unique
+  /// bcrypt hash. Never selected into a DTO, never logged.
+  passwordHash String
+  displayName  String?
+  isActive     Boolean   @default(true)
+  /// Platform staff. Bypasses tenant scoping — grant sparingly.
+  isSuperAdmin Boolean   @default(false)
+  /// Bumped to invalidate every outstanding token for this user at once.
+  tokenVersion Int       @default(0)
+  lastLoginAt  DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  memberships      OrganizationMember[]
+  refreshTokens    RefreshToken[]
+  invitesSent      OrganizationMember[] @relation("InvitedBy")
+  rolesAssigned    OrganizationMemberRole[] @relation("AssignedBy")
+
+  @@index([deletedAt])
+  @@index([isActive])
+}
+
+// -----------------------------------------------------------------------------
+// Tenancy
+// -----------------------------------------------------------------------------
+
+model Organization {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String  @unique
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  members OrganizationMember[]
+  roles   Role[]
+
+  @@index([deletedAt])
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+model OrganizationMember {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  status         MembershipStatus @default(INVITED)
+  invitedById    String?
+  invitedAt      DateTime?
+  joinedAt       DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  organization Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy    User?                    @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  roles        OrganizationMemberRole[]
+
+  /// One membership row per (organization, user).
+  @@unique([organizationId, userId])
+  @@index([organizationId, status])
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+// -----------------------------------------------------------------------------
+// Authorization
+// -----------------------------------------------------------------------------
+
+model Role {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  /// System roles ship with the framework, are shared by every organization
+  /// (organizationId = null), and are seeded with fixed ids so the seed is
+  /// idempotent. Product code must not mutate them.
+  isSystem    Boolean @default(false)
+  /// Null for system roles; set for organization-defined custom roles.
+  organizationId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  organization Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions  RolePermission[]
+  members      OrganizationMemberRole[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([isSystem])
+}
+
+model Permission {
+  id String @id @default(cuid())
+  /// Stable machine key, e.g. "organization.member.invite". Part of the public
+  /// contract: add new keys, never rename existing ones.
+  key         String  @unique
+  resource    String
+  action      String
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roles RolePermission[]
+
+  @@index([resource])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model OrganizationMemberRole {
+  memberId     String
+  roleId       String
+  assignedById String?
+  assignedAt   DateTime @default(now())
+
+  member     OrganizationMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  role       Role               @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assignedBy User?              @relation("AssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  @@id([memberId, roleId])
+  @@index([roleId])
+}
+
+// -----------------------------------------------------------------------------
+// Sessions
+// -----------------------------------------------------------------------------
+
+model RefreshToken {
+  id String @id @default(cuid())
+  /// SHA-256 of the token. The token itself is never stored, so a database
+  /// leak does not hand the attacker live sessions.
+  tokenHash String  @unique
+  userId    String
+  /// Rotation family. Presenting an already-rotated token revokes the whole
+  /// family — the standard reuse-detection response.
+  familyId  String
+  expiresAt DateTime
+  revokedAt DateTime?
+  /// Why it was revoked: "rotated", "logout", "reuse_detected", "admin".
+  revokedReason String?
+  /// The token that superseded this one, for auditing a rotation chain.
+  replacedByHash String?
+  ipAddress      String?
+  userAgent      String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([familyId])
+  @@index([expiresAt])
+}
+
+// -----------------------------------------------------------------------------
+// Audit
+// -----------------------------------------------------------------------------
+
+/// Append-only. Deliberately has:
+///   * no `updatedAt` and no `deletedAt` — records are never modified
+///   * no foreign keys — an audit record must survive deletion of the actor,
+///     the organization, or the entity it describes, and must never be removed
+///     by a cascade
+/// Grant the application role INSERT and SELECT only; see
+/// docs/security-standards.md.
+model AuditLog {
+  id String @id @default(cuid())
+
+  /// Machine action key, e.g. "auth.login" or "rbac.role.assigned".
+  action     String
+  entityType String
+  entityId   String?
+
+  /// Null for unauthenticated events such as a failed login.
+  actorId        String?
+  /// Null for platform-level events that belong to no organization.
+  organizationId String?
+
+  /// Redacted snapshots. Never contains credentials — see @trustos/audit.
+  before Json?
+  after  Json?
+
+  requestId String?
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+  @@index([requestId])
+}

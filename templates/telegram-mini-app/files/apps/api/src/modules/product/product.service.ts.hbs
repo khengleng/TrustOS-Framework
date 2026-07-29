@@ -1,0 +1,171 @@
+import { Inject, Injectable } from '@nestjs/common';
+import type { AuditService } from '@trustos/audit';
+import { PrismaService } from '@trustos/database';
+import type { AppPrismaService } from '../../core/prisma.service';
+import { ApiError } from '@trustos/errors';
+import type { TaskStatus } from '{{packageName}}-product-domain';
+import { AUDIT_SERVICE } from '../../tokens';
+import { TenantRepository } from '../../common/tenant-repository';
+import { validateInitData, type TelegramUser } from './telegram-init-data';
+
+export interface TelegramProfileRow {
+  id: string;
+  organizationId: string;
+  telegramUserId: string;
+  userId: string;
+  username: string | null;
+  firstName: string | null;
+  languageCode: string | null;
+  lastSeenAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+export interface TaskRow {
+  id: string;
+  organizationId: string;
+  telegramProfileId: string;
+  title: string;
+  status: TaskStatus;
+  completedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+export interface MiniAppSession {
+  profile: TelegramProfileRow;
+  telegramUser: TelegramUser;
+}
+
+/**
+ * Telegram Mini App service.
+ *
+ * The security boundary is `validateInitData`. Everything after it treats the
+ * Telegram user as authenticated; everything before it treats the payload as
+ * entirely hostile — a Mini App's launch parameters arrive from a browser and
+ * are trivially editable.
+ */
+@Injectable()
+export class ProductService {
+  private readonly profiles: TenantRepository<TelegramProfileRow>;
+  private readonly tasks: TenantRepository<TaskRow>;
+
+  constructor(
+    @Inject(PrismaService) prisma: AppPrismaService,
+    @Inject(AUDIT_SERVICE) private readonly audit: AuditService,
+  ) {
+    this.profiles = new TenantRepository<TelegramProfileRow>(prisma, 'telegramProfile');
+    this.tasks = new TenantRepository<TaskRow>(prisma, 'task');
+  }
+
+  /**
+   * Validates a launch and returns the session it establishes.
+   *
+   * The bot token is configuration, never a request parameter: accepting it
+   * from the caller would let anyone sign their own initData.
+   */
+  async openSession(
+    initData: string,
+    botToken: string,
+    organizationId: string,
+    userId: string,
+  ): Promise<MiniAppSession> {
+    const validated = validateInitData(initData, { botToken });
+
+    const existing = await this.profiles.list({ telegramUserId: validated.user.id });
+
+    const profile = existing[0]
+      ? await this.profiles.update(existing[0].id, {
+          username: validated.user.username,
+          firstName: validated.user.firstName,
+          languageCode: validated.user.languageCode,
+          lastSeenAt: new Date(),
+        })
+      : await this.profiles.create({
+          telegramUserId: validated.user.id,
+          userId,
+          username: validated.user.username,
+          firstName: validated.user.firstName,
+          languageCode: validated.user.languageCode,
+          lastSeenAt: new Date(),
+        });
+
+    await this.audit.record({
+      action: existing[0] ? 'miniapp.session.resumed' : 'miniapp.profile.created',
+      entityType: 'TelegramProfile',
+      entityId: profile.id,
+      organizationId,
+      // The Telegram id identifies the account; initData itself is a
+      // credential and never enters the audit trail.
+      after: { telegramUserId: profile.telegramUserId, username: profile.username },
+    });
+
+    return { profile, telegramUser: validated.user };
+  }
+
+  listProfiles(): Promise<TelegramProfileRow[]> {
+    return this.profiles.list();
+  }
+
+  listTasks(telegramProfileId?: string): Promise<TaskRow[]> {
+    return this.tasks.list(telegramProfileId ? { telegramProfileId } : {});
+  }
+
+  async createTask(
+    input: { telegramProfileId: string; title: string },
+    organizationId: string,
+  ): Promise<TaskRow> {
+    // Reports not_found for a profile in another organization.
+    await this.profiles.findById(input.telegramProfileId, organizationId);
+
+    const task = await this.tasks.create({
+      telegramProfileId: input.telegramProfileId,
+      title: input.title,
+      status: 'TODO',
+    });
+
+    await this.audit.record({
+      action: 'miniapp.task.created',
+      entityType: 'Task',
+      entityId: task.id,
+      organizationId,
+      after: { title: task.title, status: task.status },
+    });
+
+    return task;
+  }
+
+  async updateTaskStatus(
+    id: string,
+    status: TaskStatus,
+    organizationId: string,
+  ): Promise<TaskRow> {
+    const existing = await this.tasks.findById(id, organizationId);
+    const before = { status: existing.status };
+
+    const updated = await this.tasks.update(id, {
+      status,
+      completedAt: status === 'DONE' ? new Date() : null,
+    });
+
+    await this.audit.recordChange({
+      action: 'miniapp.task.status_changed',
+      entityType: 'Task',
+      entityId: id,
+      organizationId,
+      before,
+      after: { status: updated.status },
+    });
+
+    return updated;
+  }
+
+  /** Tasks belonging to one profile, verified to be in the caller's tenant. */
+  async tasksForProfile(profileId: string, organizationId: string): Promise<TaskRow[]> {
+    const profile = await this.profiles.findById(profileId, organizationId);
+    if (profile.deletedAt) throw ApiError.notFound();
+    return this.tasks.list({ telegramProfileId: profileId });
+  }
+}

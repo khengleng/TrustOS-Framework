@@ -1,0 +1,29 @@
+{
+  "name": "{{packageName}}-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "{{productDisplayName}} API.",
+  "license": "UNLICENSED",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "dev": "node --watch -r ts-node/register src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28",
+    "@nestjs/platform-express": "^11.1.28",
+    "@nestjs/swagger": "^11.4.6",
+    "{{packageName}}-product-domain": "0.1.0",
+    "{{packageName}}-shared-types": "0.1.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2"
+  }
+}

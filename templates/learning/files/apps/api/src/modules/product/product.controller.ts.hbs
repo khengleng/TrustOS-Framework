@@ -1,0 +1,165 @@
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { LEARNING_PERMISSIONS } from '{{packageName}}-product-domain';
+import {
+  ProductService,
+  type LearningSessionRow,
+  type ProgressSummary,
+  type QuizAttemptRow,
+  type StudentProfileRow,
+} from './product.service';
+
+/**
+ * Learning endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that
+ * declares none. The organization comes from `@OrganizationId()`, derived by
+ * the tenant guard from the access token.
+ */
+
+const idSchema = z.string().trim().min(1).max(64);
+
+const createStudentSchema = z.object({
+  displayName: z.string().trim().min(1).max(160),
+  userId: idSchema.optional(),
+  level: z.string().trim().max(64).optional(),
+  locale: z.string().trim().max(16).optional(),
+});
+
+const createSessionSchema = z.object({
+  studentProfileId: idSchema,
+  topic: z.string().trim().min(1).max(200),
+});
+
+const sessionStatusSchema = z.object({
+  status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'ABANDONED']),
+});
+
+const recordAttemptSchema = z
+  .object({
+    studentProfileId: idSchema,
+    learningSessionId: idSchema.optional(),
+    quizKey: z.string().trim().min(1).max(120),
+    score: z.number().int().min(0).max(100_000),
+    maxScore: z.number().int().min(0).max(100_000),
+  })
+  // A score above the maximum is a bug in the caller, and storing it would
+  // quietly corrupt every average derived from it.
+  .refine((value) => value.score <= value.maxScore, {
+    message: 'score cannot exceed maxScore.',
+    path: ['score'],
+  });
+
+@ApiTags('students')
+@ApiBearerAuth('access-token')
+@Controller('students')
+export class StudentsController {
+  constructor(private readonly product: ProductService) {}
+
+  @Get()
+  @RequirePermissions(LEARNING_PERMISSIONS.STUDENT_READ.key)
+  @ApiOperation({ summary: 'List student profiles' })
+  list(): Promise<StudentProfileRow[]> {
+    return this.product.listStudents();
+  }
+
+  @Get(':id')
+  @RequirePermissions(LEARNING_PERMISSIONS.STUDENT_READ.key)
+  @ApiOperation({ summary: 'Read one student profile' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<StudentProfileRow> {
+    return this.product.findStudent(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(LEARNING_PERMISSIONS.STUDENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a student profile' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createStudentSchema)) body: z.infer<typeof createStudentSchema>,
+  ): Promise<StudentProfileRow> {
+    return this.product.createStudent(body, organizationId);
+  }
+}
+
+@ApiTags('learning-sessions')
+@ApiBearerAuth('access-token')
+@Controller('learning-sessions')
+export class LearningSessionsController {
+  constructor(private readonly product: ProductService) {}
+
+  @Get()
+  @RequirePermissions(LEARNING_PERMISSIONS.SESSION_READ.key)
+  @ApiOperation({ summary: 'List learning sessions' })
+  list(): Promise<LearningSessionRow[]> {
+    return this.product.listSessions();
+  }
+
+  @Post()
+  @RequirePermissions(LEARNING_PERMISSIONS.SESSION_CREATE.key)
+  @ApiOperation({ summary: 'Schedule a learning session' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createSessionSchema)) body: z.infer<typeof createSessionSchema>,
+  ): Promise<LearningSessionRow> {
+    return this.product.createSession(body, organizationId);
+  }
+
+  @Put(':id/status')
+  @RequirePermissions(LEARNING_PERMISSIONS.SESSION_UPDATE.key)
+  @ApiOperation({ summary: 'Move a session through its lifecycle' })
+  updateStatus(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(sessionStatusSchema)) body: z.infer<typeof sessionStatusSchema>,
+  ): Promise<LearningSessionRow> {
+    return this.product.updateSessionStatus(id, body.status, organizationId);
+  }
+}
+
+@ApiTags('quiz-attempts')
+@ApiBearerAuth('access-token')
+@Controller('quiz-attempts')
+export class QuizAttemptsController {
+  constructor(private readonly product: ProductService) {}
+
+  @Get()
+  @RequirePermissions(LEARNING_PERMISSIONS.ATTEMPT_READ.key)
+  @ApiOperation({ summary: 'List quiz attempts' })
+  list(): Promise<QuizAttemptRow[]> {
+    return this.product.listAttempts();
+  }
+
+  @Post()
+  @RequirePermissions(LEARNING_PERMISSIONS.ATTEMPT_CREATE.key)
+  @ApiOperation({ summary: 'Record a quiz attempt' })
+  record(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(recordAttemptSchema)) body: z.infer<typeof recordAttemptSchema>,
+  ): Promise<QuizAttemptRow> {
+    return this.product.recordAttempt(body, organizationId);
+  }
+}
+
+@ApiTags('progress')
+@ApiBearerAuth('access-token')
+@Controller('progress')
+export class ProgressController {
+  constructor(private readonly product: ProductService) {}
+
+  @Get()
+  @RequirePermissions(LEARNING_PERMISSIONS.PROGRESS_READ.key)
+  @ApiOperation({
+    summary: 'Progress summary per student',
+    description: 'Derived on read from sessions and attempts, never stored.',
+  })
+  summary(): Promise<ProgressSummary[]> {
+    return this.product.progressSummary();
+  }
+}

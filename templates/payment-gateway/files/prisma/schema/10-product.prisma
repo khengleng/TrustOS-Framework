@@ -1,0 +1,153 @@
+// =============================================================================
+// Product models — TrustOS Payment Gateway
+//
+// A skeleton. Bakong, KHQR, settlement, refunds and any real payment-provider
+// integration are deliberately absent and must not be added without approval.
+//
+// Two things here are security-critical:
+//
+//   * `ApiKey.keyHash` — only a SHA-256 hash is stored, never the key. A
+//     database leak must not hand anyone live credentials. `keyPrefix` exists
+//     so a key can be identified in a UI without being reconstructable.
+//   * `PaymentStatusHistory` — append-only. A payment's current status is a
+//     claim; its history is the evidence.
+// =============================================================================
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  CANCELLED
+}
+
+enum MerchantAccountStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+/// A merchant's account with the gateway.
+model MerchantAccount {
+  id             String                @id @default(cuid())
+  organizationId String
+  displayName    String
+  /// Stable reference used in API payloads and reconciliation.
+  reference      String
+  status         MerchantAccountStatus @default(PENDING)
+  /// ISO-4217. Stored per account because a gateway is rarely single-currency.
+  defaultCurrency String               @default("USD")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  apiKeys  ApiKey[]
+  payments Payment[]
+  webhooks WebhookEndpoint[]
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// An API credential. The key itself is never stored.
+model ApiKey {
+  id                String  @id @default(cuid())
+  organizationId    String
+  merchantAccountId String
+  label             String
+  /// SHA-256 of the key. Unique so a lookup is a single indexed read.
+  keyHash           String  @unique
+  /// First characters of the key, for display only. Never enough to use.
+  keyPrefix         String
+  lastUsedAt        DateTime?
+  revokedAt         DateTime?
+  revokedReason     String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  merchantAccount MerchantAccount @relation(fields: [merchantAccountId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, merchantAccountId])
+  @@index([revokedAt])
+  @@index([deletedAt])
+}
+
+/// A payment intent. Amounts are integer minor units — never floats.
+model Payment {
+  id                String        @id @default(cuid())
+  organizationId    String
+  merchantAccountId String
+  /// Caller-supplied idempotency key, unique per organization.
+  idempotencyKey    String
+  /// Minor units (cents). Floating point must never touch money.
+  amountMinor       Int
+  currency          String
+  status            PaymentStatus @default(CREATED)
+  reference         String
+  description       String?
+  /// Opaque provider reference once a provider is integrated.
+  providerReference String?
+  failureReason     String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  merchantAccount MerchantAccount        @relation(fields: [merchantAccountId], references: [id], onDelete: Cascade)
+  history         PaymentStatusHistory[]
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@index([merchantAccountId])
+  @@index([deletedAt])
+}
+
+/// Append-only status trail for a payment.
+///
+/// No `updatedAt` and no `deletedAt`: rows are written once and never changed,
+/// for the same reason the framework's AuditLog is append-only.
+model PaymentStatusHistory {
+  id        String        @id @default(cuid())
+  organizationId String
+  paymentId String
+  fromStatus PaymentStatus?
+  toStatus  PaymentStatus
+  reason    String?
+  /// Who or what caused the transition: a user id, or "system".
+  actorId   String?
+
+  createdAt DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, paymentId])
+  @@index([paymentId, createdAt])
+}
+
+/// Where the gateway will deliver events once delivery is implemented.
+model WebhookEndpoint {
+  id                String  @id @default(cuid())
+  organizationId    String
+  merchantAccountId String
+  url               String
+  /// SHA-256 of the signing secret. The secret is shown once, at creation.
+  secretHash        String
+  /// Event names this endpoint wants, e.g. ["payment.captured"].
+  events            String[]
+  isActive          Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  merchantAccount MerchantAccount @relation(fields: [merchantAccountId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, merchantAccountId])
+  @@index([deletedAt])
+}

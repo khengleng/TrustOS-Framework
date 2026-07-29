@@ -16,6 +16,9 @@ export default defineConfig({
       '@trustos/rbac': pkg('rbac'),
       '@trustos/shared-types': pkg('shared-types'),
       '@trustos/tenancy': pkg('tenancy'),
+      '@trustos/template-registry': pkg('template-registry'),
+      '@trustos/generator-core': pkg('generator-core'),
+      '@trustos/cli': pkg('cli'),
       '@trustos/validation': pkg('validation'),
     },
   },
@@ -23,7 +26,24 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['packages/**/*.spec.ts', 'apps/**/*.spec.ts', 'templates/**/*.spec.ts'],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/.next/**'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.next/**',
+      /**
+       * Template *sources*, not tests of this repository.
+       *
+       * The specs under `templates/<id>/files/` are shipped into generated
+       * applications and only resolve once the base and template layers have
+       * been merged — `../../tokens` comes from the base layer. They are
+       * exercised by generating an application and running its suite, which is
+       * what the CI "generated applications" job does.
+       *
+       * `templates/saas-starter` is excluded from this rule: it is a real
+       * workspace, not a generator template, and its tests do run here.
+       */
+      'templates/*/files/**',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

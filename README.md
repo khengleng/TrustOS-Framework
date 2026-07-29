@@ -9,9 +9,17 @@ implement twice: validated configuration, authentication, organization-based
 tenant isolation, role-based access control, an append-only audit trail,
 structured logging, a single error contract, and health endpoints.
 
-This is **phase one**: a modular monolith foundation. It contains no business
-functionality, and by design no payments, loyalty, campaigns, notifications,
-marketplace, AI agents, Kafka, Kubernetes or microservices.
+It also ships **`trustos`**, a CLI that generates a complete, tenant-isolated,
+audited, deployable application from an approved template in a couple of
+minutes.
+
+```bash
+trustos new merchant
+```
+
+Phases one and two are a modular monolith foundation plus its generator. There
+is by design no payments, loyalty, campaigns, notifications, marketplace, AI
+agents, Kafka, Kubernetes or microservices.
 
 ---
 
@@ -97,6 +105,8 @@ All of these run in CI on every pull request (`.github/workflows/ci.yml`).
 | `npm run dev:api`                         | API in watch mode on :3000                                    |
 | `npm run dev:admin`                       | Admin console in watch mode on :3001                          |
 | `npm run clean`                           | Remove all build output                                       |
+| `npm run cli -- <args>`                   | Run the `trustos` CLI from the checkout                       |
+| `npm run templates:validate`              | Validate every template (ten checks each)                     |
 
 ---
 
@@ -126,9 +136,52 @@ All of these run in CI on every pull request (`.github/workflows/ci.yml`).
 - **`apps/admin-example`** — Next.js console: login, organization selection,
   members list, role assignment, audit log, with explicit loading, empty and
   error states.
-- **`templates/saas-starter`** — copy this folder to start a new product. It
-  wires every framework package and includes an example product module with its
-  own permissions, tenant scoping, audit logging and isolation tests.
+- **`templates/saas-starter`** — copy this folder to start a new product by
+  hand. It wires every framework package and includes an example product module
+  with its own permissions, tenant scoping, audit logging and isolation tests.
+
+---
+
+## Generating a new application
+
+Rather than copying the starter by hand, use the CLI:
+
+```bash
+npm run build:packages
+npm link -w @trustos/cli          # or: node packages/cli/bin/trustos.js
+
+trustos doctor                    # check this machine
+trustos list-templates --verbose  # see what is available
+trustos new merchant --framework-path "$PWD"
+```
+
+| Template            | Entities                                                                | Apps         |
+| ------------------- | ----------------------------------------------------------------------- | ------------ |
+| `generic-saas`      | WorkspaceItem                                                           | api, admin   |
+| `merchant`          | Merchant, Store, Branch, MerchantMember                                 | api, admin   |
+| `learning`          | StudentProfile, LearningSession, QuizAttempt                            | api, admin   |
+| `payment-gateway`   | MerchantAccount, ApiKey, Payment, PaymentStatusHistory, WebhookEndpoint | api, admin   |
+| `telegram-mini-app` | Task, TelegramProfile                                                   | api, miniapp |
+
+Every generated application arrives with the framework already wired — three
+global guards, audit logging, health probes — plus its own domain models,
+migrations, tenant-isolation tests, `AGENTS.md` for AI agents, `trustos.json`
+recording exactly what produced it, and Railway configuration.
+
+`--framework-path` is needed only until the `@trustos/*` packages are published
+to npm; it rewrites the generated dependencies to local `file:` links.
+
+The generator will not write outside the project directory, will not create a
+`.env`, will not run a script a template asked it to run, and leaves nothing
+behind if it fails. See [`docs/generator-security.md`](docs/generator-security.md).
+
+### CLI packages
+
+| Package                      | Responsibility                                                         |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| `@trustos/cli`               | The `trustos` command: parsing, prompts, output                        |
+| `@trustos/generator-core`    | Path containment, rendering, transactional writes, template validation |
+| `@trustos/template-registry` | The typed, validated catalog of approved templates                     |
 
 ---
 
@@ -175,14 +228,16 @@ Details: [`docs/security-standards.md`](docs/security-standards.md).
 ## Starting a new TrustOS product
 
 ```bash
-cp -r templates/saas-starter apps/my-product
-# rename the package in apps/my-product/package.json
-npm install
+trustos new generic-saas --framework-path "$PWD"
 ```
 
-Then replace `modules/widgets` with your domain module, keeping its shape: a
-permission on every route, `@OrganizationId()` in the handler, audit on every
-mutation, and isolation tests beside the code. The full checklist is in
+Then replace the generated `modules/product` with your domain, keeping its
+shape: a permission on every route, `@OrganizationId()` in the handler, audit on
+every mutation, and isolation tests beside the code. The generated `AGENTS.md`
+states the same rules for an AI agent working in that repository.
+
+To start from the starter template by hand instead, copy
+`templates/saas-starter` — the checklist is in
 [`docs/architecture.md`](docs/architecture.md) §8.
 
 ---

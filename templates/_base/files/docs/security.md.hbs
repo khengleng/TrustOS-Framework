@@ -1,0 +1,96 @@
+# Security — {{productDisplayName}}
+
+Inherited from the TrustOS Engineering Framework v{{frameworkVersion}}. These
+are rules for changing this repository, not background reading.
+
+## Non-negotiables
+
+1. Never weaken authentication or authorization to make something work.
+2. Never bypass tenant isolation — not temporarily, not for an admin screen,
+   not behind a flag.
+3. Every security-sensitive change ships with a test.
+4. Every sensitive action is audited.
+5. No secrets in the repository, ever.
+
+## Authorization
+
+- Every route declares `@RequirePermissions`, `@RequireRoles`,
+  `@AllowAnyAuthenticated` or `@Public`. A route that declares nothing is
+  **denied** — forgetting a decorator fails closed.
+- Least privilege: `operator` and `auditor` hold no write permission.
+- `canGrantRole` limits which roles a holder may grant, so anyone who can
+  assign roles cannot make themselves an owner.
+- A `forbidden` response never names the missing permission; that detail goes to
+  the logs.
+
+## Tenant isolation
+
+- A read without `organizationId` in the `where` clause is a blocking review
+  finding.
+- `findUnique` on a tenant-owned model is a blocking finding unless the result
+  passes through `assertTenantMatch`. Prefer `scopedDelegate`, which rewrites
+  `findUnique` to a scoped `findFirst`.
+- Cross-tenant hits report `not_found`. A 403 would confirm the id exists in
+  another organization, turning any id endpoint into an enumeration oracle.
+- New tenant-owned models need isolation tests before merge.
+
+## Secrets
+
+- `@trustos/config` is the only reader of `process.env`.
+- Production refuses to start on a missing variable, a secret under 32
+  characters, a placeholder secret, two matching JWT secrets, wildcard CORS, or
+  a non-PostgreSQL `DATABASE_URL`.
+- `NEXT_PUBLIC_*` variables are compiled into the browser bundle. The only one
+  here is the API base URL.
+- Rotate `JWT_SECRET` by deploying a new value; outstanding access tokens become
+  invalid within one TTL.
+
+## Logging
+
+Never logged, at any level, in any environment: passwords, password hashes,
+tokens of any kind, JWT secrets, API keys, private keys, connection strings, or
+full authentication request bodies.
+
+Redaction is enforced by `@trustos/logging` as a key-name deny list applied at
+any depth. **Add new sensitive field names to `SENSITIVE_KEYS` when you
+introduce them** — the list is only as good as its maintenance.
+
+## Audit trail
+
+Every record carries actor id, organization id, action, entity type, entity id,
+before, after, timestamp, request id, IP address and user agent.
+
+`AuditSink` exposes no update and no delete. The framework migration
+`auditlog_append_only` also installs a database trigger that refuses `UPDATE`
+and `DELETE` on `AuditLog`. Note that a `REVOKE` alone would not be enough:
+PostgreSQL grants a table's owner implicit rights, so when the application
+connects as the owner the revoke succeeds and changes nothing.
+
+## Errors
+
+- Every non-2xx response is `{ error, message, requestId }`, plus `details` for
+  validation errors.
+- In production an unexpected error contributes nothing to the response — no
+  message, no stack, no class.
+- Driver errors, connection strings and file paths must never reach a caller.
+
+## This application's residual risks
+
+1. No rate limiting on authentication endpoints.
+2. No password reset, email verification or account lockout.
+3. Access-token revocation is not immediate (one TTL, 15 minutes by default).
+4. The admin console holds tokens in `localStorage`; a single XSS is account
+   takeover.
+5. `prisma/schema/00-framework.prisma` is a copy and can drift from the
+   framework until refreshed by hand.
+
+{{#if templateOutOfScope}}
+## Deliberately not implemented
+
+Do not add these without approval — each one changes the risk profile of the
+product:
+
+{{#each templateOutOfScope}}
+- {{this}}
+{{/each}}
+{{/if}}

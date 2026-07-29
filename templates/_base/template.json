@@ -1,0 +1,20 @@
+{
+  "id": "_base",
+  "conditionalPaths": [
+    {
+      "prefix": "apps/api",
+      "when": "includeApi",
+      "reason": "The API is optional; a product may ship an admin console against an existing API."
+    },
+    {
+      "prefix": "apps/admin",
+      "when": "includeAdmin",
+      "reason": "The admin application is optional."
+    },
+    {
+      "prefix": "railway.toml",
+      "whenEquals": { "variable": "deploymentTarget", "value": "railway" },
+      "reason": "Railway configuration is meaningless for a local-only deployment."
+    }
+  ]
+}

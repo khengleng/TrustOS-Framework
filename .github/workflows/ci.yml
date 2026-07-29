@@ -38,8 +38,9 @@ jobs:
       - name: Validate Prisma schema
         run: npm run db:validate
 
-      # The migration is generated from the schema, so a drift between the two
-      # means someone edited one without the other.
+      # The initial migration is generated from the schema, so a drift between
+      # the two means someone edited one without the other. Later migrations
+      # (triggers, grants) are not schema-derived and are not compared.
       - name: Check migration matches schema
         run: |
           npm run migrate:diff -w @trustos/database --silent > /tmp/expected.sql
@@ -71,6 +72,176 @@ jobs:
 
       - name: Build applications
         run: npm run build:apps
+
+  templates:
+    name: validate templates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the CLI and its dependencies
+        run: npm run build:packages
+
+      - name: CLI smoke test
+        run: |
+          node packages/cli/bin/trustos.js --version
+          node packages/cli/bin/trustos.js --help
+          node packages/cli/bin/trustos.js list-templates --verbose
+
+      - name: Environment check
+        run: node packages/cli/bin/trustos.js doctor
+
+      # Ten checks per template, including that each one ships tenant-isolation
+      # tests and contains nothing secret-shaped.
+      - name: Validate every template
+        run: node packages/cli/bin/trustos.js validate-template --all
+
+  generated:
+    name: generated app (${{ matrix.template }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [templates]
+
+    strategy:
+      # One failing template should not hide the state of the others.
+      fail-fast: false
+      matrix:
+        template:
+          - generic-saas
+          - merchant
+          - learning
+          - payment-gateway
+          - telegram-mini-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install the framework
+        run: npm ci
+
+      # Generated applications resolve @trustos/* through file: links to this
+      # checkout, so the packages must be compiled before one is generated.
+      - name: Build the framework packages
+        run: npm run build:packages
+
+      - name: Generate
+        run: |
+          mkdir -p /tmp/generated
+          node packages/cli/bin/trustos.js new "${{ matrix.template }}" \
+            --yes \
+            --name "sample-${{ matrix.template }}" \
+            --package-name "sample-${{ matrix.template }}" \
+            --target-dir /tmp/generated \
+            --framework-path "$GITHUB_WORKSPACE" \
+            --generated-at 2026-01-01T00:00:00.000Z \
+            --no-git
+
+      # A dry run must produce the same plan and write nothing. Run against an
+      # already-generated directory so the conflict path is exercised too.
+      - name: Dry run is inert
+        run: |
+          BEFORE=$(find /tmp/generated -type f | wc -l)
+          node packages/cli/bin/trustos.js new "${{ matrix.template }}" \
+            --yes --name "sample-${{ matrix.template }}" \
+            --target-dir /tmp/generated --framework-path "$GITHUB_WORKSPACE" \
+            --dry-run --verbose --no-git > /tmp/dry-run.log
+          AFTER=$(find /tmp/generated -type f | wc -l)
+          if [ "$BEFORE" != "$AFTER" ]; then
+            echo "::error::--dry-run changed the filesystem ($BEFORE -> $AFTER files)"
+            exit 1
+          fi
+          grep -q "Nothing was written." /tmp/dry-run.log
+
+      - name: No secrets were generated
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: |
+          test ! -e .env || { echo "::error::a .env file was generated"; exit 1; }
+          test -f .env.example || { echo "::error::.env.example is missing"; exit 1; }
+          if find . -name '*.pem' -o -name '*.key' -o -name '*.p12' | grep -q .; then
+            echo "::error::key material was generated"
+            exit 1
+          fi
+          echo "No secrets generated."
+
+      - name: Required files are present
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: |
+          for required in AGENTS.md README.md trustos.json railway.toml \
+                          docs/architecture.md docs/deployment.md docs/security.md; do
+            test -f "$required" || { echo "::error::$required is missing"; exit 1; }
+          done
+          # The generated deployment guide must actually cover Railway.
+          grep -qi railway docs/deployment.md || { echo "::error::no Railway documentation"; exit 1; }
+          # Provenance must record what produced this project.
+          node -e "
+            const m = require('./trustos.json');
+            for (const key of ['frameworkVersion','template','templateVersion','cliVersion','generatedAt']) {
+              if (!m[key]) { console.error('missing ' + key + ' in trustos.json'); process.exit(1); }
+            }
+            console.log('trustos.json records', m.template, 'v' + m.templateVersion);
+          "
+
+      # Runs before install and build: those steps rewrite generated files
+      # (`next build` rewrites next-env.d.ts, tsc writes tsbuildinfo), so
+      # comparing a built tree would fail on artifacts that say nothing about
+      # the generator.
+      - name: Generation is deterministic
+        run: |
+          mkdir -p /tmp/repeat
+          node packages/cli/bin/trustos.js new "${{ matrix.template }}" \
+            --yes \
+            --name "sample-${{ matrix.template }}" \
+            --package-name "sample-${{ matrix.template }}" \
+            --target-dir /tmp/repeat \
+            --framework-path "$GITHUB_WORKSPACE" \
+            --generated-at 2026-01-01T00:00:00.000Z \
+            --no-git
+
+          # Two fresh trees, compared in full. Same inputs — including the
+          # timestamp — must give byte-identical output.
+          if ! diff -r \
+              "/tmp/generated/sample-${{ matrix.template }}" \
+              "/tmp/repeat/sample-${{ matrix.template }}"; then
+            echo "::error::generation is not deterministic for ${{ matrix.template }}"
+            exit 1
+          fi
+          echo "Byte-identical across two runs."
+
+      - name: Install the generated application
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: npm install
+
+      - name: Validate the generated Prisma schema
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: npm run db:validate
+
+      - name: Type check the generated application
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: npm run typecheck
+
+      # Includes the tenant-isolation suite every template is required to ship.
+      - name: Test the generated application
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: npm test
+
+      - name: Build the generated application
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: npm run build
 
   security:
     name: dependency audit

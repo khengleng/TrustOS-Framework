@@ -1,0 +1,48 @@
+// =============================================================================
+// Product models — Generic SaaS
+//
+// Conventions every tenant-owned model follows:
+//   * `organizationId` — the tenant column, indexed first because every
+//     legitimate query filters on it
+//   * `createdAt` / `updatedAt`
+//   * `deletedAt`     — soft delete; application code never hard-deletes
+//
+// Why `organizationId` is a scalar and not a Prisma relation
+// ---------------------------------------------------------
+// Prisma requires both sides of a relation, so declaring one here would mean
+// adding a back-reference to `Organization` in 00-framework.prisma — the file
+// that gets replaced wholesale when the framework is upgraded. Keeping the
+// framework copy pristine is worth more than the cascade, and it is the same
+// trade the framework makes for `AuditLog`.
+//
+// Isolation does not depend on the foreign key: it comes from the tenant scope
+// applied to every query, and it is proven by the isolation tests. If you want
+// the database-level guarantee too, add the constraint in a migration:
+//
+//   ALTER TABLE "WorkspaceItem"
+//     ADD CONSTRAINT "WorkspaceItem_organizationId_fkey"
+//     FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE;
+// =============================================================================
+
+enum WorkspaceItemStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+/// The worked example. Rename or replace it before building real features.
+model WorkspaceItem {
+  id             String              @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  status         WorkspaceItemStatus @default(DRAFT)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@index([deletedAt])
+}

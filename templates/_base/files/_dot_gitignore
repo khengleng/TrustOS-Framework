@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Environment / secrets — NEVER commit real values
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+
+# Test / coverage
+coverage/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.log
+npm-debug.log*
+
+# Prisma client, generated from prisma/schema on install
+prisma/generated/

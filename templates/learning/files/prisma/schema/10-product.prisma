@@ -1,0 +1,89 @@
+// =============================================================================
+// Product models — TrustOS Learning
+//
+// Records learning activity only. AI quiz generation, payments, school
+// management and the teacher marketplace are deliberately absent.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade. Isolation comes from the
+// tenant scope applied to every query, proven by the isolation tests.
+// =============================================================================
+
+enum LearningSessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+/// A learner. `userId` links to the framework `User` when the learner has an
+/// account; it is null for a profile created on their behalf.
+model StudentProfile {
+  id             String  @id @default(cuid())
+  organizationId String
+  userId         String?
+  displayName    String
+  /// Free-text level label, e.g. "Beginner". Not an enum: what a level means
+  /// is a product decision that changes more often than a migration should.
+  level          String?
+  locale         String  @default("en")
+  isActive       Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  sessions LearningSession[]
+  attempts QuizAttempt[]
+
+  @@index([organizationId, isActive])
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+/// One period of study by a student.
+model LearningSession {
+  id               String                @id @default(cuid())
+  organizationId   String
+  studentProfileId String
+  topic            String
+  status           LearningSessionStatus @default(SCHEDULED)
+  startedAt        DateTime?
+  completedAt      DateTime?
+  durationMinutes  Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  student  StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  attempts QuizAttempt[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, studentProfileId])
+  @@index([deletedAt])
+}
+
+/// A student's attempt at a quiz within a session.
+model QuizAttempt {
+  id                String @id @default(cuid())
+  organizationId    String
+  studentProfileId  String
+  learningSessionId String?
+  quizKey           String
+  /// Score out of `maxScore`. Stored as integers to avoid float comparison.
+  score             Int    @default(0)
+  maxScore          Int    @default(0)
+  submittedAt       DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  student StudentProfile   @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  session LearningSession? @relation(fields: [learningSessionId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, studentProfileId])
+  @@index([organizationId, quizKey])
+  @@index([deletedAt])
+}

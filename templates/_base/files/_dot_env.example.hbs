@@ -1,0 +1,50 @@
+# =============================================================================
+# {{productDisplayName}} — environment template
+#
+#   cp .env.example .env
+#
+# Never commit a filled-in copy. `.env` is gitignored; keep it that way.
+# Production values belong in your platform's variable store, not in a file.
+# =============================================================================
+
+# --- Required -----------------------------------------------------------------
+
+# development | test | production
+NODE_ENV=development
+
+PORT={{port}}
+
+# PostgreSQL connection string.
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/{{snakeCase applicationName}}_dev?schema=public
+
+# Signing keys for access and refresh tokens. They MUST be different values and
+# at least 32 characters in production. Generate each one separately with:
+#   node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+JWT_SECRET=development-only-jwt-secret-change-me-please
+JWT_REFRESH_SECRET=development-only-refresh-secret-change-me-ok
+
+# fatal | error | warn | info | debug | trace | silent
+LOG_LEVEL=debug
+
+# --- Optional (defaults shown) ------------------------------------------------
+
+SERVICE_NAME={{applicationName}}
+SERVICE_VERSION=0.1.0
+
+ACCESS_TOKEN_TTL=15m
+REFRESH_TOKEN_TTL=30d
+PASSWORD_HASH_ROUNDS=12
+
+# Comma-separated. "*" is rejected in production.
+CORS_ORIGINS=http://localhost:{{adminPort}}
+# Enable only behind a proxy you control.
+TRUST_PROXY=false
+
+# Serve Swagger UI at /docs. Consider disabling in production.
+OPENAPI_ENABLED=true
+
+{{#if includeAdmin}}
+# --- Admin application (browser) ----------------------------------------------
+# NEXT_PUBLIC_* values are embedded in the client bundle. Never put a secret here.
+NEXT_PUBLIC_API_BASE_URL=http://localhost:{{port}}/api
+{{/if}}

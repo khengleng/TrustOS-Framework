@@ -1,0 +1,28 @@
+import { defineConfig } from 'vitest/config';
+import { resolve } from 'node:path';
+
+/**
+ * Test configuration.
+ *
+ * The workspace packages are aliased to their **source**, so `npm test` works
+ * without building them first. Without this, a spec that imports
+ * `{{packageName}}-product-domain` fails on a missing `dist/` — which is a
+ * confusing way to learn that you forgot a build step, and makes the test loop
+ * slower than it needs to be.
+ *
+ * The build still compiles those packages properly; this only affects tests.
+ */
+export default defineConfig({
+  resolve: {
+    alias: {
+      '{{packageName}}-product-domain': resolve(__dirname, 'packages/product-domain/src/index.ts'),
+      '{{packageName}}-shared-types': resolve(__dirname, 'packages/shared-types/src/index.ts'),
+    },
+  },
+  test: {
+    globals: true,
+    environment: 'node',
+    include: ['packages/**/*.spec.ts', 'apps/**/*.spec.ts'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.next/**'],
+  },
+});

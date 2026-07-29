@@ -1,0 +1,80 @@
+import { DynamicModule, Module } from '@nestjs/common';
+import type { AppConfig } from '@trustos/config';
+import { PrismaService } from '@trustos/database';
+import {
+  AuthService,
+  PrismaAuthUserStore,
+  PrismaMembershipResolver,
+  PrismaRefreshTokenStore,
+} from '@trustos/auth';
+import { AUDIT_ACTIONS, AUDIT_ENTITY, type AuditService } from '@trustos/audit';
+import type { AuthEvent, AuthEventSink } from '@trustos/auth';
+import { AUDIT_SERVICE, AUTH_SERVICE } from '../../tokens';
+import { AuthController } from './auth.controller';
+
+/**
+ * Wires the framework's `AuthService` to this application's storage.
+ *
+ * Everything substitutable is visible in one factory. The framework owns the
+ * authentication *rules*; this module owns only where the rows live.
+ */
+@Module({})
+export class AuthModule {
+  static forRoot(config: AppConfig): DynamicModule {
+    return {
+      module: AuthModule,
+      controllers: [AuthController],
+      providers: [
+        {
+          provide: AUTH_SERVICE,
+          inject: [PrismaService, AUDIT_SERVICE],
+          useFactory: (prisma: PrismaService, audit: AuditService) =>
+            new AuthService({
+              config,
+              users: new PrismaAuthUserStore(prisma),
+              refreshTokens: new PrismaRefreshTokenStore(prisma),
+              memberships: new PrismaMembershipResolver(prisma),
+              events: new AuthAuditBridge(audit),
+            }),
+        },
+      ],
+      exports: [AUTH_SERVICE],
+    };
+  }
+}
+
+/**
+ * Turns authentication events into audit records.
+ *
+ * @trustos/auth does not know @trustos/audit exists — it emits events. Whether
+ * a login is worth recording is a policy question, and policy belongs here.
+ */
+const ACTION_BY_EVENT: Record<AuthEvent['type'], string> = {
+  'auth.registered': AUDIT_ACTIONS.USER_CREATED,
+  'auth.login': AUDIT_ACTIONS.LOGIN,
+  'auth.login_failed': AUDIT_ACTIONS.LOGIN_FAILED,
+  'auth.logout': AUDIT_ACTIONS.LOGOUT,
+  'auth.token_refreshed': AUDIT_ACTIONS.TOKEN_REFRESHED,
+  'auth.token_reuse_detected': AUDIT_ACTIONS.TOKEN_REUSE_DETECTED,
+  'auth.organization_selected': AUDIT_ACTIONS.ORGANIZATION_SELECTED,
+  'auth.password_rehashed': AUDIT_ACTIONS.PASSWORD_REHASHED,
+  'auth.sessions_revoked': AUDIT_ACTIONS.SESSIONS_REVOKED,
+};
+
+export class AuthAuditBridge implements AuthEventSink {
+  constructor(private readonly audit: AuditService) {}
+
+  async emit(event: AuthEvent): Promise<void> {
+    await this.audit.record({
+      action: ACTION_BY_EVENT[event.type] ?? event.type,
+      entityType: event.entityType || AUDIT_ENTITY.USER,
+      entityId: event.entityId,
+      actorId: event.actorId,
+      organizationId: event.organizationId,
+      after: event.metadata ?? null,
+      requestId: event.request.requestId,
+      ipAddress: event.request.ipAddress,
+      userAgent: event.request.userAgent,
+    });
+  }
+}

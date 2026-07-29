@@ -1,0 +1,107 @@
+import { DynamicModule, Global, Module } from '@nestjs/common';
+import { APP_GUARD, Reflector } from '@nestjs/core';
+import { AuditService, PrismaAuditSink } from '@trustos/audit';
+import { JwtAuthGuard, TokenService } from '@trustos/auth';
+import type { AppConfig } from '@trustos/config';
+import { PrismaService, checkDatabaseConnection } from '@trustos/database';
+import { setRequestActor, type Logger } from '@trustos/logging';
+import {
+  ObservabilityModule,
+  databaseHealthIndicator,
+  type MetricsRecorder,
+} from '@trustos/observability';
+import { PermissionsGuard } from '@trustos/rbac';
+import { TenantGuard } from '@trustos/tenancy';
+{{#if authEnabled}}
+import { AuthModule } from './modules/auth/auth.module';
+{{/if}}
+import { AppPrismaService } from './core/prisma.service';
+import { AuditModule } from './modules/audit/audit.module';
+import { ProductModule } from './modules/product/product.module';
+import { APP_CONFIG_TOKEN, APP_LOGGER, APP_METRICS, AUDIT_SERVICE } from './tokens';
+
+export interface AppModuleOptions {
+  config: AppConfig;
+  logger: Logger;
+  metrics: MetricsRecorder;
+}
+
+/**
+ * Composition root for {{productDisplayName}}.
+ *
+ * The three global guards below, and their order, are the security model:
+ *
+ *   JwtAuthGuard      — who is calling?          (sets request.actor)
+ *   TenantGuard       — whose data may they see? (sets request.organizationId)
+ *   PermissionsGuard  — may they do this?        (deny by default)
+ *
+ * Nest applies APP_GUARD providers in registration order, so this array *is*
+ * the order. Changing it is a security review, not a refactor.
+ *
+ * Add product modules to `imports`. Change nothing else here.
+ */
+@Global()
+@Module({})
+export class AppModule {
+  static forRoot(options: AppModuleOptions): DynamicModule {
+    const { config, logger, metrics } = options;
+
+    return {
+      module: AppModule,
+      imports: [
+        ObservabilityModule.forRootAsync({
+          config,
+          inject: [PrismaService],
+          useFactory: ((prisma: PrismaService) => ({
+            indicators: [databaseHealthIndicator(() => checkDatabaseConnection(prisma))],
+            metrics,
+          })) as never,
+        }),
+{{#if authEnabled}}
+        AuthModule.forRoot(config),
+{{/if}}
+
+        AuditModule,
+
+        // --- product modules ------------------------------------------------
+        ProductModule,
+      ],
+      providers: [
+        /**
+         * The application's own Prisma client, registered under the framework's
+         * PrismaService token.
+         *
+         * The framework's client knows only the framework models; this one is
+         * generated from prisma/schema/, which holds the framework models *and*
+         * this product's. Registering it here means framework code (audit sink,
+         * auth stores, health indicator) and product code share one client and
+         * one connection pool.
+         */
+        { provide: PrismaService, useFactory: () => new AppPrismaService(config, logger) },
+        { provide: APP_CONFIG_TOKEN, useValue: config },
+        { provide: APP_LOGGER, useValue: logger },
+        { provide: APP_METRICS, useValue: metrics },
+        { provide: TokenService, useValue: new TokenService(config) },
+        {
+          provide: AUDIT_SERVICE,
+          inject: [PrismaService],
+          useFactory: (prisma: PrismaService) =>
+            new AuditService({ sink: new PrismaAuditSink(prisma), logger }),
+        },
+        {
+          provide: APP_GUARD,
+          inject: [Reflector, TokenService],
+          useFactory: (reflector: Reflector, tokens: TokenService) =>
+            new JwtAuthGuard(reflector, {
+              tokens,
+              // Enriches every later log line and audit record with the actor.
+              onActorResolved: (actor) => setRequestActor(actor),
+            }),
+        },
+        { provide: APP_GUARD, useClass: TenantGuard },
+        { provide: APP_GUARD, useClass: PermissionsGuard },
+      ],
+      exports: [APP_CONFIG_TOKEN, APP_LOGGER, APP_METRICS, AUDIT_SERVICE, TokenService],
+    };
+  }
+}

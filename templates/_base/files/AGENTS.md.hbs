@@ -1,0 +1,131 @@
+# Instructions for AI coding agents
+
+This is **{{productDisplayName}}**, generated from the TrustOS `{{templateId}}`
+template (v{{templateVersion}}) on the TrustOS framework v{{frameworkVersion}}.
+
+Read this file before your first change. The rules below are not style
+preferences — they are the reason this application can hold other people's data.
+
+---
+
+## 1. Use the existing TrustOS packages
+
+Before writing anything, check whether the capability already exists:
+
+| Need | Use |
+| --- | --- |
+| Read an environment variable | `@trustos/config` — never `process.env` |
+| Log anything | `@trustos/logging` — never `console.*` |
+| Throw an API error | `@trustos/errors` — `ApiError.*` |
+| Validate input | `@trustos/validation` — Zod + `parseOrThrow` |
+| Hash a password, issue a token | `@trustos/auth` |
+| Check a permission | `@trustos/rbac` |
+| Scope a query to an organization | `@trustos/tenancy` |
+| Record a sensitive action | `@trustos/audit` |
+| Add a health check or metric | `@trustos/observability` |
+
+## 2. Do not duplicate shared modules
+
+No second logger, no second error shape, no second way to check a permission,
+no hand-rolled validation. If a framework package is *almost* right, raise it
+with the framework team — do not write a local variant. Two ways to do the same
+security-relevant thing means one of them will be wrong and nobody will notice.
+
+## 3. Preserve tenant isolation
+
+- Every query against a tenant-owned model carries `organizationId`. Prefer
+  `scopedDelegate`, which makes it structural.
+- The organization comes from the **access token**, never from a request body,
+  path or header.
+- A lookup by primary key must pass through `assertTenantMatch`, which reports
+  another tenant's row as `not_found` — never `forbidden`, which would confirm
+  the id exists.
+- Filtering in the frontend is never a control.
+
+## 4. Preserve RBAC
+
+- Every route declares `@RequirePermissions`, `@RequireRoles`,
+  `@AllowAnyAuthenticated` or `@Public`. A route that declares nothing is denied.
+- Never add `@Public()` to a route that handles real data.
+- Never widen a role's permissions to make something work.
+- Never remove a guard from `app.module.ts` or change the guard order. That
+  order — authenticate, scope, authorize — is the security model.
+
+## 5. Add audit logging for sensitive actions
+
+Any change to authentication state, membership, roles, permissions,
+organizations, configuration, or {{#if templateEntities}}{{#each templateEntities}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}}{{else}}product data{{/if}}
+is recorded with `AuditService.record` or `recordChange`, including `before` and
+`after`. If a reviewer cannot answer "who did this and when" from the trail, the
+change is not finished.
+
+## 6. Add tests for security-sensitive changes
+
+Anything touching authentication, authorization, tenancy, audit, error
+disclosure or secret handling ships with tests in the same change. Assert the
+**negative** case: the wrong caller is refused, the foreign row is invisible,
+the secret is absent from the payload.
+
+Copy the shape from the tenant-isolation spec beside the product module.
+
+## 7. Document schema changes
+
+A Prisma change requires a generated migration (`npm run db:migrate -- --name
+what_changed`) and a note in the PR saying what changed and whether it is
+backward compatible. Never hand-edit a generated migration.
+
+Product models go in `prisma/schema/10-product.prisma`. Do **not** edit
+`00-framework.prisma` — it is the framework's copy and is replaced on upgrade.
+
+Every tenant-owned model needs `organizationId`, `createdAt`, `updatedAt`,
+`deletedAt` and an index on `organizationId`.
+
+## 8. Do not expose secrets
+
+- Never log or return a password, hash, token, key or connection string.
+- Never add a secret to `NEXT_PUBLIC_*` — those are compiled into the browser
+  bundle.
+- Never commit a `.env`. Update `.env.example` instead, with a placeholder.
+- Production error responses must not carry a message, stack or class from an
+  unexpected error.
+
+## 9. Do not add unapproved infrastructure
+
+Out of scope without explicit approval: Kafka or any message broker,
+Kubernetes, microservices, Redis, GraphQL, WebSockets, a second database, an
+external secrets manager, or a new cloud provider.
+
+{{#if templateOutOfScope}}
+This template also deliberately excludes:
+{{#each templateOutOfScope}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+## 10. Do not start unrelated features
+
+Do the task that was asked. Do not opportunistically refactor adjacent code,
+upgrade dependencies, or "improve" something you noticed on the way. If you
+find a real problem outside the scope, finish the task and report it — do not
+silently fix it in the same change.
+
+## 11. Stop after the requested scope is complete
+
+When the task is done, stop. State what you changed, what you tested, what you
+assumed, and what you did not do.
+
+Before reporting done:
+
+```bash
+npm run lint && npm run typecheck && npm test && npm run build
+```
+
+All four must pass. **Never claim something works because it compiles.** If you
+have not run it, say so.
+
+---
+
+## Ownership
+
+Template owner: {{templateOwner}}
+Framework docs: see the TrustOS framework repository, `docs/`.

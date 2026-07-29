@@ -10,3 +10,6 @@ export * from './tenant-scope';
 export * from './scoped-delegate';
 export * from './nest/tenant.guard';
 export * from './nest/decorators';
+// Test doubles ship with the package so product code can prove its own
+// tenant isolation without a database.
+export * from './testing/fake-delegate';

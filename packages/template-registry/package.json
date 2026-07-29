@@ -1,0 +1,19 @@
+{
+  "name": "@trustos/template-registry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Typed, validated catalog of the approved TrustOS application templates.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  }
+}

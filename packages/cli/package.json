@@ -1,0 +1,34 @@
+{
+  "name": "@trustos/cli",
+  "version": "0.1.0",
+  "description": "TrustOS application generator. Creates production-ready TrustOS applications from approved templates.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "trustos": "bin/trustos.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "trustos": "node bin/trustos.js"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.2.1",
+    "@trustos/generator-core": "0.1.0",
+    "@trustos/template-registry": "0.1.0",
+    "commander": "^12.1.0"
+  }
+}

@@ -1,0 +1,86 @@
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { WORKSPACE_ITEM_PERMISSIONS } from '{{packageName}}-product-domain';
+import { ProductService, type WorkspaceItemRow } from './product.service';
+
+/**
+ * WorkspaceItem endpoints.
+ *
+ * Every route declares a permission. `PermissionsGuard` denies any route that
+ * declares none, so there is no such thing as an accidentally public endpoint
+ * here. The organization comes from `@OrganizationId()`, which reads the value
+ * the tenant guard derived from the access token — never from the request.
+ */
+
+const statusSchema = z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']);
+
+const createSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  description: z.string().trim().max(2000).optional(),
+  status: statusSchema.optional(),
+});
+
+const updateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(160).optional(),
+    description: z.string().trim().max(2000).optional(),
+    status: statusSchema.optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, { message: 'Nothing to update.' });
+
+@ApiTags('workspace-items')
+@ApiBearerAuth('access-token')
+@Controller('workspace-items')
+export class ProductController {
+  constructor(private readonly items: ProductService) {}
+
+  @Get()
+  @RequirePermissions(WORKSPACE_ITEM_PERMISSIONS.READ.key)
+  @ApiOperation({ summary: 'List workspace items in the current organization' })
+  list(): Promise<WorkspaceItemRow[]> {
+    return this.items.list();
+  }
+
+  @Get(':id')
+  @RequirePermissions(WORKSPACE_ITEM_PERMISSIONS.READ.key)
+  @ApiOperation({ summary: 'Read one workspace item' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<WorkspaceItemRow> {
+    return this.items.findById(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(WORKSPACE_ITEM_PERMISSIONS.CREATE.key)
+  @ApiOperation({ summary: 'Create a workspace item' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createSchema)) body: z.infer<typeof createSchema>,
+  ): Promise<WorkspaceItemRow> {
+    return this.items.create(body, organizationId);
+  }
+
+  @Put(':id')
+  @RequirePermissions(WORKSPACE_ITEM_PERMISSIONS.UPDATE.key)
+  @ApiOperation({ summary: 'Update a workspace item' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateSchema)) body: z.infer<typeof updateSchema>,
+  ): Promise<WorkspaceItemRow> {
+    return this.items.update(id, body, organizationId);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @RequirePermissions(WORKSPACE_ITEM_PERMISSIONS.DELETE.key)
+  @ApiOperation({ summary: 'Retire a workspace item (soft delete)' })
+  remove(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<void> {
+    return this.items.remove(id, organizationId);
+  }
+}

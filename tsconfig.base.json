@@ -27,13 +27,16 @@
     "paths": {
       "@trustos/audit": ["packages/audit/src/index.ts"],
       "@trustos/auth": ["packages/auth/src/index.ts"],
+      "@trustos/cli": ["packages/cli/src/index.ts"],
       "@trustos/config": ["packages/config/src/index.ts"],
       "@trustos/database": ["packages/database/src/index.ts"],
       "@trustos/errors": ["packages/errors/src/index.ts"],
+      "@trustos/generator-core": ["packages/generator-core/src/index.ts"],
       "@trustos/logging": ["packages/logging/src/index.ts"],
       "@trustos/observability": ["packages/observability/src/index.ts"],
       "@trustos/rbac": ["packages/rbac/src/index.ts"],
       "@trustos/shared-types": ["packages/shared-types/src/index.ts"],
+      "@trustos/template-registry": ["packages/template-registry/src/index.ts"],
       "@trustos/tenancy": ["packages/tenancy/src/index.ts"],
       "@trustos/validation": ["packages/validation/src/index.ts"]
     }

@@ -1,0 +1,235 @@
+# {{productDisplayName}}
+
+{{description}}
+
+Owned by **{{organizationName}}**. Generated from the TrustOS
+`{{templateId}}` template v{{templateVersion}} on TrustOS framework
+v{{frameworkVersion}}.
+
+---
+
+## Architecture
+
+A modular monolith on the TrustOS Engineering Framework. The framework supplies
+configuration, authentication, organization-based tenant isolation, RBAC, an
+append-only audit trail, structured logging, the error contract, and health
+endpoints. This repository supplies the product on top.
+
+```
+apps/
+{{#if includeApi}}  api/                  NestJS API — product endpoints and auth
+{{/if}}{{#if includeAdmin}}  admin/                Next.js admin console
+{{/if}}packages/
+  product-domain/       product permissions and domain types
+  shared-types/         types shared between the API and the admin app
+prisma/
+  schema/
+    00-framework.prisma framework models (copied; do not edit)
+    10-product.prisma   product models
+docs/                   architecture, deployment and security notes
+```
+
+Three global guards run on every request, in this order:
+
+```
+JwtAuthGuard       who is calling?          -> request.actor
+TenantGuard        whose data may they see? -> request.organizationId
+PermissionsGuard   may they do this?        -> deny by default
+```
+
+A route that declares no permission is denied. That is deliberate: forgetting a
+decorator produces a broken endpoint in staging rather than an open one in
+production.
+
+{{#if templateEntities}}
+### Domain entities
+
+{{#each templateEntities}}
+- `{{this}}`
+{{/each}}
+{{/if}}
+
+---
+
+## Local setup
+
+Requires Node 20.11+, npm 10+, and PostgreSQL 14+.
+
+```bash
+# 1. Install
+npm install
+
+# 2. Configure
+cp .env.example .env
+#    Fill in DATABASE_URL. The development JWT secrets work as-is locally.
+
+# 3. Create the database
+createdb {{snakeCase applicationName}}_dev
+
+# 4. Apply migrations and seed roles and permissions
+npm run db:migrate
+npm run db:seed
+
+# 5. Run
+npm run dev
+```
+
+{{#if includeApi}}
+The API listens on **http://localhost:{{port}}** with docs at `/docs`.
+{{/if}}
+{{#if includeAdmin}}
+The admin console runs on **http://localhost:{{adminPort}}**
+(`npm run dev -w {{packageName}}-admin`).
+{{/if}}
+
+---
+
+## Environment variables
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `NODE_ENV` | yes | `development`, `test` or `production` |
+| `PORT` | yes | API listen port |
+| `DATABASE_URL` | yes | PostgreSQL connection string |
+| `JWT_SECRET` | yes | 32+ characters in production |
+| `JWT_REFRESH_SECRET` | yes | Must differ from `JWT_SECRET` |
+| `LOG_LEVEL` | yes | `info` in production |
+| `CORS_ORIGINS` | no | Comma-separated; `*` is rejected in production |
+| `TRUST_PROXY` | no | `true` behind a load balancer, so audit records get real client IPs |
+| `OPENAPI_ENABLED` | no | Serve Swagger at `/docs` |
+{{#if includeAdmin}}
+| `NEXT_PUBLIC_API_BASE_URL` | no | Admin app only. Compiled into the browser bundle — never a secret. |
+{{/if}}
+
+The application refuses to start if a required variable is missing, if a
+production secret is shorter than 32 characters, or if the two JWT secrets
+match. Every problem is reported at once.
+
+---
+
+## Database
+
+```bash
+npm run db:migrate -- --name what_changed   # create and apply a migration
+npm run db:deploy                            # apply committed migrations
+npm run db:seed                              # roles, permissions, dev data
+npm run db:validate                          # validate the schema, no database needed
+```
+
+Product models go in `prisma/schema/10-product.prisma`. Prisma loads every file
+in `prisma/schema/`, so product and framework models compose without either
+editing the other. **Do not edit `00-framework.prisma`** — it is replaced when
+the framework is upgraded.
+
+---
+
+## Tests and build
+
+```bash
+npm test              # unit tests, no database required
+npm run typecheck
+npm run lint
+npm run build
+```
+
+The tenant-isolation spec beside the product module is the one that matters
+most: a change that makes it fail is a cross-customer data exposure, not a
+regression to triage later.
+
+---
+
+{{#if isRailway}}
+## Railway deployment
+
+1. Create a Railway project and add the PostgreSQL plugin.
+2. Create a service from this repository. In **Settings → Config as code**, set
+   the path to `railway.toml`.
+3. Set the variables:
+
+   ```
+   NODE_ENV=production
+   PORT=$\{{PORT}}
+   DATABASE_URL=$\{{Postgres.DATABASE_URL}}
+   JWT_SECRET=<48 random bytes>
+   JWT_REFRESH_SECRET=<different 48 random bytes>
+   LOG_LEVEL=info
+   TRUST_PROXY=true
+   CORS_ORIGINS=https://your-admin-domain
+   OPENAPI_ENABLED=false
+   ```
+
+   Generate each secret separately:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+   ```
+
+4. Deploy. `preDeployCommand` applies migrations before the new instances take
+   traffic.
+5. Seed once: `railway run npm run db:seed`.
+6. Verify: `/health` returns 200 without touching the database, `/ready`
+   returns 200 once PostgreSQL answers, and an unknown route returns a JSON
+   error with a `requestId` and **no stack trace**.
+
+Full detail, including CLI deploys and troubleshooting, is in
+[docs/deployment.md](docs/deployment.md).
+{{else}}
+## Deployment
+
+This application was generated for local use. `docs/deployment.md` describes
+what to add when you deploy it.
+{{/if}}
+
+---
+
+## Security notes
+
+- Every route declares a permission; undeclared routes are denied.
+- Tenant scope comes from the access token, never from the request.
+- Cross-tenant reads report `not_found`, never `forbidden`.
+- Sensitive actions are written to an append-only audit trail with actor,
+  organization, before/after, request id, IP and user agent.
+- Production error responses carry no message, stack or class from an
+  unexpected error.
+- Never commit a `.env`, and never put a secret in a `NEXT_PUBLIC_*` variable.
+
+See [docs/security.md](docs/security.md), and read [AGENTS.md](AGENTS.md) before
+pointing an AI coding agent at this repository.
+
+---
+
+## Known limitations
+
+Inherited from the framework at v{{frameworkVersion}}:
+
+1. **No rate limiting.** Nothing slows credential stuffing against
+   `/auth/login`. Add a limiter before exposing login publicly.
+2. **No password reset or email verification.** An invited user is created with
+   an unusable password hash and cannot sign in until a reset flow exists.
+3. **Access-token revocation is not immediate.** A revoked permission remains
+   effective until the token expires (15 minutes by default).
+4. **The admin console stores tokens in `localStorage`**, so a single XSS is
+   account takeover. Move the refresh token to an `httpOnly` cookie before
+   handling production data.
+5. **The framework schema is copied, not imported.** `00-framework.prisma` must
+   be refreshed by hand when the framework is upgraded.
+
+{{#if templateOutOfScope}}
+Deliberately out of scope for this template — do not add without approval:
+{{#each templateOutOfScope}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+---
+
+## Provenance
+
+| | |
+| --- | --- |
+| Framework version | {{frameworkVersion}} |
+| Template | {{templateId}} v{{templateVersion}} |
+| CLI version | {{cliVersion}} |
+| Generated at | {{generatedAt}} |
+
+Recorded in [trustos.json](trustos.json).
