@@ -58,7 +58,7 @@ That file already declares everything:
 ```json
 {
   "build": {
-    "builder": "NIXPACKS",
+    "builder": "RAILPACK",
     "buildCommand": "npm ci && npm run build:packages && npm run build -w @trustos/api-example"
   },
   "deploy": {
@@ -81,6 +81,25 @@ Three details worth understanding:
   — `migrate deploy` only applies what is committed.
 - **`healthcheckPath` is `/health`, not `/ready`.** Liveness must not depend on
   the database, or a brief database outage becomes a restart loop.
+
+### Deploying with the CLI instead
+
+`railway up` uploads the working directory and does **not** read a config file
+from a subdirectory, so the settings above do not apply to a CLI deploy. Set
+them as service variables instead — Railway's current builder is Railpack, so
+the `RAILPACK_*` names are the ones that take effect (`NIXPACKS_*` is silently
+ignored, which presents as `No start command detected`):
+
+```bash
+railway variables --service trustos-api --skip-deploys \
+  --set "RAILPACK_INSTALL_CMD=npm ci" \
+  --set "RAILPACK_BUILD_CMD=npm run build:packages && npm run build -w @trustos/api-example" \
+  --set "RAILPACK_START_CMD=npm run db:deploy && node apps/api-example/dist/main.js"
+railway up --service trustos-api
+```
+
+Note that a CLI deploy has no `preDeployCommand`, so `npm run db:deploy` is
+prepended to the start command instead.
 
 **Settings → Networking → Generate Domain** to get a public URL.
 
@@ -168,11 +187,23 @@ railway connect Postgres
 UPDATE "User" SET "isSuperAdmin" = true WHERE email = 'you@yourdomain.com';
 ```
 
-Then harden the audit table, which the application must never be able to rewrite:
+Audit-table immutability is already enforced by migration
+`20260729010000_auditlog_append_only`, which installs a `BEFORE UPDATE OR
+DELETE` trigger. Verify it took effect:
+
+```bash
+railway connect Postgres
+```
 
 ```sql
-REVOKE UPDATE, DELETE ON "AuditLog" FROM CURRENT_USER;
+UPDATE "AuditLog" SET action = 'tampered' WHERE id = (SELECT id FROM "AuditLog" LIMIT 1);
+-- ERROR:  AuditLog is append-only: UPDATE is not permitted
 ```
+
+Do **not** rely on `REVOKE UPDATE, DELETE ON "AuditLog" FROM CURRENT_USER`
+alone. Railway's default role owns the table, and PostgreSQL gives an owner
+implicit rights on its own objects — the revoke reports success and changes
+nothing. See `docs/security-standards.md` §7.
 
 ---
 
@@ -223,13 +254,14 @@ trail.
 
 ## 9. Troubleshooting
 
-| Symptom                                              | Cause                                                                                                                  |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Build fails on `Cannot find module '@prisma/client'` | `postinstall` did not run. Ensure the build command starts with `npm ci`, not `npm ci --ignore-scripts`.               |
-| Build fails on `Cannot find module '@trustos/...'`   | `npm run build:packages` is missing from the build command. Packages must be compiled before an app that imports them. |
-| `Invalid configuration:` at boot                     | Exactly the listed variables are missing or invalid. The message names each one.                                       |
-| Health check fails, logs look fine                   | The service is not binding `0.0.0.0:$PORT`. Do not hardcode `PORT`.                                                    |
-| `/ready` returns 503                                 | The database is unreachable. `/health` still returns 200 by design; check the Postgres plugin and `DATABASE_URL`.      |
-| Every audit record shows the same IP                 | `TRUST_PROXY` is not `true`.                                                                                           |
-| CORS errors in the admin app                         | The admin origin is missing from the API's `CORS_ORIGINS` (comma-separated, no wildcard in production).                |
-| 401 immediately after deploy                         | `JWT_SECRET` changed; all outstanding access tokens are invalid. Expected — clients refresh or sign in again.          |
+| Symptom                                              | Cause                                                                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `No start command detected` in the build log         | You set `NIXPACKS_*` variables but Railway builds with Railpack. Use `RAILPACK_INSTALL_CMD` / `RAILPACK_BUILD_CMD` / `RAILPACK_START_CMD`. |
+| Build fails on `Cannot find module '@prisma/client'` | `postinstall` did not run. Ensure the build command starts with `npm ci`, not `npm ci --ignore-scripts`.                                   |
+| Build fails on `Cannot find module '@trustos/...'`   | `npm run build:packages` is missing from the build command. Packages must be compiled before an app that imports them.                     |
+| `Invalid configuration:` at boot                     | Exactly the listed variables are missing or invalid. The message names each one.                                                           |
+| Health check fails, logs look fine                   | The service is not binding `0.0.0.0:$PORT`. Do not hardcode `PORT`.                                                                        |
+| `/ready` returns 503                                 | The database is unreachable. `/health` still returns 200 by design; check the Postgres plugin and `DATABASE_URL`.                          |
+| Every audit record shows the same IP                 | `TRUST_PROXY` is not `true`.                                                                                                               |
+| CORS errors in the admin app                         | The admin origin is missing from the API's `CORS_ORIGINS` (comma-separated, no wildcard in production).                                    |
+| 401 immediately after deploy                         | `JWT_SECRET` changed; all outstanding access tokens are invalid. Expected — clients refresh or sign in again.                              |

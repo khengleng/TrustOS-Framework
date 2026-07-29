@@ -127,15 +127,31 @@ configuration changes.
 Every record carries: actor id, organization id, action, entity type, entity id,
 before, after, timestamp, request id, IP address, user agent.
 
-- `AuditSink` has no `update` and no `delete`. In production, enforce it at the
-  database too:
+- `AuditSink` has no `update` and no `delete`. Application-level immutability is
+  a convention, so it is also enforced in the database by a `BEFORE UPDATE OR
+DELETE` trigger, shipped as migration `20260729010000_auditlog_append_only`.
+
+  **A `REVOKE` alone is not enough, and believing otherwise is worse than doing
+  nothing.** The obvious control is:
 
   ```sql
-  GRANT SELECT, INSERT ON "AuditLog" TO trustos_app;
   REVOKE UPDATE, DELETE ON "AuditLog" FROM trustos_app;
   ```
 
-  Application-level immutability is a convention; the grant is the control.
+  That works only when the application connects as a role which does **not** own
+  the table. PostgreSQL grants an owner implicit rights on its own objects, so
+  when the application connects as the owner — the default on Railway and on
+  most single-role deployments — the `REVOKE` reports success and changes
+  nothing. This was verified against the live deployment: after the revoke, an
+  `UPDATE` still reported `UPDATE 1`. The trigger applies to the owner too, so it
+  holds under the topology we actually have.
+
+  Use both where you can: run the application as a non-owner role **and** keep
+  the trigger. They are complementary.
+
+  Neither stops a superuser, who can drop the trigger. That is a known residual
+  risk: defending against a compromised database administrator requires shipping
+  records off-host to append-only storage, which is a later phase.
 
 - `before`/`after` are redacted with the logging rules before they are written.
 - `AuditLog` has no foreign keys on purpose: a record must survive deletion of
