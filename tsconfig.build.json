@@ -1,0 +1,16 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/shared-types" },
+    { "path": "packages/errors" },
+    { "path": "packages/validation" },
+    { "path": "packages/config" },
+    { "path": "packages/logging" },
+    { "path": "packages/database" },
+    { "path": "packages/auth" },
+    { "path": "packages/rbac" },
+    { "path": "packages/tenancy" },
+    { "path": "packages/audit" },
+    { "path": "packages/observability" }
+  ]
+}

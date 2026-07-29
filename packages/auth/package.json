@@ -1,0 +1,32 @@
+{
+  "name": "@trustos/auth",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Email/password authentication, JWT issuance and refresh-token rotation.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28",
+    "@trustos/config": "0.1.0",
+    "@trustos/database": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/rbac": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "@trustos/validation": "0.1.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.7"
+  }
+}

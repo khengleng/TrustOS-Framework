@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Postgres is not needed for the checks below, but Prisma refuses to load a
+  # schema whose datasource variable is unset. A syntactically valid URL that
+  # points nowhere is enough for `prisma validate` and `prisma generate`.
+  DATABASE_URL: postgresql://schema:validation@localhost:5432/validate
+
+jobs:
+  verify:
+    name: install · lint · typecheck · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # `npm ci` runs the root postinstall, which generates the Prisma client.
+      # Every later step depends on those types existing.
+      - name: Install
+        run: npm ci
+
+      - name: Validate Prisma schema
+        run: npm run db:validate
+
+      # The migration is generated from the schema, so a drift between the two
+      # means someone edited one without the other.
+      - name: Check migration matches schema
+        run: |
+          npm run migrate:diff -w @trustos/database --silent > /tmp/expected.sql
+          if ! diff -q <(grep -v '^--' /tmp/expected.sql | tr -s '[:space:]') \
+                       <(grep -v '^--' packages/database/prisma/migrations/*_init/migration.sql | tr -s '[:space:]') > /dev/null; then
+            echo "::error::prisma/migrations is out of date with schema.prisma."
+            echo "Regenerate it, or add a new migration with 'npm run db:migrate'."
+            diff /tmp/expected.sql packages/database/prisma/migrations/*_init/migration.sql || true
+            exit 1
+          fi
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Build packages
+        run: npm run build:packages
+
+      - name: Type check applications
+        run: |
+          npm run typecheck -w @trustos/api-example
+          npm run typecheck -w @trustos/saas-starter
+          npm run typecheck -w @trustos/admin-example
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build applications
+        run: npm run build:apps
+
+  security:
+    name: dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # High and critical advisories fail the build. Anything accepted must be
+      # recorded in docs/security-standards.md with a reason and a review date.
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Check for committed secrets
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$|\.env\.(local|production|development)$|\.pem$|\.p12$'; then
+            echo "::error::A secret-bearing file is tracked by git."
+            exit 1
+          fi
+          echo "No secret-bearing files are tracked."

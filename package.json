@@ -1,0 +1,58 @@
+{
+  "name": "trustos-framework",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TrustOS Engineering Framework \u2014 reusable foundation for TrustOS products.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "templates/*"
+  ],
+  "scripts": {
+    "postinstall": "npm run db:generate",
+    "build": "npm run build:packages && npm run build:apps",
+    "build:packages": "tsc -b tsconfig.build.json",
+    "build:apps": "npm run build -w @trustos/api-example && npm run build -w @trustos/saas-starter && npm run build -w @trustos/admin-example",
+    "clean": "tsc -b tsconfig.build.json --clean && rimraf \"packages/*/dist\" \"apps/*/dist\" \"apps/admin-example/.next\" \"templates/*/dist\"",
+    "typecheck": "npm run build:packages && npm run typecheck -w @trustos/api-example && npm run typecheck -w @trustos/saas-starter && npm run typecheck -w @trustos/admin-example",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:tenancy": "vitest run packages/tenancy",
+    "db:generate": "npm run generate -w @trustos/database",
+    "db:validate": "npm run validate -w @trustos/database",
+    "db:migrate": "npm run migrate:dev -w @trustos/database",
+    "db:deploy": "npm run migrate:deploy -w @trustos/database",
+    "db:seed": "npm run seed -w @trustos/database",
+    "dev:api": "npm run dev -w @trustos/api-example",
+    "dev:admin": "npm run dev -w @trustos/admin-example",
+    "audit:security": "npm audit --audit-level=high"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^20.17.10",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.8",
+    "postcss": "^8.5.25",
+    "sharp": "^0.35.3",
+    "@nestjs/swagger": {
+      "js-yaml": "^5.2.2"
+    }
+  }
+}

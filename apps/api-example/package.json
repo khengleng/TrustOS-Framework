@@ -1,0 +1,40 @@
+{
+  "name": "@trustos/api-example",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference NestJS API demonstrating every TrustOS framework package.",
+  "license": "UNLICENSED",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "dev": "node --watch -r ts-node/register src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28",
+    "@nestjs/platform-express": "^11.1.28",
+    "@nestjs/swagger": "^11.4.6",
+    "@trustos/audit": "0.1.0",
+    "@trustos/auth": "0.1.0",
+    "@trustos/config": "0.1.0",
+    "@trustos/database": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "@trustos/observability": "0.1.0",
+    "@trustos/rbac": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "@trustos/tenancy": "0.1.0",
+    "@trustos/validation": "0.1.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.17.10",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}

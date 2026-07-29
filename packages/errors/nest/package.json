@@ -1,0 +1,7 @@
+{
+  "//": "Subpath stub: keeps NestJS bindings out of browser bundles that import '@trustos/errors'.",
+  "name": "@trustos/errors-nest",
+  "private": true,
+  "main": "../dist/nest/index.js",
+  "types": "../dist/nest/index.d.ts"
+}
