@@ -258,6 +258,62 @@ The second is the check worth running before every commit that touches a definit
 `approved` with no review is invisible on inspection of a forty-state document and obvious to a
 graph walk, and it is almost always a shortcut transition added for testing and left in.
 
+## Integration rules (phase 6)
+
+The integration layer is where this platform meets everything outside it. These rules are the ones
+whose violation is _silent_ — no error, no log line, and a symptom weeks later.
+
+1. **Reuse the framework packages. Never duplicate one.** There is one retry implementation, one
+   event envelope, one circuit breaker. A second one is a second set of defaults, and the two
+   diverge within a month. If something is missing, extend the package rather than writing a local
+   version.
+
+2. **Always validate the tenant.** Every store method takes `organizationId` explicitly, and it is
+   `string | null` rather than optional so a caller cannot omit it. A method with no tenant
+   parameter is a query that returns every organization's rows.
+
+3. **Always validate the signature.** Every inbound webhook, every time, against the raw bytes
+   received — not a re-serialized body. Constant-time comparison. A signature check that returns
+   early on a mismatch leaks through timing.
+
+4. **Always record an audit entry** for anything an operator does: a replay, a rotation, a
+   cancellation, a resume. Hints and identifiers, never secret values.
+
+5. **Always add tests, including the negative and the concurrent one.** A guarantee with no test
+   that it holds under two callers is a comment. Every constraint in this phase — duplicate
+   suppression, lease loss, tenant scope — has a test that exercises the race.
+
+6. **Never bypass a retry policy.** No hand-rolled `for` loop with a `setTimeout`. `withRetry`
+   applies jitter, and without jitter every client that failed together retries together — which is
+   how a partial outage becomes a total one.
+
+7. **Never bypass event validation.** An event whose schema is not registered is never published.
+   Do not add a "raw publish" path; the registry is what makes the bus a contract rather than a
+   place where anything can appear.
+
+8. **Never expose a secret.** Not in an event, a log, an audit record, an error message, a webhook
+   body or a health response — not even truncated. A secret is shown once, at creation.
+
+9. **Never ship a provider implementation in the framework.** The seam is the deliverable. An
+   adapter belongs to the product built on this, and one in the framework is one every product
+   carries.
+
+10. **A store contract that says "must be atomic" means it.** `claimDue`, `claim`, `enqueue` and
+    the idempotency insert are single statements with `FOR UPDATE SKIP LOCKED` or a unique
+    constraint. A read-then-write implementation passes every single-threaded test and double-sends
+    the moment a second worker starts.
+
+11. **Bound everything that crosses a boundary.** Rows, columns, cells, bytes, response bodies,
+    recursion depth. An unbounded parse is an out-of-memory crash an authenticated user can trigger
+    at will.
+
+12. **Escape a cell before it reaches a spreadsheet.** A value beginning `=`, `+`, `-` or `@` is a
+    formula that executes when the file is opened, and the value came from a user.
+
+Read [docs/integration-security.md](docs/integration-security.md) before changing anything in
+`webhook-runtime/destination.ts`, `webhooks/signature.ts` or `export/formats.ts`. The checks in
+those files look redundant and are not.
+
 ## Before claiming a change is done
 
 ```bash

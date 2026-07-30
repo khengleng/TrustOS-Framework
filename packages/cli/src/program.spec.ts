@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { BUILT_IN_MODULE_IDS } from '@trustos/module-registry';
 import { readFile } from 'node:fs/promises';
 import { run } from './program';
 import { createCapturingOutput } from './output';
@@ -296,7 +297,12 @@ describe('list-modules', () => {
     const { output } = await invoke(['list-modules', '--json']);
     const parsed = JSON.parse(output) as Array<{ metadata: { id: string } }>;
 
-    expect(parsed).toHaveLength(7);
+    // Compared against the registry's own list rather than a literal, so adding a module is one
+    // edit rather than two — and so a module that fails to load shows up as a mismatch here.
+    expect(parsed).toHaveLength(BUILT_IN_MODULE_IDS.length);
+    expect(parsed.map((entry) => entry.metadata.id).sort()).toEqual(
+      [...BUILT_IN_MODULE_IDS].sort(),
+    );
   });
 });
 

@@ -1,16 +1,14 @@
 // =============================================================================
 // Workflow schema — TrustOS phase 5 models.
 //
-// COPIED FROM @trustos/database. Prisma has no cross-package schema import, so a
-// generated application carries its own copy.
+// GENERATED FROM @trustos/database by scripts/sync-schema-fragments.mjs.
+// Do not edit by hand: schema-fragments.spec.ts fails the build when this file
+// differs from what that script produces.
 //
-// `workflow-schema.spec.ts` in this template compares this file against the
-// framework's byte for byte and fails when they diverge. That check exists because
-// the framework's `00-framework.prisma` copy silently fell behind between phases —
-// a stale copy produces a client that does not know a column the engine writes,
-// and the symptom is a runtime error rather than a build failure.
+// Only templates that govern a business object with a workflow carry these.
+// Regenerate after upgrading the framework:
 //
-// When you upgrade the framework, run the test; it prints the diff.
+//   node scripts/sync-schema-fragments.mjs
 // =============================================================================
 
 // ===========================================================================

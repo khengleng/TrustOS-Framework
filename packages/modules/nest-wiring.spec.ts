@@ -15,6 +15,14 @@ import { NotificationModule } from '@trustos/module-notification/nest';
 import { ReportingModule } from '@trustos/module-reporting/nest';
 import { SearchModule } from '@trustos/module-search/nest';
 import { WorkflowModule } from '@trustos/module-workflow/nest';
+import { AdapterModule } from '@trustos/module-adapter/nest';
+import { EventsModule } from '@trustos/module-events/nest';
+import { ExportModule } from '@trustos/module-export/nest';
+import { ImportModule } from '@trustos/module-import/nest';
+import { JobsModule } from '@trustos/module-jobs/nest';
+import { SchedulerModule } from '@trustos/module-scheduler/nest';
+import { SyncModule } from '@trustos/module-sync/nest';
+import { WebhookModule } from '@trustos/module-webhook/nest';
 
 /**
  * NestJS wiring, booted for real.
@@ -112,6 +120,17 @@ describe('booting an application with every module installed', () => {
         ReportingModule.forRoot(binding),
         SearchModule.forRoot(binding),
         FeatureFlagsModule.forRoot(binding),
+
+        // The integration layer. These contribute lifecycle and health rather than controllers,
+        // so they add no routes — which is what the route assertion below now expects.
+        EventsModule.forRoot(binding),
+        WebhookModule.forRoot(binding),
+        JobsModule.forRoot(binding),
+        SchedulerModule.forRoot(binding),
+        AdapterModule.forRoot(binding),
+        ImportModule.forRoot(binding),
+        ExportModule.forRoot(binding),
+        SyncModule.forRoot(binding),
       ],
     }).compile();
 
@@ -123,7 +142,7 @@ describe('booting an application with every module installed', () => {
     await app?.close();
   });
 
-  it('resolves dependency injection for all seven modules', () => {
+  it('resolves dependency injection for every module', () => {
     for (const entry of MODULE_CATALOG) {
       const instance = app.get(moduleInstanceToken(entry.metadata.id));
       expect(instance, entry.metadata.id).toBeDefined();

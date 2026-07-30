@@ -121,8 +121,15 @@ export type ModuleCatalogEntry = z.infer<typeof moduleCatalogEntrySchema>;
 
 export const moduleCatalogSchema = z.array(moduleCatalogEntrySchema).min(1);
 
-/** Ids of the modules the framework ships. Used by the CLI for `--help`. */
+/**
+ * Ids of the modules the framework ships. Used by the CLI for `--help`.
+ *
+ * Grouped by what they are for rather than alphabetically: the capability modules a product
+ * chooses between, then the integration layer, which is infrastructure a product composes with
+ * rather than an alternative to any of the others.
+ */
 export const BUILT_IN_MODULE_IDS = [
+  // Capabilities.
   'notification',
   'document',
   'workflow',
@@ -130,6 +137,16 @@ export const BUILT_IN_MODULE_IDS = [
   'search',
   'feature-flags',
   'file-storage',
+
+  // The integration layer.
+  'events',
+  'webhook',
+  'jobs',
+  'scheduler',
+  'adapter',
+  'import',
+  'export',
+  'sync',
 ] as const;
 
 export type BuiltInModuleId = (typeof BUILT_IN_MODULE_IDS)[number];

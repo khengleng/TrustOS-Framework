@@ -340,6 +340,30 @@ async function checkNoSecrets(
 }
 
 /**
+ * Removes comments before scanning for package references.
+ *
+ * A doc comment that *mentions* a package is not a dependency on it. The framework schema
+ * carries lines like "Redacted by @trustos/security-events before it lands", and counting those
+ * as references would force every template to declare packages it never imports — which would
+ * make the check useless in the direction that matters, since a template declaring everything
+ * cannot be caught depending on something it should not.
+ *
+ * Whole comment lines only, plus block comments. A trailing `//` on a code line is left alone,
+ * because stripping it would also truncate a URL — and a code line containing both a URL and a
+ * package reference is a line whose reference we do want to see.
+ */
+function stripComments(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .filter((line) => {
+      const trimmed = line.trimStart();
+      return !trimmed.startsWith('//') && !trimmed.startsWith('#') && !trimmed.startsWith('*');
+    })
+    .join('\n');
+}
+
+/**
  * Framework packages referenced by the template must exist in the registry's
  * module list, so a template cannot quietly depend on something the framework
  * does not ship — or reimplement one it does.
@@ -353,7 +377,8 @@ async function checkPackageReferences(
   for (const layer of layers) {
     for (const file of layer.files) {
       const source = await readFile(join(layer.root, file), 'utf8');
-      for (const match of source.matchAll(/@trustos\/([a-z-]+)/g)) {
+
+      for (const match of stripComments(source).matchAll(/@trustos\/([a-z-]+)/g)) {
         const name = match[1];
         if (name) referenced.add(name);
       }

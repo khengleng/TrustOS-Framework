@@ -50,12 +50,46 @@ describe('MODULE_CATALOG', () => {
     }
   });
 
+  /*
+   * Modules that deliberately ship no controller.
+   *
+   * The integration layer contributes services and lifecycle. Its stores are ports the
+   * application supplies, so a controller in the module would have nothing to inject — the
+   * application builds its own HTTP surface over the service.
+   *
+   * Enumerated rather than inferred, so adding a capability module with no routes by accident is
+   * still caught. A module that serves data and forgot its routes is a bug; these are not.
+   */
+  const LIBRARY_SHAPED = new Set([
+    'events',
+    'webhook',
+    'jobs',
+    'scheduler',
+    'adapter',
+    'import',
+    'export',
+    'sync',
+  ]);
+
   it('has at least one route and one audit event per module', () => {
     // A module with no routes is a library, and a module that changes data
     // without writing history is not shippable in a regulated product.
     for (const entry of MODULE_CATALOG) {
-      expect(entry.routes.length, entry.metadata.id).toBeGreaterThan(0);
+      if (!LIBRARY_SHAPED.has(entry.metadata.id)) {
+        expect(entry.routes.length, entry.metadata.id).toBeGreaterThan(0);
+      }
       expect(entry.auditEvents.length, entry.metadata.id).toBeGreaterThan(0);
+    }
+  });
+
+  it('keeps the library-shaped list honest', () => {
+    // Both directions: a module listed here must actually declare no routes, and one that
+    // declares none must be listed. Otherwise the exemption above quietly becomes a way to skip
+    // the check.
+    for (const entry of MODULE_CATALOG) {
+      expect(entry.routes.length === 0, entry.metadata.id).toBe(
+        LIBRARY_SHAPED.has(entry.metadata.id),
+      );
     }
   });
 

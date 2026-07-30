@@ -7,6 +7,7 @@ import { runListTemplates } from './commands/list-templates';
 import { runValidateTemplate } from './commands/validate-template';
 import { runWorkflowList, runWorkflowSimulate, runWorkflowValidate } from './commands/workflow';
 import { runDoctor, type DoctorReport } from './commands/doctor';
+import { runDoctorIntegrations } from './commands/doctor-integrations';
 import { runAddModule } from './commands/add-module';
 import { runListModules } from './commands/list-modules';
 import { runUpgrade } from './commands/placeholders';
@@ -156,13 +157,30 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
     });
 
   // --- doctor ---------------------------------------------------------------
-  program
+  //
+  // `doctor` checks the machine; `doctor integrations` checks one application's integration
+  // wiring. A subcommand rather than a flag, because the two answer different questions and
+  // share nothing but the word.
+  const doctor = program
     .command('doctor')
     .description('check that this machine can generate and run TrustOS applications')
     .option('--json', 'machine-readable output')
-    .action(async (opts: { json?: boolean }) => {
+    .action(async (opts: { json?: boolean }, command: { args: string[] }) => {
+      // Commander runs the parent action for an unknown subcommand too, so an obvious typo would
+      // otherwise silently run the machine check and report success.
+      if (command?.args?.length) return;
       const report = await runDoctor();
       setExit(printDoctorReport(report, opts, output));
+    });
+
+  doctor
+    .command('integrations')
+    .description('check an application’s event, webhook, job, schedule and sync wiring')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--json', 'machine-readable output')
+    .option('--verbose', 'explain what this check cannot see')
+    .action(async (opts: { path?: string; json?: boolean; verbose?: boolean }) => {
+      setExit(await runDoctorIntegrations(opts, output));
     });
 
   // --- list-modules ---------------------------------------------------------

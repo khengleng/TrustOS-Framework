@@ -1,0 +1,33 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../../errors"
+    },
+    {
+      "path": "../../logging"
+    },
+    {
+      "path": "../../module-registry"
+    },
+    {
+      "path": "../../module-sdk"
+    },
+    {
+      "path": "../../observability"
+    },
+    {
+      "path": "../../scheduler"
+    },
+    {
+      "path": "../../shared-types"
+    }
+  ]
+}

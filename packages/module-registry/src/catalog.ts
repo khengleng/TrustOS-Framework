@@ -1209,6 +1209,689 @@ const RAW_CATALOG: unknown[] = [
       'Experiment analysis',
     ],
   },
+  // ==========================================================================
+  // The integration layer — phase 6.
+  //
+  // These differ from the modules above in one way worth stating: they are
+  // framework packages rather than `packages/modules/*` packages, because they
+  // are infrastructure the framework itself uses. `event-bus` publishes the
+  // events `webhooks` delivers; `scheduler` enqueues into `jobs`. Installing one
+  // adds a dependency and its documentation, and contributes no application
+  // files — the wiring is a Nest module import in the composition root.
+  //
+  // Every one of them ships **no provider implementation**. That is the phase 6
+  // boundary: the seam is the deliverable, and the adapter belongs to whatever
+  // product is built on this.
+  // ==========================================================================
+  {
+    metadata: {
+      id: 'events',
+      name: 'Event Bus',
+      description:
+        'Typed, versioned domain events with a schema registry, ordering per aggregate, retry, dead letters and replay. In-memory by default; no broker required.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['events', 'messaging', 'infrastructure'],
+    },
+    packaging: packaging('events', 'EventsModule'),
+    permissions: [
+      {
+        key: 'events.catalog.read',
+        description: 'Read the registered event schema catalog.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'events.deadletter.read',
+        description: 'List events that failed permanently.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'events.deadletter.replay',
+        description: 'Re-deliver a dead-lettered event after fixing its handler.',
+        suggestedRoles: WRITE_ROLES,
+      },
+    ],
+    // No routes.
+    //
+    // These modules ship services and lifecycle, not controllers. Their stores are ports the
+    // application supplies — there is no Prisma implementation in the framework — so a controller
+    // here would have nothing to inject. The application builds its own HTTP surface over the
+    // service; the shape it should expose is documented rather than advertised, because a catalog
+    // that advertises a route nothing serves is a catalog that lies.
+    routes: [],
+    auditEvents: [
+      {
+        action: 'events.deadletter.replayed',
+        entityType: 'EventDeadLetter',
+        description: 'An operator re-delivered an event that had failed permanently.',
+      },
+    ],
+    // No migration of its own: the integration tables are part of the framework schema, which
+    // every generated application already carries in `00-framework.prisma`. Declaring a fragment
+    // here would claim a file the module does not own — and two modules claiming one file is a
+    // merge order nobody can reason about.
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Event bus',
+        port: 'EventBus',
+        description:
+          'Where events are delivered. Replace the in-memory implementation with an adapter over a broker; no publisher or subscriber changes.',
+        provided: ['InMemoryEventBus'],
+      },
+      {
+        name: 'Dead-letter store',
+        port: 'DeadLetterStore',
+        description: 'Where permanently failed events are kept for replay.',
+        provided: ['InMemoryDeadLetterStore'],
+      },
+      {
+        name: 'Delivery ledger',
+        port: 'DeliveryLedger',
+        description:
+          'Suppresses a repeat delivery before the handler sees it. A database implementation must insert against a unique constraint rather than check-then-insert.',
+        provided: ['InMemoryDeliveryLedger'],
+      },
+    ],
+    outOfScope: [
+      'Kafka, RabbitMQ, NATS and Redis Streams adapters',
+      'Cross-process delivery (the in-memory bus is one process)',
+      'Event sourcing and aggregate rehydration',
+      'Exactly-once delivery (at-least-once, with deduplication at the consumer)',
+    ],
+  },
+
+  {
+    metadata: {
+      id: 'webhook',
+      name: 'Webhooks',
+      description:
+        'Outbound webhooks with HMAC-SHA256 signatures, overlapping secret rotation, replay protection, per-attempt delivery history and SSRF-checked destinations.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['webhooks', 'integration', 'outbound'],
+    },
+    packaging: packaging('webhook', 'WebhookModule'),
+    dependencies: [
+      {
+        moduleId: 'events',
+        versionRange: '^0.1.0',
+        reason: 'The dispatcher subscribes to the bus; there is nothing to deliver without it.',
+      },
+    ],
+    permissions: [
+      {
+        key: 'webhook.endpoint.read',
+        description: 'List webhook endpoints and their health.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'webhook.endpoint.write',
+        description: 'Create, update, pause and delete endpoints.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'webhook.secret.rotate',
+        description: 'Rotate or revoke an endpoint signing secret.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'webhook.delivery.read',
+        description: 'Read delivery history and attempt logs.',
+        suggestedRoles: READ_ROLES,
+      },
+    ],
+    // No routes.
+    //
+    // These modules ship services and lifecycle, not controllers. Their stores are ports the
+    // application supplies — there is no Prisma implementation in the framework — so a controller
+    // here would have nothing to inject. The application builds its own HTTP surface over the
+    // service; the shape it should expose is documented rather than advertised, because a catalog
+    // that advertises a route nothing serves is a catalog that lies.
+    routes: [],
+    auditEvents: [
+      {
+        action: 'webhook.endpoint.created',
+        entityType: 'WebhookEndpoint',
+        description: 'An endpoint was registered.',
+      },
+      {
+        action: 'webhook.secret.rotated',
+        entityType: 'WebhookEndpoint',
+        description: 'A signing secret was rotated. Hints only; never values.',
+      },
+      {
+        action: 'webhook.secret.revoked',
+        entityType: 'WebhookEndpoint',
+        description: 'A signing secret was revoked immediately.',
+      },
+      {
+        action: 'webhook.endpoint.auto_disabled',
+        entityType: 'WebhookEndpoint',
+        description: 'An endpoint was disabled after sustained failure.',
+      },
+    ],
+    // No migration of its own: the integration tables are part of the framework schema, which
+    // every generated application already carries in `00-framework.prisma`. Declaring a fragment
+    // here would claim a file the module does not own — and two modules claiming one file is a
+    // merge order nobody can reason about.
+    migrations: [],
+    environment: [
+      {
+        name: 'WEBHOOK_ENCRYPTION_KEY',
+        description:
+          'At least 32 characters. Encrypts signing secrets at rest with AES-256-GCM. Generate with `openssl rand -base64 48`.',
+      },
+    ],
+    extensionPoints: [
+      {
+        name: 'Secret cipher',
+        port: 'SecretCipher',
+        description:
+          'How signing secrets are encrypted at rest. Replace to move the key into KMS or Vault.',
+        provided: ['AesSecretCipher', 'PlaintextSecretCipher'],
+      },
+      {
+        name: 'Delivery store',
+        port: 'WebhookDeliveryStore',
+        description:
+          'The delivery queue. `enqueue` and `claimDue` must be atomic — see the port docstring for what a non-atomic implementation costs.',
+        provided: ['InMemoryWebhookDeliveryStore'],
+      },
+    ],
+    outOfScope: [
+      'Inbound webhook receipt (this is the sending side)',
+      'mTLS client certificates',
+      'Per-endpoint rate limiting',
+      'Webhook payload transformation and templating',
+    ],
+  },
+
+  {
+    metadata: {
+      id: 'jobs',
+      name: 'Background Jobs',
+      description:
+        'A durable job queue in the database: leased execution, retry with backoff, priority, progress, timeouts, cancellation and per-attempt history. No broker.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['jobs', 'queue', 'background'],
+    },
+    packaging: packaging('jobs', 'JobsModule'),
+    permissions: [
+      {
+        key: 'jobs.job.read',
+        description: 'List jobs and read their run history.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'jobs.job.cancel',
+        description: 'Cancel a queued or running job.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      { key: 'jobs.job.retry', description: 'Re-queue a failed job.', suggestedRoles: WRITE_ROLES },
+    ],
+    // No routes.
+    //
+    // These modules ship services and lifecycle, not controllers. Their stores are ports the
+    // application supplies — there is no Prisma implementation in the framework — so a controller
+    // here would have nothing to inject. The application builds its own HTTP surface over the
+    // service; the shape it should expose is documented rather than advertised, because a catalog
+    // that advertises a route nothing serves is a catalog that lies.
+    routes: [],
+    auditEvents: [
+      {
+        action: 'jobs.job.cancelled',
+        entityType: 'Job',
+        description: 'A job was cancelled by an operator.',
+      },
+      { action: 'jobs.job.retried', entityType: 'Job', description: 'A failed job was re-queued.' },
+    ],
+    // No migration of its own: the integration tables are part of the framework schema, which
+    // every generated application already carries in `00-framework.prisma`. Declaring a fragment
+    // here would claim a file the module does not own — and two modules claiming one file is a
+    // merge order nobody can reason about.
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Job store',
+        port: 'JobStore',
+        description:
+          'The queue itself. `claim` must be atomic; a store that reads then writes runs every job twice the moment a second worker starts.',
+        provided: ['InMemoryJobStore'],
+      },
+      {
+        name: 'Job handler',
+        port: 'JobHandlerDefinition',
+        description: 'What a job type actually does. Registered at start-up with a payload schema.',
+        provided: [],
+      },
+    ],
+    outOfScope: [
+      'Redis, SQS and RabbitMQ backends',
+      'Job chaining, workflows and fan-out orchestration',
+      'Cron expressions (that is the scheduler module)',
+      'Distributed tracing of job execution',
+    ],
+  },
+
+  {
+    metadata: {
+      id: 'scheduler',
+      name: 'Scheduler',
+      description:
+        'Cron, interval and one-time schedules with real IANA timezone support, explicit daylight-saving handling, misfire policies and pause/resume. Enqueues jobs.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['scheduler', 'cron', 'background'],
+    },
+    packaging: packaging('scheduler', 'SchedulerModule'),
+    dependencies: [
+      {
+        moduleId: 'jobs',
+        versionRange: '^0.1.0',
+        reason: 'A schedule enqueues a job rather than running work itself.',
+      },
+    ],
+    permissions: [
+      {
+        key: 'scheduler.schedule.read',
+        description: 'List schedules and their run history.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'scheduler.schedule.write',
+        description: 'Create, update and delete schedules.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'scheduler.schedule.control',
+        description: 'Pause, resume or trigger a schedule.',
+        suggestedRoles: WRITE_ROLES,
+      },
+    ],
+    // No routes.
+    //
+    // These modules ship services and lifecycle, not controllers. Their stores are ports the
+    // application supplies — there is no Prisma implementation in the framework — so a controller
+    // here would have nothing to inject. The application builds its own HTTP surface over the
+    // service; the shape it should expose is documented rather than advertised, because a catalog
+    // that advertises a route nothing serves is a catalog that lies.
+    routes: [],
+    auditEvents: [
+      {
+        action: 'scheduler.schedule.created',
+        entityType: 'Schedule',
+        description: 'A schedule was defined.',
+      },
+      {
+        action: 'scheduler.schedule.paused',
+        entityType: 'Schedule',
+        description: 'A schedule was paused.',
+      },
+      {
+        action: 'scheduler.schedule.resumed',
+        entityType: 'Schedule',
+        description: 'A schedule was resumed.',
+      },
+      {
+        action: 'scheduler.schedule.triggered',
+        entityType: 'Schedule',
+        description: 'A schedule was triggered manually.',
+      },
+    ],
+    // No migration of its own: the integration tables are part of the framework schema, which
+    // every generated application already carries in `00-framework.prisma`. Declaring a fragment
+    // here would claim a file the module does not own — and two modules claiming one file is a
+    // merge order nobody can reason about.
+    migrations: [],
+    environment: [
+      {
+        name: 'SCHEDULER_TIMEZONE',
+        description:
+          'Default IANA timezone for schedules that do not name one. "Run at 2am" means nothing without it.',
+      },
+    ],
+    extensionPoints: [
+      {
+        name: 'Schedule store',
+        port: 'ScheduleStore',
+        description:
+          'Where schedules live. `claimDue` must advance nextRunAt atomically, or every replica fires every schedule.',
+        provided: ['InMemoryScheduleStore'],
+      },
+    ],
+    outOfScope: [
+      'Sub-minute schedules',
+      'Holiday and business-calendar awareness',
+      'Distributed leader election (the atomic claim is the coordination)',
+      'Six-field cron expressions with a seconds column',
+    ],
+  },
+
+  {
+    metadata: {
+      id: 'adapter',
+      name: 'Provider Adapters',
+      description:
+        'The five-method provider contract — initialize, health, capabilities, configuration, shutdown — with a registry, circuit-breaker-guarded calls and lifecycle management.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['providers', 'adapters', 'integration'],
+    },
+    packaging: packaging('adapter', 'AdapterModule'),
+    permissions: [
+      {
+        key: 'adapter.provider.read',
+        description: 'List providers, their capabilities and their health.',
+        suggestedRoles: READ_ROLES,
+      },
+    ],
+    // No routes.
+    //
+    // These modules ship services and lifecycle, not controllers. Their stores are ports the
+    // application supplies — there is no Prisma implementation in the framework — so a controller
+    // here would have nothing to inject. The application builds its own HTTP surface over the
+    // service; the shape it should expose is documented rather than advertised, because a catalog
+    // that advertises a route nothing serves is a catalog that lies.
+    routes: [],
+    auditEvents: [
+      {
+        action: 'adapter.provider.health_changed',
+        entityType: 'Provider',
+        description:
+          'A provider changed health status. Recorded rather than only logged, because "when did this start" is the first question during an incident.',
+      },
+    ],
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Provider',
+        port: 'Provider',
+        description:
+          'Every external system this platform talks to. The framework ships no implementation of it — that is the phase 6 boundary.',
+        provided: ['BaseProvider'],
+      },
+    ],
+    outOfScope: [
+      'Any concrete provider implementation',
+      'Payment, messaging or storage adapters',
+      'Provider marketplaces and dynamic loading',
+      'Per-provider billing and quota tracking',
+    ],
+  },
+
+  {
+    metadata: {
+      id: 'import',
+      name: 'Import',
+      description:
+        'Bulk import with CSV and JSON parsing, per-row validation, preview, dry run, all-or-nothing apply, rollback and a downloadable error report.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['import', 'bulk', 'data'],
+    },
+    packaging: packaging('import', 'ImportModule'),
+    permissions: [
+      {
+        key: 'import.run.preview',
+        description: 'Validate a file without importing it.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'import.run.apply',
+        description: 'Import a validated file.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'import.run.rollback',
+        description: 'Undo a completed import.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'import.run.read',
+        description: 'List imports and download error reports.',
+        suggestedRoles: READ_ROLES,
+      },
+    ],
+    // No routes.
+    //
+    // These modules ship services and lifecycle, not controllers. Their stores are ports the
+    // application supplies — there is no Prisma implementation in the framework — so a controller
+    // here would have nothing to inject. The application builds its own HTTP surface over the
+    // service; the shape it should expose is documented rather than advertised, because a catalog
+    // that advertises a route nothing serves is a catalog that lies.
+    routes: [],
+    auditEvents: [
+      {
+        action: 'import.completed',
+        entityType: 'ImportRun',
+        description: 'An import was applied.',
+      },
+      {
+        action: 'import.rolled_back',
+        entityType: 'ImportRun',
+        description: 'An import was undone.',
+      },
+    ],
+    // No migration of its own: the integration tables are part of the framework schema, which
+    // every generated application already carries in `00-framework.prisma`. Declaring a fragment
+    // here would claim a file the module does not own — and two modules claiming one file is a
+    // merge order nobody can reason about.
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'File parser',
+        port: 'FileParser',
+        description:
+          'How a format becomes rows. Excel and ZIP are ports rather than implementations.',
+        provided: ['CsvParser', 'JsonParser'],
+      },
+      {
+        name: 'Import handler',
+        port: 'ImportHandlerDefinition',
+        description: 'What an import type validates and applies. Supplies the rollback too.',
+        provided: [],
+      },
+    ],
+    outOfScope: [
+      'Excel and ZIP parsing (ports, not implementations)',
+      'Column mapping user interfaces',
+      'Streaming import of files larger than memory',
+      'Malware scanning of uploads',
+    ],
+  },
+
+  {
+    metadata: {
+      id: 'export',
+      name: 'Export',
+      description:
+        'Streaming export to CSV, JSON and NDJSON with keyset pagination, bounded row counts, column selection and spreadsheet formula-injection escaping.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['export', 'reporting', 'data'],
+    },
+    packaging: packaging('export', 'ExportModule'),
+    permissions: [
+      {
+        key: 'export.run.create',
+        description: 'Run an export.',
+        // Write roles, not read roles. An export is a bulk extraction of tenant data to a file
+        // that leaves the system, which is a different act from reading a page of it on screen.
+        suggestedRoles: WRITE_ROLES,
+      },
+      { key: 'export.run.read', description: 'List past exports.', suggestedRoles: READ_ROLES },
+    ],
+    // No routes.
+    //
+    // These modules ship services and lifecycle, not controllers. Their stores are ports the
+    // application supplies — there is no Prisma implementation in the framework — so a controller
+    // here would have nothing to inject. The application builds its own HTTP surface over the
+    // service; the shape it should expose is documented rather than advertised, because a catalog
+    // that advertises a route nothing serves is a catalog that lies.
+    routes: [],
+    auditEvents: [
+      {
+        action: 'export.completed',
+        entityType: 'ExportRun',
+        description:
+          'An export finished. Records the filters, which is the answer to "what exactly did this file contain".',
+      },
+    ],
+    // No migration of its own: the integration tables are part of the framework schema, which
+    // every generated application already carries in `00-framework.prisma`. Declaring a fragment
+    // here would claim a file the module does not own — and two modules claiming one file is a
+    // merge order nobody can reason about.
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Export formatter',
+        port: 'ExportFormatter',
+        description: 'How rows become bytes, incrementally. Excel and PDF are ports.',
+        provided: ['CsvFormatter', 'JsonFormatter', 'JsonLinesFormatter'],
+      },
+      {
+        name: 'Export source',
+        port: 'ExportSource',
+        description:
+          'Where rows come from, one page at a time. Must filter by organizationId — the port says so in capitals.',
+        provided: [],
+      },
+      {
+        name: 'Export sink',
+        port: 'ExportSink',
+        description: 'Where the bytes go: an HTTP response, a file, object storage.',
+        provided: ['BufferSink'],
+      },
+    ],
+    outOfScope: [
+      'Excel and PDF rendering (ports, not implementations)',
+      'Scheduled report delivery by email',
+      'Chart and dashboard rendering',
+      'Client-side export in the browser',
+    ],
+  },
+
+  {
+    metadata: {
+      id: 'sync',
+      name: 'Synchronization',
+      description:
+        'Pull, push and bidirectional synchronization with incremental watermarks, four conflict policies, run history and a conflict log. No provider integrations.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'experimental',
+      tags: ['sync', 'integration', 'data'],
+    },
+    packaging: packaging('sync', 'SyncModule'),
+    dependencies: [
+      {
+        moduleId: 'jobs',
+        versionRange: '^0.1.0',
+        reason: 'A synchronization run is executed as a background job.',
+      },
+    ],
+    permissions: [
+      {
+        key: 'sync.connection.read',
+        description: 'List sync connections and their run history.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'sync.connection.write',
+        description: 'Create, pause and resume connections.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'sync.connection.run',
+        description: 'Trigger a synchronization run.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'sync.conflict.resolve',
+        description: 'Resolve a record two systems disagree about.',
+        suggestedRoles: WRITE_ROLES,
+      },
+    ],
+    // No routes.
+    //
+    // These modules ship services and lifecycle, not controllers. Their stores are ports the
+    // application supplies — there is no Prisma implementation in the framework — so a controller
+    // here would have nothing to inject. The application builds its own HTTP surface over the
+    // service; the shape it should expose is documented rather than advertised, because a catalog
+    // that advertises a route nothing serves is a catalog that lies.
+    routes: [],
+    auditEvents: [
+      {
+        action: 'sync.completed',
+        entityType: 'SyncConnection',
+        description: 'A synchronization run finished.',
+      },
+      {
+        action: 'sync.conflict.resolved',
+        entityType: 'SyncConflict',
+        description: 'A conflict was resolved by a person.',
+      },
+      {
+        action: 'sync.connection.paused',
+        entityType: 'SyncConnection',
+        description: 'A connection was paused.',
+      },
+      {
+        action: 'sync.connection.resumed',
+        entityType: 'SyncConnection',
+        description: 'A connection was resumed.',
+      },
+    ],
+    // No migration of its own: the integration tables are part of the framework schema, which
+    // every generated application already carries in `00-framework.prisma`. Declaring a fragment
+    // here would claim a file the module does not own — and two modules claiming one file is a
+    // merge order nobody can reason about.
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Sync connector',
+        port: 'SyncConnector',
+        description:
+          "The other system. Fetches remote changes, applies local ones, and reports the remote's own watermark. The framework ships none.",
+        provided: [],
+      },
+      {
+        name: 'Sync store',
+        port: 'SyncStore',
+        description: 'Where connections, runs and conflicts live.',
+        provided: ['InMemorySyncStore'],
+      },
+    ],
+    outOfScope: [
+      'Any concrete external system integration',
+      'Real-time or change-data-capture synchronization',
+      'Schema mapping and field transformation user interfaces',
+      'Three-way merge of conflicting records',
+    ],
+  },
 ];
 
 function loadCatalog(): ModuleCatalogEntry[] {

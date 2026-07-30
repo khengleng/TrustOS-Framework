@@ -1,14 +1,19 @@
 // =============================================================================
 // Framework schema — TrustOS foundation models.
 //
-// COPIED FROM @trustos/database. Prisma has no cross-package schema import, so
-// a generated application carries its own copy of the framework models. Keep
-// it in sync when you upgrade the framework: the migration notes for each
-// release say whether this file changed.
+// GENERATED FROM @trustos/database by scripts/sync-schema-fragments.mjs.
+// Do not edit by hand: schema-fragments.spec.ts fails the build when this file
+// differs from what that script produces.
 //
-// Product models live beside this file in 10-product.prisma. Prisma loads
-// every .prisma file in this directory, so the two compose without either one
-// editing the other.
+// Prisma has no cross-package schema import, so a generated application carries
+// its own copy of the framework models. Regenerate after upgrading the
+// framework:
+//
+//   node scripts/sync-schema-fragments.mjs
+//
+// Product models live beside this file in 10-product.prisma. Prisma loads every
+// .prisma file in this directory, so the two compose without either one editing
+// the other.
 //
 // Do not edit the models below to fit a product. Add product models instead.
 // =============================================================================
@@ -68,10 +73,10 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  memberships      OrganizationMember[]
-  refreshTokens    RefreshToken[]
-  invitesSent      OrganizationMember[] @relation("InvitedBy")
-  rolesAssigned    OrganizationMemberRole[] @relation("AssignedBy")
+  memberships   OrganizationMember[]
+  refreshTokens RefreshToken[]
+  invitesSent   OrganizationMember[]     @relation("InvitedBy")
+  rolesAssigned OrganizationMemberRole[] @relation("AssignedBy")
 
   @@index([deletedAt])
   @@index([isActive])
@@ -133,13 +138,13 @@ model OrganizationMember {
 // -----------------------------------------------------------------------------
 
 model Role {
-  id          String  @id @default(cuid())
-  name        String
-  description String?
+  id             String  @id @default(cuid())
+  name           String
+  description    String?
   /// System roles ship with the framework, are shared by every organization
   /// (organizationId = null), and are seeded with fixed ids so the seed is
   /// idempotent. Product code must not mutate them.
-  isSystem    Boolean @default(false)
+  isSystem       Boolean @default(false)
   /// Null for system roles; set for organization-defined custom roles.
   organizationId String?
 
@@ -157,7 +162,7 @@ model Role {
 }
 
 model Permission {
-  id String @id @default(cuid())
+  id          String  @id @default(cuid())
   /// Stable machine key, e.g. "organization.member.invite". Part of the public
   /// contract: add new keys, never rename existing ones.
   key         String  @unique
@@ -204,18 +209,26 @@ model OrganizationMemberRole {
 // -----------------------------------------------------------------------------
 
 model RefreshToken {
-  id String @id @default(cuid())
+  id             String    @id @default(cuid())
   /// SHA-256 of the token. The token itself is never stored, so a database
   /// leak does not hand the attacker live sessions.
-  tokenHash String  @unique
-  userId    String
+  tokenHash      String    @unique
+  userId         String
   /// Rotation family. Presenting an already-rotated token revokes the whole
   /// family — the standard reuse-detection response.
-  familyId  String
-  expiresAt DateTime
-  revokedAt DateTime?
+  familyId       String
+  expiresAt      DateTime
+  /// When this token was exchanged for its successor.
+  ///
+  /// Distinct from `revokedAt`, and the distinction is the whole of reuse
+  /// detection: a token that was *used* and is presented again means somebody
+  /// holds a copy, so the entire family is killed; a token that was *revoked*
+  /// was already dealt with. Collapsing the two would turn a stolen refresh
+  /// token into an ordinary rejection and leave the thief's session alive.
+  usedAt         DateTime?
+  revokedAt      DateTime?
   /// Why it was revoked: "rotated", "logout", "reuse_detected", "admin".
-  revokedReason String?
+  revokedReason  String?
   /// The token that superseded this one, for auditing a rotation chain.
   replacedByHash String?
   ipAddress      String?
@@ -251,6 +264,12 @@ model AuditLog {
 
   /// Null for unauthenticated events such as a failed login.
   actorId        String?
+  /// What kind of caller acted: user, service_account, api_key or system.
+  ///
+  /// A trail that says "user X deleted this" when it was a machine is evidence
+  /// pointing at the wrong party. Nullable because records written before phase 4
+  /// predate the column, and a backfill would be a guess.
+  actorType      String?
   /// Null for platform-level events that belong to no organization.
   organizationId String?
 
@@ -269,4 +288,649 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([action, createdAt])
   @@index([requestId])
+}
+
+// ===========================================================================
+// Phase 4 — identity, credentials, sessions and security events
+//
+// These live in the framework schema rather than in an installable fragment
+// because they are the security foundation: an application that has API keys but
+// no table to hash them into has an API-key feature nobody can use safely.
+// ===========================================================================
+
+/// A security event: what happened to the perimeter.
+///
+/// Distinct from AuditLog, which answers "who changed what". Most rows here have
+/// no organization and no actor, because the point is that authentication did not
+/// succeed — and a failed login is the single most useful security record there
+/// is. Reading this table requires `platform.admin`.
+model SecurityEvent {
+  id String @id
+
+  type     String
+  severity String
+  result   String
+  reason   String?
+
+  actorId        String?
+  actorType      String?
+  organizationId String?
+
+  ipAddress String?
+  userAgent String?
+  requestId String?
+
+  application String?
+  provider    String?
+
+  /// Risk signals, when something upstream produced them.
+  risk    Json?
+  /// Non-sensitive detail. Redacted by @trustos/security-events before it lands.
+  context Json?
+
+  occurredAt DateTime @default(now())
+
+  @@index([type, occurredAt])
+  @@index([severity, occurredAt])
+  @@index([organizationId, occurredAt])
+  @@index([actorId, occurredAt])
+  @@index([requestId])
+}
+
+/// An API key. Only a prefix, a hash and metadata — never the key.
+model ApiKey {
+  id             String @id @default(cuid())
+  organizationId String
+
+  /// First characters of the key, e.g. `tos_live_ab`. Identifies without granting.
+  keyPrefix String
+  /// SHA-256 of the whole key. The key itself is shown once, at creation, and
+  /// never stored or recoverable.
+  keyHash   String @unique
+
+  name        String
+  description String?
+  /// Scopes this credential may exercise, e.g. ["payments:read"].
+  scopes      String[]
+  /// Optional CIDR allowlist. Empty means any address.
+  ipAllowlist String[]
+
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  /// Address the key was last used from, for a leak investigation.
+  lastUsedIp String?
+  usageCount Int       @default(0)
+
+  revokedAt     DateTime?
+  revokedReason String?
+  /// Set when this key replaced another during a rotation.
+  rotatedFromId String?
+
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([organizationId, name])
+  @@index([organizationId, revokedAt])
+  @@index([keyPrefix])
+  @@index([expiresAt])
+  @@index([deletedAt])
+}
+
+/// A machine identity. Never a human user account reused for an integration.
+model ServiceAccount {
+  id             String  @id @default(cuid())
+  /// Null for a platform-level account that belongs to no organization.
+  organizationId String?
+
+  name        String
+  description String?
+  status      String  @default("active")
+
+  /// Roles granted inside the owning organization.
+  roles  String[]
+  /// Scopes this account may exercise.
+  scopes String[]
+
+  /// OIDC client id, when the account authenticates by client credentials.
+  oidcClientId        String?
+  /// SHA-256 of the local credential, when it authenticates with one.
+  credentialHash      String?
+  credentialPrefix    String?
+  credentialExpiresAt DateTime?
+  credentialRotatedAt DateTime?
+
+  lastUsedAt DateTime?
+  lastUsedIp String?
+  expiresAt  DateTime?
+
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([organizationId, name])
+  @@index([organizationId, status])
+  @@index([credentialPrefix])
+  @@index([oidcClientId])
+  @@index([deletedAt])
+}
+
+/// A session. One row per sign-in, so it can be listed and revoked individually.
+///
+/// Holds no token. The refresh token's hash lives in RefreshToken; this row is the
+/// thing a person recognises in a "your devices" list and the thing an
+/// administrator revokes.
+model UserSession {
+  id     String @id @default(cuid())
+  userId String
+
+  /// Rotation family, linking this session to its refresh tokens.
+  familyId String  @unique
+  /// Which client the session belongs to — a web app, a mobile app, a CLI.
+  clientId String?
+
+  /// Human-readable device label, derived from the user agent. Not a fingerprint.
+  deviceLabel String?
+  userAgent   String?
+  /// Correlation hash of the address, not the address. See @trustos/security-policy.
+  ipHash      String?
+
+  organizationId String?
+
+  createdAt      DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+  /// Absolute end of the session, whatever the activity.
+  expiresAt      DateTime
+
+  revokedAt     DateTime?
+  revokedReason String?
+
+  /// Authentication strength recorded at sign-in, for step-up policies.
+  authenticationLevel String  @default("low")
+  mfaCompleted        Boolean @default(false)
+  provider            String  @default("local")
+
+  @@index([userId, revokedAt])
+  @@index([userId, lastActivityAt])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+// ===========================================================================
+// Phase 6 — events, webhooks, jobs, schedules, providers, import/export, sync
+//
+// Every table here carries `organizationId` and is indexed on it, because every query in the
+// integration layer is scoped to a tenant and an unscoped one returns everybody's rows.
+//
+// Two constraints in this section are load-bearing rather than tidy, and both are commented
+// where they appear: the unique index on `(webhookEndpointId, eventId)` is what makes "never
+// send duplicate webhook deliveries" true under concurrency, and the partial unique index on
+// `Job.idempotencyKey` is what makes a double-click produce one job.
+// ---------------------------------------------------------------------------
+
+/// A permanently failed event delivery.
+///
+/// Never deleted, including after a replay: the failure happened, and the record of it is what
+/// makes an incident explicable afterwards. `replayedAt` marks it handled.
+model EventDeadLetter {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Which subscriber failed. Stable across restarts — see `SubscriptionOptions.id`.
+  subscriptionId String
+  eventId        String
+  eventName      String
+  eventVersion   String
+
+  /// The whole envelope, redacted. A replay needs no other source.
+  envelope Json
+  attempts Int
+  error    String @db.Text
+
+  failedAt     DateTime  @default(now())
+  replayedAt   DateTime?
+  replayedById String?
+
+  @@index([organizationId, replayedAt])
+  @@index([subscriptionId, failedAt])
+  @@index([eventName])
+  @@map("event_dead_letter")
+}
+
+/// Which events a subscriber has already handled.
+///
+/// The unique constraint is the whole mechanism: `markHandled` inserts and lets the database
+/// decide the winner, so two simultaneous deliveries cannot both conclude they are first.
+model EventDeliveryLedger {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// `<subscriberId>:<idempotencyKey>`.
+  deduplicationKey String
+  eventId          String
+  eventName        String
+  handledAt        DateTime @default(now())
+
+  @@unique([deduplicationKey])
+  /// The retention sweep. A ledger that grows forever is a table nobody can query.
+  @@index([handledAt])
+  @@map("event_delivery_ledger")
+}
+
+/// A URL somebody has registered to receive events.
+model WebhookEndpoint {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  url         String
+  description String?
+  status      String  @default("active")
+
+  /// Reset by any success. Drives automatic disabling at 20.
+  consecutiveFailures Int       @default(0)
+  lastSuccessAt       DateTime?
+  lastFailureAt       DateTime?
+  lastFailureReason   String?
+
+  disabledAt     DateTime?
+  disabledReason String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+
+  secrets       WebhookSecret[]
+  subscriptions WebhookSubscription[]
+  deliveries    WebhookDelivery[]
+
+  @@index([organizationId, status])
+  @@map("webhook_endpoint")
+}
+
+/// A signing secret. A row rather than a column, because rotation needs two live at once.
+model WebhookSecret {
+  id                String  @id @default(cuid())
+  organizationId    String?
+  webhookEndpointId String
+
+  /// Encrypted at rest with AES-256-GCM. Never returned by any read path.
+  secret String
+  /// Last four characters, so an integrator can identify which secret they hold.
+  hint   String
+
+  createdAt DateTime  @default(now())
+  /// Set at the start of a rotation. Both secrets sign until it passes.
+  expiresAt DateTime?
+  revokedAt DateTime?
+
+  endpoint WebhookEndpoint @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+
+  @@index([webhookEndpointId, revokedAt, expiresAt])
+  @@map("webhook_secret")
+}
+
+/// Which events an endpoint wants. Separate from the endpoint, so changing one does not touch
+/// the other's secrets.
+model WebhookSubscription {
+  id                String  @id @default(cuid())
+  organizationId    String?
+  webhookEndpointId String
+
+  /// An event name pattern: `workflow.*`, `identity.user.created`.
+  eventPattern String
+
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  endpoint WebhookEndpoint @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+
+  /// One subscription per pattern per endpoint — a duplicate would send the event twice.
+  @@unique([webhookEndpointId, eventPattern])
+  @@index([organizationId])
+  @@map("webhook_subscription")
+}
+
+/// One event, queued for one endpoint.
+model WebhookDelivery {
+  id                String  @id @default(cuid())
+  organizationId    String?
+  webhookEndpointId String
+
+  eventId      String
+  eventName    String
+  eventVersion String
+
+  status   String @default("pending")
+  attempts Int    @default(0)
+
+  /// What the worker polls. Indexed with status; a scan per tick is the first thing to fall over.
+  nextAttemptAt DateTime?
+
+  responseStatus Int?
+  responseBody   String? @db.Text
+  responseTimeMs Int?
+  error          String? @db.Text
+
+  /// The signed body, kept so a retry is byte-identical and its signature still verifies.
+  payload  String   @db.Text
+  signedAt DateTime
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  endpoint   WebhookEndpoint  @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+  attemptLog WebhookAttempt[]
+
+  /// **The duplicate-suppression guarantee.**
+  ///
+  /// Two application instances handling one event both call `enqueue`; this constraint decides
+  /// which wins. A check-then-insert would let both through, and would do so precisely under the
+  /// load where it matters.
+  @@unique([webhookEndpointId, eventId])
+  @@index([status, nextAttemptAt])
+  @@index([organizationId, createdAt])
+  @@index([eventName])
+  @@map("webhook_delivery")
+}
+
+/// One attempt within a delivery. Separate, so the history shows each try rather than the last.
+model WebhookAttempt {
+  id                String  @id @default(cuid())
+  organizationId    String?
+  webhookDeliveryId String
+
+  attempt        Int
+  startedAt      DateTime
+  durationMs     Int
+  responseStatus Int?
+  error          String?  @db.Text
+  outcome        String
+
+  delivery WebhookDelivery @relation(fields: [webhookDeliveryId], references: [id], onDelete: Cascade)
+
+  @@index([webhookDeliveryId, attempt])
+  @@map("webhook_attempt")
+}
+
+/// A background job. The queue is this table.
+model Job {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  type    String
+  payload Json
+
+  status   String @default("queued")
+  priority Int    @default(50)
+
+  attempts    Int @default(0)
+  maxAttempts Int @default(3)
+
+  /// When it becomes eligible. Also how a delay is expressed — there is no separate timer.
+  runAt       DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  /// The lease. A running job whose lease has expired is reclaimed by another worker.
+  claimedBy      String?
+  leaseExpiresAt DateTime?
+
+  progress        Int     @default(0)
+  progressMessage String?
+
+  result Json?
+  error  String? @db.Text
+
+  /// Unique among non-terminal jobs — see the partial index in the migration.
+  idempotencyKey String?
+
+  metadata Json @default("{}")
+
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  runs JobRun[]
+
+  /// What `claim` orders by.
+  @@index([status, runAt, priority])
+  /// Reclaiming a crashed worker's jobs.
+  @@index([status, leaseExpiresAt])
+  @@index([organizationId, status, createdAt])
+  @@index([type, status])
+  @@map("job")
+}
+
+/// One attempt at a job.
+model JobRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+  jobId          String
+
+  attempt    Int
+  workerId   String
+  startedAt  DateTime
+  finishedAt DateTime?
+  durationMs Int?
+  outcome    String
+  error      String?   @db.Text
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, attempt])
+  @@map("job_run")
+}
+
+/// A recurring, delayed or one-time trigger. Enqueues a job; never runs work itself.
+model Schedule {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Unique per organization. Stable, because a schedule is reconciled by key at start-up.
+  key         String
+  description String?
+
+  kind   String
+  status String @default("active")
+
+  expression String?
+  /// An IANA name. "Run at 2am" means nothing without one.
+  timezone   String    @default("UTC")
+  intervalMs Int?
+  runAt      DateTime?
+
+  jobType    String
+  jobPayload Json   @default("{}")
+
+  misfirePolicy String @default("run_once")
+
+  /// Stored rather than derived, so the tick is an indexed query rather than parsing every
+  /// schedule's expression on every tick.
+  nextRunAt DateTime?
+  lastRunAt DateTime?
+  lastJobId String?
+
+  consecutiveFailures Int     @default(0)
+  lastError           String? @db.Text
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+
+  runs ScheduleRun[]
+
+  @@unique([organizationId, key])
+  /// What `claimDue` scans.
+  @@index([status, nextRunAt])
+  @@map("schedule")
+}
+
+/// One firing of a schedule.
+model ScheduleRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+  scheduleId     String
+
+  /// When it was meant to fire. Differs from `firedAt` when the scheduler was behind.
+  scheduledFor DateTime
+  firedAt      DateTime
+  jobId        String?
+  outcome      String
+  /// Lateness. The number that says whether the scheduler is keeping up.
+  latencyMs    Int
+  error        String?  @db.Text
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@index([scheduleId, firedAt])
+  @@map("schedule_run")
+}
+
+/// A bulk import.
+model ImportRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  type          String
+  format        String
+  fileName      String
+  fileSizeBytes Int
+  /// SHA-256 of the uploaded bytes, so a re-upload of the same file is recognisable.
+  checksum      String
+
+  status String  @default("pending")
+  dryRun Boolean @default(false)
+
+  rowsRead     Int @default(0)
+  rowsAccepted Int @default(0)
+  rowsRejected Int @default(0)
+
+  /// Capped at 500 entries; `rowsRejected` is always the exact count.
+  errors         Json  @default("[]")
+  /// What the handler applied. Enough to drive a rollback.
+  appliedSummary Json?
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdById String?
+
+  @@index([organizationId, type, startedAt])
+  @@index([status])
+  @@map("import_run")
+}
+
+/// A bulk export.
+model ExportRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  type     String
+  format   String
+  fileName String
+  status   String @default("running")
+
+  rowCount  Int @default(0)
+  byteCount Int @default(0)
+
+  /// Where the artefact went, when the sink stored one.
+  documentId String?
+  /// The filters it ran with — the answer to "what exactly did this file contain".
+  parameters Json?
+  error      String? @db.Text
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdById String?
+
+  @@index([organizationId, type, startedAt])
+  @@map("export_run")
+}
+
+/// A synchronization connection between this system and an external one.
+model SyncConnection {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  connectorKey   String
+  name           String
+  direction      String
+  conflictPolicy String @default("remote_wins")
+  status         String @default("idle")
+
+  /// Where to resume. The remote's own value — a watermark from local time skips records.
+  watermark String?
+
+  lastSyncAt          DateTime?
+  lastSuccessAt       DateTime?
+  consecutiveFailures Int       @default(0)
+  lastError           String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  runs      SyncRun[]
+  conflicts SyncConflict[]
+
+  @@unique([organizationId, connectorKey, name])
+  @@index([status])
+  @@map("sync_connection")
+}
+
+/// One synchronization run.
+model SyncRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+  connectionId   String
+
+  direction  String
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  status     String    @default("running")
+
+  recordsRead    Int @default(0)
+  recordsCreated Int @default(0)
+  recordsUpdated Int @default(0)
+  recordsDeleted Int @default(0)
+  recordsSkipped Int @default(0)
+  recordsFailed  Int @default(0)
+  conflicts      Int @default(0)
+
+  /// Both ends, which is what makes a run reproducible.
+  fromWatermark String?
+  toWatermark   String?
+  error         String? @db.Text
+
+  connection SyncConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId, startedAt])
+  @@map("sync_run")
+}
+
+/// A record two systems disagree about.
+model SyncConflict {
+  id             String  @id @default(cuid())
+  organizationId String?
+  connectionId   String
+
+  runId      String
+  externalId String
+  policy     String
+  resolution String
+
+  remoteUpdatedAt DateTime
+  localUpdatedAt  DateTime
+  /// Both sides, so whoever resolves it can see what they are choosing between.
+  remoteData      Json
+  localData       Json
+
+  detectedAt   DateTime  @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+
+  connection SyncConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId, resolvedAt])
+  @@index([organizationId, resolvedAt])
+  @@map("sync_conflict")
 }

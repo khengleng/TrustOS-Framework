@@ -2,67 +2,100 @@
   "files": [],
   "references": [
     {
-      "path": "packages/shared-types"
+      "path": "./packages/modules/adapter"
     },
     {
-      "path": "packages/errors"
+      "path": "./packages/modules/events"
     },
     {
-      "path": "packages/validation"
+      "path": "./packages/modules/export"
     },
     {
-      "path": "packages/config"
+      "path": "./packages/modules/import"
     },
     {
-      "path": "packages/logging"
+      "path": "./packages/modules/jobs"
     },
     {
-      "path": "packages/database"
+      "path": "./packages/modules/scheduler"
     },
     {
-      "path": "packages/auth"
+      "path": "./packages/modules/sync"
     },
     {
-      "path": "packages/rbac"
+      "path": "./packages/modules/webhook"
     },
     {
-      "path": "packages/tenancy"
+      "path": "packages/adapter-framework"
     },
     {
-      "path": "packages/audit"
-    },
-    {
-      "path": "packages/observability"
-    },
-    {
-      "path": "packages/security-policy"
-    },
-    {
-      "path": "packages/security-events"
-    },
-    {
-      "path": "packages/identity"
-    },
-    {
-      "path": "packages/authorization"
-    },
-    {
-      "path": "packages/session-security"
+      "path": "packages/api-client-generator"
     },
     {
       "path": "packages/api-keys"
     },
     {
-      "path": "packages/service-accounts"
+      "path": "packages/audit"
     },
     {
-      "path": "packages/security-testing"
+      "path": "packages/auth"
     },
     {
-      "path": "packages/module-sdk"
+      "path": "packages/authorization"
+    },
+    {
+      "path": "packages/case-management"
+    },
+    {
+      "path": "packages/cli"
+    },
+    {
+      "path": "packages/config"
+    },
+    {
+      "path": "packages/database"
+    },
+    {
+      "path": "packages/errors"
+    },
+    {
+      "path": "packages/event-bus"
+    },
+    {
+      "path": "packages/event-registry"
+    },
+    {
+      "path": "packages/event-sdk"
+    },
+    {
+      "path": "packages/export"
+    },
+    {
+      "path": "packages/generator-core"
+    },
+    {
+      "path": "packages/identity"
+    },
+    {
+      "path": "packages/import"
+    },
+    {
+      "path": "packages/integration-health"
+    },
+    {
+      "path": "packages/integration-monitor"
+    },
+    {
+      "path": "packages/job-runtime"
+    },
+    {
+      "path": "packages/logging"
     },
     {
       "path": "packages/module-registry"
+    },
+    {
+      "path": "packages/module-sdk"
     },
     {
       "path": "packages/modules/document"
@@ -86,22 +119,64 @@
       "path": "packages/modules/workflow"
     },
     {
-      "path": "packages/workflow-core"
+      "path": "packages/observability"
     },
     {
-      "path": "packages/workflow-definition"
+      "path": "packages/provider-sdk"
     },
     {
-      "path": "packages/workflow-policy"
+      "path": "packages/rbac"
+    },
+    {
+      "path": "packages/retry"
+    },
+    {
+      "path": "packages/scheduler"
+    },
+    {
+      "path": "packages/security-events"
+    },
+    {
+      "path": "packages/security-policy"
+    },
+    {
+      "path": "packages/security-testing"
+    },
+    {
+      "path": "packages/service-accounts"
+    },
+    {
+      "path": "packages/session-security"
+    },
+    {
+      "path": "packages/shared-types"
+    },
+    {
+      "path": "packages/sync"
+    },
+    {
+      "path": "packages/template-registry"
+    },
+    {
+      "path": "packages/tenancy"
+    },
+    {
+      "path": "packages/validation"
+    },
+    {
+      "path": "packages/webhook-runtime"
+    },
+    {
+      "path": "packages/webhooks"
     },
     {
       "path": "packages/workflow-approvals"
     },
     {
-      "path": "packages/workflow-tasks"
+      "path": "packages/workflow-core"
     },
     {
-      "path": "packages/workflow-sla"
+      "path": "packages/workflow-definition"
     },
     {
       "path": "packages/workflow-escalation"
@@ -110,19 +185,16 @@
       "path": "packages/workflow-history"
     },
     {
+      "path": "packages/workflow-policy"
+    },
+    {
       "path": "packages/workflow-runtime"
     },
     {
-      "path": "packages/case-management"
+      "path": "packages/workflow-sla"
     },
     {
-      "path": "packages/template-registry"
-    },
-    {
-      "path": "packages/generator-core"
-    },
-    {
-      "path": "packages/cli"
+      "path": "packages/workflow-tasks"
     }
   ]
 }

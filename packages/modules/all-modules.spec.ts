@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTestModuleContext, type TrustosModule } from '@trustos/module-sdk';
 import {
+  BUILT_IN_MODULE_IDS,
   MODULE_CATALOG,
   ModuleRegistry,
   moduleIds,
@@ -14,6 +15,14 @@ import { notificationModule } from '@trustos/module-notification';
 import { reportingModule } from '@trustos/module-reporting';
 import { searchModule } from '@trustos/module-search';
 import { workflowModule } from '@trustos/module-workflow';
+import { adapterModule } from '@trustos/module-adapter';
+import { eventsModule } from '@trustos/module-events';
+import { exportModule } from '@trustos/module-export';
+import { importModule } from '@trustos/module-import';
+import { jobsModule } from '@trustos/module-jobs';
+import { schedulerModule } from '@trustos/module-scheduler';
+import { syncModule } from '@trustos/module-sync';
+import { webhookModule } from '@trustos/module-webhook';
 
 /**
  * Module registration, validated across the whole set.
@@ -35,12 +44,22 @@ const ALL: TrustosModule[] = [
   reportingModule as TrustosModule,
   searchModule as TrustosModule,
   workflowModule as TrustosModule,
+
+  // The integration layer.
+  eventsModule as TrustosModule,
+  webhookModule as TrustosModule,
+  jobsModule as TrustosModule,
+  schedulerModule as TrustosModule,
+  adapterModule as TrustosModule,
+  importModule as TrustosModule,
+  exportModule as TrustosModule,
+  syncModule as TrustosModule,
 ];
 
 describe('every module', () => {
   it('is defined, valid and tenant-scoped', () => {
-    // `defineModule` throws at import time, so reaching this line already proves
-    // seven valid definitions. The assertion states the invariant anyway.
+    // `defineModule` throws at import time, so reaching this line already proves every
+    // definition is valid. The assertion states the invariant anyway.
     expect(ALL).toHaveLength(moduleIds().length);
     for (const module of ALL) expect(module.tenantScoped, module.metadata.id).toBe(true);
   });
@@ -109,7 +128,7 @@ describe('every module', () => {
   });
 });
 
-describe('registering all seven into one application', () => {
+describe('registering every module into one application', () => {
   const buildRegistry = (): ModuleRegistry => {
     const registry = new ModuleRegistry();
     for (const module of ALL) {
@@ -121,7 +140,7 @@ describe('registering all seven into one application', () => {
 
   it('registers without a permission, route or id collision', () => {
     const registry = buildRegistry();
-    expect(registry.list()).toHaveLength(7);
+    expect(registry.list()).toHaveLength(BUILT_IN_MODULE_IDS.length);
 
     const permissions = registry.permissions().map((permission) => permission.key);
     expect(new Set(permissions).size).toBe(permissions.length);
@@ -139,7 +158,7 @@ describe('registering all seven into one application', () => {
   });
 
   it('reports one health indicator per module', () => {
-    expect(buildRegistry().healthIndicators()).toHaveLength(7);
+    expect(buildRegistry().healthIndicators()).toHaveLength(BUILT_IN_MODULE_IDS.length);
   });
 
   it('aggregates a permission catalog an application can seed from', () => {
@@ -175,7 +194,7 @@ describe('registering all seven into one application', () => {
   });
 });
 
-describe('installing all seven', () => {
+describe('installing every module', () => {
   it('resolves an order that satisfies every dependency', () => {
     const resolved = resolveInstallOrder(MODULE_CATALOG, moduleIds(), {
       frameworkVersion: '0.1.0',
@@ -194,7 +213,7 @@ describe('installing all seven', () => {
       }
     }
 
-    expect(resolved.order).toHaveLength(7);
+    expect(resolved.order).toHaveLength(BUILT_IN_MODULE_IDS.length);
   });
 
   it('is idempotent when everything is already installed', () => {
@@ -203,6 +222,6 @@ describe('installing all seven', () => {
     });
 
     expect(resolved.order).toEqual([]);
-    expect(resolved.alreadyInstalled).toHaveLength(7);
+    expect(resolved.alreadyInstalled).toHaveLength(BUILT_IN_MODULE_IDS.length);
   });
 });
