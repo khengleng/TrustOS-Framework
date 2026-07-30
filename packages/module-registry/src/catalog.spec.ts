@@ -61,6 +61,11 @@ describe('MODULE_CATALOG', () => {
    * still caught. A module that serves data and forgot its routes is a bug; these are not.
    */
   const LIBRARY_SHAPED = new Set([
+    'ledger',
+    'wallet',
+    'transactions',
+    'settlement',
+    'reconciliation',
     'ai',
     'rag',
     'agent',

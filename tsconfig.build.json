@@ -2,6 +2,9 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/accounts"
+    },
+    {
       "path": "./packages/agent-framework"
     },
     {
@@ -44,7 +47,28 @@
       "path": "./packages/evaluation"
     },
     {
+      "path": "./packages/fees"
+    },
+    {
+      "path": "./packages/financial-core"
+    },
+    {
+      "path": "./packages/financial-events"
+    },
+    {
+      "path": "./packages/financial-policy"
+    },
+    {
+      "path": "./packages/financial-reporting"
+    },
+    {
+      "path": "./packages/financial-risk"
+    },
+    {
       "path": "./packages/function-calling"
+    },
+    {
+      "path": "./packages/fx"
     },
     {
       "path": "./packages/guardrails"
@@ -54,6 +78,12 @@
     },
     {
       "path": "./packages/knowledge"
+    },
+    {
+      "path": "./packages/ledger"
+    },
+    {
+      "path": "./packages/limits"
     },
     {
       "path": "./packages/model-registry"
@@ -83,16 +113,34 @@
       "path": "./packages/modules/jobs"
     },
     {
+      "path": "./packages/modules/ledger"
+    },
+    {
       "path": "./packages/modules/rag"
+    },
+    {
+      "path": "./packages/modules/reconciliation"
     },
     {
       "path": "./packages/modules/scheduler"
     },
     {
+      "path": "./packages/modules/settlement"
+    },
+    {
       "path": "./packages/modules/sync"
     },
     {
+      "path": "./packages/modules/transactions"
+    },
+    {
+      "path": "./packages/modules/wallet"
+    },
+    {
       "path": "./packages/modules/webhook"
+    },
+    {
+      "path": "./packages/payments"
     },
     {
       "path": "./packages/prompt-registry"
@@ -104,13 +152,25 @@
       "path": "./packages/rag"
     },
     {
+      "path": "./packages/reconciliation"
+    },
+    {
+      "path": "./packages/settlement"
+    },
+    {
       "path": "./packages/token-meter"
     },
     {
       "path": "./packages/tool-execution"
     },
     {
+      "path": "./packages/transactions"
+    },
+    {
       "path": "./packages/vector-store"
+    },
+    {
+      "path": "./packages/wallet"
     },
     {
       "path": "packages/adapter-framework"

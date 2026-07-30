@@ -153,6 +153,14 @@ export const BUILT_IN_MODULE_IDS = [
   'ai',
   'rag',
   'agent',
+
+  // The financial platform. Everything depends on `ledger`, so the order is also the install
+  // order.
+  'ledger',
+  'wallet',
+  'transactions',
+  'settlement',
+  'reconciliation',
 ] as const;
 
 export type BuiltInModuleId = (typeof BUILT_IN_MODULE_IDS)[number];

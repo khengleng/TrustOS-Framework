@@ -40,7 +40,8 @@
     "templates:validate": "node packages/cli/bin/trustos.js validate-template --all",
     "modules:validate": "vitest run packages/module-registry packages/module-sdk",
     "test:modules": "vitest run packages/module-sdk packages/module-registry packages/modules",
-    "bench:ai": "node scripts/bench-ai.mjs"
+    "bench:ai": "node scripts/bench-ai.mjs",
+    "bench:financial": "node scripts/bench-financial.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

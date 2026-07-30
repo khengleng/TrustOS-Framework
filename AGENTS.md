@@ -387,6 +387,74 @@ Read [docs/ai-security.md](docs/ai-security.md) before changing anything in
 `tool-execution/executor.ts`, `ai-cache/cache.ts`, `prompt-registry/template.ts` or
 `agent-memory/memory.ts`. The checks in those files look redundant and are not.
 
+## Financial rules (phase 8)
+
+Money is the one thing in this repository where being subtly wrong is worse than being obviously
+broken. A crash gets fixed on the day; a fee that is wrong in the fifteenth decimal place is found
+by a counterparty six months later, and by then it is in ten thousand transactions.
+
+1. **Never modify a posted journal.** No `UPDATE`, no `DELETE`, no "just fix the description". A
+   correction is a reversal or an adjustment, both of which post a _new_ journal and leave the
+   original standing. The database refuses it too, by trigger — if you find yourself wanting to
+   drop that trigger, the change is wrong.
+
+2. **Never use floating-point arithmetic for money.** No `parseFloat`, no `Number(amount)`, no
+   `Float` column, no arithmetic on a JSON number that came from an amount. Use `Decimal` and
+   `Money` from `@trustos/financial-core`. The single `unsafeToNumber` is named to be uncomfortable
+   and belongs only in a display layer that never feeds a calculation.
+
+3. **Always validate balancing.** Debits equal credits, per currency, before anything posts. Never
+   net across currencies inside one journal — an exchange goes through an FX account with its own
+   two entries, because netting hides the rate that was used.
+
+4. **Always enforce idempotency.** Every operation that moves money takes a key, and the store
+   enforces it with a _unique constraint_. A read-then-write check passes every single-threaded
+   test and posts twice the moment two workers retry together. Scope the key to the tenant, with
+   `COALESCE` on the organization — PostgreSQL treats NULL as distinct from NULL.
+
+5. **Always audit financial actions.** Every posting with its accounts and amounts, every reversal
+   with its reason, every status change, every limit refusal, every reconciliation resolution. An
+   auditor asks what moved and who decided; both must be answerable from the record alone.
+
+6. **Never bypass limits.** No "internal caller" path, no flag that skips the limit engine.
+   `check` is a read and `consume` is the reservation — a caller that checks and then posts without
+   consuming has reintroduced the race the two-method split exists to close.
+
+7. **Never bypass tenant isolation.** Every store method takes `organizationId` explicitly, and it
+   is `string | null` rather than optional so a caller cannot omit it. Null is the platform tenant,
+   not a wildcard.
+
+8. **Check the available balance, never the total.** A hold is money that is present and not
+   spendable. A system that checks the total authorizes the same money twice, and the second
+   capture fails at settlement — after the customer has been told both succeeded.
+
+9. **Amounts on entries are positive; the direction carries the sign.** A negative debit and a
+   credit are the same movement written two ways, and a ledger that stores both has two
+   representations of every posting.
+
+10. **A customer wallet is a liability.** Money a customer deposited is money the business owes.
+    Model it as an asset and the platform reports its own obligations as its own money. The same
+    care applies to every account class: get one backwards and every balance in it is reported with
+    the wrong sign, which looks like a ledger bug and is not.
+
+11. **Never ship a provider, a scheme or a jurisdiction's rules.** No card network, no bank rail,
+    no chart of accounts, no KYC rule, no live rate feed. The seam is the deliverable; the
+    integration belongs to the product built on this.
+
+12. **Always add financial tests**, including the negative one and the concurrent one. Every
+    guarantee in this phase — balancing, immutability, idempotency, the available-balance check,
+    allocation summing back exactly — has a test that tries to break it. A guarantee with no test
+    that it holds under two callers is a comment.
+
+13. **Stop after completing phase 8.** Do not begin phase 9. Do not add Bakong, KHQR, PayChain,
+    payKH, ABA, ACLEDA, Wing, Visa, Mastercard, SWIFT, ISO 20022, blockchain or stablecoin
+    support. Phase 8 is a reusable financial foundation, and every product-specific thing added to
+    it is carried by every product built on it.
+
+Read [docs/financial-security.md](docs/financial-security.md) before changing anything in
+`ledger/ledger.ts`, `financial-core/decimal.ts`, `wallet/service.ts` or the phase 8 section of the
+Prisma migration. The checks in those files look redundant and are not.
+
 ## Before claiming a change is done
 
 ```bash

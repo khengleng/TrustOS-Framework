@@ -88,14 +88,15 @@ const APPLICATION_GENERATOR = `generator client {
 }`;
 
 /**
- * Everything an application always needs: phases 1, 4, 6 and 7.
+ * Everything an application always needs: phases 1, 4, 6, 7 and 8.
  *
  * The integration layer is in the base rather than in a template of its own, because events,
  * jobs, webhooks and schedules are infrastructure every application eventually wants — unlike
  * the workflow models, which only make sense for a product that governs a business object. The
  * phase 7 AI tables follow the same rule and for the same reason: `trustos add-module ai` should
  * be a wiring change rather than a migration, and an application that never enables AI carries
- * seventeen empty tables, which costs nothing.
+ * seventeen empty tables, which costs nothing. The phase 8 financial tables follow again: a
+ * ledger is infrastructure, and `trustos add-module ledger` should not be a migration.
  *
  * That means the base is two slices of the framework schema with the workflow section cut out of
  * the middle, rather than a prefix. Worth stating, because the obvious `slice(0, marker)` is what

@@ -2304,6 +2304,623 @@ const RAW_CATALOG: unknown[] = [
       'Agent marketplaces',
     ],
   },
+
+  // ==========================================================================
+  // ledger
+  //
+  // Everything in the financial platform depends on this. A wallet without a ledger has a
+  // balance column, which is the design mistake the phase exists to prevent.
+  // ==========================================================================
+  {
+    metadata: {
+      id: 'ledger',
+      name: 'Ledger',
+      description:
+        'Double-entry bookkeeping: journals, accounts, reversal, adjustment, trial balance and reporting. Posted journals are immutable and every journal must balance, both enforced at the database.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['financial', 'accounting', 'infrastructure'],
+    },
+    packaging: packaging('ledger', 'LedgerModule'),
+    permissions: [
+      {
+        key: 'ledger.journal.read',
+        description: 'Read journals and account balances.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'ledger.journal.post',
+        description: 'Post a journal. Every posting is permanent.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'ledger.journal.reverse',
+        description:
+          'Reverse a posted journal. Separate from posting, because a reversal is the one operation that can be used to hide another.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'ledger.account.read',
+        description: 'Read the account tree and its balances.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'ledger.account.manage',
+        description: 'Open, freeze, block and close accounts.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'ledger.report.read',
+        description: 'Run the trial balance, the general ledger and the balance sheet.',
+        suggestedRoles: READ_ROLES,
+      },
+    ],
+    // No routes.
+    //
+    // Same reasoning as the integration and AI modules: this ships services and lifecycle, not
+    // controllers. Every store is a port the application supplies, so a controller here would
+    // have nothing to inject.
+    routes: [],
+    auditEvents: [
+      {
+        action: 'ledger.journal.posted',
+        entityType: 'Journal',
+        description: 'A balanced journal was posted, with every account and amount it moved.',
+      },
+      {
+        action: 'ledger.journal.reversed',
+        entityType: 'Journal',
+        description: 'A posted journal was reversed by its mirror image, with the reason.',
+      },
+      {
+        action: 'ledger.account.opened',
+        entityType: 'Account',
+        description: 'An account was opened, with its type, class and currency.',
+      },
+      {
+        action: 'ledger.account.frozen',
+        entityType: 'Account',
+        description: 'An account was frozen. Money may still leave it.',
+      },
+      {
+        action: 'ledger.account.blocked',
+        entityType: 'Account',
+        description: 'An account was blocked. Nothing moves in either direction.',
+      },
+      {
+        action: 'ledger.account.closed',
+        entityType: 'Account',
+        description: 'An empty account was closed.',
+      },
+    ],
+    // No migration of its own: the financial tables are part of the framework schema, which every
+    // generated application already carries in `00-framework.prisma`.
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Ledger store',
+        port: 'LedgerStore',
+        description:
+          'Where journals live. Must enforce the idempotency key uniquely and aggregate balances in the database — summing millions of entries in memory is a balance query that times out when somebody needs it.',
+        provided: ['InMemoryLedgerStore'],
+      },
+      {
+        name: 'Account store',
+        port: 'AccountStore',
+        description: 'Where the account tree lives.',
+        provided: ['InMemoryAccountStore'],
+      },
+      {
+        name: 'Currency registry',
+        port: 'CurrencyRegistry',
+        description:
+          'Which currencies this deployment uses, and their precision. The framework ships eight well-known definitions and no ISO 4217 table — a partial list that looks complete is worse than none.',
+        provided: ['CurrencyRegistry'],
+      },
+      {
+        name: 'Report renderer',
+        port: 'ReportRenderer',
+        description:
+          'How a report is rendered. CSV ships; Excel needs a spreadsheet library and PDF a rendering engine, and which one is a deployment decision.',
+        provided: ['csvRenderer'],
+      },
+    ],
+    outOfScope: [
+      'Chart-of-accounts templates for any jurisdiction',
+      'Tax computation and filing',
+      'Period-end closing workflows',
+      'Consolidated group reporting',
+      'Any specific accounting standard (IFRS, GAAP)',
+    ],
+  },
+
+  // ==========================================================================
+  // wallet
+  // ==========================================================================
+  {
+    metadata: {
+      id: 'wallet',
+      name: 'Wallets',
+      description:
+        'Ledger-backed customer wallets: available, held and reserved balances, holds with expiry, freeze and history. A wallet is a view over a ledger account, never a balance of its own.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['financial', 'wallet', 'balances'],
+    },
+    packaging: packaging('wallet', 'WalletModule'),
+    dependencies: [
+      {
+        moduleId: 'ledger',
+        versionRange: '^0.1.0',
+        reason:
+          'A wallet is a view over a ledger account. Without a ledger it would need a balance column, which is two sources of truth.',
+      },
+    ],
+    permissions: [
+      {
+        key: 'wallet.read',
+        description: "Read a wallet's total, held and available balances.",
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'wallet.manage',
+        description: 'Open a wallet and change its configuration.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'wallet.credit',
+        description: 'Add money to a wallet.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'wallet.debit',
+        description: 'Take money out of a wallet, against its available balance.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'wallet.hold.manage',
+        description: 'Place, capture and release holds.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'wallet.freeze',
+        description:
+          'Freeze and unfreeze a wallet. The only record of why somebody could not spend their own money is the reason given here.',
+        suggestedRoles: WRITE_ROLES,
+      },
+    ],
+    routes: [],
+    auditEvents: [
+      {
+        action: 'wallet.opened',
+        entityType: 'Wallet',
+        description: 'A wallet was opened, along with the ledger account behind it.',
+      },
+      {
+        action: 'wallet.credited',
+        entityType: 'Wallet',
+        description: 'Money arrived in a wallet, with the journal that recorded it.',
+      },
+      {
+        action: 'wallet.debited',
+        entityType: 'Wallet',
+        description: 'Money left a wallet, against its available balance.',
+      },
+      {
+        action: 'wallet.hold.placed',
+        entityType: 'WalletHold',
+        description: 'Funds were held against a pending operation. Nothing moved.',
+      },
+      {
+        action: 'wallet.hold.captured',
+        entityType: 'WalletHold',
+        description: 'A hold was captured and the money moved.',
+      },
+      {
+        action: 'wallet.hold.released',
+        entityType: 'WalletHold',
+        description: 'A hold was released without moving money.',
+      },
+      {
+        action: 'wallet.frozen',
+        entityType: 'Wallet',
+        description: 'A wallet was frozen, with the reason.',
+      },
+      {
+        action: 'wallet.unfrozen',
+        entityType: 'Wallet',
+        description: 'A frozen wallet was returned to normal.',
+      },
+    ],
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Wallet store',
+        port: 'WalletStore',
+        description: 'Where wallets live.',
+        provided: ['InMemoryWalletStore'],
+      },
+      {
+        name: 'Hold store',
+        port: 'HoldStore',
+        description:
+          'Where holds live. The expired-hold query is what the sweeper runs, and a hold nobody sweeps is money the customer cannot spend.',
+        provided: ['InMemoryHoldStore'],
+      },
+      {
+        name: 'Limit engine',
+        port: 'LimitEngine',
+        description: 'Checked before every debit. Optional, and a wallet with no limits says so.',
+        provided: ['LimitEngine'],
+      },
+    ],
+    outOfScope: [
+      'Card issuing and physical instruments',
+      'Interest, savings and lending products',
+      'Multi-currency wallets (one wallet holds one currency)',
+      'Customer-facing wallet interfaces',
+    ],
+  },
+
+  // ==========================================================================
+  // transactions
+  // ==========================================================================
+  {
+    metadata: {
+      id: 'transactions',
+      name: 'Transactions',
+      description:
+        'The transaction lifecycle with idempotency, fees, limits, risk hooks, FX and payment requests. A declared state machine rather than status checks spread across a service.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['financial', 'payments', 'transactions'],
+    },
+    packaging: packaging('transactions', 'TransactionsModule'),
+    dependencies: [
+      {
+        moduleId: 'ledger',
+        versionRange: '^0.1.0',
+        reason: 'Every transaction posts journals, and the journal is the accounting record.',
+      },
+      {
+        moduleId: 'wallet',
+        versionRange: '^0.1.0',
+        reason: 'Authorization places a hold on a wallet, and capture spends it.',
+      },
+    ],
+    permissions: [
+      {
+        key: 'transactions.read',
+        description: 'Read transactions and their history.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'transactions.create',
+        description: 'Create a transaction. Nothing moves until it is captured.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'transactions.capture',
+        description: 'Capture a transaction, moving the money.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'transactions.reverse',
+        description: 'Reverse a captured transaction by posting compensating journals.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'transactions.refund',
+        description: 'Refund a completed transaction, wholly or partly.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'transactions.fee.manage',
+        description: 'Draft and publish fee schedules. A published version is immutable.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'transactions.limit.manage',
+        description: 'Configure limits.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'transactions.payment-request.manage',
+        description: 'Raise and cancel payment requests.',
+        suggestedRoles: WRITE_ROLES,
+      },
+    ],
+    routes: [],
+    auditEvents: [
+      {
+        action: 'transactions.transaction.captured',
+        entityType: 'Transaction',
+        description: 'A transaction was captured and the money moved.',
+      },
+      {
+        action: 'transactions.transaction.completed',
+        entityType: 'Transaction',
+        description: 'A transaction finished and is eligible for settlement.',
+      },
+      {
+        action: 'transactions.transaction.failed',
+        entityType: 'Transaction',
+        description: 'A transaction failed. Any hold was released.',
+      },
+      {
+        action: 'transactions.transaction.reversed',
+        entityType: 'Transaction',
+        description: 'A transaction was reversed. Both records remain.',
+      },
+      {
+        action: 'transactions.transaction.refunded',
+        entityType: 'Transaction',
+        description: 'Money was returned to the payer by a separate transaction.',
+      },
+      {
+        action: 'transactions.request.created',
+        entityType: 'PaymentRequest',
+        description: 'A payment request was raised, with its expiry.',
+      },
+      {
+        action: 'transactions.request.settled',
+        entityType: 'PaymentRequest',
+        description: 'A payment request was settled, wholly or partly.',
+      },
+      {
+        action: 'transactions.request.cancelled',
+        entityType: 'PaymentRequest',
+        description: 'A payment request was cancelled before it was paid.',
+      },
+    ],
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Transaction store',
+        port: 'TransactionStore',
+        description:
+          'Where transactions live. Must enforce the idempotency key uniquely per tenant — a check rather than a constraint passes every single-threaded test and takes the money twice.',
+        provided: ['InMemoryTransactionStore'],
+      },
+      {
+        name: 'Risk provider',
+        port: 'RiskProvider',
+        description:
+          'A fraud engine, a sanctions screen, a velocity rule. The framework ships none: these are products with licensed lists and trained models, and a shipped one would be a wrong one.',
+        provided: [],
+      },
+      {
+        name: 'KYC provider',
+        port: 'KycProvider',
+        description:
+          'Verification state for a subject. No regulator-specific implementation: a rule right in Cambodia is wrong in Singapore.',
+        provided: [],
+      },
+      {
+        name: 'Rate source',
+        port: 'RateStore',
+        description:
+          'Where exchange rates come from. No live integration: which rate to use is a commercial decision, not a technical one.',
+        provided: ['InMemoryRateStore'],
+      },
+      {
+        name: 'Fee schedule store',
+        port: 'FeeScheduleStore',
+        description: 'Where versioned fee schedules live.',
+        provided: ['InMemoryFeeScheduleStore'],
+      },
+    ],
+    outOfScope: [
+      'Card scheme integrations (Visa, Mastercard)',
+      'Bank rails and messaging standards (SWIFT, ISO 20022)',
+      'National payment schemes',
+      'Fraud and AML detection engines',
+      'Blockchain and stablecoin settlement',
+    ],
+  },
+
+  // ==========================================================================
+  // settlement
+  // ==========================================================================
+  {
+    metadata: {
+      id: 'settlement',
+      name: 'Settlement',
+      description:
+        'Settlement batches, instructions and windows, with partial confirmation and per-instruction returns. Asynchronous by construction: a batch sent on Friday and confirmed on Monday is the ordinary case.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['financial', 'settlement', 'payouts'],
+    },
+    packaging: packaging('settlement', 'SettlementModule'),
+    dependencies: [
+      {
+        moduleId: 'ledger',
+        versionRange: '^0.1.0',
+        reason:
+          'Sending and confirming a batch each post a journal, and the settlement account is where the money sits between them.',
+      },
+    ],
+    permissions: [
+      {
+        key: 'settlement.read',
+        description: 'Read batches, instructions and settlement reports.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'settlement.batch.manage',
+        description: 'Open a batch, add instructions and close it.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'settlement.batch.send',
+        description: 'Send a batch. The money leaves the merchants at this point.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'settlement.batch.confirm',
+        description: 'Record a counterparty confirmation, with any returns.',
+        suggestedRoles: WRITE_ROLES,
+      },
+    ],
+    routes: [],
+    auditEvents: [
+      {
+        action: 'settlement.batch.pending',
+        entityType: 'SettlementBatch',
+        description: 'A batch was closed to new instructions.',
+      },
+      {
+        action: 'settlement.batch.sent',
+        entityType: 'SettlementBatch',
+        description: 'A batch was sent. The money is in the settlement account.',
+      },
+      {
+        action: 'settlement.batch.settled',
+        entityType: 'SettlementBatch',
+        description: 'A counterparty confirmed a batch, with any returned instructions.',
+      },
+      {
+        action: 'settlement.batch.failed',
+        entityType: 'SettlementBatch',
+        description: 'A counterparty rejected a batch and the send was reversed.',
+      },
+      {
+        action: 'settlement.batch.cancelled',
+        entityType: 'SettlementBatch',
+        description: 'A batch was cancelled before it was sent.',
+      },
+    ],
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Settlement store',
+        port: 'SettlementStore',
+        description: 'Where batches and instructions live.',
+        provided: ['InMemorySettlementStore'],
+      },
+      {
+        name: 'Settlement file format',
+        port: 'none — the application writes it',
+        description:
+          'The file a counterparty receives. The framework produces the instructions and the totals; the format belongs to whoever is being paid.',
+        provided: [],
+      },
+    ],
+    outOfScope: [
+      'Bank file formats and transmission',
+      'Scheme settlement windows and cut-off rules',
+      'Netting across counterparties',
+      'Correspondent banking',
+    ],
+  },
+
+  // ==========================================================================
+  // reconciliation
+  // ==========================================================================
+  {
+    metadata: {
+      id: 'reconciliation',
+      name: 'Reconciliation',
+      description:
+        'Internal and external reconciliation with per-rule tolerance, an exception queue and resolution history. The output is a queue of things to investigate, not a single number.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['financial', 'reconciliation', 'operations'],
+    },
+    packaging: packaging('reconciliation', 'ReconciliationModule'),
+    dependencies: [
+      {
+        moduleId: 'ledger',
+        versionRange: '^0.1.0',
+        reason: 'One side of a reconciliation is the ledger, and a correction is a journal.',
+      },
+    ],
+    permissions: [
+      {
+        key: 'reconciliation.read',
+        description: 'Read runs, differences and the exception queue.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'reconciliation.run',
+        description: 'Run a reconciliation.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'reconciliation.exception.assign',
+        description: 'Assign an exception. A queue nobody owns is a list that grows.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'reconciliation.exception.resolve',
+        description:
+          'Resolve an exception, with the explanation that stops it recurring unnoticed.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'reconciliation.exception.write-off',
+        description:
+          'Write off a difference as below the cost of investigating. Separate from resolving, because the two mean different things on a report.',
+        suggestedRoles: WRITE_ROLES,
+      },
+    ],
+    routes: [],
+    auditEvents: [
+      {
+        action: 'reconciliation.run.completed',
+        entityType: 'ReconciliationRun',
+        description: 'A run finished, with its counts, its difference and the tolerance applied.',
+      },
+      {
+        action: 'reconciliation.exception.resolved',
+        entityType: 'ReconciliationException',
+        description: 'A difference was resolved, with the explanation and any correcting journal.',
+      },
+      {
+        action: 'reconciliation.exception.written_off',
+        entityType: 'ReconciliationException',
+        description: 'A difference was written off as not worth investigating.',
+      },
+    ],
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Reconciliation store',
+        port: 'ReconciliationStore',
+        description: 'Where runs and exceptions live.',
+        provided: ['InMemoryReconciliationStore'],
+      },
+      {
+        name: 'Statement reader',
+        port: 'none — the application supplies both sides',
+        description:
+          'The platform cannot know how to read a counterparty file, and which ledger accounts are in scope is a deployment decision. What the framework owns is the comparison, which is the part that is the same everywhere and easy to get subtly wrong.',
+        provided: [],
+      },
+    ],
+    outOfScope: [
+      'Bank statement formats (MT940, BAI2, CAMT)',
+      'Automatic correction of differences',
+      'Machine-learned matching',
+      'Counterparty file transport',
+    ],
+  },
 ];
 
 function loadCatalog(): ModuleCatalogEntry[] {

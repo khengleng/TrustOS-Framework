@@ -26,6 +26,11 @@ import { WebhookModule } from '@trustos/module-webhook/nest';
 import { AgentModule } from '@trustos/module-agent/nest';
 import { AiModule } from '@trustos/module-ai/nest';
 import { RagModule } from '@trustos/module-rag/nest';
+import { LedgerModule } from '@trustos/module-ledger/nest';
+import { ReconciliationModule } from '@trustos/module-reconciliation/nest';
+import { SettlementModule } from '@trustos/module-settlement/nest';
+import { TransactionsModule } from '@trustos/module-transactions/nest';
+import { WalletModule } from '@trustos/module-wallet/nest';
 
 /**
  * NestJS wiring, booted for real.
@@ -137,6 +142,11 @@ describe('booting an application with every module installed', () => {
         AiModule.forRoot(binding),
         RagModule.forRoot(binding),
         AgentModule.forRoot(binding),
+        LedgerModule.forRoot(binding),
+        WalletModule.forRoot(binding),
+        TransactionsModule.forRoot(binding),
+        SettlementModule.forRoot(binding),
+        ReconciliationModule.forRoot(binding),
       ],
     }).compile();
 

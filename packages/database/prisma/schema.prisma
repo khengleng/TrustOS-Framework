@@ -2107,3 +2107,721 @@ model AiEvaluationCaseResult {
   @@unique([runId, caseId])
   @@map("ai_evaluation_case_result")
 }
+
+// ===========================================================================
+// Phase 8 — the financial platform
+//
+// Nineteen tables: the ledger, accounts, wallets, transactions, payments, fees, limits, rates,
+// settlement, reconciliation, policy and compliance records.
+//
+// Four decisions run through all of them, and each is enforced rather than documented:
+//
+//   * **Money is `Decimal`, never `Float`.** PostgreSQL's `numeric` is exact; a double is not,
+//     and a fee computed in one agrees with every test and disagrees with the provider once in
+//     ten thousand transactions. Every amount column is `@db.Decimal(28, 8)` with the currency
+//     beside it — 28 digits holds any national-currency total in minor units, and 8 decimal
+//     places is more than any currency needs and enough for an exchange rate.
+//
+//   * **Entry amounts are positive.** The direction carries the sign. A check constraint in the
+//     migration enforces it, because a negative debit and a credit are the same movement written
+//     two ways and a ledger that stores both has two representations of every posting.
+//
+//   * **Posted journals are append-only, at the database.** A trigger refuses UPDATE and DELETE
+//     on a posted journal and on its entries. The service already refuses; the trigger is what
+//     holds when somebody connects with psql.
+//
+//   * **A journal must balance, at the database.** A deferred constraint trigger checks that
+//     debits equal credits per currency at commit. That is a guarantee the application cannot
+//     accidentally lose, and it is the one property everything else in the phase rests on.
+// ---------------------------------------------------------------------------
+
+/// One balanced journal. Immutable once posted — see the section header.
+model LedgerJournal {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Which ledger. A tenant may keep several: operational, regulatory, management.
+  ledgerId String @default("default")
+
+  /// A human reference: an invoice number, a settlement batch, a transaction id.
+  reference   String?
+  description String
+
+  /// draft, posted, reversed.
+  status String @default("posted")
+
+  /// When this journal is *effective*, which is not when it was written.
+  ///
+  /// A settlement received on Monday for Friday's trading is effective Friday. Reports run on
+  /// effective date; the audit trail uses `postedAt`. Conflating them makes a month-end report
+  /// change after the month has ended.
+  effectiveAt DateTime
+  postedAt    DateTime?
+  postedById  String?
+
+  /// Set on the original when a reversal posts, and on the reversal pointing back.
+  reversedByJournalId String?
+  reversesJournalId   String?
+
+  /// SHA-256 over the entries, the effective date and the description — not the status, because
+  /// marking a journal reversed is a legitimate change.
+  contentHash String?
+
+  /// What makes a retried posting one posting. Unique per tenant; see the migration.
+  idempotencyKey String?
+
+  metadata Json @default("{}")
+
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  entries LedgerEntry[]
+
+  @@index([organizationId, ledgerId, effectiveAt])
+  @@index([organizationId, reference])
+  @@map("ledger_journal")
+}
+
+/// One line of a journal. Always a positive amount; `direction` carries the sign.
+model LedgerEntry {
+  id             String  @id @default(cuid())
+  journalId      String
+  organizationId String?
+
+  accountId String
+  /// debit or credit.
+  direction String
+
+  /// Exact. See the section header for why this is not a float.
+  amount   Decimal @db.Decimal(28, 8)
+  currency String
+
+  description String  @default("")
+  /// A cost centre, a product, a merchant. Reporting groups on it; nothing here interprets it.
+  dimension   String?
+
+  metadata Json @default("{}")
+
+  journal LedgerJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+
+  /// The balance query's index. Account and currency together, because a balance is per currency.
+  @@index([organizationId, accountId, currency])
+  @@index([journalId])
+  @@map("ledger_entry")
+}
+
+/// Where a balance lives. The type is what makes the balance mean something.
+model FinancialAccount {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Stable and human-readable: `customer.usr_1.usd`, `system.bank.usd`.
+  code String
+  name String
+
+  /// customer, merchant, system, settlement, suspense, fee, reserve, general.
+  type  String
+  /// asset, liability, equity, revenue, expense. Derived from the type; never contradicts it.
+  class String
+
+  /// One currency per account, and it never changes. A multi-currency account is two balances
+  /// pretending to be one.
+  currency String
+
+  status String @default("active")
+
+  ownerId   String?
+  ownerType String?
+
+  ledgerId        String  @default("default")
+  parentAccountId String?
+
+  /// False for almost everything. A customer balance that can go negative is an unsecured loan
+  /// nobody decided to make.
+  allowNegative  Boolean  @default(false)
+  overdraftLimit Decimal? @db.Decimal(28, 8)
+
+  metadata Json @default("{}")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  closedAt  DateTime?
+
+  wallets Wallet[]
+
+  @@index([organizationId, type, status])
+  @@index([organizationId, ownerId])
+  @@map("financial_account")
+}
+
+/// A view over a ledger account. No balance column — see `@trustos/wallet`.
+model Wallet {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  ownerId   String
+  ownerType String @default("user")
+  name      String @default("")
+
+  currency String
+
+  /// The account this wallet is a view over. One account, and it is the whole balance.
+  accountId String
+
+  status       String    @default("active")
+  frozenAt     DateTime?
+  frozenReason String?
+
+  /// Limit keys checked before every debit.
+  limitKeys String[]
+
+  metadata Json @default("{}")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  closedAt  DateTime?
+
+  account FinancialAccount @relation(fields: [accountId], references: [id])
+  holds   WalletHold[]
+
+  @@index([organizationId, ownerId])
+  @@map("wallet")
+}
+
+/// Money placed against a pending operation. What makes an authorization mean something.
+model WalletHold {
+  id             String  @id @default(cuid())
+  organizationId String?
+  walletId       String
+
+  amount   Decimal @db.Decimal(28, 8)
+  currency String
+
+  status String @default("active")
+
+  reason    String
+  reference String?
+
+  /// Not nullable, and there is no "no expiry" option. A hold against a failed process is money
+  /// the customer cannot spend and nobody is coming back for.
+  expiresAt DateTime
+
+  /// A partial capture leaves the rest held.
+  capturedAmount Decimal? @db.Decimal(28, 8)
+
+  createdAt      DateTime  @default(now())
+  createdById    String?
+  resolvedAt     DateTime?
+  resolvedReason String?
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, status])
+  @@map("wallet_hold")
+}
+
+/// The business record of a movement. The journal is the accounting record.
+model FinancialTransaction {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// deposit, withdrawal, transfer, payment, refund, fee, adjustment.
+  type   String
+  status String @default("pending")
+
+  amount   Decimal @db.Decimal(28, 8)
+  currency String
+
+  /// Separate from the amount, so net and gross are both visible.
+  feeAmount    Decimal? @db.Decimal(28, 8)
+  /// The fee calculation, stored whole. It shows its working — see `@trustos/fees`.
+  feeBreakdown Json?
+
+  sourceWalletId       String?
+  sourceAccountId      String?
+  destinationWalletId  String?
+  destinationAccountId String?
+
+  holdId String?
+
+  /// Every journal this transaction produced, in order.
+  journalIds String[]
+
+  /// Unique per tenant. This is what makes a retried payment one payment.
+  idempotencyKey String?
+
+  reference   String?
+  description String  @default("")
+
+  parentTransactionId String?
+  /// Across every refund, so a second cannot take it past the amount.
+  refundedAmount      Decimal? @db.Decimal(28, 8)
+
+  failureReason String?
+  failureCode   String?
+
+  /// Set by a risk hook. The platform records it and does not compute it.
+  riskScore    Int?
+  riskDecision String?
+
+  expiresAt DateTime?
+
+  metadata Json @default("{}")
+
+  createdAt   DateTime  @default(now())
+  createdById String?
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  events FinancialTransactionEvent[]
+
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, sourceWalletId, createdAt])
+  @@index([organizationId, reference])
+  @@map("financial_transaction")
+}
+
+/// One step in a transaction's life. The trail a support agent reads.
+model FinancialTransactionEvent {
+  id             String  @id @default(cuid())
+  transactionId  String
+  organizationId String?
+
+  at        DateTime @default(now())
+  fromState String
+  toState   String
+  actorId   String?
+  reason    String?
+  journalId String?
+
+  transaction FinancialTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId, at])
+  @@map("financial_transaction_event")
+}
+
+/// "Somebody owes this, here is how to pay it." Every one expires.
+model PaymentRequest {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// The public reference: what appears on an invoice and is read aloud.
+  reference String
+
+  amount     Decimal  @db.Decimal(28, 8)
+  currency   String
+  paidAmount Decimal? @db.Decimal(28, 8)
+
+  status String @default("pending")
+
+  payeeAccountId String?
+  payeeWalletId  String?
+  payerId        String?
+
+  invoiceReference String?
+  description      String  @default("")
+
+  /// Required. A request with no expiry is a claim payable a year later at a price nobody honours.
+  expiresAt DateTime
+
+  allowPartial Boolean @default(false)
+
+  /// A URL the application calls. Delivery, retry and signing are `@trustos/webhooks`.
+  callbackUrl String?
+
+  /// The provider's own id. Recorded, never interpreted.
+  providerReference String?
+  provider          String?
+
+  transactionIds String[]
+
+  metadata Json @default("{}")
+
+  createdAt       DateTime  @default(now())
+  createdById     String?
+  updatedAt       DateTime  @updatedAt
+  paidAt          DateTime?
+  cancelledAt     DateTime?
+  cancelledReason String?
+
+  @@index([organizationId, status, expiresAt])
+  @@index([organizationId, invoiceReference])
+  @@map("payment_request")
+}
+
+/// A version of a fee schedule. Published versions are immutable.
+model FeeSchedule {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Stable across versions. What a caller asks for.
+  key         String
+  version     Int
+  name        String
+  description String @default("")
+
+  currency   String
+  /// Flat, percentage, tiered, discount and tax components, with their revenue accounts.
+  components Json
+
+  minimumFee Decimal? @db.Decimal(28, 8)
+  maximumFee Decimal? @db.Decimal(28, 8)
+
+  rounding String @default("half_even")
+  status   String @default("draft")
+
+  /// When this version starts pricing, and when it stops. Both, so a transaction priced last week
+  /// re-prices to the same number.
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+
+  /// Separates promotional pricing from standard on a report.
+  promotional Boolean @default(false)
+
+  createdAt     DateTime  @default(now())
+  createdById   String?
+  publishedAt   DateTime?
+  publishedById String?
+
+  @@unique([organizationId, key, version])
+  @@index([organizationId, key, status, effectiveFrom])
+  @@map("fee_schedule")
+}
+
+/// A ceiling on value or count, over a window.
+model FinancialLimit {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  key  String
+  name String
+
+  /// wallet, account, user, organization, global.
+  scope     String
+  /// transaction, day, month, rolling.
+  window    String
+  rollingMs Int?
+
+  /// IANA. "A day" is a local idea, and a platform that assumes UTC refuses a customer in Phnom
+  /// Penh at 07:00 local for yesterday's spending.
+  timezone String @default("UTC")
+
+  currency  String?
+  maxAmount Decimal? @db.Decimal(28, 8)
+  maxCount  Int?
+
+  /// block or warn. A warn-only limit is a metric with a threshold.
+  enforcement String  @default("block")
+  enabled     Boolean @default(true)
+
+  metadata Json @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usage FinancialLimitUsage[]
+
+  @@index([organizationId, scope, enabled])
+  @@map("financial_limit")
+}
+
+/// What has been used against a limit, in one window.
+model FinancialLimitUsage {
+  id             String  @id @default(cuid())
+  limitId        String
+  organizationId String?
+
+  subjectId   String
+  windowStart DateTime
+  windowEnd   DateTime
+
+  amount   Decimal? @db.Decimal(28, 8)
+  currency String?
+  count    Int      @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  limit FinancialLimit @relation(fields: [limitId], references: [id], onDelete: Cascade)
+
+  @@unique([limitId, subjectId, windowStart])
+  @@map("financial_limit_usage")
+}
+
+/// A rate between two currencies, from a named source, at a moment.
+model ExchangeRate {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  fromCurrency String
+  toCurrency   String
+
+  /// More precision than money: a USD/KHR rate at two decimal places is useless.
+  rate Decimal @db.Decimal(28, 12)
+
+  /// Where it came from. Recorded on every conversion.
+  source String
+
+  /// When the rate was struck — not when the row was written.
+  quotedAt  DateTime
+  expiresAt DateTime?
+
+  metadata Json @default("{}")
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, fromCurrency, toCurrency, quotedAt])
+  @@map("exchange_rate")
+}
+
+/// A batch of settlement instructions covering a window.
+model SettlementBatch {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  reference String
+  currency  String
+  status    String @default("open")
+
+  /// Both ends, which is what makes a batch reproducible: "everything completed between these two
+  /// instants". A batch defined only by when it ran cannot be rebuilt.
+  windowStart DateTime
+  windowEnd   DateTime
+
+  /// Money passes through here between sending and confirmation.
+  settlementAccountId String
+
+  instructionCount Int     @default(0)
+  totalAmount      Decimal @db.Decimal(28, 8)
+
+  journalIds        String[]
+  externalReference String?
+  failureReason     String?
+
+  metadata Json @default("{}")
+
+  createdAt   DateTime  @default(now())
+  createdById String?
+  updatedAt   DateTime  @updatedAt
+  sentAt      DateTime?
+  settledAt   DateTime?
+
+  instructions SettlementInstruction[]
+
+  @@index([organizationId, status, windowEnd])
+  @@map("settlement_batch")
+}
+
+/// One counterparty's share of a batch.
+model SettlementInstruction {
+  id             String  @id @default(cuid())
+  organizationId String?
+  batchId        String
+
+  counterpartyId   String
+  counterpartyName String @default("")
+
+  sourceAccountId String
+
+  amount   Decimal @db.Decimal(28, 8)
+  currency String
+
+  status String @default("pending")
+
+  /// What this instruction settles. What makes a batch explicable afterwards.
+  transactionIds String[]
+
+  externalReference String?
+  failureReason     String?
+
+  metadata Json @default("{}")
+
+  createdAt DateTime  @default(now())
+  settledAt DateTime?
+
+  batch SettlementBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, status])
+  @@index([organizationId, counterpartyId])
+  @@map("settlement_instruction")
+}
+
+/// One comparison of the platform against somebody else.
+model ReconciliationRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// What is being reconciled: `bank.usd`, `provider-x.settlement`.
+  key  String
+  /// internal or external.
+  kind String
+
+  currency    String
+  windowStart DateTime
+  windowEnd   DateTime
+
+  status String @default("running")
+
+  internalCount  Int @default(0)
+  externalCount  Int @default(0)
+  matchedCount   Int @default(0)
+  exceptionCount Int @default(0)
+
+  internalTotal Decimal @db.Decimal(28, 8)
+  externalTotal Decimal @db.Decimal(28, 8)
+  /// external − internal. Zero when the two sides agree in total.
+  difference    Decimal @db.Decimal(28, 8)
+
+  /// The tolerance, with the reason it exists — the only question anybody asks about one.
+  tolerance Json
+
+  failureReason String?
+
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+  startedById String?
+
+  exceptions ReconciliationException[]
+
+  @@index([organizationId, key, startedAt])
+  @@map("reconciliation_run")
+}
+
+/// One difference somebody has to work through.
+model ReconciliationException {
+  id             String  @id @default(cuid())
+  organizationId String?
+  runId          String
+
+  /// missing_internal, missing_external, amount_mismatch, date_mismatch, duplicate_*.
+  kind   String
+  status String @default("open")
+
+  reference String
+
+  internalAmount Decimal? @db.Decimal(28, 8)
+  externalAmount Decimal? @db.Decimal(28, 8)
+  difference     Decimal? @db.Decimal(28, 8)
+  currency       String
+
+  internalId String?
+  externalId String?
+  internalAt DateTime?
+  externalAt DateTime?
+
+  /// What to look at, in words. Written once, read by whoever picks it up.
+  detail String
+
+  assignedTo          String?
+  /// Required to close. Without it the same difference appears next month with nobody knowing it
+  /// was already looked at.
+  resolution          String?
+  correctionJournalId String?
+
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+
+  run ReconciliationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status, createdAt])
+  @@index([runId, kind])
+  @@map("reconciliation_exception")
+}
+
+/// What a tenant may do with money. Never merged — the most specific applies whole.
+model FinancialPolicy {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  name        String
+  /// platform, organization, account_type.
+  scopeKind   String
+  scopeTarget String?
+
+  /// Empty means none, not all. An unconfigured platform that accepted every currency would
+  /// produce balances nobody can settle.
+  allowedCurrencies String[]
+
+  allowNegativeBalance Boolean @default(false)
+  /// Per currency, keyed by code.
+  overdraftLimits      Json    @default("{}")
+
+  approvalThresholds  Json @default("{}")
+  highValueThresholds Json @default("{}")
+
+  allowRiskReviewToProceed Boolean @default(false)
+
+  settlementWindowMs     Int?
+  settlementAccountCodes Json @default("{}")
+  feeScheduleKeys        Json @default("{}")
+
+  /// True by default. A reversal moves money back on one person's decision.
+  requireApprovalForReversal Boolean @default(true)
+
+  enabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, scopeKind])
+  @@map("financial_policy")
+}
+
+/// A subject's verification state. The record, not the verification.
+model KycStatus {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  subjectId   String
+  subjectType String @default("user")
+
+  /// none, basic, verified, enhanced.
+  level String
+
+  verifiedBy String?
+  verifiedAt DateTime?
+
+  /// Verification ages. A platform whose KYC never expires has customer records as accurate as
+  /// the day they joined.
+  expiresAt DateTime?
+
+  notes String?
+
+  /// Recorded, never inferred here.
+  pep        Boolean @default(false)
+  sanctioned Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, subjectId])
+  @@map("kyc_status")
+}
+
+/// A suspicious activity review: what was flagged, who looked, what they decided.
+model SuspiciousActivity {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  subjectId      String
+  transactionIds String[]
+
+  /// A rule name, a provider, or a person.
+  trigger String
+  summary String
+
+  status String @default("open")
+
+  assignedTo String?
+  /// Required to leave `investigating`.
+  conclusion String?
+
+  reportedTo String?
+  reportedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, status, createdAt])
+  @@map("suspicious_activity")
+}

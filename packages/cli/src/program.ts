@@ -15,6 +15,7 @@ import {
   runAiListModels,
   runAiValidatePrompts,
 } from './commands/ai';
+import { runFinancialDoctor } from './commands/financial';
 import { runAddModule } from './commands/add-module';
 import { runListModules } from './commands/list-modules';
 import { runUpgrade } from './commands/placeholders';
@@ -255,6 +256,28 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
         setExit(await runAiEvaluate(opts, output));
       },
     );
+
+  // --- financial ------------------------------------------------------------
+  //
+  // A group, for the same reason `ai` and `workflow` are. Offline, like every other doctor here:
+  // the questions it answers are asked on a laptop against a checkout.
+  //
+  // The interesting checks are not "is it installed" — they are the ledger triggers and the
+  // floating-point scan. A financial application with the tables and none of the guarantees works
+  // perfectly and is wrong, which is the state this command exists to find.
+  const financial = program
+    .command('financial')
+    .description('inspect an application’s financial wiring, schema and precision');
+
+  financial
+    .command('doctor')
+    .description('check ledger wiring, schema, database guarantees, currencies and precision')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--json', 'machine-readable output')
+    .option('--verbose', 'explain what this check cannot see')
+    .action(async (opts: { path?: string; json?: boolean; verbose?: boolean }) => {
+      setExit(await runFinancialDoctor(opts, output));
+    });
 
   // --- list-modules ---------------------------------------------------------
   program

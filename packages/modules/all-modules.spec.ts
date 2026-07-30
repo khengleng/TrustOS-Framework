@@ -26,6 +26,11 @@ import { webhookModule } from '@trustos/module-webhook';
 import { agentModule } from '@trustos/module-agent';
 import { aiModule } from '@trustos/module-ai';
 import { ragModule } from '@trustos/module-rag';
+import { ledgerModule } from '@trustos/module-ledger';
+import { reconciliationModule } from '@trustos/module-reconciliation';
+import { settlementModule } from '@trustos/module-settlement';
+import { transactionsModule } from '@trustos/module-transactions';
+import { walletModule } from '@trustos/module-wallet';
 
 /**
  * Module registration, validated across the whole set.
@@ -62,6 +67,13 @@ const ALL: TrustosModule[] = [
   aiModule as TrustosModule,
   ragModule as TrustosModule,
   agentModule as TrustosModule,
+
+  // The financial platform.
+  ledgerModule as TrustosModule,
+  walletModule as TrustosModule,
+  transactionsModule as TrustosModule,
+  settlementModule as TrustosModule,
+  reconciliationModule as TrustosModule,
 ];
 
 describe('every module', () => {
