@@ -1,0 +1,42 @@
+{
+  "name": "@trustos/api-keys",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API keys: secure generation, irreversible hashing, prefixes, scopes, expiry, rotation, revocation and IP allowlists.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "nest"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/identity": "0.1.0",
+    "@trustos/security-events": "0.1.0",
+    "@trustos/security-policy": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "zod": "^3.24.1"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
+    "@nestjs/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28",
+    "@trustos/security-testing": "0.1.0"
+  }
+}

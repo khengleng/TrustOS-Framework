@@ -1,4 +1,5 @@
 import { Prisma, type PrismaClient } from '@trustos/database';
+import type { ActorType } from '@trustos/shared-types';
 import type { AuditQuery, AuditQueryResult, AuditRecord, AuditSink } from './audit-record';
 
 /**
@@ -22,6 +23,7 @@ export class PrismaAuditSink implements AuditSink {
         entityType: record.entityType,
         entityId: record.entityId,
         actorId: record.actorId,
+        actorType: record.actorType,
         organizationId: record.organizationId,
         before: toJson(record.before),
         after: toJson(record.after),
@@ -44,6 +46,7 @@ export class PrismaAuditSink implements AuditSink {
     const where: Prisma.AuditLogWhereInput = {
       ...(query.organizationId !== null ? { organizationId: query.organizationId } : {}),
       ...(query.actorId ? { actorId: query.actorId } : {}),
+      ...(query.actorType ? { actorType: query.actorType } : {}),
       ...(query.action ? { action: query.action } : {}),
       ...(query.entityType ? { entityType: query.entityType } : {}),
       ...(query.entityId ? { entityId: query.entityId } : {}),
@@ -75,6 +78,9 @@ export class PrismaAuditSink implements AuditSink {
         entityType: row.entityType,
         entityId: row.entityId,
         actorId: row.actorId,
+        // Narrowed rather than cast: the column is a plain string, and a value
+        // outside the union means somebody wrote to the table by hand.
+        actorType: toActorType(row.actorType),
         organizationId: row.organizationId,
         before: row.before,
         after: row.after,
@@ -86,6 +92,13 @@ export class PrismaAuditSink implements AuditSink {
       })),
     };
   }
+}
+
+const ACTOR_TYPES: ActorType[] = ['user', 'service_account', 'api_key', 'system'];
+
+function toActorType(value: string | null): ActorType | null {
+  if (value === null) return null;
+  return ACTOR_TYPES.includes(value as ActorType) ? (value as ActorType) : null;
 }
 
 function toJson(value: unknown): Prisma.InputJsonValue | typeof Prisma.JsonNull {

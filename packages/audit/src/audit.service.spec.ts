@@ -16,6 +16,7 @@ function requestContext(overrides: Partial<RequestContext> = {}): RequestContext
     userAgent: 'Mozilla/5.0 (admin console)',
     receivedAt: FIXED_NOW,
     actor: {
+      actorType: 'user',
       userId: 'user_admin',
       email: 'admin@acme.test',
       organizationId: 'org_acme',
@@ -55,6 +56,7 @@ describe('AuditService', () => {
       entityType: 'OrganizationMember',
       entityId: 'member_1',
       actorId: 'user_admin',
+      actorType: 'user',
       organizationId: 'org_acme',
       before: null,
       after: { email: 'new@acme.test', role: 'operator' },
@@ -63,6 +65,48 @@ describe('AuditService', () => {
       userAgent: 'Mozilla/5.0 (admin console)',
       occurredAt: FIXED_NOW,
     });
+  });
+
+  it('records the actor type, so the trail does not attribute a machine action to a person', async () => {
+    // An audit record saying "user X revoked this key" when it was an API key is
+    // evidence pointing at the wrong party.
+    await runWithRequestContext(
+      requestContext({
+        actor: {
+          actorType: 'api_key',
+          userId: 'key_1',
+          email: 'key_1@service.local',
+          organizationId: 'org_acme',
+          roles: [],
+          permissions: ['organization.member.invite'],
+          isSuperAdmin: false,
+          tokenId: 'key_1',
+          scopes: ['merchants:write'],
+        },
+      }),
+      () =>
+        audit.record({
+          action: AUDIT_ACTIONS.MEMBER_INVITED,
+          entityType: AUDIT_ENTITY.ORGANIZATION_MEMBER,
+          entityId: 'member_2',
+        }),
+    );
+
+    expect(sink.records[0]?.actorType).toBe('api_key');
+    expect(sink.records[0]?.actorId).toBe('key_1');
+  });
+
+  it('lets a caller state the actor type explicitly, for a system process', async () => {
+    // A scheduled job has no request context, so nothing would fill it in.
+    await audit.record({
+      action: AUDIT_ACTIONS.CONFIGURATION_CHANGED,
+      entityType: AUDIT_ENTITY.CONFIGURATION,
+      actorId: null,
+      actorType: 'system',
+      organizationId: null,
+    });
+
+    expect(sink.records[0]).toMatchObject({ actorType: 'system', actorId: null });
   });
 
   it('fills actor, organization and request metadata from the ambient context', async () => {

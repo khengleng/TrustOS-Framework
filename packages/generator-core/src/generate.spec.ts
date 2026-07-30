@@ -245,6 +245,42 @@ describe('generateApplication', () => {
     });
   });
 
+  it('generates for the local identity provider by default', async () => {
+    const result = await generateApplication(request(), options);
+    const example = await readFile(join(result.projectRoot, '.env.example'), 'utf8');
+
+    // The default has to boot on the first attempt. `oidc` needs an issuer that
+    // exists, so it is opt-in.
+    expect(example).toContain('IDENTITY_PROVIDER=local');
+    // The OIDC values are present but commented, so switching modes is uncommenting
+    // rather than remembering which four variables exist.
+    expect(example).toContain('# OIDC_ISSUER_URL=');
+
+    const manifest = JSON.parse(
+      await readFile(join(result.projectRoot, 'trustos.json'), 'utf8'),
+    ) as { generated: { identityProvider: string } };
+    expect(manifest.generated.identityProvider).toBe('local');
+  });
+
+  it('generates for an OIDC issuer when asked', async () => {
+    const result = await generateApplication(request({ identityProvider: 'oidc' }), options);
+    const example = await readFile(join(result.projectRoot, '.env.example'), 'utf8');
+
+    expect(example).toContain('IDENTITY_PROVIDER=oidc');
+    // Uncommented, because in this mode they are required rather than optional.
+    expect(example).toMatch(/^OIDC_ISSUER_URL=/m);
+    expect(example).toMatch(/^OIDC_CLIENT_ID=/m);
+    // Present and empty. A generated file must never contain a credential, even a
+    // fake-looking one, because a fake-looking one gets committed and then replaced
+    // in place by a real one.
+    expect(example).toMatch(/^OIDC_CLIENT_SECRET=$/m);
+
+    const manifest = JSON.parse(
+      await readFile(join(result.projectRoot, 'trustos.json'), 'utf8'),
+    ) as { generated: { identityProvider: string } };
+    expect(manifest.generated.identityProvider).toBe('oidc');
+  });
+
   it('substitutes the product identity everywhere it belongs', async () => {
     const result = await generateApplication(
       request({ productDisplayName: 'PayKH Gateway', packageName: '@wing/paykh' }),

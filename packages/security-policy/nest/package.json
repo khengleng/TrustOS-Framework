@@ -1,0 +1,7 @@
+{
+  "//": "Subpath stub: keeps NestJS bindings out of consumers that import '@trustos/security-policy'.",
+  "name": "@trustos/security-policy-nest",
+  "private": true,
+  "main": "../dist/nest/index.js",
+  "types": "../dist/nest/index.d.ts"
+}

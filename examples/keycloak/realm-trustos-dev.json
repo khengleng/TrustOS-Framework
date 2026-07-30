@@ -1,0 +1,138 @@
+{
+  "realm": "trustos-dev",
+  "enabled": true,
+  "displayName": "TrustOS Development",
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "offlineSessionIdleTimeout": 2592000,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "waitIncrementSeconds": 60,
+  "failureFactor": 10,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "passwordPolicy": "length(12) and notUsername(undefined) and passwordHistory(3)",
+  "roles": {
+    "realm": [
+      {
+        "name": "trustos-organization-owner",
+        "description": "Maps to the TrustOS organization_owner role."
+      },
+      {
+        "name": "trustos-administrator",
+        "description": "Maps to the TrustOS administrator role."
+      },
+      {
+        "name": "trustos-operator",
+        "description": "Maps to the TrustOS operator role."
+      },
+      {
+        "name": "trustos-auditor",
+        "description": "Maps to the TrustOS auditor role."
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "acme-owners",
+      "path": "/acme-owners",
+      "realmRoles": ["trustos-organization-owner"],
+      "attributes": {
+        "trustos_organization": ["org_acme"]
+      }
+    },
+    {
+      "name": "acme-operators",
+      "path": "/acme-operators",
+      "realmRoles": ["trustos-operator"],
+      "attributes": {
+        "trustos_organization": ["org_acme"]
+      }
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "trustos-web",
+      "name": "TrustOS Web (public)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:3001/*", "http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3001", "http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3001/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-trustos-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "trustos-api",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "trustos-api",
+      "name": "TrustOS API (confidential)",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "attributes": {
+        "access.token.lifespan": "900"
+      }
+    },
+    {
+      "clientId": "ledger-sync",
+      "name": "Ledger Sync (service account)",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "owner@acme.test",
+      "email": "owner@acme.test",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Ada",
+      "lastName": "Owner",
+      "groups": ["/acme-owners"],
+      "attributes": {
+        "trustos_organization": ["org_acme"]
+      }
+    },
+    {
+      "username": "operator@acme.test",
+      "email": "operator@acme.test",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Ben",
+      "lastName": "Operator",
+      "groups": ["/acme-operators"],
+      "attributes": {
+        "trustos_organization": ["org_acme"]
+      }
+    }
+  ]
+}

@@ -65,6 +65,7 @@ export async function runNew(
     includeApi: answers.includeApi,
     includeAdmin: answers.includeAdmin,
     authEnabled: answers.authEnabled,
+    identityProvider: answers.identityProvider,
     initialRoles: answers.initialRoles,
     ...(options.targetDir ? { targetDirectory: options.targetDir } : {}),
     ...(options.generatedAt ? { generatedAt: options.generatedAt } : {}),
@@ -127,6 +128,7 @@ export async function runNew(
       ['files', String(result.created.length + result.overwritten.length)],
       ['entities', template.entities.join(', ') || '—'],
       ['deployment', answers.deploymentTarget],
+      ['identity', answers.identityProvider],
     ]),
   );
 

@@ -35,6 +35,7 @@ export interface GenerationRequest {
   includeApi?: boolean;
   includeAdmin?: boolean;
   authEnabled?: boolean;
+  identityProvider?: 'local' | 'oidc';
   initialRoles?: string;
   telegramBotName?: string;
   /** Where the project directory is created. Defaults to the process cwd. */
@@ -189,6 +190,7 @@ export async function prepareGeneration(
     includeAdmin,
     includeMiniapp,
     authEnabled: request.authEnabled ?? true,
+    identityProvider: request.identityProvider ?? 'local',
     initialRoles: roles,
     initialRolesCsv: roles.join(','),
     telegramBotName,

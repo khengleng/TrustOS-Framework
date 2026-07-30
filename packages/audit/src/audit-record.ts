@@ -1,4 +1,4 @@
-import type { OrganizationId, RequestId, UserId } from '@trustos/shared-types';
+import type { ActorType, OrganizationId, RequestId, UserId } from '@trustos/shared-types';
 
 /**
  * What the caller supplies. Everything not given here is filled in from the
@@ -12,6 +12,13 @@ export interface AuditRecordInput {
 
   /** Null only for genuinely unauthenticated events, e.g. a failed login. */
   actorId?: UserId | null;
+  /**
+   * What kind of caller acted. Filled in from the request context when omitted.
+   *
+   * A trail that says "user X deleted this" when it was an API key is evidence
+   * pointing at the wrong party, so the type travels with the id.
+   */
+  actorType?: ActorType | null;
   /** Null only for platform-level events that belong to no organization. */
   organizationId?: OrganizationId | null;
 
@@ -33,6 +40,7 @@ export interface AuditRecord {
   entityType: string;
   entityId: string | null;
   actorId: UserId | null;
+  actorType: ActorType | null;
   organizationId: OrganizationId | null;
   before: unknown;
   after: unknown;
@@ -45,6 +53,7 @@ export interface AuditRecord {
 export interface AuditQuery {
   organizationId: OrganizationId | null;
   actorId?: UserId;
+  actorType?: ActorType;
   action?: string;
   entityType?: string;
   entityId?: string;

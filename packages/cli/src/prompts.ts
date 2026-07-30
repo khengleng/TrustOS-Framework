@@ -29,6 +29,7 @@ export interface NewCommandFlags {
   api?: boolean;
   admin?: boolean;
   auth?: boolean;
+  identityProvider?: string;
   roles?: string;
   git?: boolean;
   yes?: boolean;
@@ -45,6 +46,7 @@ export interface CollectedAnswers {
   includeApi: boolean;
   includeAdmin: boolean;
   authEnabled: boolean;
+  identityProvider: 'local' | 'oidc';
   initialRoles: string;
   gitInit: boolean;
 }
@@ -108,9 +110,29 @@ export function resolveAnswersFromFlags(
     includeApi: flags.api ?? template.includedApps.includes('api'),
     includeAdmin: flags.admin ?? template.includedApps.includes('admin'),
     authEnabled: flags.auth ?? true,
+    identityProvider: resolveIdentityProvider(flags.identityProvider),
     initialRoles: parseRoleList(flags.roles ?? SYSTEM_ROLE_SUGGESTIONS.join(',')).join(','),
     gitInit: flags.git ?? true,
   };
+}
+
+/**
+ * Validates the identity mode.
+ *
+ * A closed set with a clear error, because the failure mode of a typo here is a
+ * generated application that silently falls back to local passwords when the operator
+ * asked for an issuer — which is a weaker system than the one they requested.
+ */
+function resolveIdentityProvider(value: string | undefined): 'local' | 'oidc' {
+  const mode = (value ?? 'local').toLowerCase();
+  if (mode !== 'local' && mode !== 'oidc') {
+    throw new GeneratorError(
+      'invalid_input',
+      `Unknown identity provider "${value}".`,
+      'Use --identity-provider local or --identity-provider oidc.',
+    );
+  }
+  return mode;
 }
 
 function resolveDeploymentTarget(
@@ -201,6 +223,24 @@ export async function promptForAnswers(
   const authEnabled =
     flags.auth ?? (await confirm({ message: 'Enable authentication?', default: true }));
 
+  /*
+   * Asked only when authentication is on, and defaulted to `local`, because `oidc`
+   * needs an issuer that exists. A generated application that boots on the first try
+   * and is switched to OIDC by editing one environment variable is a better starting
+   * point than one that cannot start until Keycloak is running.
+   */
+  const identityProvider = authEnabled
+    ? ((flags.identityProvider as 'local' | 'oidc' | undefined) ??
+      (await select({
+        message: 'Identity provider',
+        choices: [
+          { name: 'Local (email and password, framework-managed)', value: 'local' as const },
+          { name: 'OIDC (Keycloak or another issuer)', value: 'oidc' as const },
+        ],
+        default: 'local',
+      })))
+    : 'local';
+
   const selectedRoles = flags.roles
     ? parseRoleList(flags.roles)
     : await checkbox({
@@ -251,6 +291,7 @@ export async function promptForAnswers(
     includeApi,
     includeAdmin,
     authEnabled,
+    identityProvider: resolveIdentityProvider(identityProvider),
     initialRoles: parseRoleList(selectedRoles.join(',')).join(','),
     gitInit,
   };

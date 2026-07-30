@@ -23,6 +23,38 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/{{snakeCase applicati
 JWT_SECRET=development-only-jwt-secret-change-me-please
 JWT_REFRESH_SECRET=development-only-refresh-secret-change-me-ok
 
+# --- Identity -----------------------------------------------------------------
+#
+# local — email and password, managed by this application.
+# oidc  — an external issuer (Keycloak or equivalent) issues the tokens.
+#
+# Exactly one is active. Running both would mean a request could be authenticated
+# by whichever is weaker, so the application refuses to start with both in
+# production. Switching modes is this one variable plus the three OIDC values.
+IDENTITY_PROVIDER={{identityProvider}}
+
+# The issuer and audience that must appear in every token this application accepts.
+# A token with the wrong issuer is a token from somewhere else.
+SECURITY_TOKEN_ISSUER={{applicationName}}
+SECURITY_TOKEN_AUDIENCE={{applicationName}}-api
+
+{{#if (eq identityProvider "oidc")}}# Required when IDENTITY_PROVIDER=oidc. Must be https in production.
+OIDC_ISSUER_URL=http://localhost:8080/realms/{{applicationName}}
+OIDC_CLIENT_ID={{applicationName}}-api
+# The confidential client secret, if the flow needs one. NEVER commit a real value.
+OIDC_CLIENT_SECRET=
+# Provider role name -> TrustOS role name. JSON object.
+OIDC_ROLE_MAP={"realm-admin":"organization_owner","realm-operator":"operator"}
+{{else}}# Required only when IDENTITY_PROVIDER=oidc. Left blank in local mode.
+# OIDC_ISSUER_URL=https://id.example.com/realms/{{applicationName}}
+# OIDC_CLIENT_ID={{applicationName}}-api
+# OIDC_CLIENT_SECRET=
+# OIDC_ROLE_MAP={"realm-admin":"organization_owner"}
+{{/if}}
+# Set to true only as a deliberate, recorded decision: it allows local passwords in
+# a production deployment, which the policy loader otherwise refuses.
+# SECURITY_ALLOW_LOCAL_IDENTITY_IN_PRODUCTION=false
+
 # fatal | error | warn | info | debug | trace | silent
 LOG_LEVEL=debug
 

@@ -48,6 +48,12 @@ export const applicationManifestSchema = z.object({
     api: z.boolean(),
     admin: z.boolean(),
     auth: z.boolean(),
+    /*
+     * Recorded so `trustos add-module` and a later upgrade can tell which identity
+     * mode the application was generated for without guessing from its .env.
+     * Optional, so a manifest written before this field existed still loads.
+     */
+    identityProvider: z.enum(['local', 'oidc']).default('local'),
     deploymentTarget: z.string().min(1).max(40),
   }),
   modules: z.array(installedModuleSchema).default([]),

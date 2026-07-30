@@ -51,6 +51,40 @@ security-relevant thing means one of them will be wrong and nobody will notice.
 - Never remove a guard from `app.module.ts` or change the guard order. That
   order — authenticate, scope, authorize — is the security model.
 
+## 4b. Preserve identity and credential handling
+
+These are the rules that keep the identity layer honest. Each one describes a change
+that compiles, passes an unmodified test suite, and quietly removes a control.
+
+- **Never bypass identity validation.** No route reads a user id from a header, a
+  query parameter or a body field. It comes from the verified actor.
+- **Never decode a token without verifying its signature.** `jwt.decode` is not
+  authentication. If a claim matters, the token must have been verified first.
+- **Always validate the issuer and the audience.** A correctly signed token from a
+  different issuer, or intended for a different audience, is somebody else's token.
+- **Never trust client-supplied roles, permissions or scopes.** They are resolved on
+  the server, per request, from the membership tables — never read from a claim.
+- **Never trust a client-supplied organization id.** The organization comes from the
+  verified actor and the server-side membership check. A header or body field naming
+  an organization is an attempt, not a fact.
+- **Default authorization decisions to deny.** A new policy that cannot decide returns
+  "no opinion", which means deny. Never write a policy that allows on an unknown case.
+- **Never store a plaintext API key or credential.** Only a prefix, a hash and
+  metadata. The plaintext exists for the lifetime of one response.
+- **Never log a token, a credential or a password.** Not at debug level, not
+  temporarily, not "while investigating". Log the prefix or a correlation hash.
+- **Preserve refresh-token reuse detection.** A used refresh token presented again
+  revokes the entire family. Removing that turns a stolen refresh token into a
+  permanent session.
+- **Add negative tests.** A test that a valid token works proves nothing about a
+  tampered one. Every new credential path needs a test that the wrong input is refused.
+- **Document new permissions and scopes** in the permission catalog, with a
+  description, before using them.
+- **Audit every privileged operation** — credential creation, revocation, rotation,
+  role changes, session revocation.
+
+If a change requires breaking one of these, stop and ask. Do not work around it.
+
 ## 5. Add audit logging for sensitive actions
 
 Any change to authentication state, membership, roles, permissions,

@@ -247,16 +247,25 @@ Details: [`docs/security-standards.md`](docs/security-standards.md).
 
 ## Documentation
 
-| Document                                                         | Contents                                                                                                                                                  |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`docs/architecture.md`](docs/architecture.md)                   | Principles, package responsibilities, dependency rules, request lifecycle, tenant isolation rules, deliberate trade-offs, how to create a new application |
-| [`docs/security-standards.md`](docs/security-standards.md)       | Authentication, authorization, tenancy, logging, audit, secrets, and this phase's known limitations                                                       |
-| [`docs/coding-standards.md`](docs/coding-standards.md)           | TypeScript, naming, errors, validation, database access, tests, API compatibility                                                                         |
-| [`docs/modules.md`](docs/modules.md)                             | The module system: what every module guarantees, installing, extension points, what is deliberately absent                                                |
-| [`docs/module-development.md`](docs/module-development.md)       | Writing a module, and the rules it must follow                                                                                                            |
-| [`docs/module-versioning.md`](docs/module-versioning.md)         | Versions, compatibility, and what counts as a breaking change                                                                                             |
-| [`docs/ai-agent-instructions.md`](docs/ai-agent-instructions.md) | How AI coding agents must work in this repository                                                                                                         |
-| [`docs/railway-deployment.md`](docs/railway-deployment.md)       | Deploying to Railway, variables, migrations, troubleshooting                                                                                              |
+| Document                                                               | Contents                                                                                                                                                  |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`docs/architecture.md`](docs/architecture.md)                         | Principles, package responsibilities, dependency rules, request lifecycle, tenant isolation rules, deliberate trade-offs, how to create a new application |
+| [`docs/security-standards.md`](docs/security-standards.md)             | Authentication, authorization, tenancy, logging, audit, secrets, and this phase's known limitations                                                       |
+| [`docs/coding-standards.md`](docs/coding-standards.md)                 | TypeScript, naming, errors, validation, database access, tests, API compatibility                                                                         |
+| [`docs/modules.md`](docs/modules.md)                                   | The module system: what every module guarantees, installing, extension points, what is deliberately absent                                                |
+| [`docs/module-development.md`](docs/module-development.md)             | Writing a module, and the rules it must follow                                                                                                            |
+| [`docs/module-versioning.md`](docs/module-versioning.md)               | Versions, compatibility, and what counts as a breaking change                                                                                             |
+| [`docs/enterprise-identity.md`](docs/enterprise-identity.md)           | The identity abstraction, local and OIDC providers, Keycloak, MFA readiness, production checklist                                                         |
+| [`docs/authorization-model.md`](docs/authorization-model.md)           | The four layers, the default-deny policy engine, tenant isolation, scopes, decision records                                                               |
+| [`docs/api-key-security.md`](docs/api-key-security.md)                 | Key format, hashed storage, lifecycle, rotation, scopes, IP allowlists                                                                                    |
+| [`docs/service-account-security.md`](docs/service-account-security.md) | Machine identities, the two credential modes, why not a human account                                                                                     |
+| [`docs/session-security.md`](docs/session-security.md)                 | Token lifetimes, refresh rotation and reuse detection, device revocation, headers, CORS, CSRF, rate limiting                                              |
+| [`docs/security-testing.md`](docs/security-testing.md)                 | Negative testing, the toolkit, the two trails, redaction, CI gates, the exception process                                                                 |
+| [`docs/threat-model.md`](docs/threat-model.md)                         | Fifteen threats, with controls, residual risk and the future control for each                                                                             |
+| [`docs/incident-response.md`](docs/incident-response.md)               | Severity, the first five minutes, where the evidence is, five playbooks, containment commands                                                             |
+| [`AGENTS.md`](AGENTS.md)                                               | The thirteen mandatory rules for automated changes to the identity and access layer                                                                       |
+| [`docs/ai-agent-instructions.md`](docs/ai-agent-instructions.md)       | How AI coding agents must work in this repository                                                                                                         |
+| [`docs/railway-deployment.md`](docs/railway-deployment.md)             | Deploying to Railway, variables, migrations, troubleshooting                                                                                              |
 
 ---
 

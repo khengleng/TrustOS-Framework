@@ -35,6 +35,30 @@
       "path": "packages/observability"
     },
     {
+      "path": "packages/security-policy"
+    },
+    {
+      "path": "packages/security-events"
+    },
+    {
+      "path": "packages/identity"
+    },
+    {
+      "path": "packages/authorization"
+    },
+    {
+      "path": "packages/session-security"
+    },
+    {
+      "path": "packages/api-keys"
+    },
+    {
+      "path": "packages/service-accounts"
+    },
+    {
+      "path": "packages/security-testing"
+    },
+    {
       "path": "packages/module-sdk"
     },
     {

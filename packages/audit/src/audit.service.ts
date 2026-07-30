@@ -98,6 +98,7 @@ export class AuditService {
       entityType: input.entityType,
       entityId: supplied(input.entityId, null),
       actorId: supplied(input.actorId, context?.actor?.userId ?? null),
+      actorType: supplied(input.actorType, context?.actor?.actorType ?? null),
       organizationId: supplied(input.organizationId, context?.organizationId ?? null),
       before: input.before === undefined ? null : deepRedact(input.before),
       after: input.after === undefined ? null : deepRedact(input.after),

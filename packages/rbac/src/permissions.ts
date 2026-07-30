@@ -48,6 +48,33 @@ export const PERMISSIONS = {
   CONFIG_READ: define('config.read', 'View application configuration.'),
   CONFIG_UPDATE: define('config.update', 'Change application configuration.'),
 
+  /*
+   * Security administration. Split read from write on purpose: an auditor needs
+   * to see which credentials exist and which sessions are open without being able
+   * to revoke either, and an incident responder needs to revoke without being able
+   * to mint. Read never exposes a credential value — see docs/api-key-security.md.
+   */
+  SECURITY_READ: define(
+    'security.read',
+    'View security posture: policy summary and provider status.',
+  ),
+  SECURITY_EVENT_READ: define('security.event.read', 'Read the security event trail.'),
+
+  API_KEY_READ: define('security.api_key.read', 'List API keys and their metadata.'),
+  API_KEY_CREATE: define('security.api_key.create', 'Create an API key.'),
+  API_KEY_ROTATE: define('security.api_key.rotate', 'Rotate an API key.'),
+  API_KEY_REVOKE: define('security.api_key.revoke', 'Revoke an API key.'),
+
+  SERVICE_ACCOUNT_READ: define('security.service_account.read', 'List service accounts.'),
+  SERVICE_ACCOUNT_CREATE: define('security.service_account.create', 'Create a service account.'),
+  SERVICE_ACCOUNT_MANAGE: define(
+    'security.service_account.manage',
+    'Disable a service account or rotate its credential.',
+  ),
+
+  SESSION_READ: define('security.session.read', 'List sessions and devices.'),
+  SESSION_REVOKE: define('security.session.revoke', 'Revoke a session.'),
+
   /** Platform staff only. Never granted to an organization role. */
   PLATFORM_ADMIN: define('platform.admin', 'Operate across every organization.'),
 } as const satisfies Record<string, PermissionDefinition>;

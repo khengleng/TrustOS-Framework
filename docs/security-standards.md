@@ -183,15 +183,23 @@ DELETE` trigger, shipped as migration `20260729010000_auditlog_append_only`.
 
 ## 9. Dependencies
 
-- CI fails on high or critical advisories (`npm audit --audit-level=high`).
+- CI fails on **critical** advisories in production dependencies
+  (`npm audit --omit=dev --audit-level=critical`). High advisories are reported and
+  do not fail: a high advisory in a transitive development dependency should not stop
+  a security fix from shipping.
 - Transitive advisories are pinned forward with `overrides` in the root
   `package.json` rather than by downgrading a direct dependency.
-- Anything accepted rather than fixed is recorded below, with a reason and a
-  review date. The list is currently empty.
-
-| Advisory | Package | Accepted because | Review by |
-| -------- | ------- | ---------------- | --------- |
-| _(none)_ |         |                  |           |
+- `npm ci` must install from the committed lockfile without modifying it. A lockfile
+  that drifts resolves versions nobody reviewed, which makes every audit result above
+  meaningless.
+- A licence report over production dependencies is produced as a CI artefact. It does
+  not fail the build: a new copyleft dependency is a legal question, and a build
+  failure is the wrong way to ask it.
+- Anything accepted rather than fixed goes in
+  [`.security-exceptions.yml`](../.security-exceptions.yml) with an owner and a
+  mandatory expiry, maximum 90 days. CI fails on an expired or undated exception.
+  The process is in
+  [security-testing.md](security-testing.md#the-exception-process).
 
 ---
 
@@ -204,10 +212,15 @@ These are deliberate and documented, not oversights. None should be treated as
    account takeover. A production console should keep the refresh token in an
    `httpOnly; Secure; SameSite=Strict` cookie set by a server route, and hold
    the access token in memory only.
-2. **No rate limiting.** There is nothing slowing down credential stuffing
-   against `/auth/login`. Add a limiter (per IP and per account) before exposing
-   a login endpoint publicly.
-3. **No account lockout or breach detection** beyond refresh-token reuse.
+2. **Rate limiting is process-local.** `InMemoryRateLimiter` (phase 4) limits login,
+   refresh and credential operations, but the counter lives in one process: N
+   instances behind a load balancer give an attacker N times the budget. The
+   `RateLimiter` port is the seam for a shared store. See
+   [session-security.md](session-security.md#rate-limiting).
+3. **Account lockout is also process-local**, with the same consequence and the same
+   `LockoutStore` seam. Breach detection is a small in-process list behind
+   `CompromisedPasswordChecker`, not a real corpus. See
+   [enterprise-identity.md](enterprise-identity.md#local-identity).
 4. **No password reset or email verification.** An invited user is created with
    an unusable password hash and cannot sign in until a reset flow exists.
 5. **Access-token revocation is not immediate.** A revoked role or permission

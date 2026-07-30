@@ -70,6 +70,10 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const actor: ActorContext = {
+      // A token minted by the local provider always represents a person. Machine
+      // callers arrive through @trustos/api-keys or @trustos/service-accounts,
+      // which set their own actor type — see @trustos/identity.
+      actorType: 'user',
       userId: claims.sub,
       email: claims.email,
       organizationId: claims.org,
@@ -77,6 +81,20 @@ export class JwtAuthGuard implements CanActivate {
       permissions: claims.perms ?? [],
       isSuperAdmin: Boolean(claims.sa),
       tokenId: claims.jti,
+      provider: 'local',
+      /*
+       * The local provider has no second factor, so assurance is `low` and `mfa`
+       * is false — stated rather than left undefined, so a route requiring MFA
+       * refuses a local session instead of silently accepting one whose assurance
+       * was never established.
+       */
+      authentication: {
+        mfa: false,
+        level: 'low',
+        methods: ['pwd'],
+        acr: null,
+        authenticatedAt: claims.iat ? new Date(claims.iat * 1000) : null,
+      },
     };
 
     request.actor = actor;

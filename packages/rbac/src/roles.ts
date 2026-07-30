@@ -64,6 +64,17 @@ export const SYSTEM_ROLES: Record<SystemRoleName, SystemRoleDefinition> = {
       PERMISSIONS.AUDIT_READ,
       PERMISSIONS.CONFIG_READ,
       PERMISSIONS.CONFIG_UPDATE,
+      PERMISSIONS.SECURITY_READ,
+      PERMISSIONS.SECURITY_EVENT_READ,
+      PERMISSIONS.API_KEY_READ,
+      PERMISSIONS.API_KEY_CREATE,
+      PERMISSIONS.API_KEY_ROTATE,
+      PERMISSIONS.API_KEY_REVOKE,
+      PERMISSIONS.SERVICE_ACCOUNT_READ,
+      PERMISSIONS.SERVICE_ACCOUNT_CREATE,
+      PERMISSIONS.SERVICE_ACCOUNT_MANAGE,
+      PERMISSIONS.SESSION_READ,
+      PERMISSIONS.SESSION_REVOKE,
     ),
     grantableRoles: ['organization_owner', 'administrator', 'operator', 'auditor'],
   },
@@ -83,6 +94,20 @@ export const SYSTEM_ROLES: Record<SystemRoleName, SystemRoleDefinition> = {
       PERMISSIONS.USER_READ,
       PERMISSIONS.AUDIT_READ,
       PERMISSIONS.CONFIG_READ,
+      /*
+       * Containment, not issuance. An administrator can see every credential and
+       * take any of them away, which is what an incident needs at three in the
+       * morning; minting a new long-lived credential is an owner's decision, so
+       * `create` and `rotate` are deliberately absent.
+       */
+      PERMISSIONS.SECURITY_READ,
+      PERMISSIONS.SECURITY_EVENT_READ,
+      PERMISSIONS.API_KEY_READ,
+      PERMISSIONS.API_KEY_REVOKE,
+      PERMISSIONS.SERVICE_ACCOUNT_READ,
+      PERMISSIONS.SERVICE_ACCOUNT_MANAGE,
+      PERMISSIONS.SESSION_READ,
+      PERMISSIONS.SESSION_REVOKE,
     ),
     // Deliberately cannot grant organization_owner or administrator.
     grantableRoles: ['operator', 'auditor'],
@@ -109,6 +134,12 @@ export const SYSTEM_ROLES: Record<SystemRoleName, SystemRoleDefinition> = {
       PERMISSIONS.MEMBER_READ,
       PERMISSIONS.ROLE_READ,
       PERMISSIONS.AUDIT_READ,
+      // Sees the posture; changes none of it.
+      PERMISSIONS.SECURITY_READ,
+      PERMISSIONS.SECURITY_EVENT_READ,
+      PERMISSIONS.API_KEY_READ,
+      PERMISSIONS.SERVICE_ACCOUNT_READ,
+      PERMISSIONS.SESSION_READ,
     ),
     grantableRoles: [],
   },

@@ -66,6 +66,13 @@ const COMMON_VARIABLES: TemplateVariable[] = [
     default: true,
   },
   {
+    name: 'identityProvider',
+    description:
+      'local or oidc. Selects which identity provider the generated API authenticates against.',
+    required: false,
+    default: 'local',
+  },
+  {
     name: 'initialRoles',
     description: 'Comma-separated role names seeded for the product.',
     required: false,

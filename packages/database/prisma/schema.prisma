@@ -189,6 +189,14 @@ model RefreshToken {
   /// family — the standard reuse-detection response.
   familyId  String
   expiresAt DateTime
+  /// When this token was exchanged for its successor.
+  ///
+  /// Distinct from `revokedAt`, and the distinction is the whole of reuse
+  /// detection: a token that was *used* and is presented again means somebody
+  /// holds a copy, so the entire family is killed; a token that was *revoked*
+  /// was already dealt with. Collapsing the two would turn a stolen refresh
+  /// token into an ordinary rejection and leave the thief's session alive.
+  usedAt    DateTime?
   revokedAt DateTime?
   /// Why it was revoked: "rotated", "logout", "reuse_detected", "admin".
   revokedReason String?
@@ -227,6 +235,12 @@ model AuditLog {
 
   /// Null for unauthenticated events such as a failed login.
   actorId        String?
+  /// What kind of caller acted: user, service_account, api_key or system.
+  ///
+  /// A trail that says "user X deleted this" when it was a machine is evidence
+  /// pointing at the wrong party. Nullable because records written before phase 4
+  /// predate the column, and a backfill would be a guess.
+  actorType      String?
   /// Null for platform-level events that belong to no organization.
   organizationId String?
 
@@ -245,4 +259,172 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([action, createdAt])
   @@index([requestId])
+}
+
+// ===========================================================================
+// Phase 4 — identity, credentials, sessions and security events
+//
+// These live in the framework schema rather than in an installable fragment
+// because they are the security foundation: an application that has API keys but
+// no table to hash them into has an API-key feature nobody can use safely.
+// ===========================================================================
+
+/// A security event: what happened to the perimeter.
+///
+/// Distinct from AuditLog, which answers "who changed what". Most rows here have
+/// no organization and no actor, because the point is that authentication did not
+/// succeed — and a failed login is the single most useful security record there
+/// is. Reading this table requires `platform.admin`.
+model SecurityEvent {
+  id String @id
+
+  type     String
+  severity String
+  result   String
+  reason   String?
+
+  actorId        String?
+  actorType      String?
+  organizationId String?
+
+  ipAddress String?
+  userAgent String?
+  requestId String?
+
+  application String?
+  provider    String?
+
+  /// Risk signals, when something upstream produced them.
+  risk Json?
+  /// Non-sensitive detail. Redacted by @trustos/security-events before it lands.
+  context Json?
+
+  occurredAt DateTime @default(now())
+
+  @@index([type, occurredAt])
+  @@index([severity, occurredAt])
+  @@index([organizationId, occurredAt])
+  @@index([actorId, occurredAt])
+  @@index([requestId])
+}
+
+/// An API key. Only a prefix, a hash and metadata — never the key.
+model ApiKey {
+  id             String @id @default(cuid())
+  organizationId String
+
+  /// First characters of the key, e.g. `tos_live_ab`. Identifies without granting.
+  keyPrefix String
+  /// SHA-256 of the whole key. The key itself is shown once, at creation, and
+  /// never stored or recoverable.
+  keyHash   String @unique
+
+  name        String
+  description String?
+  /// Scopes this credential may exercise, e.g. ["payments:read"].
+  scopes      String[]
+  /// Optional CIDR allowlist. Empty means any address.
+  ipAllowlist String[]
+
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  /// Address the key was last used from, for a leak investigation.
+  lastUsedIp String?
+  usageCount Int       @default(0)
+
+  revokedAt     DateTime?
+  revokedReason String?
+  /// Set when this key replaced another during a rotation.
+  rotatedFromId String?
+
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([organizationId, name])
+  @@index([organizationId, revokedAt])
+  @@index([keyPrefix])
+  @@index([expiresAt])
+  @@index([deletedAt])
+}
+
+/// A machine identity. Never a human user account reused for an integration.
+model ServiceAccount {
+  id String @id @default(cuid())
+  /// Null for a platform-level account that belongs to no organization.
+  organizationId String?
+
+  name        String
+  description String?
+  status      String  @default("active")
+
+  /// Roles granted inside the owning organization.
+  roles  String[]
+  /// Scopes this account may exercise.
+  scopes String[]
+
+  /// OIDC client id, when the account authenticates by client credentials.
+  oidcClientId String?
+  /// SHA-256 of the local credential, when it authenticates with one.
+  credentialHash   String?
+  credentialPrefix String?
+  credentialExpiresAt DateTime?
+  credentialRotatedAt DateTime?
+
+  lastUsedAt DateTime?
+  lastUsedIp String?
+  expiresAt  DateTime?
+
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([organizationId, name])
+  @@index([organizationId, status])
+  @@index([credentialPrefix])
+  @@index([oidcClientId])
+  @@index([deletedAt])
+}
+
+/// A session. One row per sign-in, so it can be listed and revoked individually.
+///
+/// Holds no token. The refresh token's hash lives in RefreshToken; this row is the
+/// thing a person recognises in a "your devices" list and the thing an
+/// administrator revokes.
+model UserSession {
+  id     String @id @default(cuid())
+  userId String
+
+  /// Rotation family, linking this session to its refresh tokens.
+  familyId String @unique
+  /// Which client the session belongs to — a web app, a mobile app, a CLI.
+  clientId String?
+
+  /// Human-readable device label, derived from the user agent. Not a fingerprint.
+  deviceLabel String?
+  userAgent   String?
+  /// Correlation hash of the address, not the address. See @trustos/security-policy.
+  ipHash      String?
+
+  organizationId String?
+
+  createdAt      DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+  /// Absolute end of the session, whatever the activity.
+  expiresAt      DateTime
+
+  revokedAt     DateTime?
+  revokedReason String?
+
+  /// Authentication strength recorded at sign-in, for step-up policies.
+  authenticationLevel String  @default("low")
+  mfaCompleted        Boolean @default(false)
+  provider            String  @default("local")
+
+  @@index([userId, revokedAt])
+  @@index([userId, lastActivityAt])
+  @@index([expiresAt])
+  @@index([revokedAt])
 }

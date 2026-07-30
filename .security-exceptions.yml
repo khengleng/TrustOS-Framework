@@ -1,0 +1,28 @@
+# Accepted security findings.
+#
+# An entry here is a dated decision by a named person, not a suppression. CI checks
+# that every entry has an `expires` date and that none has passed — an exception with
+# no expiry is a decision nobody revisits, which is the exact failure this file exists
+# to prevent.
+#
+# Before adding one, read the process in docs/security-testing.md#the-exception-process.
+# The short version: confirm it is not exploitable here, look for a real fix first, and
+# only then record it.
+#
+# Maximum expiry is 90 days. On expiry the build fails again; renew with a fresh
+# justification, or fix the finding.
+#
+# Format:
+#
+#   - advisory: GHSA-xxxx-xxxx-xxxx
+#     package: some-transitive-dep
+#     severity: critical
+#     reason: >
+#       Reachable only from the SVG rasteriser, which this framework does not use.
+#       Verified by tracing the import graph from packages/*/src.
+#     mitigations: Not called. Removed from the bundle by the build.
+#     accepted-by: security-owner@example.com
+#     accepted-on: 2026-07-30
+#     expires: 2026-10-30
+
+exceptions: []

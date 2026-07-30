@@ -57,6 +57,10 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
     .option('--no-api', 'do not generate the API')
     .option('--no-admin', 'do not generate the admin application')
     .option('--no-auth', 'do not wire authentication')
+    .option(
+      '--identity-provider <mode>',
+      'local | oidc — local passwords, or an OIDC issuer such as Keycloak',
+    )
     .option('--roles <list>', 'comma-separated initial roles')
     .option('--no-git', 'do not initialize a git repository')
     .option('-y, --yes', 'accept defaults; never prompt')
