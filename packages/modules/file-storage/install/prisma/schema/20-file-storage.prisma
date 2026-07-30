@@ -1,0 +1,63 @@
+// =============================================================================
+// file-storage module
+//
+// Installed by `trustos add-module file-storage`. Generate the SQL with
+// `npm run db:migrate` — the module ships the schema, the application owns the
+// migration, because a migration is only correct against a real schema.
+//
+// Conventions, identical to the framework's own tenant-owned models:
+//   * `organizationId` is a scalar, not a Prisma relation. Declaring a relation
+//     would require a back-reference in 00-framework.prisma, the file replaced
+//     wholesale on a framework upgrade.
+//   * `deletedAt` for soft delete. Module code never hard-deletes.
+//   * every index leads with `organizationId`, because every legitimate query
+//     filters on it.
+// =============================================================================
+
+/// One stored object. `storageKey` is the provider key, including the
+/// `org/<organizationId>/` namespace; `name` is what a caller supplied.
+model StoredObject {
+  id             String @id @default(cuid())
+  organizationId String
+  storageKey     String
+  name           String
+  contentType    String
+  /// SHA-256 of the current version, lowercase hex.
+  checksum       String
+  byteSize       Int
+  version        Int    @default(1)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  versions StoredObjectVersion[]
+
+  // A name is unique per organization, not globally: two customers may both
+  // store "contract.pdf".
+  @@unique([organizationId, name])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, name])
+  @@index([deletedAt])
+}
+
+/// Append-only version history. Rows are written, never updated.
+model StoredObjectVersion {
+  id             String @id @default(cuid())
+  organizationId String
+  objectId       String
+  version        Int
+  storageKey     String
+  checksum       String
+  byteSize       Int
+  contentType    String
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  object StoredObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+
+  @@unique([objectId, version])
+  @@index([organizationId, objectId])
+  @@index([deletedAt])
+}

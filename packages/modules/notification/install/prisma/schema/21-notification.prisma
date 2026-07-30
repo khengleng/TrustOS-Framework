@@ -1,0 +1,97 @@
+// =============================================================================
+// notification module
+//
+// Installed by `trustos add-module notification`. Generate the SQL with
+// `npm run db:migrate`.
+//
+// `NotificationAttempt` is append-only in application code: attempts are the
+// record of what a provider actually said, and rewriting one would make the
+// delivery history unreliable. Enforce it in the database as well if the product
+// needs the guarantee — see the AuditLog trigger in the framework migrations for
+// the pattern.
+// =============================================================================
+
+enum NotificationChannelType {
+  email
+  telegram
+  webhook
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  DEAD
+  CANCELLED
+}
+
+/// A message template. `variables` is the allow-list of names the body may
+/// reference; a placeholder outside it is refused when the template is saved.
+model NotificationTemplate {
+  id             String                  @id @default(cuid())
+  organizationId String
+  key            String
+  name           String
+  channel        NotificationChannelType
+  subject        String
+  body           String
+  variables      String[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Keys are unique per organization: two customers may both have "welcome".
+  @@unique([organizationId, key])
+  @@index([organizationId, channel])
+  @@index([deletedAt])
+}
+
+/// One message. Rendered content is stored so the delivery history shows what
+/// was actually sent, not what the template says today.
+model NotificationMessage {
+  id                String                    @id @default(cuid())
+  organizationId    String
+  templateKey       String
+  channel           NotificationChannelType
+  target            String
+  subject           String
+  body              String
+  status            NotificationDeliveryStatus @default(PENDING)
+  attempts          Int                       @default(0)
+  lastError         String?
+  providerReference String?
+  nextAttemptAt     DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  attemptRecords NotificationAttempt[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  // Supports the queue drain: due retries, oldest first.
+  @@index([status, nextAttemptAt])
+  @@index([deletedAt])
+}
+
+/// Append-only delivery attempts.
+model NotificationAttempt {
+  id                String  @id @default(cuid())
+  organizationId    String
+  messageId         String
+  attempt           Int
+  accepted          Boolean
+  failureReason     String?
+  providerReference String?
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  message NotificationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, attempt])
+  @@index([organizationId, messageId])
+  @@index([deletedAt])
+}

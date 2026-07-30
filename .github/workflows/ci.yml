@@ -106,6 +106,69 @@ jobs:
       - name: Validate every template
         run: node packages/cli/bin/trustos.js validate-template --all
 
+  modules:
+    name: validate modules
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the framework packages
+        run: npm run build:packages
+
+      # The catalog validates on import: duplicate permissions, routes, schema
+      # fragments or environment variables across modules, an unresolvable
+      # dependency, or a cycle, all make it refuse to load.
+      - name: Validate module registration
+        run: npm run modules:validate
+
+      - name: CLI can list modules without importing one
+        run: |
+          node packages/cli/bin/trustos.js list-modules --verbose
+          node packages/cli/bin/trustos.js list-modules --json > /tmp/modules.json
+          node -e "
+            const modules = require('/tmp/modules.json');
+            if (modules.length !== 7) { console.error('expected 7 modules, got ' + modules.length); process.exit(1); }
+            for (const entry of modules) {
+              if (entry.routes.length === 0) { console.error(entry.metadata.id + ' has no routes'); process.exit(1); }
+              if (entry.auditEvents.length === 0) { console.error(entry.metadata.id + ' has no audit events'); process.exit(1); }
+            }
+            console.log(modules.length + ' modules, ' + modules.reduce((n, e) => n + e.routes.length, 0) + ' routes');
+          "
+
+      # Every module must ship the five kinds of test the standard requires. A
+      # module whose isolation suite was never written would otherwise pass CI by
+      # having no failing tests.
+      - name: Every module ships the required tests
+        run: |
+          for module in packages/modules/*/; do
+            id=$(basename "$module")
+            for required in "tenant isolation" "configuration validation" "lifecycle"; do
+              if ! grep -rqi "$required" "$module/src"; then
+                echo "::error::$id has no \"$required\" tests"
+                exit 1
+              fi
+            done
+            test -f "$module/README.md" || { echo "::error::$id has no README.md"; exit 1; }
+            test -f "$module/AGENTS.md" || { echo "::error::$id has no AGENTS.md"; exit 1; }
+            echo "$id ok"
+          done
+
+      # Boots a real Nest application with all seven modules and asserts that
+      # injection resolves, every advertised route is mapped, each initialize hook
+      # ran, and the health indicators reach the readiness probe.
+      - name: NestJS wiring boots
+        run: npx vitest run packages/modules/nest-wiring.spec.ts packages/modules/all-modules.spec.ts
+
   generated:
     name: generated app (${{ matrix.template }})
     runs-on: ubuntu-latest
@@ -242,6 +305,67 @@ jobs:
       - name: Build the generated application
         working-directory: /tmp/generated/sample-${{ matrix.template }}
         run: npm run build
+
+      # Installing every module into a real generated application, which is the
+      # only place the merge behaviour, the Prisma fragment numbering and the
+      # generated wiring meet each other.
+      - name: Install every module
+        run: |
+          node packages/cli/bin/trustos.js add-module \
+            notification document workflow reporting search feature-flags \
+            --path "/tmp/generated/sample-${{ matrix.template }}" \
+            --framework-path "$GITHUB_WORKSPACE" \
+            --generated-at 2026-01-01T00:00:00.000Z \
+            --yes --verbose
+
+      - name: Installing again is a no-op
+        run: |
+          node packages/cli/bin/trustos.js add-module notification document \
+            --path "/tmp/generated/sample-${{ matrix.template }}" \
+            --framework-path "$GITHUB_WORKSPACE" \
+            --yes > /tmp/reinstall.log
+          grep -q "already installed" /tmp/reinstall.log
+          echo "add-module is idempotent."
+
+      - name: A hand-edited managed file is refused, not overwritten
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: |
+          # Strip the marker: the installer must then treat the file as somebody's
+          # code rather than as its own.
+          cp apps/api/src/modules/trustos-modules.ts /tmp/managed.bak
+          grep -v 'trustos:managed-file' /tmp/managed.bak > apps/api/src/modules/trustos-modules.ts
+
+          if node "$GITHUB_WORKSPACE/packages/cli/bin/trustos.js" add-module search \
+               --path . --framework-path "$GITHUB_WORKSPACE" --yes 2>/tmp/refuse.log; then
+            echo "::error::the installer overwrote a file it does not own"
+            exit 1
+          fi
+          grep -q "Refusing to overwrite" /tmp/refuse.log
+          cp /tmp/managed.bak apps/api/src/modules/trustos-modules.ts
+          echo "Unowned files are refused."
+
+      - name: No secrets after installing modules
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: |
+          test ! -e .env || { echo "::error::a .env file appeared"; exit 1; }
+          # A module contributes variable *names* to .env.example, never values —
+          # so it cannot contribute a secret-shaped default. Scoped to the module
+          # blocks: the template's own NODE_ENV=development legitimately has a value.
+          if awk '/^# >>> trustos module:/{i=1} /^# <<< trustos module:/{i=0} i' .env.example \
+               | grep -E '^[A-Z_]+=.+'; then
+            echo "::error::a module contributed a value to .env.example"
+            exit 1
+          fi
+          echo "No secrets."
+
+      - name: The generated application still works with modules installed
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: |
+          npm install
+          npm run db:validate
+          npm run typecheck
+          npm test
+          npm run build
 
   security:
     name: dependency audit

@@ -1,0 +1,36 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../../auth"
+    },
+    {
+      "path": "../../errors"
+    },
+    {
+      "path": "../../module-registry"
+    },
+    {
+      "path": "../../module-sdk"
+    },
+    {
+      "path": "../../rbac"
+    },
+    {
+      "path": "../../shared-types"
+    },
+    {
+      "path": "../../tenancy"
+    },
+    {
+      "path": "../../validation"
+    }
+  ]
+}

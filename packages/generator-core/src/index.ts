@@ -18,3 +18,6 @@ export * from './plan';
 export * from './writer';
 export * from './generate';
 export * from './validate-template';
+export * from './application-manifest';
+export * from './module-install-files';
+export * from './install-module';

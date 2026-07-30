@@ -9,7 +9,49 @@ independently. A generated project records all three in its `trustos.json`.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **`trustos add-module <modules…>`** — installs modules into a generated
+  application. Local only: every module is already in this repository and has been
+  through review, so there is no download, no registry lookup and no post-install
+  script.
+  - Resolves dependencies (`document` pulls in `file-storage`) and installs them
+    dependency-first.
+  - Checks compatibility against the framework version recorded in the
+    application's `trustos.json`, and refuses a `deprecated` module without
+    `--force`.
+  - Plan-then-apply, so `--dry-run` runs the identical code path and stops before
+    the write.
+  - Idempotent: a module already installed is reported and skipped, and the
+    managed files are regenerated from the whole installed set rather than
+    appended to.
+  - Refuses to overwrite a file it does not own. `app.module.ts` is never touched.
+  - Rolls a failed run back — files it created are removed, files it overwrote are
+    restored.
+  - Flags: `--path`, `--framework-path`, `--include-optional`, `--dry-run`,
+    `--force`, `--verbose`, `--json`, `-y/--yes`, `--generated-at`.
+- **`trustos list-modules`** — with `--verbose` and `--json`. Reads the catalog,
+  which is data, so listing a module never imports or executes one.
+
+### Changed
+
+- `add-module` was a placeholder in 0.1.0 and is now implemented. `upgrade`
+  remains a placeholder and still exits non-zero.
+- Generated applications now ship `apps/api/src/modules/trustos-modules.ts` (empty
+  until a module is installed) and `docs/modules.md`, and `trustos.json` gains a
+  `modules` array.
+- Generated `package.json` now pins the same transitive advisories the framework
+  root pins (`postcss`, `sharp`, `js-yaml` via `@nestjs/swagger`), so a generated
+  application reports zero high-severity vulnerabilities rather than three.
+- Generated applications now declare `pino-pretty` and `rimraf`, which their own
+  scripts and logger already required.
+
+### Fixed
+
+- `AppModule` in the base template now exports `PrismaService`. It was provided
+  but not exported, so any module or product module injecting it would have failed
+  to resolve at start-up — a boot failure that only appears when an application is
+  actually booted.
 
 ## [0.1.0] — 2026-07-30
 

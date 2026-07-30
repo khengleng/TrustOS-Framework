@@ -6,7 +6,9 @@ import { runNew } from './commands/new';
 import { runListTemplates } from './commands/list-templates';
 import { runValidateTemplate } from './commands/validate-template';
 import { runDoctor, type DoctorReport } from './commands/doctor';
-import { runAddModule, runUpgrade } from './commands/placeholders';
+import { runAddModule } from './commands/add-module';
+import { runListModules } from './commands/list-modules';
+import { runUpgrade } from './commands/placeholders';
 
 /**
  * The CLI program.
@@ -113,13 +115,35 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
       setExit(printDoctorReport(report, opts, output));
     });
 
-  // --- placeholders ---------------------------------------------------------
+  // --- list-modules ---------------------------------------------------------
+  program
+    .command('list-modules')
+    .description('list the modules that can be installed')
+    .option('--json', 'machine-readable output')
+    .option('--verbose', 'show permissions, routes, configuration and extension points')
+    .action((opts: { json?: boolean; verbose?: boolean }) => {
+      setExit(runListModules(opts, output));
+    });
+
+  // --- add-module -----------------------------------------------------------
   program
     .command('add-module')
-    .argument('[module]', 'module to add')
-    .description('(not implemented in this phase) add a module to an application')
-    .action((moduleName: string | undefined) => {
-      setExit(runAddModule(moduleName, output));
+    .argument('[modules...]', 'module ids, e.g. notification document')
+    .description('install modules into a generated application')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option(
+      '--framework-path <dir>',
+      'framework checkout to install from (needed until the packages are published)',
+    )
+    .option('--include-optional', 'install optional dependencies too')
+    .option('--dry-run', 'show what would change, write nothing')
+    .option('--force', 'allow a deprecated module')
+    .option('--verbose', 'list every file')
+    .option('--json', 'machine-readable plan')
+    .option('-y, --yes', 'do not ask for confirmation')
+    .option('--generated-at <iso>', 'fix the install timestamp (for reproducible output)')
+    .action(async (modules: string[] | undefined, opts: Record<string, unknown>) => {
+      setExit(await runAddModule(modules ?? [], opts as Record<string, never>, output));
     });
 
   program
@@ -139,9 +163,12 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
       '  trustos new learning --dry-run --verbose preview every file',
       '  trustos list-templates --verbose',
       '  trustos validate-template --all',
+      '  trustos list-modules --verbose',
+      '  trustos add-module notification --dry-run',
+      '  trustos add-module document --yes      also installs file-storage',
       '  trustos doctor',
       '',
-      'Docs: docs/cli.md',
+      'Docs: docs/cli.md, docs/modules.md',
     ].join('\n'),
   );
 

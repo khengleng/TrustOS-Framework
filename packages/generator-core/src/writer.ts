@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, rm, rmdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, rmdir, writeFile } from 'node:fs/promises';
 import { dirname, relative, sep } from 'node:path';
 import { GeneratorError } from './errors';
 import { isInside } from './paths';
@@ -49,8 +49,15 @@ export async function applyPlan(
   const createdFiles: string[] = [];
   const createdDirectories: string[] = [];
 
+  // Files this run overwrote, with their previous contents, so a rollback can put
+  // them back. Phase 2 only removed what it created, which was enough for
+  // generating a new project into an empty directory; installing a module writes
+  // into an existing one, where losing the previous contents of a file would be
+  // the worst possible outcome of a failed run.
+  const overwritten = new Map<string, string>();
+
   if (!force) {
-    const conflicts = plan.files.filter((file) => file.exists);
+    const conflicts = plan.files.filter((file) => file.exists && !file.managed);
     if (conflicts.length > 0) {
       throw new GeneratorError(
         'target_not_empty',
@@ -77,6 +84,10 @@ export async function applyPlan(
       }
 
       const existed = existsSync(file.absolutePath);
+      if (existed && !overwritten.has(file.absolutePath)) {
+        overwritten.set(file.absolutePath, await readFile(file.absolutePath, 'utf8'));
+      }
+
       await writeFile(file.absolutePath, file.contents, { encoding: 'utf8' });
 
       if (!existed) createdFiles.push(file.absolutePath);
@@ -84,7 +95,7 @@ export async function applyPlan(
       onFile?.({ path: file.path, action: existed ? 'overwritten' : 'created' });
     }
   } catch (error) {
-    const removed = await rollback(createdFiles, createdDirectories, plan.projectRoot);
+    const removed = await rollback(createdFiles, createdDirectories, overwritten, plan.projectRoot);
     options.onRollback?.({ removed });
 
     if (error instanceof GeneratorError) throw error;
@@ -130,8 +141,24 @@ async function ensureDirectory(directory: string, root: string): Promise<string[
  * Failures here are collected rather than thrown: a rollback that stops at the
  * first error leaves more mess than one that keeps going.
  */
-async function rollback(files: string[], directories: string[], root: string): Promise<number> {
+async function rollback(
+  files: string[],
+  directories: string[],
+  overwritten: Map<string, string>,
+  root: string,
+): Promise<number> {
   let removed = 0;
+
+  // Restore before removing: a file that was overwritten was not created by this
+  // run, so it must be put back rather than deleted.
+  for (const [path, previous] of overwritten) {
+    if (!isInside(root, path)) continue;
+    try {
+      await writeFile(path, previous, { encoding: 'utf8' });
+    } catch {
+      // Keep unwinding; a partial rollback beats an aborted one.
+    }
+  }
 
   for (const file of [...files].reverse()) {
     if (!isInside(root, file)) continue;

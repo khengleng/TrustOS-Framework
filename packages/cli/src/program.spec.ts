@@ -259,15 +259,103 @@ describe('new', () => {
   });
 });
 
-describe('placeholder commands', () => {
-  it('add-module explains itself and exits non-zero', async () => {
-    const { code, output } = await invoke(['add-module', 'billing']);
+describe('list-modules', () => {
+  it('lists every module without importing one', async () => {
+    const { code, output } = await invoke(['list-modules']);
 
-    expect(code).toBe(2);
-    expect(output).toContain('not implemented yet');
-    expect(output).toContain('billing');
+    expect(code).toBe(0);
+    for (const id of [
+      'notification',
+      'document',
+      'workflow',
+      'reporting',
+      'search',
+      'feature-flags',
+      'file-storage',
+    ]) {
+      expect(output).toContain(id);
+    }
   });
 
+  it('shows permissions, routes and extension points when verbose', async () => {
+    const { output } = await invoke(['list-modules', '--verbose']);
+
+    expect(output).toContain('notification.message.send');
+    expect(output).toContain('POST /notifications/messages');
+    expect(output).toContain('NotificationChannel');
+    // What a module deliberately does not do belongs next to what it does.
+    expect(output).toContain('out of scope');
+  });
+
+  it('reports the install order, which is not the order ids are typed in', async () => {
+    const { output } = await invoke(['list-modules']);
+    expect(output).toContain('file-storage -> document');
+  });
+
+  it('emits the catalog as JSON', async () => {
+    const { output } = await invoke(['list-modules', '--json']);
+    const parsed = JSON.parse(output) as Array<{ metadata: { id: string } }>;
+
+    expect(parsed).toHaveLength(7);
+  });
+});
+
+describe('add-module', () => {
+  it('lists the available modules when none is named', async () => {
+    const { code, output } = await invoke(['add-module']);
+
+    expect(code).toBe(1);
+    expect(output).toContain('Name at least one module');
+    expect(output).toContain('notification');
+  });
+
+  it('refuses to run outside a generated application', async () => {
+    // Checked before the module request is even resolved: without it the command
+    // would write into whatever directory it was run from.
+    const { code, output } = await invoke(['add-module', 'search', '--path', workspace]);
+
+    expect(code).toBe(1);
+    expect(output).toContain('trustos.json');
+  });
+
+  it('refuses a module that is not in the catalog', async () => {
+    await writeFile(
+      join(workspace, 'trustos.json'),
+      JSON.stringify({
+        frameworkVersion: '0.1.0',
+        template: 'generic-saas',
+        templateVersion: '0.1.0',
+        cliVersion: '0.1.0',
+        generatedAt: '2026-01-01T00:00:00.000Z',
+        application: {
+          name: 'demo',
+          packageName: 'demo',
+          displayName: 'Demo',
+          organization: 'Tests',
+        },
+        generated: { api: true, admin: true, auth: true, deploymentTarget: 'railway' },
+        modules: [],
+      }),
+      'utf8',
+    );
+
+    const { code, output } = await invoke([
+      'add-module',
+      'billing',
+      '--path',
+      workspace,
+      '--framework-path',
+      process.cwd(),
+    ]);
+
+    expect(code).toBe(1);
+    expect(output).toContain('Unknown module "billing"');
+    // The hint names what does exist, so the next attempt succeeds.
+    expect(output).toContain('notification');
+  });
+});
+
+describe('placeholder commands', () => {
   it('upgrade explains itself and exits non-zero', async () => {
     const { code, output } = await invoke(['upgrade']);
 

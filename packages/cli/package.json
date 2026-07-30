@@ -28,6 +28,7 @@
   "dependencies": {
     "@inquirer/prompts": "^7.2.1",
     "@trustos/generator-core": "0.1.0",
+    "@trustos/module-registry": "0.1.0",
     "@trustos/template-registry": "0.1.0",
     "commander": "^12.1.0"
   }

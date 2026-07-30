@@ -1,0 +1,74 @@
+// =============================================================================
+// document module
+//
+// Installed by `trustos add-module document`. Generate the SQL with
+// `npm run db:migrate`.
+//
+// Numbered 22, after file-storage at 20: the module depends on file-storage, and
+// the fragment number is the merge order.
+// =============================================================================
+
+/// A filing category. Keys are unique per organization.
+model DocumentCategory {
+  id             String @id @default(cuid())
+  organizationId String
+  key            String
+  name           String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  documents Document[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId, key])
+  @@index([deletedAt])
+}
+
+/// A document. `storageKey` points at the current version's content; previous
+/// versions remain readable through DocumentVersion.
+model Document {
+  id             String  @id @default(cuid())
+  organizationId String
+  categoryId     String?
+  title          String
+  description    String?
+  storageKey     String
+  contentType    String
+  checksum       String
+  byteSize       Int
+  version        Int     @default(1)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  category DocumentCategory? @relation(fields: [categoryId], references: [id])
+  versions DocumentVersion[]
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, categoryId])
+  @@index([deletedAt])
+}
+
+/// Append-only version history.
+model DocumentVersion {
+  id             String @id @default(cuid())
+  organizationId String
+  documentId     String
+  version        Int
+  storageKey     String
+  contentType    String
+  checksum       String
+  byteSize       Int
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, version])
+  @@index([organizationId, documentId])
+  @@index([deletedAt])
+}

@@ -65,13 +65,14 @@ At that point `--framework-path` becomes unnecessary: the generated
 | `trustos list-templates`         | implemented         | List the approved templates                                          |
 | `trustos validate-template [id]` | implemented         | Check a template against the generator contract                      |
 | `trustos doctor`                 | implemented         | Check this machine can generate and run TrustOS applications         |
-| `trustos add-module <module>`    | **not implemented** | Will add a framework-backed module to an existing application        |
+| `trustos list-modules`           | implemented         | List the modules that can be installed                               |
+| `trustos add-module <modules…>`  | implemented         | Install modules into a generated application                         |
 | `trustos upgrade`                | **not implemented** | Will migrate an application to a newer framework or template version |
 | `trustos --help` / `--version`   | implemented         |                                                                      |
 
-The two unimplemented commands are registered on purpose: they appear in
-`--help`, explain what they will do, say what to do instead today, and exit
-non-zero so a script cannot mistake "not implemented" for success.
+`upgrade` is registered on purpose: it appears in `--help`, explains what it will
+do, says what to do instead today, and exits non-zero so a script cannot mistake
+"not implemented" for success.
 
 ---
 
@@ -220,6 +221,90 @@ Warnings are reported but do not fail the command.
 
 ---
 
+## `trustos list-modules`
+
+```bash
+trustos list-modules
+trustos list-modules --verbose      # permissions, routes, configuration, extension points
+trustos list-modules --json
+```
+
+Reads the module catalog, which is data — so listing modules never imports or
+executes one. The verbose form is what to read before deciding what to install: it
+prints each module's permissions, routes, environment variables, feature flags,
+extension points and, deliberately, what it does _not_ do.
+
+The last line is the install order when adding all of them, because an install order
+is not the order the ids were typed in.
+
+---
+
+## `trustos add-module`
+
+```bash
+# Install one module into an application:
+trustos add-module notification --path ../my-app --framework-path .
+
+# Dependencies come with it. `document` needs `file-storage`:
+trustos add-module document --path ../my-app --framework-path .
+
+# Several at once, resolved into one dependency-first order:
+trustos add-module workflow reporting search --path ../my-app --framework-path .
+
+# See what would change and write nothing:
+trustos add-module notification --path ../my-app --framework-path . --dry-run --verbose
+```
+
+### Flags
+
+| Flag                   | Effect                                                        |
+| ---------------------- | ------------------------------------------------------------- |
+| `--path <dir>`         | Application directory. Defaults to the nearest `trustos.json` |
+| `--framework-path <d>` | Framework checkout to install from                            |
+| `--include-optional`   | Install optional dependencies too                             |
+| `--dry-run`            | Compute and report; write nothing                             |
+| `--force`              | Allow a module marked `deprecated`                            |
+| `--verbose`            | List every file                                               |
+| `--json`               | Machine-readable plan                                         |
+| `-y, --yes`            | Do not ask for confirmation                                   |
+| `--generated-at <iso>` | Fix the install timestamp, for reproducible output            |
+
+### What it writes
+
+| File                                      | Ownership                                           |
+| ----------------------------------------- | --------------------------------------------------- |
+| `prisma/schema/NN-<module>.prisma`        | The module's. Refreshed on reinstall                |
+| `apps/api/src/modules/trustos-modules.ts` | The installer's. Regenerated from the installed set |
+| `apps/api/src/modules/module-config.ts`   | Yours. Created once, never rewritten                |
+| `docs/modules.md`                         | The installer's. Regenerated                        |
+| `package.json`                            | Merged: dependencies only                           |
+| `trustos.json`                            | Merged: the `modules` array; unknown keys preserved |
+| `.env.example`                            | Merged: one anchored block per module, names only   |
+
+Everything the installer owns carries a marker comment. A file that exists, is not one
+of the merge targets, and has no marker is treated as code somebody wrote: the run
+stops and names it. `app.module.ts` is never touched.
+
+A failed run is rolled back — files it created are removed, files it overwrote are
+restored — so a partial install is not a state you can end up in.
+
+### It is idempotent
+
+A module already installed is reported and skipped. The managed files are regenerated
+from the whole installed set rather than appended to, so nothing accumulates.
+
+### After installing
+
+```bash
+npm install
+npm run db:migrate     # generates the SQL for the new fragments
+npm test
+```
+
+Then seed the permissions. Nothing grants them — see `docs/modules.md`.
+
+---
+
 ## `trustos doctor`
 
 ```bash
@@ -276,6 +361,9 @@ determinism and a real `generatedAt` in `trustos.json` can both hold.
 ---
 
 ## Related documentation
+
+- [docs/modules.md](modules.md) — the module system, and what `add-module` writes
+- [docs/module-versioning.md](module-versioning.md) — compatibility rules
 
 - [`docs/templates.md`](templates.md) — template design rules, ownership, versioning, approval
 - [`docs/generator-security.md`](generator-security.md) — threat model and file-system safety

@@ -18,11 +18,27 @@ const FRAMEWORK_PACKAGES = [
   '@trustos/database',
   '@trustos/errors',
   '@trustos/logging',
+  '@trustos/module-registry',
+  '@trustos/module-sdk',
   '@trustos/observability',
   '@trustos/rbac',
   '@trustos/shared-types',
   '@trustos/tenancy',
   '@trustos/validation',
+];
+
+/**
+ * The modules the framework ships. Listed so the admin app cannot link against
+ * one, and so a leaf package cannot depend on one.
+ */
+const MODULE_PACKAGES = [
+  '@trustos/module-document',
+  '@trustos/module-feature-flags',
+  '@trustos/module-file-storage',
+  '@trustos/module-notification',
+  '@trustos/module-reporting',
+  '@trustos/module-search',
+  '@trustos/module-workflow',
 ];
 
 /** Packages that must never be imported into browser-executed code. */
@@ -35,6 +51,8 @@ const SERVER_ONLY_PACKAGES = [
   '@trustos/observability',
   '@trustos/tenancy',
   '@trustos/rbac',
+  '@trustos/module-sdk',
+  '@trustos/module-registry',
 ];
 
 const APP_PACKAGES = ['@trustos/api-example', '@trustos/admin-example', '@trustos/saas-starter'];
@@ -108,9 +126,9 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
-          paths: FRAMEWORK_PACKAGES.filter(
-            (p) => p !== '@trustos/shared-types' && p !== '@trustos/errors',
-          ).map((name) => ({
+          paths: [...FRAMEWORK_PACKAGES, ...MODULE_PACKAGES]
+            .filter((p) => p !== '@trustos/shared-types' && p !== '@trustos/errors')
+            .map((name) => ({
             name,
             message:
               '@trustos/shared-types and @trustos/errors are leaf packages and must stay dependency-free.',
@@ -149,7 +167,7 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
-          paths: SERVER_ONLY_PACKAGES.map((name) => ({
+          paths: [...SERVER_ONLY_PACKAGES, ...MODULE_PACKAGES].map((name) => ({
             name,
             message:
               'Server-only package. The admin app may only use @trustos/shared-types and @trustos/errors.',

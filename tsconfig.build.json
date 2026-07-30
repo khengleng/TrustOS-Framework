@@ -35,6 +35,33 @@
       "path": "packages/observability"
     },
     {
+      "path": "packages/module-sdk"
+    },
+    {
+      "path": "packages/module-registry"
+    },
+    {
+      "path": "packages/modules/document"
+    },
+    {
+      "path": "packages/modules/feature-flags"
+    },
+    {
+      "path": "packages/modules/file-storage"
+    },
+    {
+      "path": "packages/modules/notification"
+    },
+    {
+      "path": "packages/modules/reporting"
+    },
+    {
+      "path": "packages/modules/search"
+    },
+    {
+      "path": "packages/modules/workflow"
+    },
+    {
       "path": "packages/template-registry"
     },
     {

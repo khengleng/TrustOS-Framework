@@ -7,5 +7,15 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
-  "references": [{ "path": "../generator-core" }, { "path": "../template-registry" }]
+  "references": [
+    {
+      "path": "../generator-core"
+    },
+    {
+      "path": "../module-registry"
+    },
+    {
+      "path": "../template-registry"
+    }
+  ]
 }

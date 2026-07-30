@@ -128,6 +128,38 @@ All of these run in CI on every pull request (`.github/workflows/ci.yml`).
 | `@trustos/audit`         | Append-only audit trail with actor, organization, before/after and request metadata.                                                    |
 | `@trustos/observability` | `/health`, `/ready`, request timing, metrics and OpenTelemetry-ready seams.                                                             |
 
+### The module system
+
+| Package                    | Responsibility                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `@trustos/module-sdk`      | The contract every module implements: metadata, lifecycle, configuration, permissions, audit, health, tenant-scoped persistence |
+| `@trustos/module-registry` | The approved module catalog, and the in-memory registry applications discover modules through                                   |
+
+### Modules
+
+Reusable business capabilities, installed with `trustos add-module`.
+
+| Module          | Capability                                                                                                     | Tables | Routes |
+| --------------- | -------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| `file-storage`  | Object storage behind a provider port, with checksums, versioning and per-organization key namespaces          | 2      | 6      |
+| `notification`  | Templated messages over email, Telegram and webhooks, with a retry queue and delivery history                  | 3      | 10     |
+| `document`      | Categorised documents with metadata, version history and soft delete                                           | 3      | 10     |
+| `workflow`      | Approval workflows with task assignment, approval history, SLA tracking and escalation. Includes maker-checker | 4      | 10     |
+| `reporting`     | Report definitions with filtering, pagination, CSV export and a PDF renderer port                              | 1      | 7      |
+| `search`        | Global search across module adapters, with permission filtering and ranking                                    | 0      | 2      |
+| `feature-flags` | Boolean flags with percentage rollout, per-subject overrides, environment scoping and expiry                   | 2      | 6      |
+
+Every module is organization-scoped, requires a permission on every route, audits
+every mutation, contributes to `GET /ready`, installs with no configuration, and can
+be tested without a database. Those are not conventions — `defineModule` throws.
+
+```bash
+trustos list-modules --verbose                            # what each one exposes
+trustos add-module document --path ../my-app              # installs file-storage too
+```
+
+See [`docs/modules.md`](docs/modules.md).
+
 ### Applications
 
 - **`apps/api-example`** — NestJS reference API: registration, login, refresh,
@@ -220,6 +252,9 @@ Details: [`docs/security-standards.md`](docs/security-standards.md).
 | [`docs/architecture.md`](docs/architecture.md)                   | Principles, package responsibilities, dependency rules, request lifecycle, tenant isolation rules, deliberate trade-offs, how to create a new application |
 | [`docs/security-standards.md`](docs/security-standards.md)       | Authentication, authorization, tenancy, logging, audit, secrets, and this phase's known limitations                                                       |
 | [`docs/coding-standards.md`](docs/coding-standards.md)           | TypeScript, naming, errors, validation, database access, tests, API compatibility                                                                         |
+| [`docs/modules.md`](docs/modules.md)                             | The module system: what every module guarantees, installing, extension points, what is deliberately absent                                                |
+| [`docs/module-development.md`](docs/module-development.md)       | Writing a module, and the rules it must follow                                                                                                            |
+| [`docs/module-versioning.md`](docs/module-versioning.md)         | Versions, compatibility, and what counts as a breaking change                                                                                             |
 | [`docs/ai-agent-instructions.md`](docs/ai-agent-instructions.md) | How AI coding agents must work in this repository                                                                                                         |
 | [`docs/railway-deployment.md`](docs/railway-deployment.md)       | Deploying to Railway, variables, migrations, troubleshooting                                                                                              |
 

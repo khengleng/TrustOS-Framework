@@ -18,6 +18,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AppPrismaService } from './core/prisma.service';
 import { AuditModule } from './modules/audit/audit.module';
 import { ProductModule } from './modules/product/product.module';
+import { TRUSTOS_MODULE_IMPORTS } from './modules/trustos-modules';
 import { APP_CONFIG_TOKEN, APP_LOGGER, APP_METRICS, AUDIT_SERVICE } from './tokens';
 
 export interface AppModuleOptions {
@@ -39,6 +40,10 @@ export interface AppModuleOptions {
  * the order. Changing it is a security review, not a refactor.
  *
  * Add product modules to `imports`. Change nothing else here.
+ *
+ * `TRUSTOS_MODULE_IMPORTS` is the list of framework modules installed by
+ * `trustos add-module`. That file is generated; this one is not, which is why the
+ * installer spreads a list here instead of editing the guard array above.
  */
 @Global()
 @Module({})
@@ -65,6 +70,10 @@ export class AppModule {
 
         // --- product modules ------------------------------------------------
         ProductModule,
+
+        // --- installed framework modules -------------------------------------
+        // Managed by `trustos add-module`. Empty until a module is installed.
+        ...TRUSTOS_MODULE_IMPORTS,
       ],
       providers: [
         /**
@@ -101,7 +110,23 @@ export class AppModule {
         { provide: APP_GUARD, useClass: TenantGuard },
         { provide: APP_GUARD, useClass: PermissionsGuard },
       ],
-      exports: [APP_CONFIG_TOKEN, APP_LOGGER, APP_METRICS, AUDIT_SERVICE, TokenService],
+      /*
+       * Exported because AppModule is @Global(): these are what product modules
+       * and installed framework modules inject.
+       *
+       * PrismaService is on the list deliberately. A provider that is declared
+       * here but not exported is invisible to every imported module, so a module
+       * injecting it would fail to resolve at start-up — which is a boot failure,
+       * not a runtime one, but only if somebody boots the application.
+       */
+      exports: [
+        APP_CONFIG_TOKEN,
+        APP_LOGGER,
+        APP_METRICS,
+        AUDIT_SERVICE,
+        PrismaService,
+        TokenService,
+      ],
     };
   }
 }
