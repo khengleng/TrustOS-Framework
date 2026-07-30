@@ -8,7 +8,8 @@ and the standards in [docs/coding-standards.md](docs/coding-standards.md) and
 
 Read this before changing anything under `packages/identity`, `packages/authorization`,
 `packages/api-keys`, `packages/service-accounts`, `packages/session-security`,
-`packages/security-events`, `packages/security-policy` or `packages/security-testing`.
+`packages/security-events`, `packages/security-policy`, `packages/security-testing`, any
+`packages/workflow-*` or `packages/case-management`.
 
 ---
 
@@ -119,6 +120,107 @@ there is a documented port. Extend the port; do not add the dependency.
 
 ---
 
+## The fourteen workflow rules
+
+Same standard as the thirteen above: every one describes a change that **compiles, passes an
+unmodified test suite, and silently removes a control**.
+
+### 1. Never bypass workflow state validation
+
+Every state change goes through `resolveTransition` and an action the definition declares. There is
+no route that writes `currentState`, and adding one would make the definition advisory — a second
+implementation of the workflow that disagrees with the first within a month.
+
+### 2. Never modify a published workflow definition
+
+Not its states, not its approvers, not a typo in a description. A running instance reads its rules
+from that row, so editing it retroactively changes the rules a decision was made under. A change is
+a new version. Three layers already refuse it — the service, the runtime's hash check, and a
+database trigger — and defeating any of them is defeating all three.
+
+### 3. Never allow self-approval where maker-checker is enabled
+
+`allowSelfApproval` defaults false and `selfApprovalPolicy` enforces it. Do not add a code path that
+skips the policy, do not read the submitter from a request body, and do not "temporarily" set the
+flag while debugging. A workflow whose submitter can approve their own request is not a control; it
+is a log entry that looks like one.
+
+### 4. Never trust client-supplied workflow state
+
+Not `currentState`, not `initiatedById`, not approval progress, not task ownership, not a comment
+visibility filter. Every one comes from a row the server read. `WorkflowActor` deliberately has no
+field for any of them, and adding one is how the whole engine becomes decorative.
+
+### 5. Always enforce tenant isolation
+
+The organization comes from the verified actor. A record in another organization is `notFound`,
+never `forbidden` — a 403 confirms the record exists, which is the enumeration primitive the
+boundary exists to deny. Every new tenant-owned index leads with `organizationId`.
+
+### 6. Always use authorization policy decisions
+
+Do not write an `if` in a service where a policy belongs. A check in a service covers one call path;
+a policy covers every route that declares the action, including ones written later. Build the
+resource with `workflowResource()` — a policy that cannot find its field abstains, and an abstaining
+separation-of-duty policy is a control that silently does not run.
+
+### 7. Always record audit history
+
+Every transition, decision, assignment, reassignment, escalation and case change. Through
+`HistoryRecorder.record`, which writes history _and_ the audit trail in one call — because a caller
+who writes one and forgets the other produces a complete history and an audit trail with a hole in
+it, discovered during an audit rather than in a test.
+
+### 8. Always add negative tests
+
+A test that a valid transition works proves nothing about an illegal one. Every new action needs
+tests that the wrong actor, the wrong state, the stale version and the duplicate submission are all
+refused — and refused with the _right_ reason, because a client that cannot tell a conflict from a
+denial retries the wrong one.
+
+### 9. Preserve idempotency
+
+An externally triggered action accepts an idempotency key, hashes the payload, and refuses the same
+key with a different payload. Never replay the first result for a different payload: that tells the
+caller an operation succeeded that never ran for their request, which is worse than any error.
+
+### 10. Preserve concurrency controls
+
+Every write is conditional on the version the read saw. `TaskStore.claim` is atomic in the store,
+not in the service — a check-then-act split across two calls cannot be made safe by anything the
+service does. Zero rows updated is the signal that somebody else won; turning it into a retry would
+produce the duplicate this exists to prevent.
+
+### 11. Do not delete workflow history
+
+`HistoryStore` has no update and no delete, and the database refuses both. A comment is amended by
+writing its previous text; a comment is redacted by hiding it, never by deleting it. The usual reason
+to redact is that a comment contains something it should not, which is exactly when the original
+must remain available to whoever is investigating.
+
+### 12. Document every new action and permission
+
+Add the permission to `WORKFLOW_PERMISSIONS` with a description and grant it to the roles that
+should hold it, before using it. If it is approval-shaped, register it with
+`registerApprovalAction` so the self-approval and duplicate-approval policies cover it. Never rename
+an existing key.
+
+### 13. Do not add product-specific workflows without approval
+
+The framework ships two generic examples. A merchant onboarding workflow, a loan origination
+workflow or a payment release workflow belongs in a product, not here — and a framework example that
+encoded one industry's rules would be copied by everyone who does something slightly different.
+
+### 14. Stop after the approved scope is complete
+
+No BPMN, no Camunda, no Temporal, no visual designer, no AI workflow generation, no Kafka, no
+Kubernetes. Where one of those would go there is a documented port or a stated limitation. Extend
+the port; do not add the dependency.
+
+If a change requires breaking one of these, stop and ask. Do not work around it.
+
+---
+
 ## Guard order is the security model
 
 `apps/security-admin-example/src/security-admin.module.ts` registers seven global
@@ -139,6 +241,22 @@ particular, assurance runs before permissions so that a privileged role with no 
 factor is stopped before its permissions are consulted. `security-admin.spec.ts`
 asserts this order against the running injector, so a reordering fails a test rather
 than passing quietly.
+
+## Workflow-specific checks
+
+A change to a definition, or to the validator, additionally needs:
+
+```bash
+# Structural validation, and permission references against the catalog.
+node packages/cli/bin/trustos.js workflow validate <file> --strict-permissions
+
+# Every path. Non-zero if any reaches a success outcome with no approval at all.
+node packages/cli/bin/trustos.js workflow simulate <file>
+```
+
+The second is the check worth running before every commit that touches a definition. A path to
+`approved` with no review is invisible on inspection of a forty-state document and obvious to a
+graph walk, and it is almost always a shortcut transition added for testing and left in.
 
 ## Before claiming a change is done
 

@@ -91,6 +91,32 @@ const BASE_MODULES = [
 
 const TENANT_MODULES = ['auth', 'rbac', 'tenancy', 'audit'] as const;
 
+/**
+ * The workflow packages a governed template wires in.
+ *
+ * The engine and its dependencies. Not every workflow package — a template that does not use
+ * cases does not declare `case-management`, because a manifest that over-declares is a
+ * manifest nobody trusts.
+ */
+const WORKFLOW_MODULES = [
+  // The authorization engine the workflow policies plug into, and the two packages the
+  // engine reports its decisions through. Not optional: the policies are the separation of
+  // duty, and without the authorizer they are not evaluated.
+  'authorization',
+  'security-policy',
+  'security-events',
+
+  'workflow-core',
+  'workflow-definition',
+  'workflow-runtime',
+  'workflow-approvals',
+  'workflow-tasks',
+  'workflow-sla',
+  'workflow-escalation',
+  'workflow-history',
+  'workflow-policy',
+] as const;
+
 const manifests: TemplateManifest[] = [
   {
     id: 'generic-saas',
@@ -108,6 +134,35 @@ const manifests: TemplateManifest[] = [
       'Initial release. WorkspaceItem is a worked example — rename or replace it before building real features on top.',
     owner: 'TrustOS Platform Team',
     outOfScope: ['payments', 'notifications', 'billing', 'reporting'],
+  },
+
+  {
+    id: 'workflow-enabled-saas',
+    displayName: 'TrustOS Workflow-Enabled SaaS',
+    description:
+      'Multi-tenant SaaS with a governed approval workflow: maker-checker, conditional ' +
+      'routing, SLAs, escalation, rework and a full audit history over one example business ' +
+      'object.',
+    version: '0.1.0',
+    minimumFrameworkVersion: '0.1.0',
+    includedApps: ['api', 'admin'],
+    includedModules: [...BASE_MODULES, ...TENANT_MODULES, ...WORKFLOW_MODULES],
+    requiredVariables: COMMON_VARIABLES,
+    deploymentTargets: ['railway', 'local'],
+    entities: ['ChangeRequest'],
+    migrationNotes:
+      'Initial release. ChangeRequest is a worked example — an amount and a risk rating, which ' +
+      'is the shape of a limit increase or a configuration change without being either. The ' +
+      'workflow definition in workflows/ is meant to be edited; validate it with ' +
+      '`trustos workflow validate` before publishing.',
+    owner: 'TrustOS Platform Team',
+    outOfScope: [
+      'payments',
+      'settlement',
+      'visual workflow designer',
+      'BPMN',
+      'external workflow engine',
+    ],
   },
 
   {

@@ -9,13 +9,16 @@ import {
 import { templateManifestSchema } from './schema';
 
 describe('template registry', () => {
-  it('ships the five approved templates', () => {
+  it('ships the six approved templates', () => {
+    // An exact list rather than a count. Adding a template is a decision, and a test that
+    // only counted would pass when one was replaced by another.
     expect(TEMPLATES.map((template) => template.id).sort()).toEqual([
       'generic-saas',
       'learning',
       'merchant',
       'payment-gateway',
       'telegram-mini-app',
+      'workflow-enabled-saas',
     ]);
   });
 

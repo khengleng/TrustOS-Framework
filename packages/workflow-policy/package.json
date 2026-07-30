@@ -1,0 +1,43 @@
+{
+  "name": "@trustos/workflow-policy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Workflow authorization policies: separation of duties, self-approval prevention and state-transition permissions.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "nest"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/authorization": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/rbac": "0.1.0",
+    "@trustos/security-events": "0.1.0",
+    "@trustos/security-policy": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "@trustos/workflow-core": "0.1.0",
+    "zod": "^3.24.1"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
+    "@nestjs/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28"
+  }
+}

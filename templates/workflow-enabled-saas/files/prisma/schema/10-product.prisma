@@ -1,0 +1,38 @@
+/// The business object this application's workflows govern.
+///
+/// A `ChangeRequest` is deliberately generic: it has an amount and a risk rating, which is
+/// the shape of a limit increase, a configuration change and a merchant approval without
+/// being any of them. Rename it before building real features on top.
+///
+/// The workflow tables themselves come from the framework's own schema — this application
+/// does not redeclare them, because a second copy would drift from the one the engine reads.
+model ChangeRequest {
+  id             String @id @default(cuid())
+  organizationId String
+
+  title         String
+  description   String @default("")
+  /// Minor units, so there is no floating-point arithmetic anywhere near a decision.
+  amount        Int
+  /// low | medium | high. Generic on purpose: a scoring model belongs to a product, and the
+  /// workflow's job is to route on the answer.
+  riskRating    String @default("low")
+  justification String @default("")
+
+  /// The workflow instance governing this request, when one has been started.
+  ///
+  /// Nullable, because a request exists before it is submitted. One workflow at a time is
+  /// enforced by the service rather than by a unique constraint: a rejected request may be
+  /// resubmitted as a new instance, and a unique index would forbid that.
+  workflowInstanceId String?
+
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  /// Tenant scope first in every index, because every query filters on it.
+  @@index([organizationId, deletedAt])
+  @@index([organizationId, riskRating])
+  @@index([workflowInstanceId])
+}

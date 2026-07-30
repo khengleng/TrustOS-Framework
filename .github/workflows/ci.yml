@@ -81,6 +81,29 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/trustos_ci
         run: npm run db:deploy
 
+      - name: No build output in a source tree
+        run: |
+          # `tsc -b` on a project whose rootDir cannot contain a referenced package emits
+          # next to the sources rather than into dist. That produced 28 stray files during
+          # phase 5 and the only symptom was a lint failure about `exports` being undefined,
+          # in a file nobody wrote.
+          #
+          # .gitignore stops them being committed. This makes them visible, because an
+          # ignored file that breaks the build is worse than a tracked one.
+          stray="$(find packages apps -path '*/src/*' \
+            \( -name '*.js' -o -name '*.js.map' -o -name '*.d.ts' -o -name '*.d.ts.map' \) \
+            -not -path '*/node_modules/*' -print)"
+
+          if [ -n "$stray" ]; then
+            echo "::error::Compiled output was emitted into a source tree:"
+            echo "$stray"
+            echo
+            echo "A tsconfig references a package its rootDir cannot contain. Check the"
+            echo "'references' and 'paths' of the project that emitted these."
+            exit 1
+          fi
+          echo "No build output in any source tree."
+
       - name: Lint
         run: npm run lint
 
@@ -210,6 +233,7 @@ jobs:
       matrix:
         template:
           - generic-saas
+          - workflow-enabled-saas
           - merchant
           - learning
           - payment-gateway

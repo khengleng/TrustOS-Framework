@@ -72,6 +72,26 @@ export const SECURITY_EVENT_TYPES = [
   'authz.role_changed',
   'authz.permission_changed',
 
+  /*
+   * --- governed workflow ----------------------------------------------------
+   *
+   * Only the workflow events that are *security* events belong here. A task being
+   * claimed or a comment being added is workflow history, not a security signal, and
+   * putting it in this trail would bury the four entries below in ordinary traffic.
+   *
+   * What qualifies: an attempt to defeat a control (self-approval, duplicate
+   * approval, separation of duty), evidence that a definition was modified outside
+   * the application, and the two privileged operations that steer a decision
+   * (reassignment and override).
+   */
+  'workflow.self_approval_blocked',
+  'workflow.duplicate_approval_blocked',
+  'workflow.separation_of_duty_blocked',
+  'workflow.definition_tampering_detected',
+  'workflow.task_reassigned',
+  'workflow.approval_overridden',
+  'workflow.idempotency_conflict',
+
   // --- abuse and integrity --------------------------------------------------
   'abuse.rate_limited',
   'abuse.csrf_rejected',
@@ -101,6 +121,17 @@ export const SEVERITY_BY_TYPE: Partial<Record<SecurityEventType, SecuritySeverit
   'session.refresh_reuse_detected': 'critical',
   'authz.cross_tenant_blocked': 'critical',
   'authz.role_escalation_blocked': 'critical',
+
+  /*
+   * A modified definition means somebody wrote to the table outside the application,
+   * so the rules a decision was made under are not the rules anybody approved. That
+   * is an integrity failure, not a policy refusal.
+   *
+   * An override is critical because it is the one path that bypasses an approval
+   * requirement. It exists for genuine incidents and every use should be looked at.
+   */
+  'workflow.definition_tampering_detected': 'critical',
+  'workflow.approval_overridden': 'critical',
   'abuse.suspicious_activity': 'critical',
   'session.suspicious': 'critical',
   'api_key.ip_denied': 'warning',
@@ -116,6 +147,18 @@ export const SEVERITY_BY_TYPE: Partial<Record<SecurityEventType, SecuritySeverit
   'abuse.csrf_rejected': 'warning',
   'abuse.cors_rejected': 'warning',
   'authz.denied': 'warning',
+
+  /*
+   * Warning, not critical. A maker clicking approve on their own request is usually
+   * somebody who does not know the policy rather than an attacker — but a burst of
+   * them from one actor is worth noticing, which is what a warning-level trail is for.
+   */
+  'workflow.self_approval_blocked': 'warning',
+  'workflow.duplicate_approval_blocked': 'warning',
+  'workflow.separation_of_duty_blocked': 'warning',
+  'workflow.idempotency_conflict': 'warning',
+  /* Privileged, legitimate, and recorded so it can be reviewed. */
+  'workflow.task_reassigned': 'info',
   'identity.provider_unavailable': 'critical',
   'identity.configuration_rejected': 'critical',
   'service_account.interactive_login_blocked': 'warning',

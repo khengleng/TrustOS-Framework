@@ -1,0 +1,581 @@
+// =============================================================================
+// Workflow schema — TrustOS phase 5 models.
+//
+// COPIED FROM @trustos/database. Prisma has no cross-package schema import, so a
+// generated application carries its own copy.
+//
+// `workflow-schema.spec.ts` in this template compares this file against the
+// framework's byte for byte and fails when they diverge. That check exists because
+// the framework's `00-framework.prisma` copy silently fell behind between phases —
+// a stale copy produces a client that does not know a column the engine writes,
+// and the symptom is a runtime error rather than a build failure.
+//
+// When you upgrade the framework, run the test; it prints the diff.
+// =============================================================================
+
+// ===========================================================================
+// Phase 5 — governed workflow, maker-checker and case management
+// ===========================================================================
+//
+// Indexes here are chosen from the queries the engine actually runs, not from a
+// guess about what might be slow. Every one is justified in a comment above it,
+// because an index nobody can explain is an index nobody dares remove.
+//
+// Three tables are deliberately not tenant-scoped by a `organizationId NOT NULL`:
+// `WorkflowDefinition` and `WorkflowVersion` may be platform-owned (null means
+// available to every tenant), and nothing else is. Every *instance* has a real
+// organization, and that is where isolation is enforced.
+
+/// A workflow's identity across versions.
+///
+/// Holds only what does not change between versions. The states, transitions and
+/// approvers live on `WorkflowVersion`.
+model WorkflowDefinition {
+  id                 String  @id @default(cuid())
+  /// Null means a platform-owned definition available to every organization.
+  /// Authoring one requires platform staff — see WorkflowDefinitionService.
+  organizationId     String?
+  /// Stable key, e.g. `change-request-approval`. Unique per organization.
+  key                String
+  name               String
+  description        String  @default("")
+  /// What this governs: `Merchant`, `Payment`, `ChangeRequest`.
+  businessObjectType String
+
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  /// Soft delete. A hard delete would orphan every instance's version reference.
+  deletedAt   DateTime?
+
+  versions  WorkflowVersion[]
+  instances WorkflowInstance[]
+
+  /// One definition per key per organization. A global definition and an
+  /// organization's own may share a key; the resolver prefers the organization's.
+  @@unique([organizationId, key])
+  /// The list view: an organization's definitions, newest first.
+  @@index([organizationId, deletedAt])
+  @@index([businessObjectType])
+}
+
+/// One immutable version.
+///
+/// After `publishedAt` is set nothing in this row may change. `definitionHash` is
+/// verified on every compile, because the application has write access to its own
+/// database and "the API refuses to change it" is not a guarantee against a direct
+/// UPDATE.
+model WorkflowVersion {
+  id                   String   @id @default(cuid())
+  workflowDefinitionId String
+  organizationId       String?
+  /// Semantic version. Unique per definition.
+  version              String
+  /// draft | under_review | approved | published | retired
+  status               String   @default("draft")
+  /// The validated definition document.
+  definition           Json
+  /// SHA-256 of the document, with object keys sorted. Detects tampering.
+  definitionHash       String
+  initialState         String
+  finalStates          String[]
+
+  effectiveFrom DateTime?
+  createdById   String?
+  /// Never the creator. Enforced by definitionGovernancePolicy.
+  approvedById  String?
+  approvedAt    DateTime?
+  /// Never the creator, and never the approver.
+  publishedById String?
+  publishedAt   DateTime?
+  retiredAt     DateTime?
+  retiredReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  definitionRef WorkflowDefinition @relation(fields: [workflowDefinitionId], references: [id], onDelete: Cascade)
+  instances     WorkflowInstance[]
+
+  @@unique([workflowDefinitionId, version])
+  /// `findPublished` — the hottest definition query, run on every instance start.
+  @@index([workflowDefinitionId, status])
+  @@index([organizationId, status])
+}
+
+/// One running process.
+model WorkflowInstance {
+  id                   String @id @default(cuid())
+  organizationId       String
+  workflowDefinitionId String
+  /// Pinned for the instance's whole life. This is workflow versioning.
+  workflowVersionId    String
+  /// Denormalised so a history read does not need a join to say which rules applied.
+  workflowVersion      String
+
+  /// active | completed | cancelled | rejected
+  status       String @default("active")
+  currentState String
+
+  businessObjectType String
+  businessObjectId   String
+  /// Caller-supplied context the definition's conditions read. Never trusted for identity.
+  data               Json   @default("{}")
+  priority           String @default("normal")
+
+  /// The maker. Read by every separation-of-duty check; never client-supplied.
+  initiatedById        String
+  initiatedByActorType String @default("user")
+
+  /// Optimistic lock. Every transition increments it; a stale write is refused.
+  version     Int @default(0)
+  reworkCount Int @default(0)
+
+  startedAt          DateTime  @default(now())
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  cancelledById      String?
+  cancellationReason String?
+  dueAt              DateTime?
+  caseId             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  definition  WorkflowDefinition   @relation(fields: [workflowDefinitionId], references: [id], onDelete: Cascade)
+  versionRef  WorkflowVersion      @relation(fields: [workflowVersionId], references: [id])
+  caseRef     CaseRecord?          @relation(fields: [caseId], references: [id])
+  tasks       WorkflowTask[]
+  decisions   WorkflowDecision[]
+  events      WorkflowEvent[]
+  slas        WorkflowSla[]
+  comments    WorkflowComment[]
+  attachments WorkflowAttachment[]
+  escalations WorkflowEscalation[]
+
+  /// The portal's main list: an organization's instances by status.
+  @@index([organizationId, status])
+  /// "What is sitting in compliance_review?" — the operational question.
+  @@index([organizationId, currentState])
+  /// "Is there already a workflow for this merchant?" — checked before starting one.
+  @@index([organizationId, businessObjectType, businessObjectId])
+  /// Overdue instances, for the SLA dashboard.
+  @@index([organizationId, dueAt])
+  @@index([workflowVersionId])
+  @@index([caseId])
+}
+
+/// One actionable item of work.
+model WorkflowTask {
+  id                 String @id @default(cuid())
+  organizationId     String
+  workflowInstanceId String
+  /// The definition step that produced this task.
+  stepKey            String
+
+  title       String
+  description String @default("")
+  /// open | assigned | claimed | in_progress | completed | rejected | cancelled | expired
+  status      String @default("open")
+  priority    String @default("normal")
+
+  /// Exactly one of the three is the authority, resolved at creation.
+  assigneeUserId  String?
+  assigneeRole    String?
+  assigneeGroupId String?
+
+  dueAt     DateTime?
+  slaStatus String?
+
+  claimedById   String?
+  claimedAt     DateTime?
+  completedById String?
+  completedAt   DateTime?
+  outcome       String?
+  delegatedById String?
+  delegatedAt   DateTime?
+
+  /// Optimistic lock. This is what makes a pooled claim safe: the claim UPDATE is
+  /// conditional on this value, so two claimants produce one winner and one zero-row
+  /// update.
+  version Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  instance WorkflowInstance @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+
+  /// "My tasks" — the query every user runs on every page load.
+  @@index([organizationId, assigneeUserId, status])
+  /// The pool: unclaimed tasks for a role.
+  @@index([organizationId, assigneeRole, status])
+  @@index([organizationId, assigneeGroupId, status])
+  /// Overdue tasks, and the expiry sweep. Status first because the sweep only wants
+  /// open ones and there are far fewer of those than there are past-due timestamps.
+  @@index([organizationId, status, dueAt])
+  @@index([workflowInstanceId, status])
+}
+
+/// One approver's decision. Append-only.
+///
+/// A returned or rejected decision is never deleted, including after a rework cycle:
+/// the point of an approval trail is that it shows what was decided before, not only
+/// what was decided last.
+model WorkflowDecision {
+  id                 String  @id @default(cuid())
+  organizationId     String
+  workflowInstanceId String
+  workflowTaskId     String?
+  stepKey            String
+  /// Which approver slot this filled. Null for a rejection or a return, which settle
+  /// the step without filling one.
+  approverKey        String?
+
+  actorId   String
+  actorType String  @default("user")
+  actorRole String?
+
+  /// approve | reject | return_for_rework | abstain
+  decision         String
+  reasonCode       String?
+  explanation      String?
+  /// Ties this decision to the authorization decision that permitted it.
+  policyDecisionId String?
+  /// Which rework cycle. Approvals do not carry across a cycle — after a return the
+  /// maker may change the fields an approver looked at.
+  reworkCycle      Int     @default(0)
+
+  decidedAt DateTime @default(now())
+
+  instance WorkflowInstance @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+
+  /// The engine's hottest read: decisions for one step in one cycle, to recompute
+  /// approval progress on every transition.
+  @@index([workflowInstanceId, stepKey, reworkCycle])
+  /// "What has this person approved?" — asked during a review of an approver.
+  @@index([organizationId, actorId])
+}
+
+/// One entry in a workflow's history. Append-only, enforced by a trigger.
+model WorkflowEvent {
+  id                 String  @id @default(cuid())
+  organizationId     String
+  workflowInstanceId String?
+  caseId             String?
+  workflowTaskId     String?
+  /// Monotonic per instance, so a reader can order events without relying on
+  /// timestamps — two events in one transaction share a millisecond.
+  sequence           Int
+
+  type             String
+  actorId          String?
+  actorType        String?
+  fromState        String?
+  toState          String?
+  action           String?
+  policyDecisionId String?
+  requestId        String?
+  /// Non-sensitive metadata only. Redacted before it is written.
+  metadata         Json?
+
+  occurredAt DateTime @default(now())
+
+  instance WorkflowInstance? @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+  caseRef  CaseRecord?       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  /// One sequence number per instance. The unique constraint is what makes the
+  /// ordering trustworthy rather than merely intended.
+  @@unique([workflowInstanceId, sequence])
+  /// The history view: one instance's events in order.
+  @@index([workflowInstanceId, sequence])
+  /// A case timeline, which merges the case's own events with those of every workflow
+  /// inside it.
+  @@index([caseId, occurredAt])
+  @@index([organizationId, occurredAt])
+  @@index([organizationId, type, occurredAt])
+}
+
+/// A comment. Editing writes a `WorkflowCommentAmendment`; there is no silent edit.
+model WorkflowComment {
+  id                 String  @id @default(cuid())
+  organizationId     String
+  workflowInstanceId String?
+  caseId             String?
+  workflowTaskId     String?
+  stepKey            String?
+
+  authorId        String
+  authorActorType String @default("user")
+  message         String
+  /// participants | approvers | administrators | internal | external
+  visibility      String @default("participants")
+  /// Visible to every reader, so a comment that was edited says so.
+  amendmentCount  Int    @default(0)
+
+  /// A redacted comment keeps its text. The usual reason to redact is that a comment
+  /// contains something it should not, which is exactly when the original must remain
+  /// available to whoever is investigating.
+  redactedAt   DateTime?
+  redactedById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  instance   WorkflowInstance?          @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+  caseRef    CaseRecord?                @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  amendments WorkflowCommentAmendment[]
+
+  /// The comment thread, filtered by what the reader may see.
+  @@index([workflowInstanceId, visibility, createdAt])
+  @@index([caseId, visibility, createdAt])
+  @@index([organizationId, authorId])
+}
+
+/// The previous text of an amended comment. Append-only.
+model WorkflowCommentAmendment {
+  id                String   @id @default(cuid())
+  workflowCommentId String
+  organizationId    String
+  previousMessage   String
+  amendedById       String
+  reason            String?
+  amendedAt         DateTime @default(now())
+
+  comment WorkflowComment @relation(fields: [workflowCommentId], references: [id], onDelete: Cascade)
+
+  @@index([workflowCommentId, amendedAt])
+}
+
+/// A reference to a document, not the bytes.
+///
+/// Detaching marks this row removed and leaves the document alone: another workflow
+/// may cite the same document, and an approver's decision was made with this evidence
+/// in front of them, so the fact that it was attached must survive its removal.
+model WorkflowAttachment {
+  id                 String  @id @default(cuid())
+  organizationId     String
+  workflowInstanceId String?
+  caseId             String?
+  workflowTaskId     String?
+  stepKey            String?
+
+  documentId     String
+  filename       String
+  contentType    String
+  sizeBytes      Int
+  /// Recorded at attach time from the document module's own value, so "is this still
+  /// the file the approver saw?" is answerable later.
+  checksum       String
+  /// supporting_evidence | identity_document | financial_record | correspondence | ...
+  classification String @default("other")
+  /// Always `not_scanned` in this phase. The field exists so adding a scanner later
+  /// needs no migration, and so a deployment can see nothing has been scanned.
+  scanStatus     String @default("not_scanned")
+
+  attachedById String
+  attachedAt   DateTime  @default(now())
+  removedAt    DateTime?
+  removedById  String?
+
+  instance WorkflowInstance? @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+  caseRef  CaseRecord?       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  /// "Does this step have evidence?" — checked on every transition out of a step that
+  /// requires it. `removedAt` is in the index because a detached attachment does not
+  /// satisfy the requirement.
+  @@index([workflowInstanceId, stepKey, removedAt])
+  @@index([caseId, removedAt])
+  @@index([organizationId, documentId])
+}
+
+/// One SLA clock.
+///
+/// Both thresholds are stored as absolute instants *and* as second offsets. That is not
+/// redundant: the instants let an index answer "which SLAs are due?" without computing
+/// a calendar per row, and the offsets let the status be recomputed correctly after a
+/// pause has moved the effective deadline.
+model WorkflowSla {
+  id                 String  @id @default(cuid())
+  organizationId     String
+  workflowInstanceId String?
+  workflowTaskId     String?
+  stepKey            String?
+
+  /// time_to_acknowledge | time_to_claim | time_to_complete | total_duration
+  kind       String
+  /// pending | active | warning | breached | paused | completed
+  status     String @default("active")
+  severity   String @default("medium")
+  /// Registered calendar. `elapsed` is the only one the framework ships.
+  calendarId String @default("elapsed")
+
+  durationSeconds  Int
+  warningAtSeconds Int
+
+  startedAt     DateTime  @default(now())
+  dueAt         DateTime
+  warningAt     DateTime
+  /// Set when the *side effect* fired. The status is recomputed on read; this records
+  /// that a notification already went out, which is what makes the sweep idempotent.
+  warnedAt      DateTime?
+  breachedAt    DateTime?
+  pausedAt      DateTime?
+  /// Accumulated, so several pause/resume cycles are additive rather than each one
+  /// overwriting the last.
+  pausedSeconds Int       @default(0)
+  completedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  instance WorkflowInstance? @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+
+  /// The sweep: thresholds crossed whose side effect has not fired. The null columns
+  /// are in the index because they are the selective part — most SLAs have already
+  /// warned or are not due.
+  @@index([status, warningAt, warnedAt])
+  @@index([status, dueAt, breachedAt])
+  @@index([workflowInstanceId, status])
+  @@index([workflowTaskId])
+  @@index([organizationId, status])
+}
+
+/// One escalation, fired once.
+model WorkflowEscalation {
+  id                 String  @id @default(cuid())
+  organizationId     String
+  workflowInstanceId String?
+  workflowTaskId     String?
+  workflowSlaId      String?
+
+  /// sla_warning | sla_breach | manual | rework_limit
+  trigger        String
+  /// notify_assignee | notify_supervisor | reassign_task | add_approver | ...
+  action         String
+  /// Derived from the target and the trigger. The unique constraint below is what makes
+  /// escalation idempotent — a breached SLA stays breached, so without it a sweep would
+  /// page somebody every minute until the queue drained.
+  idempotencyKey String
+
+  /// pending | succeeded | failed | skipped
+  status    String  @default("pending")
+  attempts  Int     @default(0)
+  /// The message, not a stack: a stack from an application callback may name internal
+  /// paths, and this row is readable in the administration portal.
+  lastError String?
+  detail    Json?
+
+  triggeredAt DateTime  @default(now())
+  completedAt DateTime?
+
+  instance WorkflowInstance? @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+
+  /// The idempotency guarantee. A unique constraint rather than a check in code,
+  /// because a check-then-insert has a window and two schedulers hit it.
+  @@unique([organizationId, idempotencyKey])
+  @@index([workflowInstanceId, triggeredAt])
+  @@index([organizationId, status, triggeredAt])
+}
+
+/// A case: work somebody owns until it is resolved.
+model CaseRecord {
+  id             String @id @default(cuid())
+  organizationId String
+  /// Product-defined: `merchant_onboarding`, `complaint`, `compliance_review`.
+  caseType       String
+  /// Human-facing reference, e.g. `CASE-1042`. Unique per organization.
+  reference      String
+
+  subject     String
+  description String @default("")
+  /// open | under_review | waiting_for_information | escalated | resolved | closed | cancelled
+  status      String @default("open")
+  priority    String @default("normal")
+
+  ownerId      String?
+  assignedTeam String?
+
+  businessObjectType String?
+  businessObjectId   String?
+  dueAt              DateTime?
+
+  /// A code and a narrative. The code makes cases countable, the narrative is what
+  /// somebody reads when the same customer complains again. Either alone is insufficient.
+  resolution     String?
+  resolutionCode String?
+  resolvedById   String?
+  resolvedAt     DateTime?
+
+  /// Closure is separate from resolution: the person who decides what to do is often
+  /// not the person who confirms it was actioned.
+  closureReason String?
+  closedById    String?
+  closedAt      DateTime?
+
+  /// Optimistic lock.
+  version Int @default(0)
+
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  instances   WorkflowInstance[]
+  events      WorkflowEvent[]
+  comments    WorkflowComment[]
+  attachments WorkflowAttachment[]
+
+  @@unique([organizationId, reference])
+  /// The case queue: an organization's open cases by status.
+  @@index([organizationId, status, priority])
+  /// "My cases" and "my team's cases".
+  @@index([organizationId, ownerId, status])
+  @@index([organizationId, assignedTeam, status])
+  /// Overdue cases.
+  @@index([organizationId, dueAt])
+  @@index([organizationId, businessObjectType, businessObjectId])
+}
+
+/// A recorded external operation, for idempotency.
+///
+/// The request hash is what makes a replayed key safe: the same key with the same
+/// payload returns the first result, and the same key with a *different* payload is
+/// refused. Returning the first result for a different payload would tell the caller an
+/// operation happened that never did.
+model WorkflowIdempotencyRecord {
+  id                String  @id @default(cuid())
+  organizationId    String
+  idempotencyKey    String
+  actorId           String
+  operation         String
+  requestHash       String
+  /// Where the result lives, e.g. `workflow_instance:wfi_123`. Never a payload.
+  responseReference String?
+  /// in_progress | completed | failed
+  status            String  @default("in_progress")
+
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  /// The atomic claim. A SELECT-then-INSERT has a window between the two, and two
+  /// concurrent requests with one key both find nothing and both insert.
+  @@unique([organizationId, idempotencyKey])
+  /// The purge sweep.
+  @@index([expiresAt])
+}
+
+/// Round-robin position, per organization and assignment key.
+///
+/// Persisted rather than in-memory: a counter that resets on every deploy sends every
+/// task after a restart to the same person, which is the opposite of round-robin.
+model WorkflowAssignmentCursor {
+  id             String @id @default(cuid())
+  organizationId String
+  /// `<stepKey>:<role>`.
+  cursorKey      String
+  position       Int    @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, cursorKey])
+}

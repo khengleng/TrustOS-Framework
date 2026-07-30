@@ -88,7 +88,7 @@ describe('list-templates', () => {
 
     expect(code).toBe(0);
     const parsed = JSON.parse(output) as Array<{ id: string; version: string }>;
-    expect(parsed).toHaveLength(5);
+    expect(parsed).toHaveLength(6);
     expect(parsed.every((entry) => Boolean(entry.id && entry.version))).toBe(true);
   });
 
@@ -110,7 +110,7 @@ describe('validate-template', () => {
       TEMPLATES_ROOT,
     ]);
 
-    expect(output).toContain('5 template(s) valid.');
+    expect(output).toContain('6 template(s) valid.');
     expect(code).toBe(0);
   });
 
@@ -150,7 +150,7 @@ describe('validate-template', () => {
 
     expect(code).toBe(0);
     const reports = JSON.parse(output) as Array<{ templateId: string; ok: boolean }>;
-    expect(reports).toHaveLength(5);
+    expect(reports).toHaveLength(6);
     expect(reports.every((report) => report.ok)).toBe(true);
   });
 });

@@ -15,7 +15,16 @@
       "path": "../module-registry"
     },
     {
+      "path": "../rbac"
+    },
+    {
       "path": "../template-registry"
+    },
+    {
+      "path": "../workflow-core"
+    },
+    {
+      "path": "../workflow-definition"
     }
   ]
 }

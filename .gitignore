@@ -8,6 +8,22 @@ build/
 out/
 *.tsbuildinfo
 
+# Build output that leaked into a source tree.
+#
+# `tsc -b` on a project whose `rootDir` cannot contain a referenced package emits next to
+# the sources rather than into `dist`. That happened during phase 5 and produced 28
+# untracked .js/.d.ts files under packages/rbac/src, which then failed lint with
+# "'exports' is not defined". Ignoring them means the mistake cannot be committed; the
+# `no-stray-build-output` CI step below is what makes it visible rather than silent.
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+packages/modules/*/src/**/*.js
+packages/modules/*/src/**/*.d.ts
+apps/*/src/**/*.js
+apps/*/src/**/*.d.ts
+
 # Environment / secrets — NEVER commit real values
 .env
 .env.*

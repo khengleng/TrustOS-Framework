@@ -1,0 +1,21 @@
+{
+  "name": "@trustos/workflow-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Workflow domain types: definitions, instances, steps, tasks, decisions and the errors every workflow package shares.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

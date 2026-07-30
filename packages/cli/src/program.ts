@@ -5,6 +5,7 @@ import { createOutput, formatRows, type Output } from './output';
 import { runNew } from './commands/new';
 import { runListTemplates } from './commands/list-templates';
 import { runValidateTemplate } from './commands/validate-template';
+import { runWorkflowList, runWorkflowSimulate, runWorkflowValidate } from './commands/workflow';
 import { runDoctor, type DoctorReport } from './commands/doctor';
 import { runAddModule } from './commands/add-module';
 import { runListModules } from './commands/list-modules';
@@ -107,6 +108,51 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
     .option('--templates-root <path>', 'override the templates directory')
     .action(async (template: string | undefined, opts: Record<string, unknown>) => {
       setExit(await runValidateTemplate(template, opts, output));
+    });
+
+  // --- workflow -------------------------------------------------------------
+  //
+  // A command group rather than three top-level commands, because `trustos workflow
+  // validate` reads as a sentence and `trustos validate-workflow` does not — and because
+  // the group is where a future `workflow diff` belongs.
+  //
+  // Every subcommand is read-only and offline: no database, no network, nothing created.
+  // These are the commands somebody runs while deciding whether to publish, and a tool that
+  // needed a running application would not be run then.
+  const workflow = program
+    .command('workflow')
+    .description('validate, simulate and inspect workflow definitions');
+
+  workflow
+    .command('validate')
+    .argument('<file>', 'workflow definition (JSON)')
+    .description('validate a workflow definition; exits non-zero when it is invalid')
+    .option('--json', 'machine-readable output')
+    .option(
+      '--strict-permissions',
+      'check permission references against the framework catalog (off by default: a ' +
+        'definition may reference product permissions this CLI does not know)',
+    )
+    .option('--permissions <list>', 'comma-separated product permission keys to accept')
+    .action(async (file: string, opts: Record<string, unknown>) => {
+      setExit(await runWorkflowValidate(file, opts, output));
+    });
+
+  workflow
+    .command('simulate')
+    .argument('<file>', 'workflow definition (JSON)')
+    .description('walk every path through a definition; reports dead ends and unreviewed paths')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, unknown>) => {
+      setExit(await runWorkflowSimulate(file, opts, output));
+    });
+
+  workflow
+    .command('list')
+    .description('list the workflow definitions shipped with the framework')
+    .option('--json', 'machine-readable output')
+    .action((opts: Record<string, unknown>) => {
+      setExit(runWorkflowList(opts, output));
     });
 
   // --- doctor ---------------------------------------------------------------

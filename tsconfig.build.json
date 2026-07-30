@@ -86,6 +86,36 @@
       "path": "packages/modules/workflow"
     },
     {
+      "path": "packages/workflow-core"
+    },
+    {
+      "path": "packages/workflow-definition"
+    },
+    {
+      "path": "packages/workflow-policy"
+    },
+    {
+      "path": "packages/workflow-approvals"
+    },
+    {
+      "path": "packages/workflow-tasks"
+    },
+    {
+      "path": "packages/workflow-sla"
+    },
+    {
+      "path": "packages/workflow-escalation"
+    },
+    {
+      "path": "packages/workflow-history"
+    },
+    {
+      "path": "packages/workflow-runtime"
+    },
+    {
+      "path": "packages/case-management"
+    },
+    {
       "path": "packages/template-registry"
     },
     {

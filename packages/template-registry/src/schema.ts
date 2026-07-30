@@ -12,6 +12,7 @@ import { z } from 'zod';
 
 export const TEMPLATE_IDS = [
   'generic-saas',
+  'workflow-enabled-saas',
   'merchant',
   'learning',
   'payment-gateway',
@@ -48,6 +49,31 @@ export const includedModuleSchema = z.enum([
   'observability',
   'config',
   'database',
+
+  /*
+   * Phase 5. A template that governs a business object with a workflow declares these, and
+   * `validate-template` fails on a template that imports a framework package it did not
+   * declare — which is how the manifest stays an accurate description of what a template
+   * writes rather than a wish.
+   */
+  'workflow-core',
+  'workflow-definition',
+  'workflow-runtime',
+  'workflow-approvals',
+  'workflow-tasks',
+  'workflow-sla',
+  'workflow-escalation',
+  'workflow-history',
+  'workflow-policy',
+  'case-management',
+
+  /*
+   * Phase 4. A workflow template needs the authorization engine the workflow policies plug
+   * into, plus the policy loader and the event emitter the engine reports denials through.
+   */
+  'authorization',
+  'security-policy',
+  'security-events',
 ]);
 export type IncludedModule = z.infer<typeof includedModuleSchema>;
 

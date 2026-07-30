@@ -43,6 +43,20 @@ export const AUDITABLE_SECURITY_EVENTS = new Set<string>([
   'session.all_revoked',
   'authz.role_changed',
   'authz.permission_changed',
+
+  /*
+   * A blocked self-approval belongs in the customer's trail: it is a governance fact
+   * about their own workflow, and an auditor asking "was maker-checker enforced" is
+   * asking exactly this. So do the two privileged operations that steer a decision.
+   *
+   * `workflow.definition_tampering_detected` deliberately does *not* cross over. It
+   * means the platform's own database was written to outside the application, which
+   * is the platform operator's problem and not the tenant's.
+   */
+  'workflow.self_approval_blocked',
+  'workflow.separation_of_duty_blocked',
+  'workflow.task_reassigned',
+  'workflow.approval_overridden',
 ]);
 
 export class AuditSecurityEventSink implements SecurityEventSink {

@@ -62,6 +62,16 @@ export interface GenerationContext {
   layers: TemplateLayer[];
 }
 
+/**
+ * Framework packages every generated application depends on.
+ *
+ * The floor, not the ceiling. A template's own `includedModules` are unioned with this — see
+ * `buildFrameworkDependencies` — so a template that wires the workflow engine gets its
+ * packages without this list having to know that workflows exist.
+ *
+ * `shared-types` is here and not in any manifest because it is not a capability a template
+ * chooses; every application needs the actor context.
+ */
 export const FRAMEWORK_PACKAGES = [
   'config',
   'database',
@@ -209,7 +219,12 @@ export async function prepareGeneration(
 
     // Dependency specs for the framework packages, so a generated
     // package.json can be rendered without repeating the list per template.
-    frameworkDependencies: buildFrameworkDependencies(frameworkVersion, request.frameworkPath),
+    frameworkDependencies: buildFrameworkDependencies(
+      frameworkVersion,
+      request.frameworkPath,
+      // The template's own capabilities. Every `includedModule` names a `@trustos/*` package.
+      template.includedModules,
+    ),
   };
 
   for (const [key, value] of Object.entries(values)) assertSafeValue(key, value);
@@ -225,12 +240,23 @@ export async function prepareGeneration(
  * Until the framework is published to npm, a generated project cannot resolve
  * `^0.1.0` from a registry. `--framework-path` rewrites them to `file:` links
  * so the generated app installs and builds today; CI relies on it.
+ *
+ * `extraPackages` comes from the template's `includedModules`. Deriving the dependency list
+ * from the manifest rather than keeping a second list here means the two cannot drift — and
+ * `validate-template` already fails a template that imports a package it did not declare, so
+ * the manifest is the accurate description of what a template needs.
+ *
+ * Sorted, because an unsorted dependency block makes every generated `package.json` differ by
+ * key order and breaks the byte-identical determinism check.
  */
 export function buildFrameworkDependencies(
   frameworkVersion: string,
   frameworkPath?: string,
+  extraPackages: readonly string[] = [],
 ): Record<string, string> {
-  const entries = FRAMEWORK_PACKAGES.map((name) => {
+  const names = [...new Set([...FRAMEWORK_PACKAGES, ...extraPackages])].sort();
+
+  const entries = names.map((name) => {
     const specifier = frameworkPath
       ? `file:${join(frameworkPath, 'packages', name)}`
       : `^${frameworkVersion}`;
