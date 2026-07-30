@@ -147,6 +147,12 @@ export const BUILT_IN_MODULE_IDS = [
   'import',
   'export',
   'sync',
+
+  // The AI platform. `rag` and `agent` both depend on `ai`, so the order is also the install
+  // order.
+  'ai',
+  'rag',
+  'agent',
 ] as const;
 
 export type BuiltInModuleId = (typeof BUILT_IN_MODULE_IDS)[number];

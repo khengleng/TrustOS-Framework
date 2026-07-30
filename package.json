@@ -2,7 +2,7 @@
   "name": "trustos-framework",
   "version": "0.1.0",
   "private": true,
-  "description": "TrustOS Engineering Framework — reusable foundation for TrustOS products.",
+  "description": "TrustOS Engineering Framework \u2014 reusable foundation for TrustOS products.",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20.11.0",
@@ -39,7 +39,8 @@
     "cli": "node packages/cli/bin/trustos.js",
     "templates:validate": "node packages/cli/bin/trustos.js validate-template --all",
     "modules:validate": "vitest run packages/module-registry packages/module-sdk",
-    "test:modules": "vitest run packages/module-sdk packages/module-registry packages/modules"
+    "test:modules": "vitest run packages/module-sdk packages/module-registry packages/modules",
+    "bench:ai": "node scripts/bench-ai.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

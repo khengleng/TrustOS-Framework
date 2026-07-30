@@ -1892,6 +1892,418 @@ const RAW_CATALOG: unknown[] = [
       'Three-way merge of conflicting records',
     ],
   },
+
+  // ==========================================================================
+  // ai
+  //
+  // The gateway and everything a model call passes through. `rag` and `agent` both depend on it,
+  // because neither can work without a gateway — and a module that cannot make a request is a
+  // module whose installation looks successful and does nothing.
+  // ==========================================================================
+  {
+    metadata: {
+      id: 'ai',
+      name: 'AI Platform',
+      description:
+        'The AI gateway and everything a model call has to pass through: model registry, prompt registry, guardrails, tenant policy, routing, cost accounting and caching. Provider-neutral; ships no provider credentials.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['ai', 'gateway', 'infrastructure'],
+    },
+    packaging: packaging('ai', 'AiModule'),
+    permissions: [
+      {
+        key: 'ai.model.read',
+        description: 'List the models this organization may use.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'ai.model.manage',
+        description: 'Register, retire and reprice models.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'ai.prompt.read',
+        description: 'Read prompts and their versions.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'ai.prompt.write',
+        description: 'Draft and edit a prompt version. Not enough to publish one.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'ai.prompt.approve',
+        description:
+          'Approve a prompt version. Separate from writing, because the author may not approve their own.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'ai.prompt.publish',
+        description:
+          'Publish an approved version, making it live. Separate again: three people, not one.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'ai.policy.read',
+        description: "Read this organization's AI policy.",
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'ai.policy.manage',
+        description: 'Change which models, tools and knowledge bases are permitted.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'ai.usage.read',
+        description: 'Read AI cost and usage reports.',
+        suggestedRoles: READ_ROLES,
+      },
+    ],
+    // No routes.
+    //
+    // Same reasoning as the integration modules: this ships services and lifecycle, not
+    // controllers. Every store is a port the application supplies, so a controller here would
+    // have nothing to inject — and a catalog that advertises a route nothing serves is a catalog
+    // that lies.
+    routes: [],
+    auditEvents: [
+      {
+        action: 'ai.request.completed',
+        entityType: 'AiRequest',
+        description:
+          'A model was called. Records the model, cost, outcome and policy decision — never the prompt or the completion.',
+      },
+      {
+        action: 'ai.request.blocked',
+        entityType: 'AiRequest',
+        description: 'A guardrail or a policy refused a request.',
+      },
+      {
+        action: 'ai.prompt.published',
+        entityType: 'AiPromptVersion',
+        description: 'A prompt version was published and became live.',
+      },
+      {
+        action: 'ai.prompt.rolled_back',
+        entityType: 'AiPromptVersion',
+        description: 'A previously approved prompt version was made live again.',
+      },
+      {
+        action: 'ai.policy.changed',
+        entityType: 'AiPolicy',
+        description: "An organization's AI policy was changed.",
+      },
+      {
+        action: 'ai.model.retired',
+        entityType: 'AiModel',
+        description: 'A model was retired and can no longer be requested.',
+      },
+    ],
+    // No migration of its own: the AI tables are part of the framework schema, which every
+    // generated application already carries in `00-framework.prisma`.
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Provider adapter',
+        port: 'AiProviderAdapter',
+        description:
+          'The provider. One adapter per provider — OpenAI, Anthropic, Gemini, OpenRouter, xAI, Ollama, vLLM. The framework ships an echo adapter for tests and no real one, because shipping a provider is choosing one.',
+        provided: ['EchoAdapter'],
+      },
+      {
+        name: 'Model store',
+        port: 'ModelStore',
+        description: 'Where the model catalog lives.',
+        provided: ['InMemoryModelRegistry'],
+      },
+      {
+        name: 'Prompt store',
+        port: 'PromptStore',
+        description: 'Where prompts and their versions live.',
+        provided: ['InMemoryPromptStore'],
+      },
+      {
+        name: 'Cache store',
+        port: 'CacheStore',
+        description:
+          'Where cached responses live. The key includes the tenant structurally, so no adapter can omit it.',
+        provided: ['InMemoryCacheStore'],
+      },
+      {
+        name: 'Cost store',
+        port: 'CostStore',
+        description: 'Where spend is recorded and aggregated.',
+        provided: ['InMemoryCostStore'],
+      },
+    ],
+    outOfScope: [
+      'Provider credentials and accounts',
+      'Fine-tuning and training pipelines',
+      'Image, audio and video generation',
+      'A chat user interface',
+      'Business-specific agents and prompts',
+      'Model hosting and GPU infrastructure',
+    ],
+  },
+
+  // ==========================================================================
+  // rag
+  // ==========================================================================
+  {
+    metadata: {
+      id: 'rag',
+      name: 'Retrieval-Augmented Generation',
+      description:
+        'Answering from documents: chunking, embedding, a vector-store interface, hybrid search with reciprocal rank fusion, citation checking and per-collection access control.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['ai', 'search', 'knowledge'],
+    },
+    packaging: packaging('rag', 'RagModule'),
+    dependencies: [
+      {
+        moduleId: 'ai',
+        versionRange: '^0.1.0',
+        reason:
+          'Retrieval produces an answer by calling a model, and every model call goes through the gateway.',
+      },
+    ],
+    permissions: [
+      {
+        key: 'rag.collection.read',
+        description: 'List knowledge collections. Reading a collection needs its own permissions.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'rag.collection.manage',
+        description: 'Create a collection and set who may read it.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'rag.document.write',
+        description: 'Add and update documents, which re-embeds them.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'rag.document.delete',
+        description: 'Remove a document and its vectors.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'rag.search',
+        description: 'Search collections this actor may read.',
+        suggestedRoles: READ_ROLES,
+      },
+    ],
+    routes: [],
+    auditEvents: [
+      {
+        action: 'rag.collection.created',
+        entityType: 'AiKnowledgeCollection',
+        description:
+          'A knowledge collection was created, with its visibility and read permissions.',
+      },
+      {
+        action: 'rag.collection.access_changed',
+        entityType: 'AiKnowledgeCollection',
+        description: 'Who may read a collection changed. The most consequential edit in retrieval.',
+      },
+      {
+        action: 'rag.document.ingested',
+        entityType: 'AiKnowledgeDocument',
+        description: 'A document was added or updated and embedded.',
+      },
+      {
+        action: 'rag.document.removed',
+        entityType: 'AiKnowledgeDocument',
+        description: 'A document and its vectors were removed.',
+      },
+    ],
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Vector store',
+        port: 'VectorStore',
+        description:
+          'Where vectors live. An interface on purpose: pgvector, Qdrant, Pinecone, Weaviate or something else. Nothing above it knows which, which is the only reason a deployment can change that decision later.',
+        provided: ['InMemoryVectorStore'],
+      },
+      {
+        name: 'Embedding provider',
+        port: 'EmbeddingProvider',
+        description:
+          'Turns text into vectors. The framework ships a deterministic hashing provider for tests — usable, and not a real embedding model.',
+        provided: ['HashingEmbeddingProvider'],
+      },
+      {
+        name: 'Knowledge store',
+        port: 'KnowledgeStore',
+        description: 'Where collections and documents live.',
+        provided: ['InMemoryKnowledgeStore'],
+      },
+      {
+        name: 'Keyword search',
+        port: 'KeywordSearch',
+        description:
+          'The other half of hybrid search. Wire full-text search from the database; without it, retrieval is vector-only.',
+        provided: [],
+      },
+    ],
+    outOfScope: [
+      'A specific vector database',
+      'A production embedding model',
+      'Document parsing (PDF, DOCX, OCR)',
+      'Web crawling and scheduled ingestion',
+      'Cross-tenant or global knowledge bases',
+    ],
+  },
+
+  // ==========================================================================
+  // agent
+  // ==========================================================================
+  {
+    metadata: {
+      id: 'agent',
+      name: 'Agent Framework',
+      description:
+        'Agents that take actions: declarative definitions, the tool loop with per-actor permission checks, memory, conversation state, stop conditions and human review.',
+      version: VERSION,
+      minimumFrameworkVersion: MINIMUM_FRAMEWORK,
+      owner: OWNER,
+      stability: 'stable',
+      tags: ['ai', 'agents', 'automation'],
+    },
+    packaging: packaging('agent', 'AgentModule'),
+    dependencies: [
+      {
+        moduleId: 'ai',
+        versionRange: '^0.1.0',
+        reason:
+          'An agent is a loop around model calls, and every model call goes through the gateway.',
+      },
+    ],
+    permissions: [
+      {
+        key: 'agent.definition.read',
+        description: 'List the registered agents and what each may do.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'agent.definition.manage',
+        description: 'Register an agent and change its tools, limits and prompt.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'agent.run',
+        description:
+          "Run an agent. An agent's own requiredPermissions are checked in addition to this one.",
+        // Not the auditor. Running an agent spends money and can call tools, which is not a
+        // read-only act however read-only the question sounds.
+        suggestedRoles: ['organization_owner', 'administrator', 'operator'],
+      },
+      {
+        key: 'agent.memory.read',
+        description: 'Read what an agent remembers about a user or an organization.',
+        suggestedRoles: READ_ROLES,
+      },
+      {
+        key: 'agent.memory.forget',
+        description: 'Delete a memory. Needed for a subject access request.',
+        suggestedRoles: WRITE_ROLES,
+      },
+      {
+        key: 'agent.review.decide',
+        description:
+          'Approve, reject or escalate AI output. Never held by the person or process that produced it.',
+        suggestedRoles: WRITE_ROLES,
+      },
+    ],
+    routes: [],
+    auditEvents: [
+      {
+        action: 'agent.run',
+        entityType: 'AiAgentRun',
+        description:
+          'An agent ran. Records which tools were called and why it stopped — never the conversation.',
+      },
+      {
+        action: 'agent.tool.called',
+        entityType: 'AiToolCall',
+        description: 'An agent called a tool, with the outcome.',
+      },
+      {
+        action: 'agent.tool.denied',
+        entityType: 'AiToolCall',
+        description:
+          'A tool call was refused because the actor lacked the permission. The prompt-injection signal worth alerting on.',
+      },
+      {
+        action: 'agent.review.requested',
+        entityType: 'AiReviewRequest',
+        description: 'Output was queued for a person to check.',
+      },
+      {
+        action: 'agent.review.approve',
+        entityType: 'AiReviewRequest',
+        description: 'A reviewer approved AI output, possibly with a correction.',
+      },
+      {
+        action: 'agent.review.reject',
+        entityType: 'AiReviewRequest',
+        description: 'A reviewer rejected AI output, with the reason.',
+      },
+    ],
+    migrations: [],
+    environment: [],
+    extensionPoints: [
+      {
+        name: 'Tool',
+        port: 'FunctionDefinition',
+        description:
+          'What an agent can do. Each declares a schema and the permission the actor must hold. The framework ships none, because a tool is an action in somebody else’s domain.',
+        provided: [],
+      },
+      {
+        name: 'Memory store',
+        port: 'MemoryStore',
+        description: 'Where agent memory lives, scoped by conversation, session, user or tenant.',
+        provided: ['InMemoryMemoryStore'],
+      },
+      {
+        name: 'Conversation store',
+        port: 'ConversationStore',
+        description: 'Where conversations and their turns live.',
+        provided: ['InMemoryConversationStore'],
+      },
+      {
+        name: 'Review store',
+        port: 'ReviewStore',
+        description: 'The human review queue.',
+        provided: ['InMemoryReviewStore'],
+      },
+      {
+        name: 'Summariser',
+        port: 'summarise',
+        description:
+          'Compacts a long conversation. A port rather than an implementation, because summarising well needs a model call — and a conversation service that made model calls would depend on everything.',
+        provided: [],
+      },
+    ],
+    outOfScope: [
+      'Business-specific agents (banking, lending, payments, merchants)',
+      'A chat user interface',
+      'Autonomous agents that run without a triggering actor',
+      'Multi-agent negotiation and delegation',
+      'Agent marketplaces',
+    ],
+  },
 ];
 
 function loadCatalog(): ModuleCatalogEntry[] {

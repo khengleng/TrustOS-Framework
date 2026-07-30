@@ -9,10 +9,22 @@
   "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
   "references": [
     {
+      "path": "../agent-framework"
+    },
+    {
+      "path": "../evaluation"
+    },
+    {
       "path": "../generator-core"
     },
     {
+      "path": "../model-registry"
+    },
+    {
       "path": "../module-registry"
+    },
+    {
+      "path": "../prompt-registry"
     },
     {
       "path": "../rbac"

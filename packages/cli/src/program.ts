@@ -8,6 +8,13 @@ import { runValidateTemplate } from './commands/validate-template';
 import { runWorkflowList, runWorkflowSimulate, runWorkflowValidate } from './commands/workflow';
 import { runDoctor, type DoctorReport } from './commands/doctor';
 import { runDoctorIntegrations } from './commands/doctor-integrations';
+import {
+  runAiDoctor,
+  runAiEvaluate,
+  runAiListAgents,
+  runAiListModels,
+  runAiValidatePrompts,
+} from './commands/ai';
 import { runAddModule } from './commands/add-module';
 import { runListModules } from './commands/list-modules';
 import { runUpgrade } from './commands/placeholders';
@@ -182,6 +189,72 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
     .action(async (opts: { path?: string; json?: boolean; verbose?: boolean }) => {
       setExit(await runDoctorIntegrations(opts, output));
     });
+
+  // --- ai -------------------------------------------------------------------
+  //
+  // A group, for the same reason `workflow` is one: `trustos ai list-models` reads as a sentence.
+  //
+  // Every subcommand is offline — no database, no network, no model call, no credentials. That is
+  // what makes them usable on a laptop against a checkout, which is when somebody asks these
+  // questions. `ai evaluate` therefore validates suites and compares recorded runs rather than
+  // calling a model; the run that calls models happens inside the application, where the gateway
+  // and the credentials are.
+  const ai = program
+    .command('ai')
+    .description('inspect an application’s AI platform: models, agents, prompts, evaluations');
+
+  ai.command('doctor')
+    .description('check an application’s AI wiring, schema, catalog and secrets')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--json', 'machine-readable output')
+    .option('--verbose', 'explain what this check cannot see')
+    .action(async (opts: { path?: string; json?: boolean; verbose?: boolean }) => {
+      setExit(await runAiDoctor(opts, output));
+    });
+
+  ai.command('list-models')
+    .description('list the models this application registers')
+    .option('--path <dir>', 'application directory')
+    .option('--json', 'machine-readable output')
+    .option('--verbose', 'show capabilities, pricing age and tenant restrictions')
+    .action(async (opts: { path?: string; json?: boolean; verbose?: boolean }) => {
+      setExit(await runAiListModels(opts, output));
+    });
+
+  ai.command('list-agents')
+    .description('list the agents this application registers')
+    .option('--path <dir>', 'application directory')
+    .option('--json', 'machine-readable output')
+    .action(async (opts: { path?: string; json?: boolean }) => {
+      setExit(await runAiListAgents(opts, output));
+    });
+
+  ai.command('validate-prompts')
+    .description('check prompt templates: syntax, variables, components and injection flags')
+    .option('--path <dir>', 'application directory')
+    .option('--json', 'machine-readable output')
+    .action(async (opts: { path?: string; json?: boolean }) => {
+      setExit(await runAiValidatePrompts(opts, output));
+    });
+
+  ai.command('evaluate')
+    .description('validate evaluation suites, or compare two recorded runs')
+    .option('--path <dir>', 'application directory')
+    .option('--baseline <file>', 'a recorded run to compare against')
+    .option('--candidate <file>', 'the run to compare')
+    .option('--tolerance <number>', 'score movement to ignore as noise (default 0.05)')
+    .option('--json', 'machine-readable output')
+    .action(
+      async (opts: {
+        path?: string;
+        baseline?: string;
+        candidate?: string;
+        tolerance?: string;
+        json?: boolean;
+      }) => {
+        setExit(await runAiEvaluate(opts, output));
+      },
+    );
 
   // --- list-modules ---------------------------------------------------------
   program

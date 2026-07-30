@@ -314,6 +314,79 @@ Read [docs/integration-security.md](docs/integration-security.md) before changin
 `webhook-runtime/destination.ts`, `webhooks/signature.ts` or `export/formats.ts`. The checks in
 those files look redundant and are not.
 
+## AI rules (phase 7)
+
+The AI layer is where this platform lets a probabilistic system take actions. Every rule below
+describes a change that compiles, passes the tests, and removes a control that only announces
+itself when something has already gone wrong.
+
+1. **Reuse the framework packages. Never duplicate one.** There is one gateway, one guardrail
+   pipeline, one token meter, one cache-key builder. A second one is a second set of defaults, and
+   the two diverge within a month.
+
+2. **Never bypass the gateway.** No provider SDK imported outside an adapter, no direct HTTP call
+   to a model endpoint. The gateway is where policy, guardrails, routing, cost accounting and audit
+   are applied, and a request that goes around it is a request nobody can account for afterwards.
+
+3. **Never bypass guardrails.** Do not add a `skipGuardrails` flag, a "trusted caller" path or an
+   internal-only bypass. A caller who needs different thresholds configures a guardrail profile.
+   The moment a bypass exists, every other guarantee in this phase becomes conditional on nobody
+   using it.
+
+4. **Never expose secrets.** Provider credentials live in the environment and are redacted
+   structurally — `[SET]` or `[NOT SET]`, never a prefix. Nothing in the AI schema has a column for
+   a credential, and nothing should gain one. A prompt is not a secret either: assume a determined
+   user extracts the system prompt, and put nothing in it that matters if they do.
+
+5. **Never bypass tenant isolation.** Every store call takes `organizationId` explicitly. A cache
+   key is built from a context, never from a string a caller assembles. Null is the platform
+   tenant, not a wildcard. The failure here is silent: the wrong tenant's answer is a perfectly
+   good answer.
+
+6. **Always audit AI actions.** Every request, every tool call, every review decision, every prompt
+   publication, every policy change. Metadata, prompt version, tool names and outcomes — never the
+   prompt, the completion or the conversation. Where content lives is one deliberate place.
+
+7. **Always validate tool permissions against the _actor_, not the agent.** This is the control
+   that makes a successful prompt injection survivable, and it is the one most easily "simplified"
+   away by someone who reads the agent's tool list as a grant rather than a ceiling. Never accept
+   `organizationId` as a tool parameter.
+
+8. **Always validate prompt versions.** Render through the registry, check the content hash, and
+   never edit a published version. An inline production prompt has no author, no approval and no
+   rollback.
+
+9. **Always use the model registry.** No model name in application code. A hardcoded model cannot
+   be retired centrally and cannot fall back when its provider has an incident.
+
+10. **Always use the prompt registry** for anything a customer reads. Three people — author,
+    approver, publisher — and the framework refuses self-approval and self-publication.
+
+11. **Never claim to eliminate hallucination.** Guardrails reduce a rate; retrieval reduces it
+    further; neither eliminates it. Any comment, log line, doc or metric name implying otherwise is
+    wrong and will be believed. Name a heuristic a heuristic: `groundedness` measures word overlap,
+    and its own `detail` string says so because the number gets copied into dashboards.
+
+12. **Never cache a sensitive request** unless the tenant policy explicitly allows it. Caching is
+    off by default, and `confidential` collections are never cached.
+
+13. **A limit reached is not a success.** A run that exhausted its steps, tokens or time reports
+    `limit_reached`, and a truncated completion is not a final answer. Presenting half a thought as
+    a conclusion is the failure mode of every agent framework that gets this wrong.
+
+14. **Always add tests, including the negative one.** Every agent deserves four: the injection
+    test, the limit test, the tool-failure test, and — where it requires review — the test that its
+    output cannot be read until a person approves it.
+
+15. **Stop after completing phase 7.** Do not begin phase 8. Do not add business-specific agents,
+    a chat interface, voice, image generation, fine-tuning or a marketplace. Phase 7 is a reusable
+    enterprise AI platform, and every product-specific thing added to it is carried by every
+    product built on it.
+
+Read [docs/ai-security.md](docs/ai-security.md) before changing anything in
+`tool-execution/executor.ts`, `ai-cache/cache.ts`, `prompt-registry/template.ts` or
+`agent-memory/memory.ts`. The checks in those files look redundant and are not.
+
 ## Before claiming a change is done
 
 ```bash

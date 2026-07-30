@@ -934,3 +934,638 @@ model SyncConflict {
   @@index([organizationId, resolvedAt])
   @@map("sync_conflict")
 }
+
+// ===========================================================================
+// Phase 7 — the AI platform
+//
+// Seventeen tables behind the store ports the phase 7 packages define. Every package takes a
+// store interface rather than a Prisma client, so an application can put any of this somewhere
+// else — memory in Redis, vectors in a real vector database, telemetry in a time-series store —
+// without the framework knowing. These are the default implementations' tables.
+//
+// Three things in this section are deliberate and are commented where they appear:
+//
+//   * `ai_request_log` is one table read by two packages. Cost accounting and observability need
+//     almost the same row, and writing it twice would let the two disagree about what a request
+//     cost — which is the one thing a cost report must never do.
+//
+//   * Vectors are stored as `Json`, not as a native vector type. A `vector` column needs the
+//     pgvector extension, and requiring an extension to run the framework would make "provider
+//     neutral" false at the database as well. This is a correct, slow default; an application
+//     with real retrieval volume points `VectorStore` at something built for it.
+//
+//   * Nothing here stores an API key, a prompt's rendered output alongside a customer's data, or
+//     a completion in the telemetry table. Where content lives is a deliberate choice per table.
+// ---------------------------------------------------------------------------
+
+/// A model the platform may use.
+///
+/// Applications ask for models by id or by requirement; this is what the registry reads.
+/// Pricing is in cents per million tokens, as integers — floating-point money multiplied by a
+/// million-token count accumulates error that shows up as a cost report nobody can reconcile.
+model AiModel {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// The registry id applications use: `openai.gpt-4o`, `anthropic.sonnet`.
+  modelId         String
+  provider        String
+  /// What the provider calls it. Changes without the registry id changing.
+  providerModelId String
+
+  displayName  String
+  family       String?
+  status       String  @default("available")
+  /// Why it is unavailable or deprecated. Shown to whoever asks for it.
+  statusReason String?
+
+  contextTokens   Int
+  maxOutputTokens Int
+  capabilities    String[]
+
+  /// Cents per million tokens.
+  inputCostPerMillion       Int
+  outputCostPerMillion      Int
+  cachedInputCostPerMillion Int?
+  /// When the pricing was last checked. Stale pricing is a silently wrong cost report.
+  pricingUpdatedAt          DateTime
+
+  /// Null means unknown, not fast.
+  p50LatencyMs Int?
+
+  /// Empty means every tenant. Otherwise an allow-list.
+  allowedOrganizationIds String[]
+
+  /// Set by `markUnavailable`, and time-limited so it heals itself.
+  unavailableUntil  DateTime?
+  unavailableReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, status])
+  @@index([provider, status])
+  @@map("ai_model")
+}
+
+/// A prompt, identified by its key.
+model AiPrompt {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// `support.system`, `translation.user`. Stable across versions.
+  key         String
+  name        String
+  description String?
+  owner       String?
+  tags        String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions AiPromptVersion[]
+
+  @@index([organizationId, key])
+  @@map("ai_prompt")
+}
+
+/// One version of a prompt.
+///
+/// **A published version is immutable.** The application enforces it and the database records
+/// what would have been broken: `contentHash` covers the content fields only, so retiring a
+/// version does not read as tampering, and a mismatch on render means somebody edited a row.
+model AiPromptVersion {
+  id             String  @id @default(cuid())
+  promptId       String
+  organizationId String?
+
+  version Int
+  /// draft, in_review, approved, published, retired.
+  status  String @default("draft")
+
+  /// The template. Rendered by the restricted renderer in `@trustos/prompt-registry`.
+  template      String  @db.Text
+  /// Declared variables, with types and whether each is trusted.
+  variables     Json    @default("[]")
+  /// Which model this was written and tested against.
+  modelId       String?
+  /// The guardrail profile this prompt expects.
+  safetyProfile String?
+
+  /// Over the content fields only. See the model comment.
+  contentHash String
+
+  /// Three people: author, approver, publisher. Self-approval is refused by the registry.
+  createdById   String?
+  approvedById  String?
+  approvedAt    DateTime?
+  publishedById String?
+  publishedAt   DateTime?
+  retiredAt     DateTime?
+  /// Why it was retired or rejected.
+  note          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  prompt AiPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([promptId, version])
+  @@index([organizationId, status])
+  @@map("ai_prompt_version")
+}
+
+/// What a tenant is allowed to do with AI.
+///
+/// Never merged — see `@trustos/ai-policy`. The most specific policy applies whole, so "why was
+/// this allowed" always has one answer.
+model AiPolicy {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  name        String
+  /// platform, organization, agent, application.
+  scopeKind   String
+  /// The agent or application this applies to, when the scope names one.
+  scopeTarget String?
+
+  allowedModels         String[]
+  deniedModels          String[]
+  allowedProviders      String[]
+  /// Denied by default: an empty list means no tools.
+  allowedTools          String[]
+  allowedKnowledgeBases String[]
+
+  maxOutputTokens Int?
+  maxRuntimeMs    Int?
+  maxAgentSteps   Int?
+
+  /// Cents.
+  maxCostCentsPerRequest Int?
+  maxCostCentsPerDay     Int?
+  maxCostCentsPerMonth   Int?
+
+  guardrailProfile String?
+  reviewAllOutput  Boolean @default(false)
+  /// Off by default. A cache keyed carelessly returns one tenant's answer to another.
+  allowCaching     Boolean @default(false)
+
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, scopeKind])
+  @@map("ai_policy")
+}
+
+/// One AI request: what it cost and what happened.
+///
+/// **One table, two readers.** `@trustos/cost-monitor` aggregates the money columns and
+/// `@trustos/ai-observability` aggregates the rest. Two tables would let them disagree about
+/// what a request cost, and reconciling a cost report against an invoice is hard enough with one
+/// source of truth.
+///
+/// No prompt text and no completion text, ever. This table is queried by more people, exported
+/// to more dashboards and retained longer than any other in the platform.
+model AiRequestLog {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Which application spent it.
+  application String  @default("unknown")
+  actorId     String?
+
+  modelId      String
+  provider     String
+  /// Set when the router fell back from another model.
+  fallbackFrom String?
+
+  agentId       String?
+  promptKey     String?
+  promptVersion String?
+
+  /// success, provider_error, guardrail_blocked, policy_denied, budget_exceeded,
+  /// schema_mismatch, cancelled.
+  outcome      String
+  /// A short reason code. Never a message with content in it.
+  reason       String?
+  /// stop, length, tool_calls, content_filter — separates wasted spend from useful spend.
+  finishReason String?
+
+  promptTokens       Int @default(0)
+  completionTokens   Int @default(0)
+  reasoningTokens    Int @default(0)
+  cachedPromptTokens Int @default(0)
+  totalTokens        Int @default(0)
+
+  /// Sub-cent precision preserved; rounded only when reported.
+  costCents Decimal @db.Decimal(14, 6)
+  /// Whether the token counts came from the provider or from an estimate.
+  estimated Boolean @default(false)
+  /// True when no provider call happened at all.
+  cached    Boolean @default(false)
+
+  latencyMs Int
+  attempts  Int @default(1)
+
+  at DateTime @default(now())
+
+  @@index([organizationId, at])
+  @@index([organizationId, modelId, at])
+  @@index([organizationId, agentId, at])
+  @@map("ai_request_log")
+}
+
+/// A conversation between a user and an agent.
+model AiConversation {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  userId  String?
+  agentId String?
+  title   String?
+
+  /// The summary of everything compacted away, and how many turns it stands for.
+  summary                String? @db.Text
+  summarisedMessageCount Int     @default(0)
+
+  status String @default("active")
+
+  totalTokens    Int     @default(0)
+  totalCostCents Decimal @default(0) @db.Decimal(14, 6)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  turns AiConversationTurn[]
+
+  @@index([organizationId, userId, updatedAt])
+  @@index([organizationId, agentId, updatedAt])
+  @@map("ai_conversation")
+}
+
+/// One turn.
+///
+/// `sequence` continues past compacted turns, so a number identifies the same turn for the whole
+/// life of the conversation rather than shifting when history is folded into the summary.
+model AiConversationTurn {
+  id             String  @id @default(cuid())
+  conversationId String
+  organizationId String?
+
+  sequence Int
+  role     String
+  content  String? @db.Text
+
+  /// The assistant's tool calls, and the id a tool message answers.
+  toolCalls  Json?
+  toolCallId String?
+
+  modelId   String?
+  tokens    Int     @default(0)
+  costCents Decimal @default(0) @db.Decimal(14, 6)
+
+  createdAt DateTime @default(now())
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, sequence])
+  @@index([conversationId, createdAt])
+  @@map("ai_conversation_turn")
+}
+
+/// What an agent remembers.
+///
+/// The scope is the access-control boundary, and the subject columns are what make it one: a
+/// `user` memory with no `userId` would be recalled for everybody in the tenant. The application
+/// refuses to write one; the unique index below refuses to store two.
+model AiAgentMemory {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// conversation, session, user, organization, long_term.
+  scope String
+
+  userId         String?
+  conversationId String?
+  sessionId      String?
+  agentId        String?
+
+  key        String
+  value      String @db.Text
+  /// stated or inferred. A recall that cannot tell them apart presents a guess as a fact.
+  confidence String @default("inferred")
+
+  /// Not nullable. Nothing lives forever by accident.
+  expiresAt DateTime
+
+  createdAt      DateTime @default(now())
+  lastAccessedAt DateTime @default(now())
+  accessCount    Int      @default(0)
+
+  @@index([organizationId, scope, lastAccessedAt])
+  @@index([organizationId, conversationId])
+  @@index([organizationId, userId])
+  @@index([expiresAt])
+  @@map("ai_agent_memory")
+}
+
+/// One agent run.
+///
+/// `stopReason` and `limitHit` are both recorded because they answer different questions: a run
+/// that stopped at `limit_reached` is not a run that finished, and a report that cannot tell them
+/// apart counts half-finished work as delivered.
+model AiAgentRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  agentId        String
+  conversationId String?
+  actorId        String?
+  application    String?
+
+  /// final_answer, tool_success, schema_satisfied, limit_reached, error.
+  stopReason String
+  /// steps, tokens, runtime — set only when a limit ended the run.
+  limitHit   String?
+
+  steps          Int     @default(0)
+  totalTokens    Int     @default(0)
+  totalCostCents Decimal @default(0) @db.Decimal(14, 6)
+  durationMs     Int     @default(0)
+
+  needsReview Boolean @default(false)
+  reviewId    String?
+
+  /// Never a stack trace, never the conversation.
+  error String? @db.Text
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  runSteps AiAgentRunStep[]
+
+  @@index([organizationId, agentId, startedAt])
+  @@index([organizationId, stopReason, startedAt])
+  @@map("ai_agent_run")
+}
+
+/// One step of a run: what the model said, and what ran because of it.
+///
+/// Tool names and outcomes, not tool arguments. Arguments routinely contain the identifiers the
+/// rest of the platform is careful about, and the audit log already records the call.
+model AiAgentRunStep {
+  id             String  @id @default(cuid())
+  runId          String
+  organizationId String?
+
+  step    Int
+  modelId String
+
+  /// Names and outcomes only.
+  toolCalls Json @default("[]")
+
+  tokens    Int     @default(0)
+  costCents Decimal @default(0) @db.Decimal(14, 6)
+  latencyMs Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  run AiAgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, step])
+  @@map("ai_agent_run_step")
+}
+
+/// Output waiting for a person.
+///
+/// `status` is the gate: `@trustos/human-review` refuses to return the content of anything that
+/// is not `approved`, so a pending item cannot be read and rendered by accident.
+model AiReviewRequest {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  subjectType String
+  subjectId   String
+
+  content String  @db.Text
+  prompt  String? @db.Text
+
+  agentId String?
+  modelId String?
+
+  /// Why this needs review. Shown to the reviewer, so it is never empty.
+  reason  String
+  /// What the automated checks were unsure about.
+  signals String[]
+
+  priority String @default("normal")
+  status   String @default("pending")
+
+  /// Cannot be the person who decides it.
+  requestedBy        String?
+  assignedTo         String?
+  requiredPermission String?
+
+  decidedBy        String?
+  decidedAt        DateTime?
+  decisionNote     String?   @db.Text
+  /// The reviewer's fix. Returned in place of the original.
+  correctedContent String?   @db.Text
+
+  dueAt   DateTime
+  /// Every state change, with who and why.
+  history Json     @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, status, priority, createdAt])
+  @@index([organizationId, assignedTo, status])
+  @@map("ai_review_request")
+}
+
+/// A searchable collection of documents.
+///
+/// `restricted` by default. A knowledge base that defaults to readable is a knowledge base that
+/// answers questions for people who should not have asked.
+model AiKnowledgeCollection {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  key         String
+  name        String
+  description String?
+
+  /// public, restricted, confidential.
+  visibility       String   @default("restricted")
+  /// Permissions a reader must hold.
+  readPermissions  String[]
+  writePermissions String[]
+
+  /// The embedding model, and the two numbers that make a vector comparable to another.
+  embeddingModelId String
+  dimensions       Int
+  embeddingVersion String @default("1")
+
+  documentCount Int @default(0)
+  chunkCount    Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents AiKnowledgeDocument[]
+
+  @@index([organizationId, visibility])
+  @@map("ai_knowledge_collection")
+}
+
+/// A document in a collection.
+///
+/// `contentHash` is what makes re-ingestion cheap: an unchanged document is not re-embedded, and
+/// embedding is the expensive half of putting a document into a knowledge base.
+model AiKnowledgeDocument {
+  id             String  @id @default(cuid())
+  collectionId   String
+  organizationId String?
+
+  externalId  String?
+  title       String
+  uri         String?
+  content     String  @db.Text
+  contentHash String
+
+  metadata Json @default("{}")
+
+  chunkCount Int       @default(0)
+  /// Null until the document has been embedded.
+  embeddedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  collection AiKnowledgeCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, collectionId, updatedAt])
+  @@map("ai_knowledge_document")
+}
+
+/// One embedded chunk.
+///
+/// The vector is `Json`. See the section header: a native vector column needs pgvector, and
+/// requiring a database extension to run the framework would make "no vendor lock-in" false one
+/// layer down. An application with real retrieval volume points `VectorStore` elsewhere.
+model AiVectorRecord {
+  id             String  @id
+  organizationId String?
+  collectionId   String
+
+  /// The three fields that decide whether this vector may be compared with a query.
+  modelId    String
+  dimensions Int
+  version    String @default("1")
+
+  vector  Json
+  content String @db.Text
+
+  /// Flat scalars only. A nested filter works on one vector database and not the next.
+  metadata Json @default("{}")
+
+  documentId String?
+  title      String?
+  uri        String?
+  section    String?
+  chunkIndex Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, collectionId])
+  @@index([collectionId, documentId])
+  @@map("ai_vector_record")
+}
+
+/// A cached AI response.
+///
+/// `cacheKey` is built by `@trustos/ai-cache` from a context that includes the organization
+/// structurally — a key that omits the tenant cannot be constructed. The unique constraint is on
+/// the key alone because the key already carries the tenant.
+model AiCacheEntry {
+  id       String @id @default(cuid())
+  cacheKey String @unique
+
+  organizationId String?
+
+  modelId  String
+  provider String
+
+  content   String? @db.Text
+  toolCalls Json?
+  usage     Json
+  costCents Decimal @db.Decimal(14, 6)
+
+  hits      Int       @default(0)
+  lastHitAt DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([organizationId, expiresAt])
+  /// The purge job scans every tenant, so it needs an index that does not lead with the tenant.
+  @@index([expiresAt])
+  @@map("ai_cache_entry")
+}
+
+/// One run of an evaluation suite.
+///
+/// `variant` is what makes the history useful: two runs of the same suite are only comparable
+/// when you know what changed between them — a prompt version, a model, a commit.
+model AiEvaluationRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  suiteId String
+  subject String
+  variant String
+
+  passed  Int @default(0)
+  failed  Int @default(0)
+  errored Int @default(0)
+
+  /// Mean per metric, over the cases that produced one.
+  scores         Json    @default("{}")
+  totalCostCents Decimal @default(0) @db.Decimal(14, 6)
+
+  startedAt  DateTime
+  finishedAt DateTime
+
+  results AiEvaluationCaseResult[]
+
+  @@index([organizationId, suiteId, startedAt])
+  @@map("ai_evaluation_run")
+}
+
+/// One case in one run.
+///
+/// The output is kept, because a regression report that cannot show what changed sends somebody
+/// to re-run the case by hand.
+model AiEvaluationCaseResult {
+  id             String  @id @default(cuid())
+  runId          String
+  organizationId String?
+
+  caseId String
+  output String @db.Text
+
+  metrics  Json     @default("[]")
+  passed   Boolean  @default(false)
+  failures String[]
+
+  latencyMs Int     @default(0)
+  costCents Decimal @default(0) @db.Decimal(14, 6)
+  /// Set when the case could not be run at all. Distinct from scoring badly.
+  error     String? @db.Text
+
+  run AiEvaluationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, caseId])
+  @@map("ai_evaluation_case_result")
+}

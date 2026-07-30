@@ -61,6 +61,9 @@ describe('MODULE_CATALOG', () => {
    * still caught. A module that serves data and forgot its routes is a bug; these are not.
    */
   const LIBRARY_SHAPED = new Set([
+    'ai',
+    'rag',
+    'agent',
     'events',
     'webhook',
     'jobs',
@@ -147,7 +150,10 @@ describe('MODULE_CATALOG', () => {
     const suggested = suggestedPermissionsForRole('auditor');
     expect(suggested.length).toBeGreaterThan(0);
     for (const key of suggested) {
-      expect(key).toMatch(/\.(read|list|execute|evaluate|run)$/);
+      // `search` is read-only by definition, like `read` and `list`. `run` is here for running a
+      // report, which reads; `agent.run` deliberately does not suggest the auditor role, because
+      // running an agent spends money and can call tools.
+      expect(key).toMatch(/\.(read|list|execute|evaluate|run|search)$/);
     }
   });
 

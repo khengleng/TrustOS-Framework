@@ -1,0 +1,20 @@
+# AGENTS.md — @trustos/module-agent
+
+Agents that take actions: declarative agent definitions, the tool loop with per-actor permission checks, memory, conversation state, stop conditions and human review.
+
+## Rules
+
+1. **The implementation belongs in the framework package**, not here. This package declares and
+   wires; `@trustos/agent-framework`, `@trustos/agent-memory`, `@trustos/agent-runtime`, `@trustos/conversation`, `@trustos/function-calling`, `@trustos/human-review`, `@trustos/tool-execution` does the work.
+2. **Never bypass the gateway.** Every model call goes through `@trustos/ai-gateway`, which is
+   where policy, guardrails, cost accounting and audit are applied.
+3. **Never bypass guardrails**, and never add a flag that does. A caller who needs different
+   thresholds configures a guardrail profile.
+4. **Never expose secrets.** Provider credentials belong in the adapter's configuration and are
+   redacted everywhere they are printed — never logged, not even truncated.
+5. **Never bypass tenant isolation.** Every store call takes `organizationId` explicitly.
+6. **Always audit AI actions**: every request, every tool call, every review decision.
+7. **Always use the model registry and the prompt registry.** A hardcoded model name or an inline
+   production prompt is a change nobody can review or roll back.
+8. **Add a test for every behaviour**, including the negative one. A guarantee with no test that
+   it holds is a comment.

@@ -1,0 +1,25 @@
+{
+  "name": "@trustos/conversation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Conversation state: turns, summarisation and context-window fitting.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/agent-memory": "0.1.0",
+    "@trustos/ai-sdk": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/model-registry": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "@trustos/token-meter": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

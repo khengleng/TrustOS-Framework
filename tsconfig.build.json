@@ -2,7 +2,73 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/agent-framework"
+    },
+    {
+      "path": "./packages/agent-memory"
+    },
+    {
+      "path": "./packages/agent-runtime"
+    },
+    {
+      "path": "./packages/ai-cache"
+    },
+    {
+      "path": "./packages/ai-gateway"
+    },
+    {
+      "path": "./packages/ai-observability"
+    },
+    {
+      "path": "./packages/ai-policy"
+    },
+    {
+      "path": "./packages/ai-sdk"
+    },
+    {
+      "path": "./packages/ai-workflows"
+    },
+    {
+      "path": "./packages/content-filter"
+    },
+    {
+      "path": "./packages/conversation"
+    },
+    {
+      "path": "./packages/cost-monitor"
+    },
+    {
+      "path": "./packages/embedding"
+    },
+    {
+      "path": "./packages/evaluation"
+    },
+    {
+      "path": "./packages/function-calling"
+    },
+    {
+      "path": "./packages/guardrails"
+    },
+    {
+      "path": "./packages/human-review"
+    },
+    {
+      "path": "./packages/knowledge"
+    },
+    {
+      "path": "./packages/model-registry"
+    },
+    {
+      "path": "./packages/model-router"
+    },
+    {
       "path": "./packages/modules/adapter"
+    },
+    {
+      "path": "./packages/modules/agent"
+    },
+    {
+      "path": "./packages/modules/ai"
     },
     {
       "path": "./packages/modules/events"
@@ -17,6 +83,9 @@
       "path": "./packages/modules/jobs"
     },
     {
+      "path": "./packages/modules/rag"
+    },
+    {
       "path": "./packages/modules/scheduler"
     },
     {
@@ -24,6 +93,24 @@
     },
     {
       "path": "./packages/modules/webhook"
+    },
+    {
+      "path": "./packages/prompt-registry"
+    },
+    {
+      "path": "./packages/prompt-security"
+    },
+    {
+      "path": "./packages/rag"
+    },
+    {
+      "path": "./packages/token-meter"
+    },
+    {
+      "path": "./packages/tool-execution"
+    },
+    {
+      "path": "./packages/vector-store"
     },
     {
       "path": "packages/adapter-framework"

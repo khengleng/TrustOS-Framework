@@ -23,6 +23,9 @@ import { JobsModule } from '@trustos/module-jobs/nest';
 import { SchedulerModule } from '@trustos/module-scheduler/nest';
 import { SyncModule } from '@trustos/module-sync/nest';
 import { WebhookModule } from '@trustos/module-webhook/nest';
+import { AgentModule } from '@trustos/module-agent/nest';
+import { AiModule } from '@trustos/module-ai/nest';
+import { RagModule } from '@trustos/module-rag/nest';
 
 /**
  * NestJS wiring, booted for real.
@@ -131,6 +134,9 @@ describe('booting an application with every module installed', () => {
         ImportModule.forRoot(binding),
         ExportModule.forRoot(binding),
         SyncModule.forRoot(binding),
+        AiModule.forRoot(binding),
+        RagModule.forRoot(binding),
+        AgentModule.forRoot(binding),
       ],
     }).compile();
 

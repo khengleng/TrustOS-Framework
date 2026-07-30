@@ -27,8 +27,12 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^7.2.1",
+    "@trustos/agent-framework": "0.1.0",
+    "@trustos/evaluation": "0.1.0",
     "@trustos/generator-core": "0.1.0",
+    "@trustos/model-registry": "0.1.0",
     "@trustos/module-registry": "0.1.0",
+    "@trustos/prompt-registry": "0.1.0",
     "@trustos/rbac": "0.1.0",
     "@trustos/template-registry": "0.1.0",
     "@trustos/workflow-core": "0.1.0",

@@ -23,6 +23,9 @@ import { jobsModule } from '@trustos/module-jobs';
 import { schedulerModule } from '@trustos/module-scheduler';
 import { syncModule } from '@trustos/module-sync';
 import { webhookModule } from '@trustos/module-webhook';
+import { agentModule } from '@trustos/module-agent';
+import { aiModule } from '@trustos/module-ai';
+import { ragModule } from '@trustos/module-rag';
 
 /**
  * Module registration, validated across the whole set.
@@ -54,6 +57,11 @@ const ALL: TrustosModule[] = [
   importModule as TrustosModule,
   exportModule as TrustosModule,
   syncModule as TrustosModule,
+
+  // The AI platform.
+  aiModule as TrustosModule,
+  ragModule as TrustosModule,
+  agentModule as TrustosModule,
 ];
 
 describe('every module', () => {
