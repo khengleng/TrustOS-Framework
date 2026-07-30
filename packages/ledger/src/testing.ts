@@ -9,6 +9,7 @@ import {
 } from '@trustos/financial-core';
 import type { AccountBalance, LedgerStore } from './ledger';
 import type { Journal } from './journal';
+import { contains, type AccountingPeriod, type PeriodStatus, type PeriodStore } from './closing';
 
 /**
  * An in-memory ledger store, for tests and development.
@@ -140,5 +141,63 @@ export class InMemoryLedgerStore implements LedgerStore {
       .sort(
         (a, b) => a.accountId.localeCompare(b.accountId) || a.currency.localeCompare(b.currency),
       );
+  }
+}
+
+/**
+ * An in-memory period store, for tests and development.
+ *
+ * `containing` is called on every posting. A real implementation indexes on
+ * `(organizationId, ledgerId, startsAt, endsAt)`; a linear scan here is fine for a handful of
+ * periods and would not be at volume.
+ */
+export class InMemoryPeriodStore implements PeriodStore {
+  readonly periods = new Map<string, AccountingPeriod>();
+
+  async create(period: AccountingPeriod): Promise<AccountingPeriod> {
+    this.periods.set(period.id, period);
+    return period;
+  }
+
+  async find(id: string, organizationId: string | null): Promise<AccountingPeriod | null> {
+    const period = this.periods.get(id);
+    if (!period || period.organizationId !== organizationId) return null;
+    return period;
+  }
+
+  async update(id: string, patch: Partial<AccountingPeriod>): Promise<AccountingPeriod | null> {
+    const period = this.periods.get(id);
+    if (!period) return null;
+
+    const updated = { ...period, ...patch } as AccountingPeriod;
+    this.periods.set(id, updated);
+    return updated;
+  }
+
+  async containing(input: {
+    organizationId: string | null;
+    ledgerId: string;
+    at: Date;
+  }): Promise<AccountingPeriod | null> {
+    return (
+      [...this.periods.values()]
+        .filter((period) => period.organizationId === input.organizationId)
+        .filter((period) => period.ledgerId === input.ledgerId)
+        .find((period) => contains(period, input.at)) ?? null
+    );
+  }
+
+  async list(input: {
+    organizationId: string | null;
+    ledgerId?: string;
+    status?: PeriodStatus;
+    limit?: number;
+  }): Promise<AccountingPeriod[]> {
+    return [...this.periods.values()]
+      .filter((period) => period.organizationId === input.organizationId)
+      .filter((period) => !input.ledgerId || period.ledgerId === input.ledgerId)
+      .filter((period) => !input.status || period.status === input.status)
+      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
+      .slice(0, input.limit ?? 200);
   }
 }

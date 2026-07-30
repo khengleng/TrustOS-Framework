@@ -22,7 +22,13 @@ function write(relative: string, contents: string | object): void {
 }
 
 const MODELS: Record<string, string[]> = {
-  ledger: ['LedgerJournal', 'LedgerEntry', 'FinancialAccount', 'FinancialPolicy'],
+  ledger: [
+    'LedgerJournal',
+    'LedgerEntry',
+    'FinancialAccount',
+    'FinancialPolicy',
+    'AccountingPeriod',
+  ],
   wallet: ['Wallet', 'WalletHold'],
   transactions: [
     'FinancialTransaction',
@@ -32,7 +38,7 @@ const MODELS: Record<string, string[]> = {
     'FinancialLimit',
     'ExchangeRate',
   ],
-  settlement: ['SettlementBatch', 'SettlementInstruction'],
+  settlement: ['SettlementBatch', 'SettlementInstruction', 'SettlementAdjustment'],
   reconciliation: ['ReconciliationRun', 'ReconciliationException'],
 };
 
@@ -41,11 +47,20 @@ CREATE OR REPLACE FUNCTION trustos_journal_must_balance() RETURNS trigger AS $$ 
 CREATE OR REPLACE FUNCTION trustos_journal_immutable() RETURNS trigger AS $$ BEGIN RETURN NEW; END; $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION trustos_entry_immutable() RETURNS trigger AS $$ BEGIN RETURN NEW; END; $$ LANGUAGE plpgsql;
 ALTER TABLE "ledger_entry" ADD CONSTRAINT "ledger_entry_amount_positive" CHECK ("amount" > 0);
+ALTER TABLE "accounting_period" ADD CONSTRAINT "accounting_period_no_overlap" EXCLUDE USING gist ((COALESCE("organizationId", '')) WITH =, "ledgerId" WITH =, tsrange("startsAt", "endsAt", '[)') WITH &&);
+ALTER TABLE "wallet_hold" ADD CONSTRAINT "wallet_hold_expiry_matches_kind" CHECK (("kind" = 'hold' AND "expiresAt" IS NOT NULL) OR ("kind" = 'reserve' AND "expiresAt" IS NULL));
 `;
 
 /** A generated application with the financial modules installed and wired. */
 function application(
-  options: { modules?: string[]; wired?: boolean; guarantees?: boolean; schema?: string } = {},
+  options: {
+    modules?: string[];
+    wired?: boolean;
+    guarantees?: boolean;
+    schema?: string;
+    /** Migration SQL to write instead of the complete set, for testing one missing constraint. */
+    migration?: string;
+  } = {},
 ): void {
   const modules = options.modules ?? ['ledger'];
 
@@ -84,7 +99,10 @@ function application(
   );
 
   if (options.guarantees !== false) {
-    write('prisma/migrations/20261101000000_financial/migration.sql', GUARANTEES);
+    write(
+      'prisma/migrations/20261101000000_financial/migration.sql',
+      options.migration ?? GUARANTEES,
+    );
   } else {
     write('prisma/migrations/20261101000000_financial/migration.sql', 'CREATE TABLE x (id TEXT);');
   }
@@ -150,17 +168,49 @@ describe('the database guarantees', () => {
     const text = output.lines.join('\n');
     expect(text).toMatch(/the balancing trigger/);
     expect(text).toMatch(/the journal immutability trigger/);
-    expect(text).toMatch(/an unbalanced journal or an edited posting would be accepted/);
+    expect(text).toMatch(/the period non-overlap constraint/);
+    expect(text).toMatch(/the database would accept what they exist to refuse/);
+  });
+
+  it('fails when a wallet application is missing the hold expiry check', async () => {
+    /*
+     * Scoped to wallet, because a deployment with no wallets has no `wallet_hold` table to
+     * constrain — and a doctor that fails on a table you do not have is a doctor people stop
+     * running.
+     */
+    application({
+      modules: ['ledger', 'wallet'],
+      guarantees: true,
+      migration: GUARANTEES.replace(/ALTER TABLE "wallet_hold".*\n/, ''),
+    });
+
+    const output = createCapturingOutput();
+
+    expect(await runFinancialDoctor({ path: root }, output)).toBe(1);
+    expect(output.lines.join('\n')).toMatch(/the hold expiry check/);
+  });
+
+  it('does not ask a ledger-only application for the hold expiry check', async () => {
+    application({
+      modules: ['ledger'],
+      guarantees: true,
+      migration: GUARANTEES.replace(/ALTER TABLE "wallet_hold".*\n/, ''),
+    });
+
+    const output = createCapturingOutput();
+    await runFinancialDoctor({ path: root }, output);
+
+    expect(output.lines.join('\n')).not.toMatch(/the hold expiry check/);
   });
 
   it('passes when every guarantee is in a migration', async () => {
-    application({ modules: ['ledger'] });
+    application({ modules: ['ledger', 'wallet'] });
 
     const output = createCapturingOutput();
     await runFinancialDoctor({ path: root }, output);
 
     expect(output.lines.join('\n')).toMatch(
-      /Balancing, immutability and positive-amount constraints are all in the migrations/,
+      /Balancing, immutability, positive-amount, period-overlap and hold-expiry constraints are all in the migrations/,
     );
   });
 });

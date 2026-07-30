@@ -13,7 +13,9 @@ and reconciliation, with nothing in it that belongs to one product.
 - [The packages](#the-packages)
 - [A payment, end to end](#a-payment-end-to-end)
 - [What is deliberately absent](#what-is-deliberately-absent)
+- [Reporting](#reporting)
 - [Choosing where to start](#choosing-where-to-start)
+- [Extension guide](#extension-guide)
 - [Running it](#running-it)
 
 ---
@@ -186,6 +188,47 @@ instructed and not paid. That number is what a bank statement is checked against
 The list is not a roadmap. A framework that shipped a card integration would be making a commercial
 decision for every deployment, and the deployments that disagreed would carry it anyway.
 
+## Reporting
+
+Two kinds, and the distinction matters when deciding which one answers a question.
+
+**Accounting reports** come from the ledger and are computed:
+
+| Report          | Answers                                                    |
+| --------------- | ---------------------------------------------------------- |
+| `generalLedger` | Every line on one account, with a running balance          |
+| `trialBalance`  | Does the whole ledger balance, and what is in each account |
+| `balanceSheet`  | Assets against liabilities, equity, revenue and expenses   |
+
+**Operational reports** are shaped from rows the owning service supplies:
+
+| Report                 | Answers                                                                          |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| `walletReport`         | How much is in the wallets — total, held, reserved, available, per currency      |
+| `transactionReport`    | What happened this period, by status _and_ by type, with a success rate          |
+| `settlementReportRows` | What was in a batch and what became of each instruction                          |
+| `feeReport`            | What was earned, by schedule **version**, with an effective rate in basis points |
+| `exceptionReport`      | Everything unresolved, from every source, oldest first                           |
+
+The operational five take rows rather than querying. A reporting package that reached into six
+stores would be a seventh place that knows how a wallet balance is computed, and the day it
+disagrees with the wallet service is the day nobody can say which is right.
+
+Three details are deliberate:
+
+- **The wallet report totals per currency**, never across. A total across currencies means nothing.
+- **The fee report keeps schedule versions apart.** A schedule that changed mid-period produces two
+  versions in one report, and collapsing them hides exactly the thing somebody is looking for when
+  they ask why revenue moved.
+- **The exception report sorts oldest first.** Newest-first buries the item nobody wants to pick up,
+  which is reliably the one that matters.
+
+Every report renders through `ReportExporter`. CSV ships; Excel and PDF are `ReportRenderer`
+implementations, because a spreadsheet library and a rendering engine are dependencies with their
+own security surface and the choice belongs to the deployment. Asking for a format with no renderer
+names what is available rather than falling back to CSV — an auditor who asked for a PDF and
+received a CSV will ask why, and "it fell back" is not an answer.
+
 ## Choosing where to start
 
 | You want to         | Install                     | Read                                   |
@@ -197,6 +240,60 @@ decision for every deployment, and the deployments that disagreed would carry it
 | Check the books     | `+ reconciliation`          | [reconciliation.md](reconciliation.md) |
 
 Everything depends on `ledger`.
+
+## Extension guide
+
+Every seam in the phase, and what a deployment usually does with it.
+
+| Port                                       | Ships     | You supply                                                                         |
+| ------------------------------------------ | --------- | ---------------------------------------------------------------------------------- |
+| `LedgerStore`                              | in-memory | Prisma. Unique index on the idempotency key; aggregate balances in the database    |
+| `PeriodStore`                              | in-memory | Prisma, indexed on `(org, ledger, startsAt, endsAt)` — it is read on every posting |
+| `AccountStore`, `WalletStore`, `HoldStore` | in-memory | Prisma. The hold store must close the check-then-write race                        |
+| `TransactionStore`                         | in-memory | Prisma. Unique index on the idempotency key                                        |
+| `LimitStore`                               | in-memory | Prisma. `consume` must be atomic and in the posting's transaction                  |
+| `RateStore`                                | in-memory | Your rate source. No live feed ships — which rate to use is commercial             |
+| `RiskProvider`                             | **none**  | A fraud engine, a sanctions screen. Licensed lists, trained models                 |
+| `KycProvider`                              | **none**  | A verification vendor. Jurisdiction-specific                                       |
+| `RegulatoryExporter`                       | **none**  | Whatever your regulator asks for                                                   |
+| `ReportRenderer`                           | CSV       | Excel, PDF                                                                         |
+| Settlement file format                     | —         | Whatever the counterparty asked for                                                |
+| Statement reader                           | —         | Whatever the counterparty sends                                                    |
+
+Two of these are worth reading the relevant document before implementing, because a plausible
+implementation is wrong: [`HoldStore`](wallet.md#extension-guide) and
+[`LedgerStore`](ledger.md#extension-guide).
+
+### The shortest possible wiring
+
+```ts
+const currencies = new CurrencyRegistry(myCurrencies);
+const ledger = new Ledger({ store: ledgerStore, periods: periodStore, currencies, audit });
+const accounts = new AccountService({ store: accountStore, ledger, currencies, audit });
+
+const wallets = new WalletService({
+  wallets: walletStore,
+  holds: holdStore,
+  ledger,
+  accounts,
+  limits: new LimitEngine({ store: limitStore, currencies }),
+  currencies,
+  audit,
+});
+
+const transactions = new TransactionService({
+  store: transactionStore,
+  ledger,
+  wallets,
+  accounts,
+  fees: new FeeService({ store: feeStore, currencies }),
+  risk: new RiskAssessor({ providers: [myFraudEngine] }),
+  currencies,
+  audit,
+});
+```
+
+Everything else — settlement, reconciliation, reporting — takes the same `ledger` and `accounts`.
 
 ## Running it
 

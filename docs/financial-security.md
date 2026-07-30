@@ -14,6 +14,8 @@ Read [threat-model.md](threat-model.md) for the platform underneath.
 - [Balance corruption](#balance-corruption)
 - [Cross-tenant access](#cross-tenant-access)
 - [Unauthorized reversal](#unauthorized-reversal)
+- [Backdating and period closing](#backdating-and-period-closing)
+- [Hiding a difference](#hiding-a-difference)
 - [Precision, overflow and underflow](#precision-overflow-and-underflow)
 - [What is audited](#what-is-audited)
 - [Incident playbook](#incident-playbook)
@@ -152,6 +154,53 @@ can be used to hide another.
 - **Reversing twice is refused.** The second reversal balances on its own, posts cleanly, and
   leaves the account off by the original amount in the other direction.
 
+## Backdating and period closing
+
+A journal posted today with an effective date inside a period somebody has already reported on is
+the quietest way to make a report wrong. It balances, it is immutable, it is audited — and the
+March report that a board saw last week no longer reconciles to March.
+
+| Control                                         | What it does                                                                   |
+| ----------------------------------------------- | ------------------------------------------------------------------------------ |
+| Period closing                                  | Refuses a posting whose **effective date** falls in a closed period            |
+| The trial balance is stored at closing          | The number the report was based on survives a later reopen                     |
+| A period that does not balance cannot be closed | Without `force`, and forcing is recorded                                       |
+| Reopening needs a reason, and is kept           | `ledger.period.reopened` names who and why, on the period and in the audit log |
+
+Closing checks the effective date, not the posting date. Checking the posting date would be useless
+— it is always now — and is the version that looks like it works.
+
+**Reopening is permitted deliberately.** Refusing outright sounds stricter and is worse: the
+correction still has to happen, so it happens as a journal dated after the close with a description
+explaining that it belongs in March. That is the same misstatement, told less legibly and with
+nothing recording that a closed period was worked around.
+
+## Hiding a difference
+
+A settlement batch settles for 1,000 and the bank pays 995.50. There are two ways to make the
+records agree, and one of them destroys the evidence.
+
+|           |                                                                                                                                                                                                     |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Wrong** | Edit the batch to say 995.50. The two now agree, the counterparty's fee is invisible, and next month the same fee is deducted and nobody knows it is recurring                                      |
+| **Right** | Post an adjustment: `-4.50`, with a reason, booked to bank charges. The batch still says what the counterparty was told, the fee is a line in an expense account, and `netSettled` reconciles clean |
+
+So a settled batch is immutable in the same sense a journal is. `adjustBatch` posts a new journal
+and records the correction against the batch; there is no path that changes what was sent.
+
+Three supporting rules:
+
+- **The reason is required.** A difference with no explanation is one nobody can close, and it
+  appears again on next month's reconciliation.
+- **The report shows both numbers.** `total` is what was instructed and `netSettled` is what was
+  paid; a report showing only one hides either the fee or the instruction.
+- **Adjusting an unsent batch is refused.** No money has moved, so an adjustment would post against
+  a settlement that never happened — change the instruction while the batch is open.
+
+The same principle governs reserves: `release()` refuses a reserve by name, because that is the
+method a generic cancellation handler calls, and a reserve dissolved by a cleanup loop is a
+chargeback cover that silently stopped covering anything.
+
 ## Precision, overflow and underflow
 
 | Risk                               | Control                                                                                                                                                       |
@@ -208,6 +257,16 @@ left a merchant and not reached a bank.
 Conversions fail rather than using last week's number — that is what `maxRateAgeMs` is for. If
 conversions are _succeeding_ on a dead feed, the tolerance is too generous, and every conversion
 since the feed died is wrong by however much the rate has moved.
+
+**A closed period needs a posting.**
+Reopen it — do not post a journal dated after the close and describe it as belonging to March. The
+reopen is recorded and the backdated description is not, and in six months only one of those is
+findable. Close the period again afterwards.
+
+**A settlement is short and nobody knows why.**
+Post it to a suspense account as an adjustment with the reason "unexplained shortfall, under
+investigation", not to bank charges. Booking an unknown difference to a plausible account is how it
+stops being a question.
 
 **Money arrived that nobody expected.**
 A `missing_internal` reconciliation exception. Post it to suspense, not to revenue. Suspense is

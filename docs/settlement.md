@@ -8,8 +8,12 @@ were in which batch.
 - [The lifecycle](#the-lifecycle)
 - [Partial confirmation](#partial-confirmation)
 - [Failure](#failure)
+- [Adjustments](#adjustments)
 - [The settlement report](#the-settlement-report)
 - [Operating settlement](#operating-settlement)
+- [Data model](#data-model)
+- [Sequence: a batch, end to end](#sequence-a-batch-end-to-end)
+- [Extension guide](#extension-guide)
 
 ---
 
@@ -129,12 +133,54 @@ await settlement.failBatch({ id: batch.id, organizationId, reason: 'The bank rej
 Reverses the send. Every merchant is back where they were, the settlement account returns to zero,
 and the trial balance still balances.
 
+## Adjustments
+
+The batch confirmed on Monday. On Thursday the bank's statement shows 4.50 less, because they
+deducted a fee nobody modelled.
+
+```ts
+await settlement.adjustBatch({
+  id: batch.id,
+  organizationId,
+  kind: 'counterparty_fee',
+  amount: money('-4.50', 'USD'), // signed: negative means they paid less
+  reason: 'The bank deducted a 4.50 processing fee not modelled in the batch.',
+  counterAccountId: bankChargesAccount.id,
+});
+```
+
+**Never by editing the batch.** A settled batch is what the counterparty was told and what the
+reconciliation ran against. Editing it to match the statement makes the two agree by destroying the
+evidence of the disagreement, and the fee the counterparty deducted becomes invisible.
+
+The amount is **signed**, and it is the one place in the phase where an amount is. Positive means
+the counterparty paid more than the batch said; negative means less. A direction field would need
+every reader to know whose point of view it is from, and an adjustment is read by whoever is
+holding a bank statement.
+
+| Kind                | For                                                       |
+| ------------------- | --------------------------------------------------------- |
+| `counterparty_fee`  | A fee they deducted                                       |
+| `amount_difference` | Any other difference between instructed and received      |
+| `fx_difference`     | An exchange difference between instruction and settlement |
+| `chargeback`        | A return arriving after the batch settled                 |
+| `other`             | Described in the reason                                   |
+
+An adjustment against a batch that has not been sent is refused: no money has moved, so there is
+nothing to correct — change the instruction while the batch is open.
+
 ## The settlement report
 
 ```ts
 const report = await settlement.report({ id: batch.id, organizationId });
-// { instructionCount, total, settled, returned, failed, pending, counterparties, instructions }
+// { instructionCount, total, settled, returned, failed, pending,
+//   adjusted, netSettled, counterparties, instructions, adjustments }
 ```
+
+`netSettled` is `settled + adjusted` — what the counterparty **actually paid**, which is not the
+batch total once anything has been adjusted. `settlementDifference` compares against it, because
+comparing the unadjusted total would report the same difference every month until somebody noticed
+the adjustment existed.
 
 The `transactionIds` on each instruction are what make a batch explicable afterwards. Six months
 later the question is "why was this merchant paid 4,182.15 on the third", and the answer is a list
@@ -151,6 +197,95 @@ of transactions.
 
 The first is the one to reconcile daily. It is a single number, it should match a bank statement,
 and when it does not the difference is the batch that went wrong.
+
+## Data model
+
+```
+  SettlementBatch ──1:n──▶ SettlementInstruction
+    id                        id
+    reference                 batchId
+    currency                  counterpartyId
+    status   open→pending→    sourceAccountId ──▶ FinancialAccount (a merchant balance)
+             sent→settled     amount
+    windowStart ─┐            status  pending→sent→settled│returned│failed
+    windowEnd  ──┴─ what      transactionIds ◀── what this settles; makes a batch
+                   makes a                       explicable six months later
+                   batch      externalReference
+                   rebuildable
+    settlementAccountId ──▶ FinancialAccount (liability: instructed, not yet paid)
+    totalAmount
+    journalIds     send, confirm, and every adjustment
+       │
+       │ 1:n
+       ▼
+  SettlementAdjustment
+    kind        counterparty_fee│amount_difference│fx_difference│chargeback│other
+    amount      SIGNED — the only signed amount in the phase
+    reason      required
+    counterAccountId    where the difference is booked
+    journalId           the correcting posting
+    instructionId       when it is attributable to one
+```
+
+## Sequence: a batch, end to end
+
+```
+  platform                    ledger                         counterparty
+     │                          │                                  │
+  openBatch                     │                                  │
+  addInstruction × 2            │                                  │
+  closeBatch                    │                                  │
+     │                          │                                  │
+  sendBatch ───────────────────▶│  DR merchant A 600               │
+     │                          │  DR merchant B 400               │
+     │                          │  CR settlement 1000              │
+     │                          │                                  │
+     │            settlement account now holds 1000 ───────────────┤ file sent
+     │                          │                                  │
+     │                    ... Friday to Monday ...                 │
+     │                          │                                  │
+  confirmBatch ◀────────────────┼──────────────────────────────────┤ B returned:
+     │                          │  DR settlement 1000              │ account closed
+     │                          │  CR bank        600              │
+     │                          │  CR merchant B  400  ◀── back to where it came from,
+     │                          │                          per instruction, not as a lump sum
+     │            settlement account back to zero                  │
+     │                          │                                  │
+     │                    ... Thursday, the statement ...          │
+     │                          │                                  │
+  adjustBatch ─────────────────▶│  DR bank charges 4.50            │
+     │                          │  CR settlement   4.50            │
+     │                                                             │
+  report().netSettled = 595.50 ── reconciles clean against the statement
+```
+
+## Extension guide
+
+### A settlement store
+
+Nothing unusual — batches, instructions and adjustments, each scoped by tenant. The one thing worth
+indexing carefully is `listBatches({ status: 'sent' })`, because that is the in-transit query an
+operator runs every morning.
+
+### The file a counterparty receives
+
+The framework produces the instructions and the totals; the format belongs to whoever is being
+paid. There is no `SettlementFileWriter` interface, deliberately: every counterparty's format
+differs in ways an interface would have to model badly, and a bad abstraction over four bank
+formats is worse than four small writers.
+
+```ts
+const report = await settlement.report({ id: batch.id, organizationId });
+const rows = settlementReportRows(report); // from @trustos/financial-reporting
+// …then write whatever the bank asked for.
+```
+
+### Netting across counterparties
+
+Not supported, and it is not an oversight. Netting means one instruction paying several
+counterparties' positions against each other, which changes who is owed what — a commercial
+arrangement with legal consequences, not a technical feature. A deployment that nets does it by
+producing net instructions before the batch, where the arithmetic is visible.
 
 ## Related
 

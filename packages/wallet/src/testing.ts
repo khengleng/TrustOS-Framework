@@ -1,4 +1,4 @@
-import type { Hold, Wallet } from './wallet';
+import { isExpired, type Hold, type Wallet } from './wallet';
 import type { HoldStore, WalletStore } from './service';
 
 /** In-memory wallet and hold stores, for tests and development. */
@@ -84,11 +84,15 @@ export class InMemoryHoldStore implements HoldStore {
   }
 
   async expired(organizationId: string | null, at: Date, limit = 100): Promise<Hold[]> {
-    return [...this.holds.values()]
-      .filter((hold) => hold.organizationId === organizationId)
-      .filter((hold) => hold.status === 'active' && hold.expiresAt <= at)
-      .sort((a, b) => a.expiresAt.getTime() - b.expiresAt.getTime())
-      .slice(0, limit);
+    return (
+      [...this.holds.values()]
+        .filter((hold) => hold.organizationId === organizationId)
+        // A reserve has no expiry and the sweeper must never see one. `isExpired` is the single
+        // place that distinction is decided.
+        .filter((hold) => isExpired(hold, at))
+        .sort((a, b) => (a.expiresAt?.getTime() ?? 0) - (b.expiresAt?.getTime() ?? 0))
+        .slice(0, limit)
+    );
   }
 
   async list(input: {

@@ -178,10 +178,10 @@ export class WalletService {
   }
 
   /**
-   * The three balances.
+   * The four balances.
    *
    * Computed from the ledger and the active holds, every time. See the header of `wallet.ts` for
-   * why there is no cached column.
+   * why there is no cached column, and why `held` and `reserved` are counted separately.
    */
   async balance(
     walletId: string,
@@ -192,20 +192,30 @@ export class WalletService {
     const account = await this.options.accounts.get(wallet.accountId, organizationId);
 
     const total = await this.options.accounts.balance(account, asOf);
-    const holds = await this.options.holds.active(walletId, organizationId);
+    const active = await this.options.holds.active(walletId, organizationId);
 
-    const held = holds.reduce<Money>(
-      (sum, hold) => addMoney(sum, this.remainingOf(hold)),
-      zeroMoney(wallet.currency, this.options.currencies),
-    );
+    const holds = active.filter((entry) => entry.kind === 'hold');
+    const reserves = active.filter((entry) => entry.kind === 'reserve');
+
+    const sum = (entries: Hold[]) =>
+      entries.reduce<Money>(
+        (running, hold) => addMoney(running, this.remainingOf(hold)),
+        zeroMoney(wallet.currency, this.options.currencies),
+      );
+
+    const held = sum(holds);
+    const reserved = sum(reserves);
 
     return {
       walletId,
       currency: wallet.currency,
       total,
       held,
-      available: subtractMoney(total, held),
+      reserved,
+      // Both come off. A reserve that did not reduce availability would be a number on a screen.
+      available: subtractMoney(subtractMoney(total, held), reserved),
       holdCount: holds.length,
+      reserveCount: reserves.length,
       asOf: asOf ?? this.now(),
     };
   }
@@ -364,6 +374,7 @@ export class WalletService {
       organizationId: input.organizationId,
       walletId: wallet.id,
       amount: moneyToJson(input.amount),
+      kind: 'hold',
       status: 'active',
       reason: input.reason,
       reference: input.reference ?? null,
@@ -385,11 +396,150 @@ export class WalletService {
         amount: formatMoney(input.amount),
         reason: input.reason,
         reference: created.reference,
-        expiresAt: created.expiresAt.toISOString(),
+        expiresAt: created.expiresAt?.toISOString() ?? null,
       },
     });
 
     return { hold: created, balance: await this.balance(wallet.id, input.organizationId) };
+  }
+
+  /**
+   * Places a standing reserve.
+   *
+   * Like a hold in that it reduces the available balance and moves nothing, and unlike one in
+   * every other respect: it has no expiry, the sweeper never touches it, and it ends when
+   * somebody decides it should. A rolling reserve against chargebacks, a regulatory minimum, a
+   * security deposit.
+   *
+   * Separate from `hold` rather than a flag on it, because the two are asked for by different
+   * people for different reasons — and a `hold({ expires: false })` is exactly the call that
+   * creates the immortal authorization this package refuses.
+   */
+  async reserve(input: {
+    walletId: string;
+    organizationId: string | null;
+    amount: Money;
+    reason: string;
+    reference?: string | null;
+    actorId?: string | null;
+  }): Promise<{ reserve: Hold; balance: WalletBalance }> {
+    const wallet = await this.assertMovable(
+      input.walletId,
+      input.organizationId,
+      'out',
+      input.amount,
+    );
+
+    const balance = await this.balance(wallet.id, input.organizationId);
+    assertSufficient(balance, input.amount);
+
+    const now = this.now();
+
+    const reserve = holdSchema.parse({
+      id: this.newId('hld'),
+      organizationId: input.organizationId,
+      walletId: wallet.id,
+      amount: moneyToJson(input.amount),
+      kind: 'reserve',
+      status: 'active',
+      reason: input.reason,
+      reference: input.reference ?? null,
+      // Null, and the schema refuses anything else for a reserve.
+      expiresAt: null,
+      createdAt: now,
+      createdById: input.actorId ?? null,
+    });
+
+    const created = await this.options.holds.create(reserve);
+
+    await this.options.audit?.record({
+      action: 'wallet.reserve.placed',
+      entityType: 'WalletHold',
+      entityId: created.id,
+      actorId: input.actorId ?? null,
+      organizationId: input.organizationId,
+      after: {
+        walletId: wallet.id,
+        amount: formatMoney(input.amount),
+        reason: input.reason,
+        reference: created.reference,
+      },
+    });
+
+    return { reserve: created, balance: await this.balance(wallet.id, input.organizationId) };
+  }
+
+  /**
+   * Releases a standing reserve.
+   *
+   * A separate method from `release` so the audit action differs, and so releasing a reserve is a
+   * deliberate act rather than something a generic "release everything on this wallet" loop does
+   * by accident.
+   */
+  async releaseReserve(input: {
+    reserveId: string;
+    organizationId: string | null;
+    reason: string;
+    actorId?: string | null;
+  }): Promise<Hold> {
+    const reserve = await this.requireHold(input.reserveId, input.organizationId);
+
+    if (reserve.kind !== 'reserve') {
+      throw ApiError.validation(
+        [
+          {
+            path: 'reserveId',
+            message:
+              `${reserve.id} is a hold, not a reserve. Use release() — a hold ends with its ` +
+              'operation, and treating the two the same is how a sweeper releases a chargeback ' +
+              'reserve.',
+          },
+        ],
+        'Not a reserve.',
+      );
+    }
+
+    if (reserve.status !== 'active') {
+      throw ApiError.conflict(`This reserve is already ${reserve.status}.`, {
+        reason: 'reserve_not_active',
+        reserveId: reserve.id,
+      });
+    }
+
+    if (!input.reason.trim()) {
+      throw ApiError.validation(
+        [
+          {
+            path: 'reason',
+            message:
+              'Releasing a reserve needs a reason. A reserve exists because somebody decided it ' +
+              'should, and removing it without a record leaves the next person unable to tell ' +
+              'whether the risk it covered is gone.',
+          },
+        ],
+        'Releasing a reserve needs a reason.',
+      );
+    }
+
+    const updated = await this.options.holds.update(reserve.id, {
+      status: 'released',
+      resolvedAt: this.now(),
+      resolvedReason: input.reason,
+    });
+
+    if (!updated) throw ApiError.notFound(`No reserve with id "${input.reserveId}".`);
+
+    await this.options.audit?.record({
+      action: 'wallet.reserve.released',
+      entityType: 'WalletHold',
+      entityId: reserve.id,
+      actorId: input.actorId ?? null,
+      organizationId: input.organizationId,
+      before: { status: 'active' },
+      after: { status: 'released', reason: input.reason },
+    });
+
+    return updated;
   }
 
   /**
@@ -406,6 +556,27 @@ export class WalletService {
     expired?: boolean;
   }): Promise<Hold> {
     const hold = await this.requireHold(input.holdId, input.organizationId);
+
+    if (hold.kind === 'reserve') {
+      /*
+       * A reserve released through the hold path.
+       *
+       * Refused, because this is the method a sweeper and a cancellation handler call — and a
+       * generic release loop that quietly dissolved a chargeback reserve is exactly the failure
+       * the two kinds exist to prevent.
+       */
+      throw ApiError.validation(
+        [
+          {
+            path: 'holdId',
+            message:
+              `${hold.id} is a reserve, not a hold. Use releaseReserve() — releasing a standing ` +
+              'reserve is a deliberate decision, not something a cancellation handler does.',
+          },
+        ],
+        'Not a hold.',
+      );
+    }
 
     if (hold.status !== 'active') {
       throw ApiError.conflict(
@@ -454,6 +625,20 @@ export class WalletService {
     actorId?: string | null;
   }): Promise<{ hold: Hold; journal: Journal; balance: WalletBalance }> {
     const hold = await this.requireHold(input.holdId, input.organizationId);
+
+    if (hold.kind === 'reserve') {
+      throw ApiError.validation(
+        [
+          {
+            path: 'holdId',
+            message:
+              `${hold.id} is a reserve. A reserve covers a future obligation and is not a claim ` +
+              'on the money — capturing one would spend a floor that exists to stay there.',
+          },
+        ],
+        'Cannot capture a reserve.',
+      );
+    }
 
     if (hold.status !== 'active') {
       throw ApiError.conflict(
@@ -556,7 +741,7 @@ export class WalletService {
       await this.release({
         holdId: hold.id,
         organizationId: input.organizationId,
-        reason: `Expired at ${hold.expiresAt.toISOString()} without being captured.`,
+        reason: `Expired at ${hold.expiresAt?.toISOString() ?? 'an unknown time'} without being captured.`,
         expired: true,
       });
 
@@ -669,6 +854,12 @@ export class WalletService {
 
   async holds(walletId: string, organizationId: string | null, limit?: number): Promise<Hold[]> {
     return this.options.holds.list({ walletId, organizationId, limit });
+  }
+
+  /** Standing reserves on a wallet, and why each one is there. */
+  async reserves(walletId: string, organizationId: string | null): Promise<Hold[]> {
+    const active = await this.options.holds.active(walletId, organizationId);
+    return active.filter((hold) => hold.kind === 'reserve');
   }
 
   /** How much of a hold is still held: the amount less anything already captured. */

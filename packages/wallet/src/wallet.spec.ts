@@ -5,6 +5,7 @@ import { AccountService, InMemoryAccountStore } from '@trustos/accounts';
 import { InMemoryLedgerStore, Ledger } from '@trustos/ledger';
 import { InMemoryLimitStore, LimitEngine, limitSchema } from '@trustos/limits';
 import { WalletService } from './service';
+import { holdSchema } from './wallet';
 import { InMemoryHoldStore, InMemoryWalletStore } from './testing';
 
 /**
@@ -715,5 +716,354 @@ describe('concurrency', () => {
     );
 
     expect(formatMoney((await wallets.balance(wallet.id, 'org_a')).total)).toBe('100.00 USD');
+  });
+});
+
+describe('reserves', () => {
+  it('reduces the available balance without expiring', async () => {
+    /*
+     * A rolling reserve against chargebacks. It behaves like a hold in that the money cannot be
+     * spent, and unlike one in that nothing will ever release it on a timer.
+     */
+    const { wallets, wallet } = await funded('1000.00');
+
+    const { balance } = await wallets.reserve({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('200.00'),
+      reason: 'Rolling reserve: 20% of monthly volume against chargebacks.',
+    });
+
+    expect(formatMoney(balance.total)).toBe('1000.00 USD');
+    expect(formatMoney(balance.reserved)).toBe('200.00 USD');
+    expect(formatMoney(balance.held)).toBe('0.00 USD');
+    expect(formatMoney(balance.available)).toBe('800.00 USD');
+    expect(balance.reserveCount).toBe(1);
+  });
+
+  it('reports held and reserved separately', async () => {
+    // They have opposite lifecycles, and a single number cannot say which one is a bug.
+    const { wallets, wallet } = await funded('1000.00');
+
+    await wallets.reserve({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('200.00'),
+      reason: 'Rolling reserve.',
+    });
+
+    await wallets.hold({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('300.00'),
+      reason: 'Card authorization.',
+    });
+
+    const balance = await wallets.balance(wallet.id, 'org_a');
+
+    expect(formatMoney(balance.held)).toBe('300.00 USD');
+    expect(formatMoney(balance.reserved)).toBe('200.00 USD');
+    expect(formatMoney(balance.available)).toBe('500.00 USD');
+    expect(balance.holdCount).toBe(1);
+    expect(balance.reserveCount).toBe(1);
+  });
+
+  it('is never touched by the sweeper', async () => {
+    /*
+     * The failure this prevents: a sweeper that dissolves somebody's chargeback reserve because
+     * it looked like an old hold.
+     */
+    const { wallets, wallet } = await funded('1000.00');
+
+    await wallets.reserve({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('200.00'),
+      reason: 'Rolling reserve.',
+    });
+
+    clock = new Date(clock.getTime() + 365 * 86_400_000);
+
+    expect((await wallets.sweepExpiredHolds({ organizationId: 'org_a' })).released).toBe(0);
+    expect(formatMoney((await wallets.balance(wallet.id, 'org_a')).reserved)).toBe('200.00 USD');
+  });
+
+  it('refuses a reserve with an expiry', async () => {
+    // A reserve that expired on a timer would be one that silently stopped covering anything.
+    expect(() =>
+      holdSchema.parse({
+        id: 'hld_1',
+        organizationId: 'org_a',
+        walletId: 'wlt_1',
+        amount: { currency: 'USD', amount: '100.00' },
+        kind: 'reserve',
+        reason: 'x',
+        expiresAt: new Date(),
+        createdAt: new Date(),
+      }),
+    ).toThrow(/A reserve does not expire/);
+  });
+
+  it('refuses a hold with no expiry', async () => {
+    expect(() =>
+      holdSchema.parse({
+        id: 'hld_1',
+        organizationId: 'org_a',
+        walletId: 'wlt_1',
+        amount: { currency: 'USD', amount: '100.00' },
+        kind: 'hold',
+        reason: 'x',
+        expiresAt: null,
+        createdAt: new Date(),
+      }),
+    ).toThrow(/A standing floor is a reserve, not a hold/);
+  });
+
+  it('refuses to release a reserve through the hold path', async () => {
+    // This is the method a cancellation handler and a sweeper call.
+    const { wallets, wallet } = await funded('1000.00');
+
+    const { reserve } = await wallets.reserve({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('200.00'),
+      reason: 'Rolling reserve.',
+    });
+
+    const error = await caught(() =>
+      wallets.release({ holdId: reserve.id, organizationId: 'org_a', reason: 'Oops.' }),
+    );
+
+    expect(detailsOf(error)).toMatch(/is a reserve, not a hold/);
+    expect(detailsOf(error)).toMatch(/not something a cancellation handler does/);
+  });
+
+  it('refuses to capture a reserve', async () => {
+    // A reserve covers a future obligation; capturing one spends a floor that exists to stay there.
+    const { wallets, wallet, bank } = await funded('1000.00');
+
+    const { reserve } = await wallets.reserve({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('200.00'),
+      reason: 'Rolling reserve.',
+    });
+
+    const error = await caught(() =>
+      wallets.capture({
+        holdId: reserve.id,
+        organizationId: 'org_a',
+        toAccountId: bank.id,
+        description: 'Nope',
+      }),
+    );
+
+    expect(detailsOf(error)).toMatch(/spend a floor that exists to stay there/);
+  });
+
+  it('releases deliberately, with a reason', async () => {
+    const { wallets, wallet, audit } = await funded('1000.00');
+
+    const { reserve } = await wallets.reserve({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('200.00'),
+      reason: 'Rolling reserve.',
+    });
+
+    await wallets.releaseReserve({
+      reserveId: reserve.id,
+      organizationId: 'org_a',
+      reason: 'Merchant graduated to unreserved terms after twelve clean months.',
+      actorId: 'usr_risk',
+    });
+
+    expect(formatMoney((await wallets.balance(wallet.id, 'org_a')).available)).toBe('1000.00 USD');
+
+    const record = audit.record.mock.calls.find(
+      (call) => call[0].action === 'wallet.reserve.released',
+    )!;
+
+    expect(record[0].after).toMatchObject({ reason: expect.stringMatching(/twelve clean months/) });
+  });
+
+  it('requires a reason to release', async () => {
+    // Without one the next person cannot tell whether the risk it covered is gone.
+    const { wallets, wallet } = await funded('1000.00');
+
+    const { reserve } = await wallets.reserve({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('200.00'),
+      reason: 'Rolling reserve.',
+    });
+
+    const error = await caught(() =>
+      wallets.releaseReserve({ reserveId: reserve.id, organizationId: 'org_a', reason: ' ' }),
+    );
+
+    expect(detailsOf(error)).toMatch(/whether the risk it covered is gone/);
+  });
+
+  it('stops a debit that would eat into the reserve', async () => {
+    const { wallets, wallet, bank } = await funded('1000.00');
+
+    await wallets.reserve({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('200.00'),
+      reason: 'Rolling reserve.',
+    });
+
+    const error = await caught(() =>
+      wallets.debit({
+        walletId: wallet.id,
+        organizationId: 'org_a',
+        amount: usd('900.00'),
+        toAccountId: bank.id,
+        description: 'Payout',
+        idempotencyKey: 'out_1',
+      }),
+    );
+
+    expect(detailsOf(error)).toMatch(/exceeds the available balance of 800.00 USD/);
+    expect(detailsOf(error)).toMatch(/200.00 USD is reserved across 1 standing reserve\(s\)/);
+  });
+
+  it('lists the reserves and why each is there', async () => {
+    const { wallets, wallet } = await funded('1000.00');
+
+    await wallets.reserve({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('200.00'),
+      reason: 'Rolling reserve: 20% of monthly volume.',
+    });
+
+    await wallets.hold({
+      walletId: wallet.id,
+      organizationId: 'org_a',
+      amount: usd('50.00'),
+      reason: 'Authorization.',
+    });
+
+    const reserves = await wallets.reserves(wallet.id, 'org_a');
+
+    expect(reserves).toHaveLength(1);
+    expect(reserves[0]!.reason).toMatch(/20% of monthly volume/);
+  });
+});
+
+describe('load and concurrency', () => {
+  it('keeps the balance exact across a thousand movements', async () => {
+    // Accumulation: a balance that is right once and drifts over a thousand postings.
+    const { wallets, wallet, bank } = await funded('0.00');
+
+    for (let index = 0; index < 500; index += 1) {
+      await wallets.credit({
+        walletId: wallet.id,
+        organizationId: 'org_a',
+        amount: usd('0.07'),
+        fromAccountId: bank.id,
+        description: 'Micro-deposit',
+        idempotencyKey: `in_${index}`,
+      });
+    }
+
+    for (let index = 0; index < 500; index += 1) {
+      await wallets.debit({
+        walletId: wallet.id,
+        organizationId: 'org_a',
+        amount: usd('0.03'),
+        toAccountId: bank.id,
+        description: 'Micro-payment',
+        idempotencyKey: `out_${index}`,
+      });
+    }
+
+    // 500 × 0.07 − 500 × 0.03 = 20.00, exactly.
+    expect(formatMoney((await wallets.balance(wallet.id, 'org_a')).total)).toBe('20.00 USD');
+  }, 20_000);
+
+  it('handles a hundred holds and releases without losing availability', async () => {
+    const { wallets, wallet } = await funded('1000.00');
+
+    const holds = await Promise.all(
+      Array.from({ length: 100 }, (_, index) =>
+        wallets.hold({
+          walletId: wallet.id,
+          organizationId: 'org_a',
+          amount: usd('1.00'),
+          reason: `Authorization ${index}`,
+        }),
+      ),
+    );
+
+    expect(formatMoney((await wallets.balance(wallet.id, 'org_a')).held)).toBe('100.00 USD');
+
+    for (const { hold } of holds) {
+      await wallets.release({ holdId: hold.id, organizationId: 'org_a', reason: 'Cancelled.' });
+    }
+
+    expect(formatMoney((await wallets.balance(wallet.id, 'org_a')).available)).toBe('1000.00 USD');
+  }, 20_000);
+
+  it('does not double-spend when the same debit is retried five hundred times at once', async () => {
+    const { wallets, wallet, bank } = await funded('1000.00');
+
+    await Promise.all(
+      Array.from({ length: 500 }, () =>
+        wallets.debit({
+          walletId: wallet.id,
+          organizationId: 'org_a',
+          amount: usd('100.00'),
+          toAccountId: bank.id,
+          description: 'Retried payment',
+          idempotencyKey: 'storm',
+        }),
+      ),
+    );
+
+    expect(formatMoney((await wallets.balance(wallet.id, 'org_a')).total)).toBe('900.00 USD');
+  }, 20_000);
+
+  it('lets two concurrent holds both pass, which is why the store must be atomic', async () => {
+    /*
+     * Documented rather than fixed here, and worth a test so the limitation is not rediscovered.
+     *
+     * `hold` reads the balance and then writes, and two callers reading the same number both see
+     * room — the same shape as `LimitEngine.check`. The in-memory store has no lock, so this is
+     * what it does.
+     *
+     * A production `HoldStore` closes it, and the only way to close it is at the database: insert
+     * the hold and re-check the balance in one transaction, or take a row lock on the wallet. An
+     * implementation that does neither passes every single-threaded test and lets a customer
+     * authorize the same money twice.
+     */
+    const { wallets, wallet } = await funded('100.00');
+
+    const results = await Promise.allSettled([
+      wallets.hold({
+        walletId: wallet.id,
+        organizationId: 'org_a',
+        amount: usd('100.00'),
+        reason: 'First',
+      }),
+      wallets.hold({
+        walletId: wallet.id,
+        organizationId: 'org_a',
+        amount: usd('100.00'),
+        reason: 'Second',
+      }),
+    ]);
+
+    // Both succeed against this store. That is the race, stated plainly.
+    expect(results.every((result) => result.status === 'fulfilled')).toBe(true);
+
+    // And the consequence is visible: the wallet is over-held.
+    const balance = await wallets.balance(wallet.id, 'org_a');
+
+    expect(formatMoney(balance.held)).toBe('200.00 USD');
+    expect(formatMoney(balance.available)).toBe('-100.00 USD');
   });
 });

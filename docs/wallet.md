@@ -3,12 +3,16 @@
 A wallet is a **view over a ledger account**, not a balance of its own.
 
 - [Why there is no balance column](#why-there-is-no-balance-column)
-- [Three balances](#three-balances)
+- [Four balances](#four-balances)
 - [Holds](#holds)
+- [Reserves](#reserves)
 - [Moving money](#moving-money)
 - [Freezing](#freezing)
 - [Statements](#statements)
 - [Operating wallets](#operating-wallets)
+- [Data model](#data-model)
+- [Sequence: authorize and capture](#sequence-authorize-and-capture)
+- [Extension guide](#extension-guide)
 
 ---
 
@@ -101,6 +105,42 @@ One subtlety worth knowing: the hold being captured is added _back_ to availabil
 capture's own balance check. Otherwise every capture fails on a wallet whose whole balance is
 authorized, which is the normal case.
 
+## Reserves
+
+A reserve reduces the available balance and moves nothing, exactly like a hold — and is the
+opposite of one in every other respect.
+
+```ts
+await wallets.reserve({
+  walletId,
+  organizationId,
+  amount: money('200.00', 'USD'),
+  reason: 'Rolling reserve: 20% of monthly volume against chargebacks.',
+});
+```
+
+**Held and reserved are separate because their lifecycles are opposite.** A hold that has outlived
+its operation is a bug and the sweeper releases it; a reserve that has sat there for a year is
+working exactly as intended.
+
+Merging them means one of two failures, and both have happened to systems that modelled one
+number: either the sweeper dissolves somebody's chargeback reserve, or nothing sweeps and a dead
+authorization freezes money forever.
+
+So the framework refuses the ambiguity structurally:
+
+|             | `hold`                                           | `reserve`                                                    |
+| ----------- | ------------------------------------------------ | ------------------------------------------------------------ |
+| `expiresAt` | **required**                                     | **must be null**                                             |
+| Swept       | yes                                              | never                                                        |
+| Captured    | yes                                              | refused — capturing a floor spends what exists to stay there |
+| Released by | `release()`, a cancellation handler, the sweeper | `releaseReserve()` only, with a reason                       |
+
+`release()` on a reserve is refused by name, because that is the method a generic cancellation loop
+calls. Releasing a reserve requires a reason: a reserve exists because somebody decided it should,
+and removing it without a record leaves the next person unable to tell whether the risk it covered
+is gone.
+
 ## Moving money
 
 ```ts
@@ -175,6 +215,102 @@ Four numbers to watch:
 
 The sweeper number is the one to alert on. It is zero in a healthy system, and every hold it
 releases was money a customer could not spend for as long as the hold lived.
+
+## Data model
+
+```
+  Wallet ────1:1────▶ FinancialAccount        (the balance lives here, not on the wallet)
+    id                  id
+    ownerId             code       customer.<owner>.<currency>
+    currency            class      liability
+    accountId ─────────▶id
+    status              status
+    limitKeys
+       │
+       │ 1:n
+       ▼
+  WalletHold
+    id
+    walletId
+    amount
+    kind          hold │ reserve      ◀── decides everything below
+    status        active │ captured │ released │ expired
+    expiresAt     required for hold, null for reserve
+    capturedAmount   a partial capture leaves the rest held
+    reason
+    reference     the transaction this belongs to
+```
+
+There is deliberately **no `balance` column** on `Wallet`. See the first section.
+
+| Column                 | Type             | Note                                                            |
+| ---------------------- | ---------------- | --------------------------------------------------------------- |
+| `WalletHold.amount`    | `Decimal(28, 8)` |                                                                 |
+| `WalletHold.expiresAt` | `timestamp`      | Not nullable for a hold; the schema enforces the asymmetry      |
+| `WalletHold.kind`      | `text`           | The only field the sweeper reads before deciding to touch a row |
+
+## Sequence: authorize and capture
+
+```
+  payer            wallet service           hold store            ledger
+    │                    │                      │                   │
+    │  hold(102.50)      │                      │                   │
+    ├───────────────────▶│                      │                   │
+    │                    │  balance()           │                   │
+    │                    ├─────────────────────────────────────────▶│
+    │                    │◀───────── total 1000, held 0 ────────────┤
+    │                    │                      │                   │
+    │                    │  available >= 102.50 │                   │
+    │                    ├─────────────────────▶│  insert           │
+    │◀── hld_1 ──────────┤                      │                   │
+    │                    │                      │                   │
+    │        available is now 897.50; nothing has been posted       │
+    │                    │                      │                   │
+    │  capture(98.00)    │                      │                   │
+    ├───────────────────▶│                      │                   │
+    │                    │  the hold is added back to availability  │
+    │                    │  (or every capture on a fully-authorized │
+    │                    │   wallet would fail)                     │
+    │                    ├─────────────────────────────────────────▶│  DR wallet 98.00
+    │                    │                      │                   │  CR merchant 98.00
+    │                    ├─────────────────────▶│  captured 98.00   │
+    │◀── balance 902.00 ─┤                      │                   │
+    │                    │                      │                   │
+    │        4.50 remains held; release() gives it back             │
+```
+
+## Extension guide
+
+### A hold store
+
+```ts
+export class PrismaHoldStore implements HoldStore {
+  async active(walletId: string, organizationId: string | null): Promise<Hold[]> {
+    /* … */
+  }
+
+  async expired(organizationId: string | null, at: Date, limit = 100): Promise<Hold[]> {
+    // Must use `isExpired`, or filter on `kind = 'hold'` explicitly. A query that only checks
+    // `expiresAt <= now` returns reserves, and the sweeper dissolves somebody's chargeback cover.
+  }
+}
+```
+
+> **The check-then-write race is real and the store must close it.**
+>
+> `hold` reads the balance and then writes. Two callers reading the same number both see room — the
+> same shape as `LimitEngine.check`. The in-memory store has no lock and `wallet.spec.ts` has a
+> test that demonstrates it, so the limitation is not rediscovered.
+>
+> A production store closes it at the database: insert the hold and re-check the balance in one
+> transaction, or take a row lock on the wallet. An implementation that does neither passes every
+> single-threaded test and lets a customer authorize the same money twice.
+
+### Caching a balance
+
+Allowed, and only in one shape: cache it **beside the ledger with the journal id it was computed
+at**. That is a cache and can be rebuilt. A column that is written by the application on every
+movement is a second source of truth, which is what this package exists to prevent.
 
 ## Related
 

@@ -3,7 +3,7 @@ import { ApiError } from '@trustos/errors';
 import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
 import { checkBalance, credit, debit, isBalanced, mirrorEntries } from './journal';
 import { Ledger, contentHashOf } from './ledger';
-import { InMemoryLedgerStore } from './testing';
+import { InMemoryLedgerStore, InMemoryPeriodStore } from './testing';
 
 /**
  * The tests that matter are the ones about what a ledger refuses.
@@ -608,5 +608,221 @@ describe('concurrency', () => {
 
     expect(trial.balanced).toBe(true);
     expect(formatMoney(trial.totals[0]!.debits)).toBe('500.00 USD');
+  });
+});
+
+describe('period closing', () => {
+  function withPeriods() {
+    const store = new InMemoryLedgerStore(currencies);
+    const periods = new InMemoryPeriodStore();
+    const audit = { record: vi.fn() };
+
+    const ledger = new Ledger({
+      store,
+      periods,
+      currencies,
+      audit,
+      now: () => clock,
+      newId: (prefix) => `${prefix}_${(counter += 1)}`,
+    });
+
+    return { store, periods, audit, ledger };
+  }
+
+  const march = {
+    code: '2026-03',
+    startsAt: new Date('2026-03-01T00:00:00.000Z'),
+    endsAt: new Date('2026-04-01T00:00:00.000Z'),
+  };
+
+  it('refuses a posting into a closed period', async () => {
+    /*
+     * The failure this prevents: a report run in April for March, sent to somebody who acted on
+     * it, and then a journal posted with a March effective date. Nobody re-runs March.
+     */
+    const { ledger } = withPeriods();
+
+    const period = await ledger.openPeriod({ organizationId: 'org_a', ...march });
+    await ledger.closePeriod({ id: period.id, organizationId: 'org_a', actorId: 'usr_finance' });
+
+    await expect(
+      post(ledger, { effectiveAt: new Date('2026-03-15T00:00:00.000Z') }),
+    ).rejects.toThrow(/Period 2026-03 .* was closed/);
+  });
+
+  it('checks the effective date, not the posting date', async () => {
+    // Checking the posting date would be useless — it is always now — and freezing the whole
+    // ledger is the other way to get it wrong.
+    const { ledger } = withPeriods();
+
+    const period = await ledger.openPeriod({ organizationId: 'org_a', ...march });
+    await ledger.closePeriod({ id: period.id, organizationId: 'org_a' });
+
+    clock = new Date('2026-04-15T00:00:00.000Z');
+
+    // Posted now, effective now: fine, even though March is closed.
+    await expect(post(ledger)).resolves.toMatchObject({ status: 'posted' });
+  });
+
+  it('says what to do instead of just refusing', async () => {
+    const { ledger } = withPeriods();
+
+    const period = await ledger.openPeriod({ organizationId: 'org_a', ...march });
+    await ledger.closePeriod({ id: period.id, organizationId: 'org_a' });
+
+    const error = await caught(() =>
+      post(ledger, { effectiveAt: new Date('2026-03-15T00:00:00.000Z') }),
+    );
+
+    expect((error as Error).message).toMatch(/Post to the current period with a note/);
+  });
+
+  it('records the trial balance at the moment of closing', async () => {
+    /*
+     * Stored rather than recomputed. Recomputing gives a different answer the moment anything is
+     * posted into a reopened period, and the number people need is the one the report they acted
+     * on was based on.
+     */
+    const { ledger } = withPeriods();
+
+    await post(ledger, { effectiveAt: new Date('2026-03-10T00:00:00.000Z') });
+
+    const period = await ledger.openPeriod({ organizationId: 'org_a', ...march });
+    const closed = await ledger.closePeriod({ id: period.id, organizationId: 'org_a' });
+
+    expect(closed.closingTotals).toEqual([
+      { currency: 'USD', debits: '100.00', credits: '100.00' },
+    ]);
+  });
+
+  it('refuses to close a period that does not balance', async () => {
+    // Closing a broken period freezes the break, and the report everybody then works from is the
+    // wrong one.
+    const { ledger, store } = withPeriods();
+
+    const journal = await post(ledger, { effectiveAt: new Date('2026-03-10T00:00:00.000Z') });
+
+    const tampered = structuredClone(store.journals.get(journal.id)!);
+    tampered.entries.pop();
+    store.journals.set(journal.id, tampered);
+
+    const period = await ledger.openPeriod({ organizationId: 'org_a', ...march });
+
+    await expect(ledger.closePeriod({ id: period.id, organizationId: 'org_a' })).rejects.toThrow(
+      /would freeze the break/,
+    );
+  });
+
+  it('closes anyway when forced, and records that it was forced', async () => {
+    const { ledger, store, audit } = withPeriods();
+
+    const journal = await post(ledger, { effectiveAt: new Date('2026-03-10T00:00:00.000Z') });
+    const tampered = structuredClone(store.journals.get(journal.id)!);
+    tampered.entries.pop();
+    store.journals.set(journal.id, tampered);
+
+    const period = await ledger.openPeriod({ organizationId: 'org_a', ...march });
+    await ledger.closePeriod({ id: period.id, organizationId: 'org_a', force: true });
+
+    const record = audit.record.mock.calls.find(
+      (call) => call[0].action === 'ledger.period.closed',
+    )!;
+
+    expect(record[0].after).toMatchObject({ forced: true, balanced: false });
+  });
+
+  it('reopens loudly, with a reason and a record', async () => {
+    /*
+     * Refusing outright sounds stricter and is worse: the correction happens anyway, as a journal
+     * dated after the close with a description explaining that it belongs in March.
+     */
+    const { ledger, audit } = withPeriods();
+
+    const period = await ledger.openPeriod({ organizationId: 'org_a', ...march });
+    await ledger.closePeriod({ id: period.id, organizationId: 'org_a' });
+
+    const reopened = await ledger.reopenPeriod({
+      id: period.id,
+      organizationId: 'org_a',
+      reason: 'A supplier invoice arrived three weeks late and belongs in March.',
+      actorId: 'usr_finance',
+    });
+
+    expect(reopened.status).toBe('open');
+    expect(reopened.reopenings).toHaveLength(1);
+    expect(reopened.reopenings[0]!.reason).toMatch(/three weeks late/);
+
+    expect(
+      audit.record.mock.calls.some((call) => call[0].action === 'ledger.period.reopened'),
+    ).toBe(true);
+
+    // And posting into it works again.
+    await expect(
+      post(ledger, { effectiveAt: new Date('2026-03-15T00:00:00.000Z') }),
+    ).resolves.toMatchObject({ status: 'posted' });
+  });
+
+  it('requires a reason to reopen', async () => {
+    const { ledger } = withPeriods();
+
+    const period = await ledger.openPeriod({ organizationId: 'org_a', ...march });
+    await ledger.closePeriod({ id: period.id, organizationId: 'org_a' });
+
+    const error = await caught(() =>
+      ledger.reopenPeriod({ id: period.id, organizationId: 'org_a', reason: '  ' }),
+    );
+
+    expect(detailsOf(error)).toMatch(/only record of why a period somebody already reported on/);
+  });
+
+  it('refuses two periods covering the same instant', async () => {
+    // A journal would belong to both, and which one a report uses depends on which query ran.
+    const { ledger } = withPeriods();
+
+    await ledger.openPeriod({ organizationId: 'org_a', ...march });
+
+    await expect(
+      ledger.openPeriod({
+        organizationId: 'org_a',
+        code: '2026-03-late',
+        startsAt: new Date('2026-03-15T00:00:00.000Z'),
+        endsAt: new Date('2026-04-15T00:00:00.000Z'),
+      }),
+    ).rejects.toThrow(/overlaps 2026-03/);
+  });
+
+  it('lets consecutive periods tile exactly', async () => {
+    // The window is half-open, so April starting when March ends is not an overlap.
+    const { ledger } = withPeriods();
+
+    await ledger.openPeriod({ organizationId: 'org_a', ...march });
+
+    await expect(
+      ledger.openPeriod({
+        organizationId: 'org_a',
+        code: '2026-04',
+        startsAt: new Date('2026-04-01T00:00:00.000Z'),
+        endsAt: new Date('2026-05-01T00:00:00.000Z'),
+      }),
+    ).resolves.toBeTruthy();
+  });
+
+  it('does not close another tenant’s period', async () => {
+    const { ledger } = withPeriods();
+    const period = await ledger.openPeriod({ organizationId: 'org_a', ...march });
+
+    await expect(ledger.closePeriod({ id: period.id, organizationId: 'org_b' })).rejects.toThrow(
+      /No period with id/,
+    );
+  });
+
+  it('posts freely when no period store is wired', async () => {
+    // The honest default: a framework that invented periods would refuse postings for a reason
+    // nobody configured.
+    const { ledger } = setup();
+
+    await expect(
+      post(ledger, { effectiveAt: new Date('2020-01-01T00:00:00.000Z') }),
+    ).resolves.toMatchObject({ status: 'posted' });
   });
 });

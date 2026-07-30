@@ -2297,14 +2297,23 @@ model WalletHold {
   amount   Decimal @db.Decimal(28, 8)
   currency String
 
+  /// hold or reserve.
+  ///
+  /// The only field the sweeper reads before deciding whether to touch a row. A `hold` is against
+  /// a specific pending operation and expires; a `reserve` is a standing floor and never does.
+  /// Merging them means either the sweeper dissolves somebody's chargeback cover, or nothing
+  /// sweeps and a dead authorization freezes money forever.
+  kind String @default("hold")
+
   status String @default("active")
 
   reason    String
   reference String?
 
-  /// Not nullable, and there is no "no expiry" option. A hold against a failed process is money
-  /// the customer cannot spend and nobody is coming back for.
-  expiresAt DateTime
+  /// Required for a hold, null for a reserve. A hold against a failed process is money the
+  /// customer cannot spend and nobody is coming back for; a reserve that expired on a timer is
+  /// cover that silently stopped covering anything. A check constraint enforces both halves.
+  expiresAt DateTime?
 
   /// A partial capture leaves the rest held.
   capturedAmount Decimal? @db.Decimal(28, 8)
@@ -2606,6 +2615,7 @@ model SettlementBatch {
   settledAt   DateTime?
 
   instructions SettlementInstruction[]
+  adjustments  SettlementAdjustment[]
 
   @@index([organizationId, status, windowEnd])
   @@map("settlement_batch")
@@ -2765,6 +2775,89 @@ model FinancialPolicy {
 
   @@index([organizationId, scopeKind])
   @@map("financial_policy")
+}
+
+/// A window nothing may post into once it is closed.
+///
+/// Closing is about the *effective* date. A journal posted today with a March effective date is
+/// exactly what closing prevents; checking the posting date would be useless, because it is always
+/// now.
+model AccountingPeriod {
+  id             String  @id @default(cuid())
+  organizationId String?
+  ledgerId       String  @default("default")
+
+  /// Readable and sortable: `2026-03`, `2026-Q1`, `FY2026`.
+  code String
+
+  /// Half-open: `[startsAt, endsAt)`. Consecutive periods tile without a gap or an overlap; an
+  /// inclusive end makes midnight on the last day belong to two periods.
+  startsAt DateTime
+  endsAt   DateTime
+
+  status String @default("open")
+
+  /// The trial balance at the moment of closing, per currency.
+  ///
+  /// Stored rather than recomputed. Recomputing gives a different answer the moment anything is
+  /// posted into a reopened period, and the number people need is the one the report they acted on
+  /// was based on.
+  closingTotals Json @default("[]")
+
+  closedAt    DateTime?
+  closedById  String?
+  closingNote String?
+
+  /// Every reopen, so "who unlocked March" has an answer.
+  reopenings Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// The index the posting path uses. Read on every posting, so it leads with the tenant and the
+  /// ledger and covers the window.
+  @@index([organizationId, ledgerId, startsAt, endsAt])
+  @@map("accounting_period")
+}
+
+/// A correction against a batch that has already settled.
+///
+/// Never by editing the batch: a settled batch is what the counterparty was told and what the
+/// reconciliation ran against, and editing it to match a later statement makes the two agree by
+/// destroying the evidence of the disagreement.
+model SettlementAdjustment {
+  id             String  @id @default(cuid())
+  organizationId String?
+  batchId        String
+  /// When the difference is attributable to one instruction.
+  instructionId  String?
+
+  /// counterparty_fee, amount_difference, fx_difference, chargeback, other.
+  kind String
+
+  /// **Signed**, and the only signed amount in the phase. Positive means the counterparty paid
+  /// more than the batch said. A direction field would need every reader to know whose point of
+  /// view it is from, and an adjustment is read by whoever is holding a bank statement.
+  amount   Decimal @db.Decimal(28, 8)
+  currency String
+
+  /// Required. A difference with no explanation is one nobody can close, and it appears again on
+  /// next month's reconciliation.
+  reason String
+
+  /// Where the difference is booked: a fee expense, an FX loss, a suspense account.
+  counterAccountId String
+
+  journalId         String?
+  externalReference String?
+
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  batch SettlementBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, createdAt])
+  @@map("settlement_adjustment")
 }
 
 /// A subject's verification state. The record, not the verification.

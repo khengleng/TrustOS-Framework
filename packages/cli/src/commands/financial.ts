@@ -229,7 +229,13 @@ async function checkSchema(
   const schema = await readFile(schemaPath, 'utf8');
 
   const REQUIRED: Record<string, string[]> = {
-    ledger: ['LedgerJournal', 'LedgerEntry', 'FinancialAccount', 'FinancialPolicy'],
+    ledger: [
+      'LedgerJournal',
+      'LedgerEntry',
+      'FinancialAccount',
+      'FinancialPolicy',
+      'AccountingPeriod',
+    ],
     wallet: ['Wallet', 'WalletHold'],
     transactions: [
       'FinancialTransaction',
@@ -239,7 +245,7 @@ async function checkSchema(
       'FinancialLimit',
       'ExchangeRate',
     ],
-    settlement: ['SettlementBatch', 'SettlementInstruction'],
+    settlement: ['SettlementBatch', 'SettlementInstruction', 'SettlementAdjustment'],
     reconciliation: ['ReconciliationRun', 'ReconciliationException'],
   };
 
@@ -339,6 +345,21 @@ async function checkMigrations(
   if (!combined.includes('trustos_entry_immutable')) missing.push('the entry immutability trigger');
   if (!combined.includes('ledger_entry_amount_positive')) missing.push('the positive-amount check');
 
+  /*
+   * Two periods covering the same day are two answers to "was this month closed", and the
+   * application picks whichever it read first. Only the exclusion constraint can prevent it —
+   * a check in code loses the race.
+   */
+  if (!combined.includes('accounting_period_no_overlap'))
+    missing.push('the period non-overlap constraint');
+
+  /*
+   * The kind/expiry rule. Without it a reserve can be written with an expiry, the sweeper
+   * releases it on schedule, and a rolling reserve silently stops covering anything.
+   */
+  if (installed.includes('wallet') && !combined.includes('wallet_hold_expiry_matches_kind'))
+    missing.push('the hold expiry check');
+
   if (missing.length > 0) {
     return [
       {
@@ -346,11 +367,13 @@ async function checkMigrations(
         status: 'FAIL',
         detail:
           `The migrations do not contain ${missing.join(', ')}. The tables exist and the ` +
-          'guarantees do not, so an unbalanced journal or an edited posting would be accepted by ' +
-          'the database.',
+          'guarantees do not, so the database would accept what they exist to refuse — an ' +
+          'unbalanced journal, an edited posting, two periods covering the same day, a reserve ' +
+          'the sweeper will release.',
         remediation:
-          'Copy the hand-written section of 20261101000000_phase8_financial_platform/migration.sql ' +
-          'from the framework into a migration of your own.',
+          'Copy the hand-written sections of 20261101000000_phase8_financial_platform and ' +
+          '20261115000000_phase8_closing_reserves_adjustments from the framework into migrations ' +
+          'of your own.',
       },
     ];
   }
@@ -359,7 +382,9 @@ async function checkMigrations(
     {
       area: 'ledger guarantees',
       status: 'PASS',
-      detail: 'Balancing, immutability and positive-amount constraints are all in the migrations.',
+      detail:
+        'Balancing, immutability, positive-amount, period-overlap and hold-expiry constraints ' +
+        'are all in the migrations.',
     },
   ];
 }

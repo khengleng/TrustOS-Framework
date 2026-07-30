@@ -25,6 +25,8 @@ const { calculateFee, feeScheduleSchema } = await load('fees');
 const { LimitEngine, InMemoryLimitStore, limitSchema, windowFor } = await load('limits');
 const { compare } = await load('reconciliation');
 const { applySpread } = await load('fx');
+const { InMemoryPeriodStore } = await load('ledger');
+const { WalletService, InMemoryWalletStore, InMemoryHoldStore } = await load('wallet');
 
 function bench(name, iterations, fn) {
   for (let i = 0; i < Math.min(iterations, 500); i += 1) fn();
@@ -154,6 +156,100 @@ const account = await accounts.open({
 
 bench('normalBalance (sign flip)', 1_000_000, () => normalBalance(account, left));
 await benchAsync('accounts.balance (20k journals)', 200, () => accounts.balance(account));
+
+/*
+ * Posting with period closing switched on.
+ *
+ * Worth measuring separately: attaching a period store puts a lookup on the hot path of every
+ * posting, and the difference against the line above is what closing costs.
+ */
+const closingLedger = new Ledger({
+  store: new InMemoryLedgerStore(currencies),
+  currencies,
+  periods: new InMemoryPeriodStore(),
+  now: () => clock,
+  newId: (prefix) => `${prefix}_${(counter += 1)}`,
+});
+
+await closingLedger.openPeriod({
+  organizationId: 'org_a',
+  code: '2026-03',
+  startsAt: new Date('2026-03-01T00:00:00.000Z'),
+  endsAt: new Date('2026-04-01T00:00:00.000Z'),
+});
+
+await benchAsync('Ledger.post (period closing enabled)', 20_000, (index) =>
+  closingLedger.post({
+    organizationId: 'org_a',
+    description: 'Card payment',
+    entries: [
+      debit('acc_customer', usd('102.50')),
+      credit('acc_merchant', usd('100.00')),
+      credit('acc_fee', usd('2.50')),
+    ],
+    idempotencyKey: `closing_${index}`,
+  }),
+);
+
+console.log('\nwallet');
+
+const holdStore = new InMemoryHoldStore();
+const wallets = new WalletService({
+  wallets: new InMemoryWalletStore(),
+  holds: holdStore,
+  accounts,
+  ledger,
+  currencies,
+  now: () => clock,
+  newId: (prefix) => `${prefix}_${(counter += 1)}`,
+});
+
+const wallet = await wallets.open({
+  organizationId: 'org_a',
+  ownerId: 'usr_bench',
+  currency: 'USD',
+});
+
+await wallets.credit({
+  walletId: wallet.id,
+  organizationId: 'org_a',
+  amount: usd('100000.00'),
+  fromAccountId: 'acc_bank',
+  description: 'Funding.',
+  idempotencyKey: 'bench_fund',
+});
+
+// Twenty holds and five reserves: a busy wallet, and enough of each to show the split cost.
+for (let index = 0; index < 20; index += 1) {
+  await wallets.hold({
+    walletId: wallet.id,
+    organizationId: 'org_a',
+    amount: usd('10.00'),
+    reason: 'Authorization.',
+    expiresAt: new Date('2026-03-08T09:00:00.000Z'),
+  });
+}
+
+for (let index = 0; index < 5; index += 1) {
+  await wallets.reserve({
+    walletId: wallet.id,
+    organizationId: 'org_a',
+    amount: usd('50.00'),
+    reason: 'Rolling reserve.',
+  });
+}
+
+/*
+ * Read this one against `accounts.balance` above, not on its own.
+ *
+ * It shares the ledger the earlier benchmarks filled with 20k journals, and the in-memory store
+ * scans all of them — so almost the whole number is the ledger scan, and splitting holds from
+ * reserves costs nothing next to it. Postgres answers that scan with an indexed aggregate; what
+ * this measures is the shape of the work, not the latency of a deployment.
+ */
+await benchAsync('wallet.balance (20 holds + 5 reserves)', 2_000, () =>
+  wallets.balance(wallet.id, 'org_a'),
+);
 
 console.log('\nfees');
 const schedule = feeScheduleSchema.parse({

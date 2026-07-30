@@ -2,8 +2,12 @@ import { ApiError } from '@trustos/errors';
 import type { LoggerPort } from '@trustos/logging';
 import {
   addMoney,
+  divide,
   formatDecimal,
   formatMoney,
+  isZero,
+  multiply,
+  parseDecimal,
   subtractMoney,
   zeroMoney,
   type CurrencyRegistry,
@@ -365,6 +369,90 @@ export function generalLedgerRows(report: GeneralLedgerReport): Array<Record<str
   }));
 }
 
+/** A wallet report as CSV rows. */
+export function walletReportRows(report: WalletReport): Array<Record<string, string>> {
+  return report.lines.map((line) => ({
+    wallet_id: line.walletId,
+    owner_id: line.ownerId,
+    currency: line.currency,
+    status: line.status,
+    total: formatDecimal(line.total.amount),
+    held: formatDecimal(line.held.amount),
+    reserved: formatDecimal(line.reserved.amount),
+    available: formatDecimal(line.available.amount),
+  }));
+}
+
+/** A transaction report as CSV rows. */
+export function transactionReportRows(report: TransactionReport): Array<Record<string, string>> {
+  return report.lines.map((line) => ({
+    date: line.at.toISOString(),
+    transaction_id: line.transactionId,
+    type: line.type,
+    status: line.status,
+    reference: line.reference ?? '',
+    currency: line.currency,
+    amount: formatDecimal(line.amount.amount),
+    fee: line.feeAmount ? formatDecimal(line.feeAmount.amount) : '',
+    failure_code: line.failureCode ?? '',
+  }));
+}
+
+/** A settlement report as CSV rows, one line per instruction. */
+export function settlementReportRows(report: {
+  instructions: Array<{
+    id: string;
+    counterpartyId: string;
+    counterpartyName: string;
+    status: string;
+    amount: { currency: string; amount: string };
+    externalReference: string | null;
+    failureReason: string | null;
+    transactionIds: string[];
+  }>;
+}): Array<Record<string, string>> {
+  return report.instructions.map((instruction) => ({
+    instruction_id: instruction.id,
+    counterparty_id: instruction.counterpartyId,
+    counterparty_name: instruction.counterpartyName,
+    status: instruction.status,
+    currency: instruction.amount.currency,
+    amount: instruction.amount.amount,
+    external_reference: instruction.externalReference ?? '',
+    failure_reason: instruction.failureReason ?? '',
+    // The transactions this settles, which is what makes a batch explicable six months later.
+    transaction_count: String(instruction.transactionIds.length),
+  }));
+}
+
+/** A fee report as CSV rows. */
+export function feeReportRows(report: FeeReport): Array<Record<string, string>> {
+  return report.lines.map((line) => ({
+    schedule: line.scheduleKey,
+    version: String(line.scheduleVersion),
+    component: line.componentName,
+    revenue_account: line.revenueAccountCode ?? '',
+    currency: line.currency,
+    count: String(line.count),
+    amount: formatDecimal(line.amount.amount),
+  }));
+}
+
+/** An exception report as CSV rows, oldest first. */
+export function exceptionReportRows(report: ExceptionReport): Array<Record<string, string>> {
+  return report.lines.map((line) => ({
+    source: line.source,
+    id: line.id,
+    kind: line.kind,
+    reference: line.reference,
+    amount: line.amount ? formatDecimal(line.amount.amount) : '',
+    opened_at: line.openedAt.toISOString(),
+    age_days: String(Math.floor(line.ageMs / 86_400_000)),
+    assigned_to: line.assignedTo ?? '',
+    detail: line.detail,
+  }));
+}
+
 /**
  * The document-rendering seam.
  *
@@ -444,6 +532,287 @@ export class ReportExporter {
       body: await renderer.render(input),
     };
   }
+}
+
+// ---------------------------------------------------------------------------
+// The operational reports
+//
+// Everything above is accounting. Everything below is what somebody actually asks for: how much is
+// in the wallets, what happened this week, what did we earn, what is still broken.
+//
+// All five take the rows from whichever service owns them rather than querying themselves. A
+// reporting package that reached into six stores would be a seventh place that knows how a wallet
+// balance is computed, and the day it disagrees with the wallet service is the day nobody can say
+// which is right.
+// ---------------------------------------------------------------------------
+
+export interface WalletReportLine {
+  walletId: string;
+  ownerId: string;
+  currency: string;
+  status: string;
+  total: Money;
+  held: Money;
+  reserved: Money;
+  available: Money;
+}
+
+export interface WalletReport {
+  organizationId: string | null;
+  asOf: Date;
+  lines: WalletReportLine[];
+  /** Per currency, because a total across currencies means nothing. */
+  totals: Array<{ currency: string; total: Money; held: Money; reserved: Money; available: Money }>;
+  walletCount: number;
+  generatedAt: Date;
+}
+
+/**
+ * Every wallet and what is in it.
+ *
+ * The number a finance team reconciles against the customer-liability account: the sum of every
+ * wallet balance should equal that account's balance exactly, and when it does not, one of the two
+ * has a wallet nobody knows about.
+ */
+export function walletReport(input: {
+  organizationId: string | null;
+  asOf: Date;
+  lines: WalletReportLine[];
+  generatedAt: Date;
+  currencies?: CurrencyRegistry;
+}): WalletReport {
+  const codes = [...new Set(input.lines.map((line) => line.currency))].sort();
+
+  const totals = codes.map((currency) => {
+    const relevant = input.lines.filter((line) => line.currency === currency);
+    const zero = zeroMoney(currency, input.currencies);
+
+    const sum = (pick: (line: WalletReportLine) => Money) =>
+      relevant.reduce<Money>((running, line) => addMoney(running, pick(line)), zero);
+
+    return {
+      currency,
+      total: sum((line) => line.total),
+      held: sum((line) => line.held),
+      reserved: sum((line) => line.reserved),
+      available: sum((line) => line.available),
+    };
+  });
+
+  return {
+    organizationId: input.organizationId,
+    asOf: input.asOf,
+    lines: [...input.lines].sort(
+      (a, b) => a.currency.localeCompare(b.currency) || a.ownerId.localeCompare(b.ownerId),
+    ),
+    totals,
+    walletCount: input.lines.length,
+    generatedAt: input.generatedAt,
+  };
+}
+
+export interface TransactionReportLine {
+  transactionId: string;
+  at: Date;
+  type: string;
+  status: string;
+  currency: string;
+  amount: Money;
+  feeAmount: Money | null;
+  reference: string | null;
+  failureCode: string | null;
+}
+
+export interface TransactionReport {
+  organizationId: string | null;
+  period: ReportPeriod;
+  lines: TransactionReportLine[];
+  /** Counts and value by status, which is the shape an operations review wants. */
+  byStatus: Array<{ status: string; count: number; value: Money }>;
+  byType: Array<{ type: string; count: number; value: Money }>;
+  /** Completed value over attempted value. The number that says whether the platform works. */
+  successRate: number;
+  totalValue: Money;
+  totalFees: Money;
+  generatedAt: Date;
+}
+
+/**
+ * What happened in a period.
+ *
+ * Grouped by status *and* by type, because the two answer different questions: "how much did we
+ * process" and "what is failing". A report with only a total tells an operations review nothing it
+ * can act on.
+ *
+ * The success rate counts completed against everything attempted, including failures — a rate
+ * computed over successes only is always 100%.
+ */
+export function transactionReport(input: {
+  organizationId: string | null;
+  period: ReportPeriod;
+  currency: string;
+  lines: TransactionReportLine[];
+  generatedAt: Date;
+  currencies?: CurrencyRegistry;
+}): TransactionReport {
+  const zero = zeroMoney(input.currency, input.currencies);
+  const relevant = input.lines.filter((line) => line.currency === input.currency);
+
+  const group = <TKey extends string>(pick: (line: TransactionReportLine) => TKey) => {
+    const keys = [...new Set(relevant.map(pick))].sort();
+
+    return keys.map((key) => {
+      const matching = relevant.filter((line) => pick(line) === key);
+
+      return {
+        key,
+        count: matching.length,
+        value: matching.reduce<Money>((sum, line) => addMoney(sum, line.amount), zero),
+      };
+    });
+  };
+
+  const completed = relevant.filter((line) => line.status === 'completed');
+
+  return {
+    organizationId: input.organizationId,
+    period: input.period,
+    lines: [...relevant].sort((a, b) => a.at.getTime() - b.at.getTime()),
+    byStatus: group((line) => line.status).map(({ key, count, value }) => ({
+      status: key,
+      count,
+      value,
+    })),
+    byType: group((line) => line.type).map(({ key, count, value }) => ({
+      type: key,
+      count,
+      value,
+    })),
+    // Over everything attempted. A rate computed over successes only is always 100%.
+    successRate: relevant.length === 0 ? 0 : completed.length / relevant.length,
+    totalValue: relevant.reduce<Money>((sum, line) => addMoney(sum, line.amount), zero),
+    totalFees: relevant.reduce<Money>(
+      (sum, line) => (line.feeAmount ? addMoney(sum, line.feeAmount) : sum),
+      zero,
+    ),
+    generatedAt: input.generatedAt,
+  };
+}
+
+export interface FeeReportLine {
+  scheduleKey: string;
+  scheduleVersion: number;
+  componentName: string;
+  revenueAccountCode: string | null;
+  currency: string;
+  count: number;
+  amount: Money;
+}
+
+export interface FeeReport {
+  organizationId: string | null;
+  period: ReportPeriod;
+  lines: FeeReportLine[];
+  total: Money;
+  /** Fees as a share of transaction value. The number a pricing review starts from. */
+  effectiveRate: string;
+  generatedAt: Date;
+}
+
+/**
+ * What was earned in fees, by schedule version and component.
+ *
+ * By **version**, not only by key. A schedule that changed mid-period produces two versions in one
+ * report, and collapsing them hides exactly the thing somebody is looking for when they ask why
+ * revenue moved.
+ */
+export function feeReport(input: {
+  organizationId: string | null;
+  period: ReportPeriod;
+  currency: string;
+  lines: FeeReportLine[];
+  transactionValue: Money;
+  generatedAt: Date;
+  currencies?: CurrencyRegistry;
+}): FeeReport {
+  const zero = zeroMoney(input.currency, input.currencies);
+  const total = input.lines.reduce<Money>((sum, line) => addMoney(sum, line.amount), zero);
+
+  return {
+    organizationId: input.organizationId,
+    period: input.period,
+    lines: [...input.lines].sort(
+      (a, b) =>
+        a.scheduleKey.localeCompare(b.scheduleKey) ||
+        a.scheduleVersion - b.scheduleVersion ||
+        a.componentName.localeCompare(b.componentName),
+    ),
+    total,
+    // Basis points, because that is how pricing is discussed. Zero volume gives 0 rather than a
+    // division by zero, and a period with no transactions genuinely has no rate.
+    effectiveRate: isZero(input.transactionValue.amount)
+      ? '0'
+      : formatDecimal(
+          divide(multiply(total.amount, parseDecimal('10000')), input.transactionValue.amount, 2),
+        ),
+    generatedAt: input.generatedAt,
+  };
+}
+
+export interface ExceptionReportLine {
+  source: 'reconciliation' | 'settlement' | 'suspense' | 'other';
+  id: string;
+  kind: string;
+  reference: string;
+  detail: string;
+  amount: Money | null;
+  openedAt: Date;
+  ageMs: number;
+  assignedTo: string | null;
+}
+
+export interface ExceptionReport {
+  organizationId: string | null;
+  asOf: Date;
+  lines: ExceptionReportLine[];
+  bySource: Array<{ source: string; count: number }>;
+  /** The oldest open item. The number that says whether the queue is being worked. */
+  oldestAgeMs: number | null;
+  unassigned: number;
+  generatedAt: Date;
+}
+
+/**
+ * Everything currently unresolved, from every source that produces exceptions.
+ *
+ * One report rather than four, because the question is "what is broken" and the answer being spread
+ * across a reconciliation screen, a settlement screen and a suspense-account balance is how a
+ * six-week-old item survives.
+ *
+ * Sorted **oldest first**, deliberately. Newest-first buries the item nobody wants to pick up,
+ * which is reliably the one that matters.
+ */
+export function exceptionReport(input: {
+  organizationId: string | null;
+  asOf: Date;
+  lines: ExceptionReportLine[];
+  generatedAt: Date;
+}): ExceptionReport {
+  const sources = [...new Set(input.lines.map((line) => line.source))].sort();
+
+  return {
+    organizationId: input.organizationId,
+    asOf: input.asOf,
+    lines: [...input.lines].sort((a, b) => a.openedAt.getTime() - b.openedAt.getTime()),
+    bySource: sources.map((source) => ({
+      source,
+      count: input.lines.filter((line) => line.source === source).length,
+    })),
+    oldestAgeMs:
+      input.lines.length === 0 ? null : Math.max(...input.lines.map((line) => line.ageMs)),
+    unassigned: input.lines.filter((line) => line.assignedTo === null).length,
+    generatedAt: input.generatedAt,
+  };
 }
 
 /** A statement line, for a customer-facing wallet statement. */

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
 import { AccountService, InMemoryAccountStore } from '@trustos/accounts';
 import { InMemoryLedgerStore, Ledger, credit, debit } from '@trustos/ledger';
-import { SettlementService } from './settlement';
+import { SettlementService, settlementDifference } from './settlement';
 import { InMemorySettlementStore } from './testing';
 
 /**
@@ -501,5 +501,278 @@ describe('tenancy', () => {
     await expect(
       context.settlement.closeBatch({ id: batch.id, organizationId: 'org_b' }),
     ).rejects.toThrow(/No settlement batch with id/);
+  });
+});
+
+describe('adjustments', () => {
+  async function settled() {
+    const context = await setup();
+    const { batch } = await batchWithInstructions(context);
+
+    await context.settlement.closeBatch({ id: batch.id, organizationId: 'org_a' });
+    await context.settlement.sendBatch({ id: batch.id, organizationId: 'org_a' });
+    await context.settlement.confirmBatch({
+      id: batch.id,
+      organizationId: 'org_a',
+      destinationAccountId: context.bank.id,
+    });
+
+    const feeExpense = await context.accounts.open({
+      organizationId: 'org_a',
+      code: 'general.bank-charges.usd',
+      name: 'Bank charges',
+      type: 'general',
+      class: 'expense',
+      currency: 'USD',
+    });
+
+    return { ...context, batch, feeExpense };
+  }
+
+  it('records a fee the counterparty deducted after settlement', async () => {
+    /*
+     * The case this exists for: the batch confirmed on Monday, and on Thursday the statement shows
+     * 4.50 less because the bank deducted a fee nobody modelled.
+     */
+    const context = await settled();
+
+    const { adjustment, journal } = await context.settlement.adjustBatch({
+      id: context.batch.id,
+      organizationId: 'org_a',
+      kind: 'counterparty_fee',
+      amount: usd('-4.50'),
+      reason: 'The bank deducted a 4.50 processing fee not modelled in the batch.',
+      counterAccountId: context.feeExpense.id,
+      actorId: 'usr_finance',
+    });
+
+    expect(adjustment.kind).toBe('counterparty_fee');
+    expect(journal.description).toMatch(/Settlement adjustment to SETTLE-2026-03-01-USD/);
+
+    // The fee is an expense; the settlement account is credited to absorb the shortfall.
+    expect(
+      formatMoney(
+        await context.accounts.balance(await context.accounts.get(context.feeExpense.id, 'org_a')),
+      ),
+    ).toBe('4.50 USD');
+  });
+
+  it('leaves the batch itself untouched', async () => {
+    /*
+     * The batch is what the counterparty was told and what the reconciliation ran against. Editing
+     * it to match a later statement makes the two agree by destroying the evidence.
+     */
+    const context = await settled();
+
+    await context.settlement.adjustBatch({
+      id: context.batch.id,
+      organizationId: 'org_a',
+      kind: 'counterparty_fee',
+      amount: usd('-4.50'),
+      reason: 'Bank fee.',
+      counterAccountId: context.feeExpense.id,
+    });
+
+    const batch = await context.settlement.getBatch(context.batch.id, 'org_a');
+
+    expect(batch.status).toBe('settled');
+    expect(`${batch.totalAmount.amount} ${batch.totalAmount.currency}`).toBe('1000.00 USD');
+  });
+
+  it('reports what the counterparty actually paid, separately from the batch total', async () => {
+    // The number a bank statement is compared against is not the batch total.
+    const context = await settled();
+
+    await context.settlement.adjustBatch({
+      id: context.batch.id,
+      organizationId: 'org_a',
+      kind: 'counterparty_fee',
+      amount: usd('-4.50'),
+      reason: 'Bank fee.',
+      counterAccountId: context.feeExpense.id,
+    });
+
+    const report = await context.settlement.report({
+      id: context.batch.id,
+      organizationId: 'org_a',
+    });
+
+    expect(formatMoney(report.total)).toBe('1000.00 USD');
+    expect(formatMoney(report.settled)).toBe('1000.00 USD');
+    expect(formatMoney(report.adjusted)).toBe('-4.50 USD');
+    expect(formatMoney(report.netSettled)).toBe('995.50 USD');
+    expect(report.adjustments).toHaveLength(1);
+  });
+
+  it('reconciles clean against a statement once adjusted', async () => {
+    /*
+     * Comparing the unadjusted total would report the same difference every month until somebody
+     * noticed the adjustment existed.
+     */
+    const context = await settled();
+
+    await context.settlement.adjustBatch({
+      id: context.batch.id,
+      organizationId: 'org_a',
+      kind: 'counterparty_fee',
+      amount: usd('-4.50'),
+      reason: 'Bank fee.',
+      counterAccountId: context.feeExpense.id,
+    });
+
+    const report = await context.settlement.report({
+      id: context.batch.id,
+      organizationId: 'org_a',
+    });
+
+    expect(formatMoney(settlementDifference(report, usd('995.50')))).toBe('0.00 USD');
+  });
+
+  it('handles the counterparty paying more, not only less', async () => {
+    const context = await settled();
+
+    await context.settlement.adjustBatch({
+      id: context.batch.id,
+      organizationId: 'org_a',
+      kind: 'fx_difference',
+      amount: usd('2.25'),
+      reason: 'Favourable exchange difference between instruction and settlement.',
+      counterAccountId: context.feeExpense.id,
+    });
+
+    const report = await context.settlement.report({
+      id: context.batch.id,
+      organizationId: 'org_a',
+    });
+
+    expect(formatMoney(report.netSettled)).toBe('1002.25 USD');
+  });
+
+  it('keeps the ledger balanced through an adjustment', async () => {
+    const context = await settled();
+
+    await context.settlement.adjustBatch({
+      id: context.batch.id,
+      organizationId: 'org_a',
+      kind: 'counterparty_fee',
+      amount: usd('-4.50'),
+      reason: 'Bank fee.',
+      counterAccountId: context.feeExpense.id,
+    });
+
+    expect((await context.ledger.trialBalance({ organizationId: 'org_a' })).balanced).toBe(true);
+  });
+
+  it('refuses to adjust a batch that has not been sent', async () => {
+    // No money has moved, so there is nothing to correct — change the instruction instead.
+    const context = await setup();
+    const { batch } = await batchWithInstructions(context);
+
+    await expect(
+      context.settlement.adjustBatch({
+        id: batch.id,
+        organizationId: 'org_a',
+        kind: 'other',
+        amount: usd('-1.00'),
+        reason: 'Too early.',
+        counterAccountId: context.bank.id,
+      }),
+    ).rejects.toThrow(/there is nothing to adjust — no money has moved/);
+  });
+
+  it('requires a reason', async () => {
+    // A difference with no explanation appears again on next month's reconciliation.
+    const context = await settled();
+
+    const error = await caught(() =>
+      context.settlement.adjustBatch({
+        id: context.batch.id,
+        organizationId: 'org_a',
+        kind: 'other',
+        amount: usd('-1.00'),
+        reason: '  ',
+        counterAccountId: context.feeExpense.id,
+      }),
+    );
+
+    expect(detailsOf(error)).toMatch(/nobody can close/);
+  });
+
+  it('refuses an adjustment of zero', async () => {
+    const context = await settled();
+
+    const error = await caught(() =>
+      context.settlement.adjustBatch({
+        id: context.batch.id,
+        organizationId: 'org_a',
+        kind: 'other',
+        amount: usd('0.00'),
+        reason: 'Nothing.',
+        counterAccountId: context.feeExpense.id,
+      }),
+    );
+
+    expect(detailsOf(error)).toMatch(/corrects nothing/);
+  });
+
+  it('refuses an adjustment in another currency', async () => {
+    const context = await settled();
+
+    const error = await caught(() =>
+      context.settlement.adjustBatch({
+        id: context.batch.id,
+        organizationId: 'org_a',
+        kind: 'other',
+        amount: money('400000', 'KHR', currencies),
+        reason: 'Wrong currency.',
+        counterAccountId: context.feeExpense.id,
+      }),
+    );
+
+    expect(detailsOf(error)).toMatch(/settles USD and this adjustment is KHR/);
+  });
+
+  it('attributes an adjustment to one instruction when it belongs to one', async () => {
+    const context = await settled();
+    const instructions = await context.settlement.instructions(context.batch.id, 'org_a');
+
+    const { adjustment } = await context.settlement.adjustBatch({
+      id: context.batch.id,
+      organizationId: 'org_a',
+      kind: 'chargeback',
+      amount: usd('-25.00'),
+      reason: 'Chargeback arriving after settlement.',
+      counterAccountId: context.feeExpense.id,
+      instructionId: instructions[0]!.id,
+    });
+
+    expect(adjustment.instructionId).toBe(instructions[0]!.id);
+  });
+
+  it('audits the adjustment with its reason and its journal', async () => {
+    const context = await settled();
+
+    await context.settlement.adjustBatch({
+      id: context.batch.id,
+      organizationId: 'org_a',
+      kind: 'counterparty_fee',
+      amount: usd('-4.50'),
+      reason: 'Bank deducted a processing fee.',
+      counterAccountId: context.feeExpense.id,
+      actorId: 'usr_finance',
+    });
+
+    const record = context.audit.record.mock.calls.find(
+      (call) => call[0].action === 'settlement.batch.adjusted',
+    )!;
+
+    expect(record[0]).toMatchObject({
+      actorId: 'usr_finance',
+      after: expect.objectContaining({
+        kind: 'counterparty_fee',
+        amount: '-4.50 USD',
+        reason: 'Bank deducted a processing fee.',
+      }),
+    });
   });
 });

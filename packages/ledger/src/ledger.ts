@@ -21,6 +21,13 @@ import {
   type Journal,
   type JournalEntry,
 } from './journal';
+import {
+  accountingPeriodSchema,
+  assertPeriodOpen,
+  overlapping,
+  type AccountingPeriod,
+  type PeriodStore,
+} from './closing';
 
 /**
  * The ledger service.
@@ -92,6 +99,14 @@ export interface AccountBalance {
 
 export interface LedgerOptions {
   store: LedgerStore;
+  /**
+   * Where accounting periods live.
+   *
+   * Optional. Without it nothing is ever closed, which is a legitimate configuration for a
+   * platform that does not run periods — and the honest default, because a framework that
+   * invented periods would refuse postings for a reason nobody configured.
+   */
+  periods?: PeriodStore;
   currencies?: CurrencyRegistry;
   audit?: Pick<AuditService, 'record'>;
   logger?: LoggerPort;
@@ -144,6 +159,13 @@ export class Ledger {
     assertBalanced(entries, this.options.currencies);
 
     this.assertDistinctSides(entries);
+
+    // The period check reads a row, so it comes after the free checks and before the write.
+    await this.assertPeriodOpenFor(
+      input.organizationId,
+      input.ledgerId ?? 'default',
+      input.effectiveAt ?? now,
+    );
 
     const journal = journalSchema.parse({
       id: this.newId('jrn'),
@@ -335,6 +357,213 @@ export class Ledger {
     return journal;
   }
 
+  /**
+   * Opens an accounting period.
+   *
+   * Refuses one that overlaps an existing period: two periods covering one instant means a journal
+   * belongs to both, and which one a report uses depends on which query ran.
+   */
+  async openPeriod(input: {
+    organizationId: string | null;
+    code: string;
+    startsAt: Date;
+    endsAt: Date;
+    ledgerId?: string;
+  }): Promise<AccountingPeriod> {
+    const periods = this.requirePeriods();
+    const ledgerId = input.ledgerId ?? 'default';
+    const now = this.now();
+
+    const parsed = accountingPeriodSchema.safeParse({
+      id: this.newId('per'),
+      organizationId: input.organizationId,
+      ledgerId,
+      code: input.code,
+      startsAt: input.startsAt,
+      endsAt: input.endsAt,
+      status: 'open',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    if (!parsed.success) {
+      throw ApiError.validation(
+        parsed.error.issues.map((issue) => ({
+          path: issue.path.join('.') || 'period',
+          message: issue.message,
+        })),
+        `The period "${input.code}" is not valid.`,
+      );
+    }
+
+    const existing = await periods.list({ organizationId: input.organizationId, ledgerId });
+    const clashes = overlapping(existing, {
+      startsAt: input.startsAt,
+      endsAt: input.endsAt,
+      ledgerId,
+    });
+
+    if (clashes.length > 0) {
+      throw ApiError.conflict(
+        `Period ${input.code} overlaps ${clashes.map((period) => period.code).join(', ')}. Two ` +
+          'periods covering one instant means a journal belongs to both, and which one a report ' +
+          'uses depends on which query ran.',
+        { reason: 'period_overlap', code: input.code },
+      );
+    }
+
+    return periods.create(parsed.data);
+  }
+
+  /**
+   * Closes a period.
+   *
+   * Records the trial balance at the moment of closing, and refuses to close a period that does
+   * not balance — closing a broken period freezes the break, and the report everybody then works
+   * from is the wrong one.
+   */
+  async closePeriod(input: {
+    id: string;
+    organizationId: string | null;
+    actorId?: string | null;
+    note?: string;
+    /** Closes anyway, recording that it was forced. For a period nobody can reconcile. */
+    force?: boolean;
+  }): Promise<AccountingPeriod> {
+    const periods = this.requirePeriods();
+    const period = await this.requirePeriod(input.id, input.organizationId);
+
+    if (period.status === 'closed') {
+      throw ApiError.conflict(`Period ${period.code} is already closed.`, {
+        reason: 'period_already_closed',
+        periodId: period.id,
+      });
+    }
+
+    const trial = await this.trialBalance({
+      organizationId: input.organizationId,
+      ledgerId: period.ledgerId,
+      asOf: period.endsAt,
+    });
+
+    if (!trial.balanced && input.force !== true) {
+      throw ApiError.conflict(
+        `Period ${period.code} does not balance, so closing it would freeze the break: ` +
+          `${trial.problems.join(' ')} Investigate first, or close with force and record why.`,
+        { reason: 'period_unbalanced', periodId: period.id },
+      );
+    }
+
+    const now = this.now();
+
+    const closed = await periods.update(period.id, {
+      status: 'closed',
+      closedAt: now,
+      closedById: input.actorId ?? null,
+      closingNote: input.note ?? null,
+      closingTotals: trial.totals.map((total) => ({
+        currency: total.currency,
+        debits: formatMoney(total.debits).split(' ')[0]!,
+        credits: formatMoney(total.credits).split(' ')[0]!,
+      })),
+      updatedAt: now,
+    });
+
+    if (!closed) throw ApiError.notFound(`No period with id "${input.id}".`);
+
+    await this.options.audit?.record({
+      action: 'ledger.period.closed',
+      entityType: 'AccountingPeriod',
+      entityId: period.id,
+      actorId: input.actorId ?? null,
+      organizationId: input.organizationId,
+      before: { status: 'open' },
+      after: {
+        status: 'closed',
+        code: period.code,
+        balanced: trial.balanced,
+        forced: input.force === true,
+        note: input.note ?? null,
+        totals: closed.closingTotals,
+      },
+    });
+
+    return closed;
+  }
+
+  /**
+   * Reopens a closed period.
+   *
+   * Loud on purpose: a reason is required and every reopening is kept. Refusing outright sounds
+   * stricter and is worse — the correction happens anyway, as a journal dated after the close
+   * with a description explaining that it belongs in March, which is the same lie told less
+   * legibly.
+   */
+  async reopenPeriod(input: {
+    id: string;
+    organizationId: string | null;
+    reason: string;
+    actorId?: string | null;
+  }): Promise<AccountingPeriod> {
+    const periods = this.requirePeriods();
+    const period = await this.requirePeriod(input.id, input.organizationId);
+
+    if (period.status !== 'closed') {
+      throw ApiError.conflict(`Period ${period.code} is not closed.`, {
+        reason: 'period_not_closed',
+        periodId: period.id,
+      });
+    }
+
+    if (!input.reason.trim()) {
+      throw ApiError.validation(
+        [
+          {
+            path: 'reason',
+            message:
+              'Reopening a closed period needs a reason. It is the only record of why a period ' +
+              'somebody already reported on was changed.',
+          },
+        ],
+        'Reopening a period needs a reason.',
+      );
+    }
+
+    const now = this.now();
+
+    const reopened = await periods.update(period.id, {
+      status: 'open',
+      reopenings: [
+        ...period.reopenings,
+        { at: now, actorId: input.actorId ?? null, reason: input.reason },
+      ],
+      updatedAt: now,
+    });
+
+    if (!reopened) throw ApiError.notFound(`No period with id "${input.id}".`);
+
+    await this.options.audit?.record({
+      action: 'ledger.period.reopened',
+      entityType: 'AccountingPeriod',
+      entityId: period.id,
+      actorId: input.actorId ?? null,
+      organizationId: input.organizationId,
+      before: { status: 'closed', closedAt: period.closedAt?.toISOString() ?? null },
+      after: { status: 'open', reason: input.reason },
+    });
+
+    return reopened;
+  }
+
+  async periods(input: {
+    organizationId: string | null;
+    ledgerId?: string;
+    status?: 'open' | 'closed';
+    limit?: number;
+  }): Promise<AccountingPeriod[]> {
+    return this.requirePeriods().list(input);
+  }
+
   async list(input: Parameters<LedgerStore['list']>[0]): Promise<Journal[]> {
     return this.options.store.list(input);
   }
@@ -495,6 +724,49 @@ export class Ledger {
     const journal = await this.options.store.find(id, organizationId);
     if (!journal) throw ApiError.notFound(`No journal with id "${id}".`);
     return journal;
+  }
+
+  /**
+   * Refuses a posting into a closed period.
+   *
+   * A no-op when no period store is configured, which is the honest default: a framework that
+   * invented periods would refuse postings for a reason nobody configured.
+   */
+  private async assertPeriodOpenFor(
+    organizationId: string | null,
+    ledgerId: string,
+    effectiveAt: Date,
+  ): Promise<void> {
+    if (!this.options.periods) return;
+
+    const period = await this.options.periods.containing({
+      organizationId,
+      ledgerId,
+      at: effectiveAt,
+    });
+
+    assertPeriodOpen(period, effectiveAt);
+  }
+
+  private requirePeriods(): PeriodStore {
+    if (!this.options.periods) {
+      throw ApiError.internal(
+        'No period store is configured, so this ledger has no accounting periods. Wire one to use ' +
+          'period closing.',
+        { reason: 'periods_not_configured' },
+      );
+    }
+
+    return this.options.periods;
+  }
+
+  private async requirePeriod(
+    id: string,
+    organizationId: string | null,
+  ): Promise<AccountingPeriod> {
+    const period = await this.requirePeriods().find(id, organizationId);
+    if (!period) throw ApiError.notFound(`No period with id "${id}".`);
+    return period;
   }
 }
 

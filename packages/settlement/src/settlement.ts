@@ -57,6 +57,72 @@ export type SettlementStatus = (typeof SETTLEMENT_STATUSES)[number];
 export const INSTRUCTION_STATUSES = ['pending', 'sent', 'settled', 'failed', 'returned'] as const;
 export type InstructionStatus = (typeof INSTRUCTION_STATUSES)[number];
 
+export const ADJUSTMENT_KINDS = [
+  /** The counterparty deducted a fee the batch did not account for. */
+  'counterparty_fee',
+  /** The amount received differs from the amount instructed, for any other reason. */
+  'amount_difference',
+  /** An exchange difference between instruction and settlement. */
+  'fx_difference',
+  /** A chargeback or return arriving after the batch settled. */
+  'chargeback',
+  /** Anything else, described in the reason. */
+  'other',
+] as const;
+
+export type AdjustmentKind = (typeof ADJUSTMENT_KINDS)[number];
+
+/**
+ * A correction against a batch that has already settled.
+ *
+ * The case this exists for: the batch confirmed on Monday, and on Thursday the bank's statement
+ * shows 4.50 less than the batch said, because they deducted a fee nobody modelled. The batch is
+ * settled and immutable; the difference is real; and the only honest way to record it is a new
+ * posting that says what it corrects.
+ *
+ * **Never by editing the batch.** A settled batch is what the counterparty was told and what the
+ * reconciliation was run against. Editing it to match the statement makes the two agree by
+ * destroying the evidence of the disagreement, and the fee the counterparty deducted becomes
+ * invisible.
+ */
+export const settlementAdjustmentSchema = z
+  .object({
+    id: z.string(),
+    organizationId: z.string().nullable(),
+    batchId: z.string().min(1).max(120),
+    /** The instruction this adjusts, when it is attributable to one. */
+    instructionId: z.string().max(120).nullable().default(null),
+
+    kind: z.enum(ADJUSTMENT_KINDS),
+
+    /**
+     * Signed, and this is the one place in the phase where an amount is.
+     *
+     * Positive means the counterparty paid *more* than the batch said; negative means less. A
+     * direction field would need every reader to know whose point of view it is from, and an
+     * adjustment is read by whoever is holding a bank statement.
+     */
+    amount: moneySchema,
+
+    /** Required. A difference with no explanation is a difference nobody can close. */
+    reason: z.string().min(1).max(1000),
+
+    /** The account the difference is booked to: a fee expense, an FX loss, a suspense account. */
+    counterAccountId: z.string().min(1).max(120),
+
+    /** The correcting journal. */
+    journalId: z.string().max(120).nullable().default(null),
+
+    /** The counterparty's reference for the difference, when they gave one. */
+    externalReference: z.string().max(200).nullable().default(null),
+
+    createdAt: z.coerce.date(),
+    createdById: z.string().nullable().default(null),
+  })
+  .strict();
+
+export type SettlementAdjustment = z.infer<typeof settlementAdjustmentSchema>;
+
 export const settlementInstructionSchema = z
   .object({
     id: z.string(),
@@ -170,6 +236,9 @@ export interface SettlementStore {
     to?: Date;
     limit?: number;
   }): Promise<SettlementBatch[]>;
+
+  addAdjustment(adjustment: SettlementAdjustment): Promise<SettlementAdjustment>;
+  adjustments(batchId: string, organizationId: string | null): Promise<SettlementAdjustment[]>;
 
   addInstruction(instruction: SettlementInstruction): Promise<SettlementInstruction>;
   findInstruction(id: string, organizationId: string | null): Promise<SettlementInstruction | null>;
@@ -572,6 +641,168 @@ export class SettlementService {
   }
 
   /**
+   * Records a correction against a settled batch.
+   *
+   * Posts a journal moving the difference between the settlement account and whichever account the
+   * difference belongs to — a fee expense, an FX loss, a suspense account while somebody works out
+   * what it was.
+   *
+   * The batch itself is untouched. It is what the counterparty was told and what the
+   * reconciliation ran against, and editing it to match a later statement makes the two agree by
+   * destroying the evidence of the disagreement.
+   */
+  async adjustBatch(input: {
+    id: string;
+    organizationId: string | null;
+    kind: AdjustmentKind;
+    /** Signed: positive means the counterparty paid more than the batch said. */
+    amount: Money;
+    reason: string;
+    counterAccountId: string;
+    instructionId?: string | null;
+    externalReference?: string | null;
+    actorId?: string | null;
+    idempotencyKey?: string | null;
+  }): Promise<{ adjustment: SettlementAdjustment; journal: Journal }> {
+    const batch = await this.requireBatch(input.id, input.organizationId);
+
+    if (batch.status !== 'settled' && batch.status !== 'sent') {
+      /*
+       * Adjusting a batch that has not been sent.
+       *
+       * There is nothing to correct: no money has moved and the instruction can simply be changed
+       * while the batch is open. An adjustment here would post a journal against a settlement that
+       * never happened.
+       */
+      throw ApiError.conflict(
+        `Batch ${batch.reference} is ${batch.status}, so there is nothing to adjust — no money has ` +
+          'moved. Change the instruction while the batch is open.',
+        { reason: 'batch_not_settled', batchId: batch.id, status: batch.status },
+      );
+    }
+
+    if (input.amount.currency !== batch.currency) {
+      throw ApiError.validation(
+        [
+          {
+            path: 'amount',
+            message:
+              `Batch ${batch.reference} settles ${batch.currency} and this adjustment is ` +
+              `${input.amount.currency}.`,
+          },
+        ],
+        'Currency mismatch with the batch.',
+      );
+    }
+
+    if (isZeroMoney(input.amount)) {
+      throw ApiError.validation(
+        [{ path: 'amount', message: 'An adjustment of zero corrects nothing.' }],
+        'Nothing to adjust.',
+      );
+    }
+
+    if (!input.reason.trim()) {
+      throw ApiError.validation(
+        [
+          {
+            path: 'reason',
+            message:
+              'An adjustment needs a reason. A difference with no explanation is a difference ' +
+              'nobody can close, and it appears again on next month’s reconciliation.',
+          },
+        ],
+        'An adjustment needs a reason.',
+      );
+    }
+
+    const magnitude: Money = {
+      currency: input.amount.currency,
+      amount: {
+        units:
+          input.amount.amount.units < 0n ? -input.amount.amount.units : input.amount.amount.units,
+        scale: input.amount.amount.scale,
+      },
+    };
+
+    const shortfall = input.amount.amount.units < 0n;
+
+    // Less received than instructed: the settlement account is short, so the difference is an
+    // expense. More received: the settlement account is over, and the difference is a credit.
+    const entries = shortfall
+      ? [
+          debit(input.counterAccountId, magnitude, { description: input.reason }),
+          credit(batch.settlementAccountId, magnitude, {
+            description: `Adjustment to ${batch.reference}`,
+          }),
+        ]
+      : [
+          debit(batch.settlementAccountId, magnitude, {
+            description: `Adjustment to ${batch.reference}`,
+          }),
+          credit(input.counterAccountId, magnitude, { description: input.reason }),
+        ];
+
+    const journal = await this.options.ledger.post({
+      organizationId: input.organizationId,
+      description: `Settlement adjustment to ${batch.reference}: ${input.reason}`,
+      reference: batch.reference,
+      entries,
+      actorId: input.actorId,
+      metadata: { batchId: batch.id, adjustmentKind: input.kind },
+      idempotencyKey: input.idempotencyKey ?? null,
+    });
+
+    const adjustment = settlementAdjustmentSchema.parse({
+      id: this.newId('sta'),
+      organizationId: input.organizationId,
+      batchId: batch.id,
+      instructionId: input.instructionId ?? null,
+      kind: input.kind,
+      amount: moneyToJson(input.amount),
+      reason: input.reason,
+      counterAccountId: input.counterAccountId,
+      journalId: journal.id,
+      externalReference: input.externalReference ?? null,
+      createdAt: this.now(),
+      createdById: input.actorId ?? null,
+    });
+
+    const created = await this.options.store.addAdjustment(adjustment);
+
+    await this.options.store.updateBatch(batch.id, {
+      journalIds: [...batch.journalIds, journal.id],
+      updatedAt: this.now(),
+    });
+
+    await this.options.audit?.record({
+      action: 'settlement.batch.adjusted',
+      entityType: 'SettlementBatch',
+      entityId: batch.id,
+      actorId: input.actorId ?? null,
+      organizationId: input.organizationId,
+      after: {
+        reference: batch.reference,
+        adjustmentId: created.id,
+        kind: input.kind,
+        amount: formatMoney(input.amount),
+        reason: input.reason,
+        journalId: journal.id,
+      },
+    });
+
+    return { adjustment: created, journal };
+  }
+
+  /** Every correction posted against a batch, and what each was for. */
+  async adjustments(
+    batchId: string,
+    organizationId: string | null,
+  ): Promise<SettlementAdjustment[]> {
+    return this.options.store.adjustments(batchId, organizationId);
+  }
+
+  /**
    * What is in transit right now.
    *
    * The number to check against a bank statement: instructed to a counterparty and not yet paid.
@@ -618,18 +849,31 @@ export class SettlementService {
   async report(input: { id: string; organizationId: string | null }): Promise<SettlementReport> {
     const batch = await this.requireBatch(input.id, input.organizationId);
     const instructions = await this.options.store.instructions(batch.id, input.organizationId);
+    const adjustments = await this.options.store.adjustments(batch.id, input.organizationId);
 
     const byStatus = (status: InstructionStatus) =>
       instructions.filter((instruction) => instruction.status === status);
+
+    const adjusted = adjustments.reduce<Money>(
+      (sum, adjustment) => addMoney(sum, moneyFromJson(adjustment.amount, this.options.currencies)),
+      zeroMoney(batch.currency, this.options.currencies),
+    );
+
+    const settled = this.totalOf(byStatus('settled'), batch.currency);
 
     return {
       batch,
       instructionCount: instructions.length,
       total: this.totalOf(instructions, batch.currency),
-      settled: this.totalOf(byStatus('settled'), batch.currency),
+      settled,
       returned: this.totalOf(byStatus('returned'), batch.currency),
       failed: this.totalOf(byStatus('failed'), batch.currency),
       pending: this.totalOf([...byStatus('pending'), ...byStatus('sent')], batch.currency),
+      adjusted,
+      // What the counterparty actually paid: settled instructions plus every correction. This is
+      // the number a bank statement is compared against, and it is not the batch total.
+      netSettled: addMoney(settled, adjusted),
+      adjustments,
       counterparties: [...new Set(instructions.map((instruction) => instruction.counterpartyId))]
         .length,
       instructions,
@@ -718,11 +962,22 @@ export interface SettlementReport {
   returned: Money;
   failed: Money;
   pending: Money;
+  /** The sum of every correction posted after settlement. Signed. */
+  adjusted: Money;
+  /** `settled + adjusted`. What the counterparty actually paid. */
+  netSettled: Money;
   counterparties: number;
   instructions: SettlementInstruction[];
+  adjustments: SettlementAdjustment[];
 }
 
-/** The difference between what a batch says and what a counterparty reported. For reconciliation. */
+/**
+ * The difference between what a batch says and what a counterparty reported.
+ *
+ * Compares against `netSettled`, not `settled` — a batch that has already been adjusted for the
+ * counterparty's fee should reconcile clean, and comparing the unadjusted total would report the
+ * same difference every month until somebody noticed the adjustment existed.
+ */
 export function settlementDifference(report: SettlementReport, counterpartyTotal: Money): Money {
-  return subtractMoney(report.settled, counterpartyTotal);
+  return subtractMoney(report.netSettled, counterpartyTotal);
 }

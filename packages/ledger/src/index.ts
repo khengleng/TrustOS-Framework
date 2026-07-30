@@ -8,5 +8,6 @@
  * for why each one is absolute.
  */
 export * from './journal';
+export * from './closing';
 export * from './ledger';
 export * from './testing';

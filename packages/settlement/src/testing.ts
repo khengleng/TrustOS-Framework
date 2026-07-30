@@ -1,4 +1,5 @@
 import type {
+  SettlementAdjustment,
   SettlementBatch,
   SettlementInstruction,
   SettlementStatus,
@@ -9,6 +10,7 @@ import type {
 export class InMemorySettlementStore implements SettlementStore {
   readonly batches = new Map<string, SettlementBatch>();
   readonly instructionsById = new Map<string, SettlementInstruction>();
+  readonly adjustmentsById = new Map<string, SettlementAdjustment>();
 
   async createBatch(batch: SettlementBatch): Promise<SettlementBatch> {
     this.batches.set(batch.id, batch);
@@ -46,6 +48,23 @@ export class InMemorySettlementStore implements SettlementStore {
       .filter((batch) => !input.to || batch.windowStart <= input.to)
       .sort((a, b) => b.windowEnd.getTime() - a.windowEnd.getTime())
       .slice(0, input.limit ?? 200);
+  }
+
+  async addAdjustment(adjustment: SettlementAdjustment): Promise<SettlementAdjustment> {
+    this.adjustmentsById.set(adjustment.id, adjustment);
+    return adjustment;
+  }
+
+  async adjustments(
+    batchId: string,
+    organizationId: string | null,
+  ): Promise<SettlementAdjustment[]> {
+    return [...this.adjustmentsById.values()]
+      .filter(
+        (adjustment) =>
+          adjustment.batchId === batchId && adjustment.organizationId === organizationId,
+      )
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id));
   }
 
   async addInstruction(instruction: SettlementInstruction): Promise<SettlementInstruction> {

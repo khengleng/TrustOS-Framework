@@ -10,6 +10,9 @@ person can work through.
 - [Tolerance](#tolerance)
 - [The queue](#the-queue)
 - [Operating reconciliation](#operating-reconciliation)
+- [Data model](#data-model)
+- [Sequence: a daily run](#sequence-a-daily-run)
+- [Extension guide](#extension-guide)
 
 ---
 
@@ -151,6 +154,115 @@ const health = await reconciliation.queueHealth(organizationId);
 
 Run reconciliation daily, not monthly. A daily run finds a difference against one day of
 transactions; a monthly one finds the same difference against thirty.
+
+## Data model
+
+```
+  ReconciliationRun ──1:n──▶ ReconciliationException
+    id                         id
+    key      bank.usd          runId
+    kind     internal│external kind      missing_internal│missing_external│
+    currency                             amount_mismatch│date_mismatch│
+    windowStart ─┐                       duplicate_internal│duplicate_external
+    windowEnd  ──┴─ what makes  status    open│investigating│resolved│written_off
+                    a run          reference   what both sides should agree on
+                    reproducible   internalAmount ─┐
+    internalCount                  externalAmount ─┼─ both sides, so the exception
+    externalCount                  difference     ─┘   is readable without re-deriving
+    matchedCount                   internalId / externalId
+    exceptionCount                 detail        written once, read by whoever picks it up
+    internalTotal                  assignedTo    a queue nobody owns is a list that grows
+    externalTotal                  resolution    required to close
+    difference   external − internal
+    tolerance    { amount, dateMs, reason }   ◀── the reason is required
+```
+
+| Column                           | Type             | Note                                                                      |
+| -------------------------------- | ---------------- | ------------------------------------------------------------------------- |
+| `ReconciliationRun.difference`   | `Decimal(28, 8)` | `external − internal`                                                     |
+| `ReconciliationRun.tolerance`    | `jsonb`          | Carries the _reason_, which is the only thing anybody asks about it later |
+| `ReconciliationException.detail` | `text`           | Written at detection, with enough to act on                               |
+
+## Sequence: a daily run
+
+```
+  scheduler        application            reconciliation           queue
+     │                  │                       │                    │
+  06:00 ───────────────▶│                       │                    │
+     │            read the ledger side          │                    │
+     │            read the bank file            │                    │
+     │                  ├──────────────────────▶│                    │
+     │                  │   compare(internal, external, tolerance)   │
+     │                  │                       │                    │
+     │                  │   index by reference, not by amount        │
+     │                  │   ├─ duplicates first (before matching)    │
+     │                  │   ├─ amount within tolerance? matched      │
+     │                  │   ├─ dates far apart? matched + observed   │
+     │                  │   └─ unmatched on either side? exception   │
+     │                  │                       ├───────────────────▶│ 4 exceptions
+     │                  │◀── run + exceptions ──┤                    │
+     │                                                               │
+  08:30   an operator opens the queue, oldest first                  │
+             ├─ assign  ─────────────────────────────────────────────▶ investigating
+             └─ resolve with an explanation, and a correcting journal
+                where one was needed
+```
+
+## Extension guide
+
+### Supplying the two sides
+
+Both are the caller's, and that is deliberate: the platform cannot know how to read a
+counterparty's file, and which ledger accounts are in scope is a deployment decision.
+
+```ts
+const internal = (await ledger.list({ organizationId, accountId: bankAccount.id, from, to })).map(
+  (journal) => ({
+    reference: journal.reference ?? journal.id,
+    amount: totalFor(journal, bankAccount.id),
+    at: journal.effectiveAt,
+    sourceId: journal.id,
+  }),
+);
+
+const external = parseStatement(file); // yours
+```
+
+The one rule: **the reference must be the thing both sides agree on**. If the bank echoes your
+payment reference, use it. If it does not, the reconciliation is amount-and-date matching wearing a
+reference's clothes, and it will pair two unrelated payments the first month you have two of the
+same size.
+
+### A tolerance
+
+```ts
+tolerance: { amount: '0.01', reason: 'The card network rounds each conversion leg to the cent.' }
+```
+
+Per run, because a one-cent difference on a card settlement is rounding and a one-cent difference on
+an internal transfer is a bug. The reason is required and is not decoration: a tolerance is a
+decision to stop looking at differences below a size, and in a year the only question anybody asks
+about it is why.
+
+### An automatic resolver
+
+There is no hook for one, deliberately. A rule that closes exceptions automatically is a rule that
+closes the one that mattered, and the failure is silent — the queue looks healthy because the
+difference was resolved by a machine that could not read a bank statement.
+
+What is supported is a **correcting journal recorded against the resolution**:
+
+```ts
+const journal = await ledger.post({/* the correction */});
+
+await reconciliation.resolve({
+  id: exception.id,
+  organizationId,
+  resolution:
+    'A deposit we had not recorded. Posted to suspense and identified from the reference.',
+  correctionJournalId: journal.id,
+});
+```
 
 ## Related
 

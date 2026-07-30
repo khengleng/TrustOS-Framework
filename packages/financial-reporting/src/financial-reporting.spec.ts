@@ -7,10 +7,18 @@ import {
   ReportExporter,
   ReportingService,
   csvRenderer,
+  exceptionReport,
+  exceptionReportRows,
+  feeReport,
+  feeReportRows,
   generalLedgerRows,
   toCsv,
   toStatement,
+  transactionReport,
+  transactionReportRows,
   trialBalanceRows,
+  walletReport,
+  walletReportRows,
 } from './reports';
 
 /**
@@ -396,5 +404,298 @@ describe('the renderer seam', () => {
 
     expect(result.contentType).toMatch(/spreadsheetml/);
     expect(exporter.formats()).toEqual(['csv', 'xlsx']);
+  });
+});
+
+describe('the wallet report', () => {
+  const line = (
+    ownerId: string,
+    total: string,
+    held = '0.00',
+    reserved = '0.00',
+    currency = 'USD',
+  ) => ({
+    walletId: `wlt_${ownerId}`,
+    ownerId,
+    currency,
+    status: 'active',
+    total: money(total, currency, currencies),
+    held: money(held, currency, currencies),
+    reserved: money(reserved, currency, currencies),
+    available: money(
+      (Number(total) - Number(held) - Number(reserved)).toFixed(2),
+      currency,
+      currencies,
+    ),
+  });
+
+  it('totals per currency, because a total across currencies means nothing', () => {
+    const report = walletReport({
+      organizationId: 'org_a',
+      asOf: clock,
+      generatedAt: clock,
+      currencies,
+      lines: [
+        line('usr_1', '100.00'),
+        line('usr_2', '250.00'),
+        { ...line('usr_3', '400000', '0', '0', 'KHR') },
+      ],
+    });
+
+    expect(report.totals).toHaveLength(2);
+    expect(formatMoney(report.totals.find((total) => total.currency === 'USD')!.total)).toBe(
+      '350.00 USD',
+    );
+    expect(formatMoney(report.totals.find((total) => total.currency === 'KHR')!.total)).toBe(
+      '400000 KHR',
+    );
+  });
+
+  it('separates held from reserved in the totals', async () => {
+    const report = walletReport({
+      organizationId: 'org_a',
+      asOf: clock,
+      generatedAt: clock,
+      currencies,
+      lines: [line('usr_1', '1000.00', '300.00', '200.00')],
+    });
+
+    const usdTotal = report.totals[0]!;
+
+    expect(formatMoney(usdTotal.held)).toBe('300.00 USD');
+    expect(formatMoney(usdTotal.reserved)).toBe('200.00 USD');
+    expect(formatMoney(usdTotal.available)).toBe('500.00 USD');
+  });
+
+  it('renders as CSV with every balance', () => {
+    const report = walletReport({
+      organizationId: 'org_a',
+      asOf: clock,
+      generatedAt: clock,
+      currencies,
+      lines: [line('usr_1', '1000.00', '300.00', '200.00')],
+    });
+
+    const csv = toCsv(walletReportRows(report));
+
+    expect(csv.split('\n')[0]).toBe(
+      'wallet_id,owner_id,currency,status,total,held,reserved,available',
+    );
+    expect(csv).toContain('wlt_usr_1,usr_1,USD,active,1000.00,300.00,200.00,500.00');
+  });
+});
+
+describe('the transaction report', () => {
+  const line = (
+    id: string,
+    status: string,
+    amount: string,
+    type = 'payment',
+    fee: string | null = null,
+  ) => ({
+    transactionId: id,
+    at: clock,
+    type,
+    status,
+    currency: 'USD',
+    amount: usd(amount),
+    feeAmount: fee ? usd(fee) : null,
+    reference: `ORD-${id}`,
+    failureCode: status === 'failed' ? 'provider_declined' : null,
+  });
+
+  const report = () =>
+    transactionReport({
+      organizationId: 'org_a',
+      period,
+      currency: 'USD',
+      generatedAt: clock,
+      currencies,
+      lines: [
+        line('1', 'completed', '100.00', 'payment', '2.50'),
+        line('2', 'completed', '200.00', 'payment', '5.00'),
+        line('3', 'failed', '50.00'),
+        line('4', 'completed', '75.00', 'refund'),
+      ],
+    });
+
+  it('groups by status and by type, because they answer different questions', () => {
+    // "How much did we process" and "what is failing".
+    const result = report();
+
+    expect(result.byStatus.find((entry) => entry.status === 'completed')!.count).toBe(3);
+    expect(formatMoney(result.byStatus.find((entry) => entry.status === 'failed')!.value)).toBe(
+      '50.00 USD',
+    );
+    expect(result.byType.find((entry) => entry.type === 'refund')!.count).toBe(1);
+  });
+
+  it('computes the success rate over everything attempted', () => {
+    // A rate computed over successes only is always 100%.
+    expect(report().successRate).toBe(0.75);
+  });
+
+  it('reports zero rather than dividing by nothing for an empty period', () => {
+    const empty = transactionReport({
+      organizationId: 'org_a',
+      period,
+      currency: 'USD',
+      generatedAt: clock,
+      currencies,
+      lines: [],
+    });
+
+    expect(empty.successRate).toBe(0);
+    expect(formatMoney(empty.totalValue)).toBe('0.00 USD');
+  });
+
+  it('totals the fees separately from the value', () => {
+    const result = report();
+
+    expect(formatMoney(result.totalValue)).toBe('425.00 USD');
+    expect(formatMoney(result.totalFees)).toBe('7.50 USD');
+  });
+
+  it('renders as CSV with the failure code', () => {
+    const csv = toCsv(transactionReportRows(report()));
+
+    expect(csv).toContain('provider_declined');
+  });
+});
+
+describe('the fee report', () => {
+  const result = () =>
+    feeReport({
+      organizationId: 'org_a',
+      period,
+      currency: 'USD',
+      generatedAt: clock,
+      currencies,
+      transactionValue: usd('10000.00'),
+      lines: [
+        {
+          scheduleKey: 'payment.standard',
+          scheduleVersion: 1,
+          componentName: 'Processing',
+          revenueAccountCode: 'fee.processing.usd',
+          currency: 'USD',
+          count: 40,
+          amount: usd('100.00'),
+        },
+        {
+          scheduleKey: 'payment.standard',
+          scheduleVersion: 2,
+          componentName: 'Processing',
+          revenueAccountCode: 'fee.processing.usd',
+          currency: 'USD',
+          count: 60,
+          amount: usd('150.00'),
+        },
+      ],
+    });
+
+  it('keeps the versions apart', () => {
+    /*
+     * A schedule that changed mid-period produces two versions in one report, and collapsing them
+     * hides exactly the thing somebody is looking for when they ask why revenue moved.
+     */
+    expect(result().lines.map((line) => line.scheduleVersion)).toEqual([1, 2]);
+  });
+
+  it('reports the effective rate in basis points', () => {
+    // 250.00 on 10,000.00 is 250 basis points.
+    expect(result().effectiveRate).toBe('250.00');
+  });
+
+  it('reports a zero rate for a period with no volume, rather than dividing by zero', () => {
+    const empty = feeReport({
+      organizationId: 'org_a',
+      period,
+      currency: 'USD',
+      generatedAt: clock,
+      currencies,
+      transactionValue: usd('0.00'),
+      lines: [],
+    });
+
+    expect(empty.effectiveRate).toBe('0');
+  });
+
+  it('renders as CSV with the revenue account', () => {
+    expect(toCsv(feeReportRows(result()))).toContain('fee.processing.usd');
+  });
+});
+
+describe('the exception report', () => {
+  const line = (
+    id: string,
+    source: 'reconciliation' | 'settlement' | 'suspense',
+    ageDays: number,
+  ) => ({
+    source,
+    id,
+    kind: 'missing_internal',
+    reference: `REF-${id}`,
+    detail: 'Money on the statement with nothing matching it internally.',
+    amount: usd('250.00'),
+    openedAt: new Date(clock.getTime() - ageDays * 86_400_000),
+    ageMs: ageDays * 86_400_000,
+    assignedTo: ageDays > 30 ? null : 'usr_ops',
+  });
+
+  const result = () =>
+    exceptionReport({
+      organizationId: 'org_a',
+      asOf: clock,
+      generatedAt: clock,
+      lines: [
+        line('a', 'reconciliation', 2),
+        line('b', 'settlement', 45),
+        line('c', 'suspense', 10),
+      ],
+    });
+
+  it('sorts oldest first, deliberately', () => {
+    /*
+     * Newest-first buries the item nobody wants to pick up, which is reliably the one that
+     * matters.
+     */
+    expect(result().lines.map((line) => line.id)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('reports the oldest age, which says whether the queue is being worked', () => {
+    expect(result().oldestAgeMs).toBe(45 * 86_400_000);
+  });
+
+  it('counts what nobody owns', () => {
+    expect(result().unassigned).toBe(1);
+  });
+
+  it('brings every source into one report', () => {
+    // The question is "what is broken", and spreading the answer across three screens is how a
+    // six-week-old item survives.
+    expect(result().bySource.map((entry) => entry.source)).toEqual([
+      'reconciliation',
+      'settlement',
+      'suspense',
+    ]);
+  });
+
+  it('renders as CSV with the age in days', () => {
+    const csv = toCsv(exceptionReportRows(result()));
+
+    expect(csv.split('\n')[1]).toContain(',45,');
+  });
+
+  it('reports no oldest age for an empty queue, rather than zero', () => {
+    // Zero would read as "the oldest item is brand new", which is the opposite of empty.
+    const empty = exceptionReport({
+      organizationId: 'org_a',
+      asOf: clock,
+      generatedAt: clock,
+      lines: [],
+    });
+
+    expect(empty.oldestAgeMs).toBeNull();
   });
 });

@@ -11,6 +11,9 @@ a posted journal is never edited.
 - [What the database enforces](#what-the-database-enforces)
 - [Idempotency](#idempotency)
 - [Reading a balance](#reading-a-balance)
+- [Closing a period](#closing-a-period)
+- [Data model](#data-model)
+- [Extension guide](#extension-guide)
 
 ---
 
@@ -234,6 +237,151 @@ const balances = await ledger.balances({
   organizationId,
   accountIds: [account.id],
   asOf: endOfJanuary, // a closed period does not move
+});
+```
+
+## Closing a period
+
+A closed period is one nothing may post into.
+
+```ts
+const march = await ledger.openPeriod({
+  organizationId,
+  code: '2026-03',
+  startsAt: new Date('2026-03-01T00:00:00Z'),
+  endsAt: new Date('2026-04-01T00:00:00Z'), // half-open: [start, end)
+});
+
+await ledger.closePeriod({ id: march.id, organizationId, actorId, note: 'Month-end close.' });
+```
+
+The failure this prevents: a report run in April for March, sent to somebody who acted on it, and
+then a journal posted with a March effective date. The report is now wrong and nobody knows,
+because reports are run on demand and nobody re-runs March.
+
+**Closing is about the effective date, not the posting date.** A journal posted today with a March
+effective date is exactly what closing prevents; a journal posted today with today's date is fine
+however many periods are closed behind it. Checking the posting date would be useless — it is
+always now — and freezing the whole ledger is the other way to get it wrong.
+
+Three properties worth knowing:
+
+- **The window is half-open**, so consecutive periods tile without a gap and without an overlap. An
+  inclusive end makes midnight on the last day belong to two periods.
+- **Closing records the trial balance**, rather than recomputing it later. Recomputing gives a
+  different answer the moment anything is posted into a reopened period, and the number people need
+  is the one the report they acted on was based on.
+- **A period that does not balance cannot be closed** without `force`. Closing a broken period
+  freezes the break, and the report everybody then works from is the wrong one.
+
+### Reopening
+
+```ts
+await ledger.reopenPeriod({
+  id: march.id,
+  organizationId,
+  reason: 'A supplier invoice arrived three weeks late and belongs in March.',
+  actorId,
+});
+```
+
+Loud on purpose: a reason is required and every reopening is kept on the period.
+
+Refusing outright sounds stricter and is worse in practice. The correction still has to happen, so
+it happens as a journal dated after the close with a description explaining that it belongs in
+March — which is the same lie, told less legibly.
+
+Periods are optional. Without a `PeriodStore` nothing is ever closed, which is the honest default:
+a framework that invented periods would refuse postings for a reason nobody configured.
+
+## Data model
+
+```
+  LedgerJournal ──1:n──▶ LedgerEntry
+    id                     id
+    organizationId         journalId ────┐
+    ledgerId               accountId ────┼──▶ FinancialAccount
+    reference              direction     │      id
+    description            amount  ◀─────┘      code        (unique per tenant)
+    status                 currency             name
+    effectiveAt   ◀── periods check this        type        customer│merchant│system│
+    postedAt                                    class       settlement│suspense│fee│
+    reversedByJournalId                         currency    reserve│general
+    reversesJournalId                           status
+    contentHash   ◀── SHA-256, checked on read  ownerId
+    idempotencyKey ◀── unique per tenant        allowNegative
+                                                overdraftLimit
+
+  AccountingPeriod
+    code            '2026-03'
+    startsAt        ─┐
+    endsAt          ─┴─ half-open [start, end)
+    status          open│closed
+    closingTotals   the trial balance at the moment of closing
+    reopenings      every reopen, with who and why
+```
+
+| Column                      | Type             | Note                                                              |
+| --------------------------- | ---------------- | ----------------------------------------------------------------- |
+| `LedgerEntry.amount`        | `Decimal(28, 8)` | Never `Float`. Always positive; `direction` carries the sign      |
+| `LedgerJournal.effectiveAt` | `timestamp`      | When it is effective, not when it was written                     |
+| `LedgerJournal.contentHash` | `text`           | Over the entries, effective date and description — not the status |
+| `FinancialAccount.class`    | `text`           | Derived from `type`; the schema refuses a contradiction           |
+
+## Extension guide
+
+### A ledger store
+
+```ts
+export class PrismaLedgerStore implements LedgerStore {
+  async insert(journal: Journal, idempotencyKey: string | null): Promise<Journal> {
+    // Must be one transaction, and must let the unique index decide the winner.
+    // A read-then-write passes every single-threaded test and posts twice under two workers.
+  }
+
+  async balances(input): Promise<AccountBalance[]> {
+    // Must aggregate in the database. A busy account has millions of entries, and a balance query
+    // that reads them all times out at exactly the moment somebody needs it.
+  }
+}
+```
+
+Three requirements, all of them load-bearing:
+
+1. `insert` enforces the idempotency key with a **unique index**, scoped to the tenant with
+   `COALESCE` on the organization.
+2. `balances` aggregates in the database.
+3. The migration carries the balancing and immutability triggers. `trustos financial doctor`
+   checks this, because an application that copied the schema and generated its own migration has
+   the tables and none of the guarantees.
+
+### A currency
+
+```ts
+registry.register({
+  code: 'POINTS',
+  name: 'Loyalty points',
+  exponent: 0,
+  isFiat: false,
+});
+```
+
+The exponent is the number of decimal places, and it is not cosmetic: every amount in the currency
+is stored at that scale. KHR at exponent 2 carries two digits the currency does not have, and they
+will be non-zero after a percentage fee.
+
+### An account type
+
+The eight shipped types cover what a payment platform needs. Anything else is `general` with an
+explicit class:
+
+```ts
+await accounts.open({
+  code: 'general.rounding.usd',
+  name: 'Rounding differences',
+  type: 'general',
+  class: 'expense', // declared, because `general` implies nothing
+  currency: 'USD',
 });
 ```
 
