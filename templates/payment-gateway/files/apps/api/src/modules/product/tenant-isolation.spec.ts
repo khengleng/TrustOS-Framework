@@ -47,7 +47,7 @@ function buildService(): { service: ProductService; sink: InMemoryAuditSink } {
         ...timestamps,
       },
     ]),
-    apiKey: new FakeModelDelegate([]),
+    gatewayApiKey: new FakeModelDelegate([]),
     payment: new FakeModelDelegate([
       {
         id: 'pay_acme',
@@ -78,7 +78,7 @@ function buildService(): { service: ProductService; sink: InMemoryAuditSink } {
         ...timestamps,
       },
     ]),
-    webhookEndpoint: new FakeModelDelegate([]),
+    gatewayWebhookEndpoint: new FakeModelDelegate([]),
     // The history table is append-only, so the fake only needs create + read.
     paymentStatusHistory: {
       create: async ({ data }: { data: Record<string, unknown> }) => {

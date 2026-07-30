@@ -1,0 +1,396 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { ERP_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  ErpService,
+  type DepartmentRow,
+  type EmployeeRow,
+  type ProjectRow,
+  type InventoryItemRow,
+  type PurchaseRequestRow,
+} from './erp.service';
+
+/**
+ * TrustOS ERP endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createDepartmentSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  parentId: z.string().trim().min(1).max(64).optional(),
+  costCentre: z.string().trim().min(1).max(255).optional(),
+});
+
+const updateDepartmentSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    parentId: z.string().trim().min(1).max(64).optional(),
+    costCentre: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createEmployeeSchema = z.object({
+  employeeNumber: z.string().trim().min(1).max(255),
+  userId: z.string().trim().min(1).max(255).optional(),
+  departmentId: z.string().trim().min(1).max(64),
+  fullName: z.string().trim().min(1).max(255),
+  jobTitle: z.string().trim().min(1).max(255).optional(),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
+  startedOn: z.coerce.date(),
+  status: z.enum(['ACTIVE', 'ON_LEAVE', 'SUSPENDED', 'LEFT']).optional(),
+});
+
+const updateEmployeeSchema = z
+  .object({
+    userId: z.string().trim().min(1).max(255).optional(),
+    departmentId: z.string().trim().min(1).max(64).optional(),
+    fullName: z.string().trim().min(1).max(255).optional(),
+    jobTitle: z.string().trim().min(1).max(255).optional(),
+    email: z.string().trim().toLowerCase().email().max(254).optional(),
+    startedOn: z.coerce.date().optional(),
+    status: z.enum(['ACTIVE', 'ON_LEAVE', 'SUSPENDED', 'LEFT']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createProjectSchema = z.object({
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(255),
+  departmentId: z.string().trim().min(1).max(64),
+  managerEmployeeId: z.string().trim().min(1).max(64).optional(),
+  budget: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  startsOn: z.coerce.date().optional(),
+  endsOn: z.coerce.date().optional(),
+  status: z.enum(['PLANNED', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED']).optional(),
+});
+
+const updateProjectSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    departmentId: z.string().trim().min(1).max(64).optional(),
+    managerEmployeeId: z.string().trim().min(1).max(64).optional(),
+    budget: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    startsOn: z.coerce.date().optional(),
+    endsOn: z.coerce.date().optional(),
+    status: z.enum(['PLANNED', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createInventoryItemSchema = z.object({
+  sku: z.string().trim().min(1).max(255),
+  name: z.string().trim().min(1).max(255),
+  unit: z.string().trim().min(1).max(255),
+  quantityOnHand: z.coerce.number().int().optional(),
+  reorderLevel: z.coerce.number().int().optional(),
+  location: z.string().trim().min(1).max(255).optional(),
+  unitCost: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+});
+
+const updateInventoryItemSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    unit: z.string().trim().min(1).max(255).optional(),
+    quantityOnHand: z.coerce.number().int().optional(),
+    reorderLevel: z.coerce.number().int().optional(),
+    location: z.string().trim().min(1).max(255).optional(),
+    unitCost: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createPurchaseRequestSchema = z.object({
+  reference: z.string().trim().min(1).max(255),
+  departmentId: z.string().trim().min(1).max(64),
+  requestedByEmployeeId: z.string().trim().min(1).max(64),
+  projectId: z.string().trim().min(1).max(64).optional(),
+  description: z.string().trim().min(1).max(4000),
+  estimatedAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  workflowInstanceId: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'ORDERED', 'RECEIVED', 'CANCELLED']).optional(),
+  neededBy: z.coerce.date().optional(),
+});
+
+const updatePurchaseRequestSchema = z
+  .object({
+    departmentId: z.string().trim().min(1).max(64).optional(),
+    requestedByEmployeeId: z.string().trim().min(1).max(64).optional(),
+    projectId: z.string().trim().min(1).max(64).optional(),
+    description: z.string().trim().min(1).max(4000).optional(),
+    estimatedAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    workflowInstanceId: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'ORDERED', 'RECEIVED', 'CANCELLED']).optional(),
+    neededBy: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('departments')
+@ApiBearerAuth('access-token')
+@Controller('departments')
+export class DepartmentController {
+  constructor(private readonly product: ErpService) {}
+
+  @Get()
+  @RequirePermissions(P.DEPARTMENT_READ.key)
+  @ApiOperation({ summary: 'List departments' })
+  list(): Promise<DepartmentRow[]> {
+    return this.product.listDepartments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.DEPARTMENT_READ.key)
+  @ApiOperation({ summary: 'Read one department' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<DepartmentRow> {
+    return this.product.findDepartment(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.DEPARTMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a department' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createDepartmentSchema))
+    body: z.infer<typeof createDepartmentSchema>,
+  ): Promise<DepartmentRow> {
+    return this.product.createDepartment(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.DEPARTMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a department' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateDepartmentSchema))
+    body: z.infer<typeof updateDepartmentSchema>,
+  ): Promise<DepartmentRow> {
+    return this.product.updateDepartment(id, body, organizationId);
+  }
+}
+
+@ApiTags('employees')
+@ApiBearerAuth('access-token')
+@Controller('employees')
+export class EmployeeController {
+  constructor(private readonly product: ErpService) {}
+
+  @Get()
+  @RequirePermissions(P.EMPLOYEE_READ.key)
+  @ApiOperation({ summary: 'List employees' })
+  list(): Promise<EmployeeRow[]> {
+    return this.product.listEmployees();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.EMPLOYEE_READ.key)
+  @ApiOperation({ summary: 'Read one employee' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<EmployeeRow> {
+    return this.product.findEmployee(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.EMPLOYEE_CREATE.key)
+  @ApiOperation({ summary: 'Create a employee' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createEmployeeSchema))
+    body: z.infer<typeof createEmployeeSchema>,
+  ): Promise<EmployeeRow> {
+    return this.product.createEmployee(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.EMPLOYEE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a employee' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateEmployeeSchema))
+    body: z.infer<typeof updateEmployeeSchema>,
+  ): Promise<EmployeeRow> {
+    return this.product.updateEmployee(id, body, organizationId);
+  }
+}
+
+@ApiTags('projects')
+@ApiBearerAuth('access-token')
+@Controller('projects')
+export class ProjectController {
+  constructor(private readonly product: ErpService) {}
+
+  @Get()
+  @RequirePermissions(P.PROJECT_READ.key)
+  @ApiOperation({ summary: 'List projects' })
+  list(): Promise<ProjectRow[]> {
+    return this.product.listProjects();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PROJECT_READ.key)
+  @ApiOperation({ summary: 'Read one project' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ProjectRow> {
+    return this.product.findProject(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PROJECT_CREATE.key)
+  @ApiOperation({ summary: 'Create a project' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createProjectSchema))
+    body: z.infer<typeof createProjectSchema>,
+  ): Promise<ProjectRow> {
+    return this.product.createProject(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PROJECT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a project' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateProjectSchema))
+    body: z.infer<typeof updateProjectSchema>,
+  ): Promise<ProjectRow> {
+    return this.product.updateProject(id, body, organizationId);
+  }
+}
+
+@ApiTags('inventory-items')
+@ApiBearerAuth('access-token')
+@Controller('inventory-items')
+export class InventoryItemController {
+  constructor(private readonly product: ErpService) {}
+
+  @Get()
+  @RequirePermissions(P.INVENTORY_ITEM_READ.key)
+  @ApiOperation({ summary: 'List inventory' })
+  list(): Promise<InventoryItemRow[]> {
+    return this.product.listInventoryItems();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.INVENTORY_ITEM_READ.key)
+  @ApiOperation({ summary: 'Read one item' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<InventoryItemRow> {
+    return this.product.findInventoryItem(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.INVENTORY_ITEM_CREATE.key)
+  @ApiOperation({ summary: 'Create a item' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createInventoryItemSchema))
+    body: z.infer<typeof createInventoryItemSchema>,
+  ): Promise<InventoryItemRow> {
+    return this.product.createInventoryItem(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.INVENTORY_ITEM_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a item' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateInventoryItemSchema))
+    body: z.infer<typeof updateInventoryItemSchema>,
+  ): Promise<InventoryItemRow> {
+    return this.product.updateInventoryItem(id, body, organizationId);
+  }
+}
+
+@ApiTags('purchase-requests')
+@ApiBearerAuth('access-token')
+@Controller('purchase-requests')
+export class PurchaseRequestController {
+  constructor(private readonly product: ErpService) {}
+
+  @Get()
+  @RequirePermissions(P.PURCHASE_REQUEST_READ.key)
+  @ApiOperation({ summary: 'List purchase requests' })
+  list(): Promise<PurchaseRequestRow[]> {
+    return this.product.listPurchaseRequests();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PURCHASE_REQUEST_READ.key)
+  @ApiOperation({ summary: 'Read one purchase request' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PurchaseRequestRow> {
+    return this.product.findPurchaseRequest(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PURCHASE_REQUEST_CREATE.key)
+  @ApiOperation({ summary: 'Create a purchase request' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPurchaseRequestSchema))
+    body: z.infer<typeof createPurchaseRequestSchema>,
+  ): Promise<PurchaseRequestRow> {
+    return this.product.createPurchaseRequest(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PURCHASE_REQUEST_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a purchase request' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePurchaseRequestSchema))
+    body: z.infer<typeof updatePurchaseRequestSchema>,
+  ): Promise<PurchaseRequestRow> {
+    return this.product.updatePurchaseRequest(id, body, organizationId);
+  }
+}

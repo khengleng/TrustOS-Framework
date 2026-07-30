@@ -1,0 +1,233 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { WALLET_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  WalletService,
+  type WalletProfileRow,
+  type WalletTransferRow,
+  type TransferLimitProfileRow,
+} from './wallet.service';
+
+/**
+ * TrustOS Wallet endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createWalletProfileSchema = z.object({
+  walletId: z.string().trim().min(1).max(255),
+  ownerName: z.string().trim().min(1).max(255),
+  ownerPhone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  currency: z.string().trim().min(1).max(255),
+  tier: z.enum(['BASIC', 'VERIFIED', 'PREMIUM']).optional(),
+  status: z.enum(['ACTIVE', 'FROZEN', 'CLOSED']).optional(),
+});
+
+const updateWalletProfileSchema = z
+  .object({
+    ownerName: z.string().trim().min(1).max(255).optional(),
+    ownerPhone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    tier: z.enum(['BASIC', 'VERIFIED', 'PREMIUM']).optional(),
+    status: z.enum(['ACTIVE', 'FROZEN', 'CLOSED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createWalletTransferSchema = z.object({
+  reference: z.string().trim().min(1).max(255),
+  fromProfileId: z.string().trim().min(1).max(64),
+  toProfileId: z.string().trim().min(1).max(64),
+  amount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  journalId: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['PENDING', 'POSTED', 'FAILED', 'REVERSED']).optional(),
+  note: z.string().trim().min(1).max(255).optional(),
+});
+
+const updateWalletTransferSchema = z
+  .object({
+    fromProfileId: z.string().trim().min(1).max(64).optional(),
+    toProfileId: z.string().trim().min(1).max(64).optional(),
+    amount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['PENDING', 'POSTED', 'FAILED', 'REVERSED']).optional(),
+    note: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createTransferLimitProfileSchema = z.object({
+  tier: z.enum(['BASIC', 'VERIFIED', 'PREMIUM']),
+  limitKey: z.string().trim().min(1).max(255),
+  description: z.string().trim().min(1).max(255),
+});
+
+const updateTransferLimitProfileSchema = z
+  .object({
+    tier: z.enum(['BASIC', 'VERIFIED', 'PREMIUM']).optional(),
+    limitKey: z.string().trim().min(1).max(255).optional(),
+    description: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('wallet-profiles')
+@ApiBearerAuth('access-token')
+@Controller('wallet-profiles')
+export class WalletProfileController {
+  constructor(private readonly product: WalletService) {}
+
+  @Get()
+  @RequirePermissions(P.WALLET_PROFILE_READ.key)
+  @ApiOperation({ summary: 'List wallets' })
+  list(): Promise<WalletProfileRow[]> {
+    return this.product.listWalletProfiles();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.WALLET_PROFILE_READ.key)
+  @ApiOperation({ summary: 'Read one wallet' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<WalletProfileRow> {
+    return this.product.findWalletProfile(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.WALLET_PROFILE_CREATE.key)
+  @ApiOperation({ summary: 'Create a wallet' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createWalletProfileSchema))
+    body: z.infer<typeof createWalletProfileSchema>,
+  ): Promise<WalletProfileRow> {
+    return this.product.createWalletProfile(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.WALLET_PROFILE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a wallet' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateWalletProfileSchema))
+    body: z.infer<typeof updateWalletProfileSchema>,
+  ): Promise<WalletProfileRow> {
+    return this.product.updateWalletProfile(id, body, organizationId);
+  }
+}
+
+@ApiTags('wallet-transfers')
+@ApiBearerAuth('access-token')
+@Controller('wallet-transfers')
+export class WalletTransferController {
+  constructor(private readonly product: WalletService) {}
+
+  @Get()
+  @RequirePermissions(P.WALLET_TRANSFER_READ.key)
+  @ApiOperation({ summary: 'List transfers' })
+  list(): Promise<WalletTransferRow[]> {
+    return this.product.listWalletTransfers();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.WALLET_TRANSFER_READ.key)
+  @ApiOperation({ summary: 'Read one transfer' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<WalletTransferRow> {
+    return this.product.findWalletTransfer(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.WALLET_TRANSFER_CREATE.key)
+  @ApiOperation({ summary: 'Create a transfer' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createWalletTransferSchema))
+    body: z.infer<typeof createWalletTransferSchema>,
+  ): Promise<WalletTransferRow> {
+    return this.product.createWalletTransfer(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.WALLET_TRANSFER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a transfer' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateWalletTransferSchema))
+    body: z.infer<typeof updateWalletTransferSchema>,
+  ): Promise<WalletTransferRow> {
+    return this.product.updateWalletTransfer(id, body, organizationId);
+  }
+}
+
+@ApiTags('transfer-limit-profiles')
+@ApiBearerAuth('access-token')
+@Controller('transfer-limit-profiles')
+export class TransferLimitProfileController {
+  constructor(private readonly product: WalletService) {}
+
+  @Get()
+  @RequirePermissions(P.TRANSFER_LIMIT_PROFILE_READ.key)
+  @ApiOperation({ summary: 'List limit profiles' })
+  list(): Promise<TransferLimitProfileRow[]> {
+    return this.product.listTransferLimitProfiles();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.TRANSFER_LIMIT_PROFILE_READ.key)
+  @ApiOperation({ summary: 'Read one limit profile' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<TransferLimitProfileRow> {
+    return this.product.findTransferLimitProfile(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.TRANSFER_LIMIT_PROFILE_CREATE.key)
+  @ApiOperation({ summary: 'Create a limit profile' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createTransferLimitProfileSchema))
+    body: z.infer<typeof createTransferLimitProfileSchema>,
+  ): Promise<TransferLimitProfileRow> {
+    return this.product.createTransferLimitProfile(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.TRANSFER_LIMIT_PROFILE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a limit profile' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateTransferLimitProfileSchema))
+    body: z.infer<typeof updateTransferLimitProfileSchema>,
+  ): Promise<TransferLimitProfileRow> {
+    return this.product.updateTransferLimitProfile(id, body, organizationId);
+  }
+}

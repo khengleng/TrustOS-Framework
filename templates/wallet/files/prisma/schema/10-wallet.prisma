@@ -1,0 +1,102 @@
+// =============================================================================
+// TrustOS Wallet — product models
+//
+// Customer wallets over the framework ledger: wallet profiles, transfers,
+// transfer limits and history. Balances come from @trustos/wallet — this
+// template stores no balance column.
+//
+// Out of scope, deliberately: payment providers, card issuing, cash-in and
+// cash-out networks, FX execution, interest and rewards.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum WalletTier {
+  BASIC
+  VERIFIED
+  PREMIUM
+}
+
+enum WalletProfileStatus {
+  ACTIVE
+  FROZEN
+  CLOSED
+}
+
+enum TransferStatus {
+  PENDING
+  POSTED
+  FAILED
+  REVERSED
+}
+
+/// The product-side record of a wallet. `walletId` points at the framework
+/// wallet that owns the money; everything financial is read through
+/// @trustos/wallet.
+model WalletProfile {
+  id             String @id @default(cuid())
+  organizationId String
+  walletId String
+  ownerName String
+  ownerPhone String?
+  currency String
+  tier WalletTier @default(BASIC)
+  status WalletProfileStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, walletId])
+  @@index([organizationId, currency])
+  @@index([organizationId, tier])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A movement between two wallets. The journal is written by @trustos/ledger;
+/// this row is the product-level record of *why*, and `journalId` is the link
+/// between them.
+model WalletTransfer {
+  id             String @id @default(cuid())
+  organizationId String
+  reference String
+  fromProfileId String
+  toProfileId String
+  amount Decimal @db.Decimal(28, 8)
+  currency String
+  journalId String?
+  status TransferStatus @default(PENDING)
+  note String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, fromProfileId])
+  @@index([organizationId, toProfileId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// Which framework limit keys apply to a wallet tier. The ceilings themselves
+/// live in @trustos/limits — this maps tiers onto them so a tier change is one
+/// row, not a migration.
+model TransferLimitProfile {
+  id             String @id @default(cuid())
+  organizationId String
+  tier WalletTier
+  limitKey String
+  description String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, tier])
+  @@index([deletedAt])
+}

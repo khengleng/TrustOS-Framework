@@ -1,0 +1,320 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { GOLD_SHOP_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  GoldShopService,
+  type GoldPriceRow,
+  type GoldItemRow,
+  type GoldOrderRow,
+  type GoldInvoiceRow,
+} from './gold-shop.service';
+
+/**
+ * TrustOS Gold Shop endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createGoldPriceSchema = z.object({
+  karat: z.enum(['K10', 'K14', 'K18', 'K21', 'K22', 'K24']),
+  pricePerGram: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  source: z.string().trim().min(1).max(255),
+  quotedAt: z.coerce.date(),
+});
+
+const updateGoldPriceSchema = z
+  .object({
+    karat: z.enum(['K10', 'K14', 'K18', 'K21', 'K22', 'K24']).optional(),
+    pricePerGram: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    source: z.string().trim().min(1).max(255).optional(),
+    quotedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createGoldItemSchema = z.object({
+  tag: z.string().trim().min(1).max(255),
+  name: z.string().trim().min(1).max(255),
+  karat: z.enum(['K10', 'K14', 'K18', 'K21', 'K22', 'K24']),
+  grossWeightGrams: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  goldWeightGrams: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  labourCost: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  status: z.enum(['IN_STOCK', 'RESERVED', 'SOLD', 'MELTED']).optional(),
+});
+
+const updateGoldItemSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    karat: z.enum(['K10', 'K14', 'K18', 'K21', 'K22', 'K24']).optional(),
+    grossWeightGrams: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    goldWeightGrams: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    labourCost: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['IN_STOCK', 'RESERVED', 'SOLD', 'MELTED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createGoldOrderSchema = z.object({
+  reference: z.string().trim().min(1).max(255),
+  itemId: z.string().trim().min(1).max(64),
+  priceId: z.string().trim().min(1).max(64),
+  direction: z.enum(['SELL_TO_CUSTOMER', 'BUY_FROM_CUSTOMER']),
+  customerName: z.string().trim().min(1).max(255),
+  customerPhone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  goldValue: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  labourCost: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  total: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  status: z.enum(['DRAFT', 'CONFIRMED', 'SETTLED', 'CANCELLED']).optional(),
+});
+
+const updateGoldOrderSchema = z
+  .object({
+    itemId: z.string().trim().min(1).max(64).optional(),
+    priceId: z.string().trim().min(1).max(64).optional(),
+    direction: z.enum(['SELL_TO_CUSTOMER', 'BUY_FROM_CUSTOMER']).optional(),
+    customerName: z.string().trim().min(1).max(255).optional(),
+    customerPhone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    goldValue: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    labourCost: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    total: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['DRAFT', 'CONFIRMED', 'SETTLED', 'CANCELLED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createGoldInvoiceSchema = z.object({
+  orderId: z.string().trim().min(1).max(64),
+  number: z.string().trim().min(1).max(255),
+  issuedAt: z.coerce.date(),
+  total: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  status: z.enum(['ISSUED', 'PAID', 'VOID']).optional(),
+});
+
+const updateGoldInvoiceSchema = z
+  .object({
+    orderId: z.string().trim().min(1).max(64).optional(),
+    issuedAt: z.coerce.date().optional(),
+    total: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['ISSUED', 'PAID', 'VOID']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('gold-prices')
+@ApiBearerAuth('access-token')
+@Controller('gold-prices')
+export class GoldPriceController {
+  constructor(private readonly product: GoldShopService) {}
+
+  @Get()
+  @RequirePermissions(P.GOLD_PRICE_READ.key)
+  @ApiOperation({ summary: 'List price quotes' })
+  list(): Promise<GoldPriceRow[]> {
+    return this.product.listGoldPrices();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.GOLD_PRICE_READ.key)
+  @ApiOperation({ summary: 'Read one price quote' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<GoldPriceRow> {
+    return this.product.findGoldPrice(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.GOLD_PRICE_CREATE.key)
+  @ApiOperation({ summary: 'Create a price quote' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createGoldPriceSchema))
+    body: z.infer<typeof createGoldPriceSchema>,
+  ): Promise<GoldPriceRow> {
+    return this.product.createGoldPrice(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.GOLD_PRICE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a price quote' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateGoldPriceSchema))
+    body: z.infer<typeof updateGoldPriceSchema>,
+  ): Promise<GoldPriceRow> {
+    return this.product.updateGoldPrice(id, body, organizationId);
+  }
+}
+
+@ApiTags('gold-items')
+@ApiBearerAuth('access-token')
+@Controller('gold-items')
+export class GoldItemController {
+  constructor(private readonly product: GoldShopService) {}
+
+  @Get()
+  @RequirePermissions(P.GOLD_ITEM_READ.key)
+  @ApiOperation({ summary: 'List inventory' })
+  list(): Promise<GoldItemRow[]> {
+    return this.product.listGoldItems();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.GOLD_ITEM_READ.key)
+  @ApiOperation({ summary: 'Read one item' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<GoldItemRow> {
+    return this.product.findGoldItem(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.GOLD_ITEM_CREATE.key)
+  @ApiOperation({ summary: 'Create a item' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createGoldItemSchema))
+    body: z.infer<typeof createGoldItemSchema>,
+  ): Promise<GoldItemRow> {
+    return this.product.createGoldItem(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.GOLD_ITEM_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a item' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateGoldItemSchema))
+    body: z.infer<typeof updateGoldItemSchema>,
+  ): Promise<GoldItemRow> {
+    return this.product.updateGoldItem(id, body, organizationId);
+  }
+}
+
+@ApiTags('gold-orders')
+@ApiBearerAuth('access-token')
+@Controller('gold-orders')
+export class GoldOrderController {
+  constructor(private readonly product: GoldShopService) {}
+
+  @Get()
+  @RequirePermissions(P.GOLD_ORDER_READ.key)
+  @ApiOperation({ summary: 'List orders' })
+  list(): Promise<GoldOrderRow[]> {
+    return this.product.listGoldOrders();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.GOLD_ORDER_READ.key)
+  @ApiOperation({ summary: 'Read one order' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<GoldOrderRow> {
+    return this.product.findGoldOrder(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.GOLD_ORDER_CREATE.key)
+  @ApiOperation({ summary: 'Create a order' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createGoldOrderSchema))
+    body: z.infer<typeof createGoldOrderSchema>,
+  ): Promise<GoldOrderRow> {
+    return this.product.createGoldOrder(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.GOLD_ORDER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a order' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateGoldOrderSchema))
+    body: z.infer<typeof updateGoldOrderSchema>,
+  ): Promise<GoldOrderRow> {
+    return this.product.updateGoldOrder(id, body, organizationId);
+  }
+}
+
+@ApiTags('gold-invoices')
+@ApiBearerAuth('access-token')
+@Controller('gold-invoices')
+export class GoldInvoiceController {
+  constructor(private readonly product: GoldShopService) {}
+
+  @Get()
+  @RequirePermissions(P.GOLD_INVOICE_READ.key)
+  @ApiOperation({ summary: 'List invoices' })
+  list(): Promise<GoldInvoiceRow[]> {
+    return this.product.listGoldInvoices();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.GOLD_INVOICE_READ.key)
+  @ApiOperation({ summary: 'Read one invoice' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<GoldInvoiceRow> {
+    return this.product.findGoldInvoice(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.GOLD_INVOICE_CREATE.key)
+  @ApiOperation({ summary: 'Create a invoice' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createGoldInvoiceSchema))
+    body: z.infer<typeof createGoldInvoiceSchema>,
+  ): Promise<GoldInvoiceRow> {
+    return this.product.createGoldInvoice(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.GOLD_INVOICE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a invoice' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateGoldInvoiceSchema))
+    body: z.infer<typeof updateGoldInvoiceSchema>,
+  ): Promise<GoldInvoiceRow> {
+    return this.product.updateGoldInvoice(id, body, organizationId);
+  }
+}

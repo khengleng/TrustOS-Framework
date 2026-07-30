@@ -1,0 +1,370 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { TELEGRAM_MINIAPP_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  TelegramMiniappService,
+  type MiniAppUserRow,
+  type MiniAppSessionRow,
+  type DeepLinkRow,
+  type MenuEntryRow,
+  type MiniAppNotificationSettingRow,
+} from './telegram-miniapp.service';
+
+/**
+ * TrustOS Telegram Mini App endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createMiniAppUserSchema = z.object({
+  platform: z.enum(['TELEGRAM', 'WHATSAPP', 'MESSENGER']),
+  platformUserId: z.string().trim().min(1).max(255),
+  userId: z.string().trim().min(1).max(255).optional(),
+  displayName: z.string().trim().min(1).max(255),
+  languageCode: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['ACTIVE', 'BLOCKED']).optional(),
+});
+
+const updateMiniAppUserSchema = z
+  .object({
+    userId: z.string().trim().min(1).max(255).optional(),
+    displayName: z.string().trim().min(1).max(255).optional(),
+    languageCode: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['ACTIVE', 'BLOCKED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createMiniAppSessionSchema = z.object({
+  miniAppUserId: z.string().trim().min(1).max(64),
+  startedAt: z.coerce.date(),
+  expiresAt: z.coerce.date(),
+  endedAt: z.coerce.date().optional(),
+  launchParam: z.string().trim().min(1).max(255).optional(),
+});
+
+const updateMiniAppSessionSchema = z
+  .object({
+    miniAppUserId: z.string().trim().min(1).max(64).optional(),
+    startedAt: z.coerce.date().optional(),
+    expiresAt: z.coerce.date().optional(),
+    endedAt: z.coerce.date().optional(),
+    launchParam: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createDeepLinkSchema = z.object({
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  label: z.string().trim().min(1).max(255),
+  target: z.string().trim().min(1).max(255),
+  isActive: z.coerce.boolean().optional(),
+  openCount: z.coerce.number().int().optional(),
+});
+
+const updateDeepLinkSchema = z
+  .object({
+    label: z.string().trim().min(1).max(255).optional(),
+    target: z.string().trim().min(1).max(255).optional(),
+    isActive: z.coerce.boolean().optional(),
+    openCount: z.coerce.number().int().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createMenuEntrySchema = z.object({
+  label: z.string().trim().min(1).max(255),
+  href: z.string().trim().min(1).max(255),
+  icon: z.string().trim().min(1).max(255).optional(),
+  position: z.coerce.number().int(),
+  requiredPermission: z.string().trim().min(1).max(255).optional(),
+  isActive: z.coerce.boolean().optional(),
+});
+
+const updateMenuEntrySchema = z
+  .object({
+    label: z.string().trim().min(1).max(255).optional(),
+    href: z.string().trim().min(1).max(255).optional(),
+    icon: z.string().trim().min(1).max(255).optional(),
+    position: z.coerce.number().int().optional(),
+    requiredPermission: z.string().trim().min(1).max(255).optional(),
+    isActive: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createMiniAppNotificationSettingSchema = z.object({
+  miniAppUserId: z.string().trim().min(1).max(64),
+  notificationKey: z.string().trim().min(1).max(255),
+  muted: z.coerce.boolean().optional(),
+});
+
+const updateMiniAppNotificationSettingSchema = z
+  .object({
+    miniAppUserId: z.string().trim().min(1).max(64).optional(),
+    notificationKey: z.string().trim().min(1).max(255).optional(),
+    muted: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('mini-app-users')
+@ApiBearerAuth('access-token')
+@Controller('mini-app-users')
+export class MiniAppUserController {
+  constructor(private readonly product: TelegramMiniappService) {}
+
+  @Get()
+  @RequirePermissions(P.MINI_APP_USER_READ.key)
+  @ApiOperation({ summary: 'List users' })
+  list(): Promise<MiniAppUserRow[]> {
+    return this.product.listMiniAppUsers();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.MINI_APP_USER_READ.key)
+  @ApiOperation({ summary: 'Read one user' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<MiniAppUserRow> {
+    return this.product.findMiniAppUser(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.MINI_APP_USER_CREATE.key)
+  @ApiOperation({ summary: 'Create a user' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createMiniAppUserSchema))
+    body: z.infer<typeof createMiniAppUserSchema>,
+  ): Promise<MiniAppUserRow> {
+    return this.product.createMiniAppUser(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.MINI_APP_USER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a user' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateMiniAppUserSchema))
+    body: z.infer<typeof updateMiniAppUserSchema>,
+  ): Promise<MiniAppUserRow> {
+    return this.product.updateMiniAppUser(id, body, organizationId);
+  }
+}
+
+@ApiTags('mini-app-sessions')
+@ApiBearerAuth('access-token')
+@Controller('mini-app-sessions')
+export class MiniAppSessionController {
+  constructor(private readonly product: TelegramMiniappService) {}
+
+  @Get()
+  @RequirePermissions(P.MINI_APP_SESSION_READ.key)
+  @ApiOperation({ summary: 'List sessions' })
+  list(): Promise<MiniAppSessionRow[]> {
+    return this.product.listMiniAppSessions();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.MINI_APP_SESSION_READ.key)
+  @ApiOperation({ summary: 'Read one session' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<MiniAppSessionRow> {
+    return this.product.findMiniAppSession(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.MINI_APP_SESSION_CREATE.key)
+  @ApiOperation({ summary: 'Create a session' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createMiniAppSessionSchema))
+    body: z.infer<typeof createMiniAppSessionSchema>,
+  ): Promise<MiniAppSessionRow> {
+    return this.product.createMiniAppSession(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.MINI_APP_SESSION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a session' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateMiniAppSessionSchema))
+    body: z.infer<typeof updateMiniAppSessionSchema>,
+  ): Promise<MiniAppSessionRow> {
+    return this.product.updateMiniAppSession(id, body, organizationId);
+  }
+}
+
+@ApiTags('deep-links')
+@ApiBearerAuth('access-token')
+@Controller('deep-links')
+export class DeepLinkController {
+  constructor(private readonly product: TelegramMiniappService) {}
+
+  @Get()
+  @RequirePermissions(P.DEEP_LINK_READ.key)
+  @ApiOperation({ summary: 'List deep links' })
+  list(): Promise<DeepLinkRow[]> {
+    return this.product.listDeepLinks();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.DEEP_LINK_READ.key)
+  @ApiOperation({ summary: 'Read one deep link' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<DeepLinkRow> {
+    return this.product.findDeepLink(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.DEEP_LINK_CREATE.key)
+  @ApiOperation({ summary: 'Create a deep link' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createDeepLinkSchema))
+    body: z.infer<typeof createDeepLinkSchema>,
+  ): Promise<DeepLinkRow> {
+    return this.product.createDeepLink(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.DEEP_LINK_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a deep link' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateDeepLinkSchema))
+    body: z.infer<typeof updateDeepLinkSchema>,
+  ): Promise<DeepLinkRow> {
+    return this.product.updateDeepLink(id, body, organizationId);
+  }
+}
+
+@ApiTags('menu-entries')
+@ApiBearerAuth('access-token')
+@Controller('menu-entries')
+export class MenuEntryController {
+  constructor(private readonly product: TelegramMiniappService) {}
+
+  @Get()
+  @RequirePermissions(P.MENU_ENTRY_READ.key)
+  @ApiOperation({ summary: 'List menu' })
+  list(): Promise<MenuEntryRow[]> {
+    return this.product.listMenuEntries();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.MENU_ENTRY_READ.key)
+  @ApiOperation({ summary: 'Read one menu entry' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<MenuEntryRow> {
+    return this.product.findMenuEntry(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.MENU_ENTRY_CREATE.key)
+  @ApiOperation({ summary: 'Create a menu entry' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createMenuEntrySchema))
+    body: z.infer<typeof createMenuEntrySchema>,
+  ): Promise<MenuEntryRow> {
+    return this.product.createMenuEntry(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.MENU_ENTRY_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a menu entry' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateMenuEntrySchema))
+    body: z.infer<typeof updateMenuEntrySchema>,
+  ): Promise<MenuEntryRow> {
+    return this.product.updateMenuEntry(id, body, organizationId);
+  }
+}
+
+@ApiTags('mini-app-notification-settings')
+@ApiBearerAuth('access-token')
+@Controller('mini-app-notification-settings')
+export class MiniAppNotificationSettingController {
+  constructor(private readonly product: TelegramMiniappService) {}
+
+  @Get()
+  @RequirePermissions(P.MINI_APP_NOTIFICATION_SETTING_READ.key)
+  @ApiOperation({ summary: 'List notification settings' })
+  list(): Promise<MiniAppNotificationSettingRow[]> {
+    return this.product.listMiniAppNotificationSettings();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.MINI_APP_NOTIFICATION_SETTING_READ.key)
+  @ApiOperation({ summary: 'Read one notification setting' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<MiniAppNotificationSettingRow> {
+    return this.product.findMiniAppNotificationSetting(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.MINI_APP_NOTIFICATION_SETTING_CREATE.key)
+  @ApiOperation({ summary: 'Create a notification setting' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createMiniAppNotificationSettingSchema))
+    body: z.infer<typeof createMiniAppNotificationSettingSchema>,
+  ): Promise<MiniAppNotificationSettingRow> {
+    return this.product.createMiniAppNotificationSetting(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.MINI_APP_NOTIFICATION_SETTING_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a notification setting' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateMiniAppNotificationSettingSchema))
+    body: z.infer<typeof updateMiniAppNotificationSettingSchema>,
+  ): Promise<MiniAppNotificationSettingRow> {
+    return this.product.updateMiniAppNotificationSetting(id, body, organizationId);
+  }
+}

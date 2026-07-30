@@ -1,0 +1,186 @@
+/**
+ * TrustOS E-commerce — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { ECOMMERCE_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const ECOMMERCE_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'catalogs',
+    label: 'Catalogs',
+    singular: 'Catalog',
+    endpoint: '/catalogs',
+    description: "A set of products offered by a store.",
+    table: {
+      key: 'catalogs',
+      label: 'Catalogs',
+      endpoint: '/catalogs',
+      emptyHint: 'Create one with POST /api/catalogs.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'storeId', label: 'Store', format: 'reference' },
+        { key: 'name', label: 'Name' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'isDefault', label: 'Default', format: 'badge' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    search: {
+      fields: [
+        { key: 'name', label: 'Name' },
+      ],
+    },
+    permissions: {
+      list: P.CATALOG_READ.key,
+      read: P.CATALOG_READ.key,
+      create: P.CATALOG_CREATE.key,
+      update: P.CATALOG_UPDATE.key,
+    },
+  },
+  {
+    key: 'products',
+    label: 'Products',
+    singular: 'Product',
+    endpoint: '/products',
+    description: "Something a customer can buy.",
+    table: {
+      key: 'products',
+      label: 'Products',
+      endpoint: '/products',
+      emptyHint: 'Create one with POST /api/products.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'catalogId', label: 'Catalog', format: 'reference' },
+        { key: 'name', label: 'Name' },
+        { key: 'sku', label: 'SKU', sortable: true },
+        { key: 'description', label: 'Description' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DRAFT","label":"Draft"},{"value":"ACTIVE","label":"Active"},{"value":"ARCHIVED","label":"Archived"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Name' },
+        { key: 'sku', label: 'SKU', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.PRODUCT_READ.key,
+      read: P.PRODUCT_READ.key,
+      create: P.PRODUCT_CREATE.key,
+      update: P.PRODUCT_UPDATE.key,
+    },
+  },
+  {
+    key: 'product-variants',
+    label: 'Variants',
+    singular: 'Variant',
+    endpoint: '/product-variants',
+    description: "A buyable configuration of a product, with its own price.",
+    table: {
+      key: 'product-variants',
+      label: 'Variants',
+      endpoint: '/product-variants',
+      emptyHint: 'Create one with POST /api/product-variants.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'productId', label: 'Product', format: 'reference' },
+        { key: 'name', label: 'Variant' },
+        { key: 'sku', label: 'SKU', sortable: true },
+        { key: 'price', label: 'Price', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'isActive', label: 'Active', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    permissions: {
+      list: P.PRODUCT_VARIANT_READ.key,
+      read: P.PRODUCT_VARIANT_READ.key,
+      create: P.PRODUCT_VARIANT_CREATE.key,
+      update: P.PRODUCT_VARIANT_UPDATE.key,
+    },
+  },
+  {
+    key: 'orders',
+    label: 'Orders',
+    singular: 'Order',
+    endpoint: '/orders',
+    description: "A customer purchase.",
+    table: {
+      key: 'orders',
+      label: 'Orders',
+      endpoint: '/orders',
+      emptyHint: 'Create one with POST /api/orders.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'storeId', label: 'Store', format: 'reference' },
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'customerName', label: 'Customer' },
+        { key: 'customerPhone', label: 'Phone' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'total', label: 'Total', format: 'money', currencyKey: 'currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PENDING","label":"Pending"},{"value":"CONFIRMED","label":"Confirmed"},{"value":"FULFILLED","label":"Fulfilled"},{"value":"CANCELLED","label":"Cancelled"},{"value":"REFUNDED","label":"Refunded"}] },
+      { key: 'placedAt', label: 'Placed', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+        { key: 'customerName', label: 'Customer' },
+      ],
+    },
+    permissions: {
+      list: P.ORDER_READ.key,
+      read: P.ORDER_READ.key,
+      create: P.ORDER_CREATE.key,
+      update: P.ORDER_UPDATE.key,
+    },
+  },
+  {
+    key: 'order-lines',
+    label: 'Order lines',
+    singular: 'Order line',
+    endpoint: '/order-lines',
+    description: "One product on an order, priced as it was when the order was placed.",
+    table: {
+      key: 'order-lines',
+      label: 'Order lines',
+      endpoint: '/order-lines',
+      emptyHint: 'Create one with POST /api/order-lines.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'orderId', label: 'Order', format: 'reference' },
+        { key: 'variantId', label: 'Variant', format: 'reference' },
+        { key: 'description', label: 'Description' },
+        { key: 'quantity', label: 'Quantity', format: 'number' },
+        { key: 'unitPrice', label: 'Unit price', format: 'money', currencyKey: 'currency' },
+        { key: 'lineTotal', label: 'Line total', format: 'money', currencyKey: 'currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    permissions: {
+      list: P.ORDER_LINE_READ.key,
+      read: P.ORDER_LINE_READ.key,
+      create: P.ORDER_LINE_CREATE.key,
+      update: P.ORDER_LINE_UPDATE.key,
+    },
+  },
+];

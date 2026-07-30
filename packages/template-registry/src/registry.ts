@@ -1,3 +1,4 @@
+import { industryManifests } from './industry';
 import { registrySchema, type TemplateManifest, type TemplateVariable } from './schema';
 
 /**
@@ -120,6 +121,9 @@ const WORKFLOW_MODULES = [
 const manifests: TemplateManifest[] = [
   {
     id: 'generic-saas',
+    category: 'foundation',
+    status: 'stable',
+    documentation: 'docs/templates.md',
     displayName: 'TrustOS Generic SaaS',
     description:
       'Multi-tenant SaaS foundation: NestJS API, Next.js admin, organizations, RBAC, audit, and one example domain entity.',
@@ -138,6 +142,9 @@ const manifests: TemplateManifest[] = [
 
   {
     id: 'workflow-enabled-saas',
+    category: 'foundation',
+    status: 'stable',
+    documentation: 'docs/templates.md',
     displayName: 'TrustOS Workflow-Enabled SaaS',
     description:
       'Multi-tenant SaaS with a governed approval workflow: maker-checker, conditional ' +
@@ -167,13 +174,21 @@ const manifests: TemplateManifest[] = [
 
   {
     id: 'merchant',
+    category: 'commerce',
+    status: 'stable',
+    documentation: 'docs/industry-reference.md',
     displayName: 'TrustOS Merchant',
     description:
       'Merchant foundation: merchants, stores, branches and merchant members, with an admin console over all four.',
     version: '0.1.0',
     minimumFrameworkVersion: '0.1.0',
     includedApps: ['api', 'admin'],
-    includedModules: [...BASE_MODULES, ...TENANT_MODULES],
+    /*
+     * `template-sdk` because merchant is a parent template: its aggregator files compose the
+     * chain's resources and permissions, and those are SDK types. A template that is extended
+     * declares it even when its own domain files do not import it.
+     */
+    includedModules: [...BASE_MODULES, ...TENANT_MODULES, 'template-sdk'],
     requiredVariables: COMMON_VARIABLES,
     deploymentTargets: ['railway', 'local'],
     entities: ['Merchant', 'Store', 'Branch', 'MerchantMember'],
@@ -185,6 +200,9 @@ const manifests: TemplateManifest[] = [
 
   {
     id: 'learning',
+    category: 'education',
+    status: 'stable',
+    documentation: 'docs/industry-reference.md',
     displayName: 'TrustOS Learning',
     description:
       'Learning foundation: student profiles, learning sessions and quiz attempts, with progress and review screens.',
@@ -203,6 +221,9 @@ const manifests: TemplateManifest[] = [
 
   {
     id: 'payment-gateway',
+    category: 'financial-services',
+    status: 'stable',
+    documentation: 'docs/industry-reference.md',
     displayName: 'TrustOS Payment Gateway',
     description:
       'Payment-gateway skeleton: merchant accounts, hashed API keys, payment records with status history, webhook registration and a mock provider interface.',
@@ -212,7 +233,13 @@ const manifests: TemplateManifest[] = [
     includedModules: [...BASE_MODULES, ...TENANT_MODULES],
     requiredVariables: COMMON_VARIABLES,
     deploymentTargets: ['railway', 'local'],
-    entities: ['MerchantAccount', 'ApiKey', 'Payment', 'PaymentStatusHistory', 'WebhookEndpoint'],
+    entities: [
+      'MerchantAccount',
+      'GatewayApiKey',
+      'Payment',
+      'PaymentStatusHistory',
+      'GatewayWebhookEndpoint',
+    ],
     migrationNotes:
       'Initial release. The provider interface is a mock. Bakong, KHQR, settlement, refunds and any real provider integration are out of scope and must not be added without approval.',
     owner: 'payKH Team',
@@ -228,6 +255,10 @@ const manifests: TemplateManifest[] = [
 
   {
     id: 'telegram-mini-app',
+    category: 'messaging',
+    status: 'deprecated',
+    documentation: 'docs/industry-reference.md',
+    supersededBy: 'telegram-miniapp',
     displayName: 'TrustOS Telegram Mini App',
     description:
       'Telegram Mini App foundation: initData validation, session creation, authenticated user context, and an example Task feature.',
@@ -253,9 +284,16 @@ const manifests: TemplateManifest[] = [
   },
 ];
 
-/** Parsed once at module load, so an invalid manifest cannot reach a caller. */
+/**
+ * Parsed once at module load, so an invalid manifest cannot reach a caller.
+ *
+ * The industry catalog is generated from `scripts/template-specs.mjs` — see `industry.ts`. It is
+ * concatenated rather than merged, so a hand-written manifest and a generated one can never both
+ * claim the same id: the schema's enum has one entry per id, and a duplicate would fail here at
+ * import time rather than at generation time.
+ */
 export const TEMPLATES: readonly TemplateManifest[] = Object.freeze(
-  registrySchema.parse(manifests),
+  registrySchema.parse([...manifests, ...industryManifests(COMMON_VARIABLES)]),
 );
 
 export function listTemplates(): readonly TemplateManifest[] {
@@ -288,6 +326,114 @@ export function isFrameworkCompatible(
   frameworkVersion: string,
 ): boolean {
   return compareSemver(frameworkVersion, template.minimumFrameworkVersion) >= 0;
+}
+
+/**
+ * The layer chain for a template, parent first.
+ *
+ * `['hospital', 'clinic']` for a clinic — `_base` is added by the generator, which owns the
+ * universal layer. Returned outermost-last so the caller can apply them in order and let a child
+ * override its parent.
+ *
+ * Refuses a cycle by name. A cycle is only reachable by hand-editing the registry, and the
+ * alternative to refusing is the generator hanging with no output, which is the worst way to
+ * learn about a typo.
+ */
+export function resolveTemplateChain(id: string): TemplateManifest[] {
+  const chain: TemplateManifest[] = [];
+  const seen = new Set<string>();
+
+  let current: TemplateManifest | undefined = requireTemplate(id);
+
+  while (current) {
+    if (seen.has(current.id)) {
+      throw new Error(
+        `Template inheritance cycle: ${[...seen, current.id].join(' -> ')}. A template chain is ` +
+          'a line, not a loop.',
+      );
+    }
+
+    seen.add(current.id);
+    chain.unshift(current);
+    current = current.extends ? requireTemplate(current.extends) : undefined;
+  }
+
+  return chain;
+}
+
+/**
+ * Every module a template ends up with, including those inherited from its parents.
+ *
+ * A child never *removes* a parent's module. It could not honestly: the parent's files are
+ * layered in and they import what they import, so a child that dropped a module would generate
+ * an application that does not compile.
+ */
+export function effectiveModules(id: string): string[] {
+  const modules = new Set<string>();
+
+  for (const template of resolveTemplateChain(id)) {
+    for (const module of template.includedModules) modules.add(module);
+  }
+
+  return [...modules].sort();
+}
+
+/** Templates in a category, in registry order. */
+export function templatesByCategory(category: string): TemplateManifest[] {
+  return TEMPLATES.filter((template) => template.category === category);
+}
+
+/** Templates that extend the given one, directly. */
+export function templateChildren(id: string): TemplateManifest[] {
+  return TEMPLATES.filter((template) => template.extends === id);
+}
+
+/**
+ * A compatibility verdict for a template against a framework version.
+ *
+ * Separate from `isFrameworkCompatible` because the CLI needs to say *why*, and because a
+ * deprecated or experimental template is generatable with a warning rather than compatible or
+ * not — three states, and a boolean can only carry two.
+ */
+export interface CompatibilityReport {
+  templateId: string;
+  frameworkVersion: string;
+  compatible: boolean;
+  warnings: string[];
+  reason?: string;
+}
+
+export function checkCompatibility(
+  template: TemplateManifest,
+  frameworkVersion: string,
+): CompatibilityReport {
+  const warnings: string[] = [];
+
+  if (template.status === 'deprecated') {
+    warnings.push(
+      `"${template.id}" is deprecated. Use "${template.supersededBy}" for new projects; this one ` +
+        'still generates so existing applications can keep upgrading.',
+    );
+  }
+
+  if (template.status === 'experimental') {
+    warnings.push(
+      `"${template.id}" is experimental: its entities and permission keys may change between ` +
+        'versions, and a rename of either is a migration.',
+    );
+  }
+
+  const compatible = isFrameworkCompatible(template, frameworkVersion);
+
+  return {
+    templateId: template.id,
+    frameworkVersion,
+    compatible,
+    warnings,
+    reason: compatible
+      ? undefined
+      : `Needs framework ${template.minimumFrameworkVersion} or newer; this checkout is ${frameworkVersion}.`,
+  };
 }
 
 /** Numeric semantic-version comparison. Returns -1, 0 or 1. */

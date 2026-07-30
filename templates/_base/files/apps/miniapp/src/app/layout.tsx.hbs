@@ -1,0 +1,33 @@
+import type { ReactNode } from 'react';
+import './globals.css';
+
+export const metadata = {
+  title: '{{productDisplayName}}',
+  description: '{{description}}',
+};
+
+/**
+ * Mini app shell.
+ *
+ * `viewport-fit=cover` and `user-scalable=no` because a mini app renders inside the messaging
+ * client's WebView, where a pinch-zoom fights the host's own gestures. `themeColor` follows the
+ * platform rather than the product: a mini app that ignores the client's dark mode is the one
+ * screen in the conversation that glows white at night.
+ */
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover' as const,
+};
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <main className="miniapp">{children}</main>
+      </body>
+    </html>
+  );
+}

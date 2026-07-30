@@ -1,0 +1,389 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { INSURANCE_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  InsuranceService,
+  type PolicyHolderRow,
+  type InsuranceProductRow,
+  type PolicyRow,
+  type PremiumRow,
+  type ClaimRow,
+} from './insurance.service';
+
+/**
+ * TrustOS Insurance endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createPolicyHolderSchema = z.object({
+  holderNumber: z.string().trim().min(1).max(255),
+  fullName: z.string().trim().min(1).max(255),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  dateOfBirth: z.coerce.date().optional(),
+});
+
+const updatePolicyHolderSchema = z
+  .object({
+    fullName: z.string().trim().min(1).max(255).optional(),
+    email: z.string().trim().toLowerCase().email().max(254).optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    dateOfBirth: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createInsuranceProductSchema = z.object({
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(255),
+  category: z.enum(['LIFE', 'HEALTH', 'MOTOR', 'PROPERTY', 'TRAVEL']),
+  currency: z.string().trim().min(1).max(255),
+  basePremium: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  defaultSumInsured: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  isActive: z.coerce.boolean().optional(),
+});
+
+const updateInsuranceProductSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    category: z.enum(['LIFE', 'HEALTH', 'MOTOR', 'PROPERTY', 'TRAVEL']).optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    basePremium: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    defaultSumInsured: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    isActive: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createPolicySchema = z.object({
+  policyNumber: z.string().trim().min(1).max(255),
+  holderId: z.string().trim().min(1).max(64),
+  productId: z.string().trim().min(1).max(64),
+  sumInsured: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  startsOn: z.coerce.date(),
+  endsOn: z.coerce.date(),
+  status: z.enum(['QUOTED', 'ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED']).optional(),
+});
+
+const updatePolicySchema = z
+  .object({
+    holderId: z.string().trim().min(1).max(64).optional(),
+    productId: z.string().trim().min(1).max(64).optional(),
+    startsOn: z.coerce.date().optional(),
+    endsOn: z.coerce.date().optional(),
+    status: z.enum(['QUOTED', 'ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createPremiumSchema = z.object({
+  policyId: z.string().trim().min(1).max(64),
+  dueOn: z.coerce.date(),
+  amount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  paidAt: z.coerce.date().optional(),
+  status: z.enum(['DUE', 'PAID', 'OVERDUE', 'WAIVED']).optional(),
+});
+
+const updatePremiumSchema = z
+  .object({
+    policyId: z.string().trim().min(1).max(64).optional(),
+    dueOn: z.coerce.date().optional(),
+    amount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    paidAt: z.coerce.date().optional(),
+    status: z.enum(['DUE', 'PAID', 'OVERDUE', 'WAIVED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createClaimSchema = z.object({
+  claimNumber: z.string().trim().min(1).max(255),
+  policyId: z.string().trim().min(1).max(64),
+  incidentOn: z.coerce.date(),
+  reportedAt: z.coerce.date(),
+  claimedAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  approvedAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+  currency: z.string().trim().min(1).max(255),
+  workflowInstanceId: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['REPORTED', 'ASSESSING', 'APPROVED', 'REJECTED', 'PAID', 'WITHDRAWN']).optional(),
+  summary: z.string().trim().min(1).max(4000).optional(),
+});
+
+const updateClaimSchema = z
+  .object({
+    policyId: z.string().trim().min(1).max(64).optional(),
+    incidentOn: z.coerce.date().optional(),
+    reportedAt: z.coerce.date().optional(),
+    claimedAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    approvedAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    workflowInstanceId: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['REPORTED', 'ASSESSING', 'APPROVED', 'REJECTED', 'PAID', 'WITHDRAWN']).optional(),
+    summary: z.string().trim().min(1).max(4000).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('policy-holders')
+@ApiBearerAuth('access-token')
+@Controller('policy-holders')
+export class PolicyHolderController {
+  constructor(private readonly product: InsuranceService) {}
+
+  @Get()
+  @RequirePermissions(P.POLICY_HOLDER_READ.key)
+  @ApiOperation({ summary: 'List policyholders' })
+  list(): Promise<PolicyHolderRow[]> {
+    return this.product.listPolicyHolders();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.POLICY_HOLDER_READ.key)
+  @ApiOperation({ summary: 'Read one policyholder' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PolicyHolderRow> {
+    return this.product.findPolicyHolder(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.POLICY_HOLDER_CREATE.key)
+  @ApiOperation({ summary: 'Create a policyholder' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPolicyHolderSchema))
+    body: z.infer<typeof createPolicyHolderSchema>,
+  ): Promise<PolicyHolderRow> {
+    return this.product.createPolicyHolder(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.POLICY_HOLDER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a policyholder' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePolicyHolderSchema))
+    body: z.infer<typeof updatePolicyHolderSchema>,
+  ): Promise<PolicyHolderRow> {
+    return this.product.updatePolicyHolder(id, body, organizationId);
+  }
+}
+
+@ApiTags('insurance-products')
+@ApiBearerAuth('access-token')
+@Controller('insurance-products')
+export class InsuranceProductController {
+  constructor(private readonly product: InsuranceService) {}
+
+  @Get()
+  @RequirePermissions(P.INSURANCE_PRODUCT_READ.key)
+  @ApiOperation({ summary: 'List products' })
+  list(): Promise<InsuranceProductRow[]> {
+    return this.product.listInsuranceProducts();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.INSURANCE_PRODUCT_READ.key)
+  @ApiOperation({ summary: 'Read one product' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<InsuranceProductRow> {
+    return this.product.findInsuranceProduct(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.INSURANCE_PRODUCT_CREATE.key)
+  @ApiOperation({ summary: 'Create a product' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createInsuranceProductSchema))
+    body: z.infer<typeof createInsuranceProductSchema>,
+  ): Promise<InsuranceProductRow> {
+    return this.product.createInsuranceProduct(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.INSURANCE_PRODUCT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a product' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateInsuranceProductSchema))
+    body: z.infer<typeof updateInsuranceProductSchema>,
+  ): Promise<InsuranceProductRow> {
+    return this.product.updateInsuranceProduct(id, body, organizationId);
+  }
+}
+
+@ApiTags('policies')
+@ApiBearerAuth('access-token')
+@Controller('policies')
+export class PolicyController {
+  constructor(private readonly product: InsuranceService) {}
+
+  @Get()
+  @RequirePermissions(P.POLICY_READ.key)
+  @ApiOperation({ summary: 'List policies' })
+  list(): Promise<PolicyRow[]> {
+    return this.product.listPolicies();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.POLICY_READ.key)
+  @ApiOperation({ summary: 'Read one policy' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PolicyRow> {
+    return this.product.findPolicy(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.POLICY_CREATE.key)
+  @ApiOperation({ summary: 'Create a policy' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPolicySchema))
+    body: z.infer<typeof createPolicySchema>,
+  ): Promise<PolicyRow> {
+    return this.product.createPolicy(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.POLICY_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a policy' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePolicySchema))
+    body: z.infer<typeof updatePolicySchema>,
+  ): Promise<PolicyRow> {
+    return this.product.updatePolicy(id, body, organizationId);
+  }
+}
+
+@ApiTags('premiums')
+@ApiBearerAuth('access-token')
+@Controller('premiums')
+export class PremiumController {
+  constructor(private readonly product: InsuranceService) {}
+
+  @Get()
+  @RequirePermissions(P.PREMIUM_READ.key)
+  @ApiOperation({ summary: 'List premiums' })
+  list(): Promise<PremiumRow[]> {
+    return this.product.listPremiums();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PREMIUM_READ.key)
+  @ApiOperation({ summary: 'Read one premium' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PremiumRow> {
+    return this.product.findPremium(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PREMIUM_CREATE.key)
+  @ApiOperation({ summary: 'Create a premium' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPremiumSchema))
+    body: z.infer<typeof createPremiumSchema>,
+  ): Promise<PremiumRow> {
+    return this.product.createPremium(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PREMIUM_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a premium' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePremiumSchema))
+    body: z.infer<typeof updatePremiumSchema>,
+  ): Promise<PremiumRow> {
+    return this.product.updatePremium(id, body, organizationId);
+  }
+}
+
+@ApiTags('claims')
+@ApiBearerAuth('access-token')
+@Controller('claims')
+export class ClaimController {
+  constructor(private readonly product: InsuranceService) {}
+
+  @Get()
+  @RequirePermissions(P.CLAIM_READ.key)
+  @ApiOperation({ summary: 'List claims' })
+  list(): Promise<ClaimRow[]> {
+    return this.product.listClaims();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CLAIM_READ.key)
+  @ApiOperation({ summary: 'Read one claim' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ClaimRow> {
+    return this.product.findClaim(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CLAIM_CREATE.key)
+  @ApiOperation({ summary: 'Create a claim' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createClaimSchema))
+    body: z.infer<typeof createClaimSchema>,
+  ): Promise<ClaimRow> {
+    return this.product.createClaim(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CLAIM_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a claim' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateClaimSchema))
+    body: z.infer<typeof updateClaimSchema>,
+  ): Promise<ClaimRow> {
+    return this.product.updateClaim(id, body, organizationId);
+  }
+}

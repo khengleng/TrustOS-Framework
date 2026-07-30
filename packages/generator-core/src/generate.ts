@@ -2,8 +2,10 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import {
+  effectiveModules,
   isFrameworkCompatible,
   requireTemplate,
+  resolveTemplateChain,
   type TemplateManifest,
 } from '@trustos/template-registry';
 import { GeneratorError } from './errors';
@@ -84,6 +86,13 @@ export const FRAMEWORK_PACKAGES = [
   'tenancy',
   'audit',
   'shared-types',
+
+  /*
+   * Not a capability a template chooses, for the same reason as `shared-types`: the shared
+   * `_base` layer itself uses the SDK's descriptors, so every generated application has it
+   * whether or not its manifest thought to ask.
+   */
+  'template-sdk',
 ] as const;
 
 /**
@@ -194,6 +203,7 @@ export async function prepareGeneration(
     description,
     port,
     adminPort: port + 1,
+    miniappPort: port + 2,
     deploymentTarget,
     isRailway: deploymentTarget === 'railway',
     includeApi,
@@ -222,8 +232,12 @@ export async function prepareGeneration(
     frameworkDependencies: buildFrameworkDependencies(
       frameworkVersion,
       request.frameworkPath,
-      // The template's own capabilities. Every `includedModule` names a `@trustos/*` package.
-      template.includedModules,
+      /*
+       * The chain's capabilities, not just this manifest's. A child's generated project contains
+       * its parents' files, and those files import their parents' packages — so a dependency
+       * list built from one manifest generates a project that does not install.
+       */
+      effectiveModules(template.id),
     ),
   };
 
@@ -266,11 +280,24 @@ export function buildFrameworkDependencies(
   return Object.fromEntries(entries);
 }
 
-/** Base layer first, template layer second so a template can override it. */
+/**
+ * The layers to apply, in order: `_base`, then every ancestor, then the template itself.
+ *
+ * Later layers override earlier ones, which is what makes inheritance work without duplication.
+ * A template contributes additive files — its Prisma fragment, its Nest module folder, its own
+ * resource list — plus three aggregators it *does* override, each of which is a list of imports
+ * naming every layer in the chain.
+ *
+ * So `hospital` extending `clinic` restates no patient field. It adds its folder and re-lists
+ * the chain, and the clinic files arrive from the layer beneath untouched. Without this, a child
+ * template would be a copy of its parent, and the copy would be correct on the day it was made.
+ */
 async function loadLayers(templatesRoot: string, templateId: string): Promise<TemplateLayer[]> {
   const layers: TemplateLayer[] = [];
 
-  for (const name of ['_base', templateId]) {
+  const chain = resolveTemplateChain(templateId).map((template) => template.id);
+
+  for (const name of ['_base', ...chain]) {
     const root = join(templatesRoot, name);
     const configPath = join(root, 'template.json');
 

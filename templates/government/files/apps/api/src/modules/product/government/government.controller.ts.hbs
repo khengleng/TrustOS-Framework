@@ -1,0 +1,382 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { GOVERNMENT_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  GovernmentService,
+  type CitizenRow,
+  type GovernmentServiceRow,
+  type ServiceApplicationRow,
+  type ServiceAppointmentRow,
+  type PublicNoticeRow,
+} from './government.service';
+
+/**
+ * TrustOS Government Services endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createCitizenSchema = z.object({
+  citizenNumber: z.string().trim().min(1).max(255),
+  fullName: z.string().trim().min(1).max(255),
+  nationalIdRef: z.string().trim().min(1).max(255).optional(),
+  dateOfBirth: z.coerce.date().optional(),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  addressLine: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'DECEASED']).optional(),
+});
+
+const updateCitizenSchema = z
+  .object({
+    fullName: z.string().trim().min(1).max(255).optional(),
+    nationalIdRef: z.string().trim().min(1).max(255).optional(),
+    dateOfBirth: z.coerce.date().optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    addressLine: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['ACTIVE', 'INACTIVE', 'DECEASED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createGovernmentServiceSchema = z.object({
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(255),
+  description: z.string().trim().min(1).max(4000).optional(),
+  workflowDefinitionId: z.string().trim().min(1).max(255).optional(),
+  processingDays: z.coerce.number().int().optional(),
+  isActive: z.coerce.boolean().optional(),
+});
+
+const updateGovernmentServiceSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    description: z.string().trim().min(1).max(4000).optional(),
+    workflowDefinitionId: z.string().trim().min(1).max(255).optional(),
+    processingDays: z.coerce.number().int().optional(),
+    isActive: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createServiceApplicationSchema = z.object({
+  reference: z.string().trim().min(1).max(255),
+  citizenId: z.string().trim().min(1).max(64),
+  serviceId: z.string().trim().min(1).max(64),
+  submittedAt: z.coerce.date(),
+  payload: z.record(z.unknown()).optional(),
+  workflowInstanceId: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'INFORMATION_REQUESTED', 'APPROVED', 'REJECTED', 'WITHDRAWN']).optional(),
+  decidedAt: z.coerce.date().optional(),
+});
+
+const updateServiceApplicationSchema = z
+  .object({
+    citizenId: z.string().trim().min(1).max(64).optional(),
+    serviceId: z.string().trim().min(1).max(64).optional(),
+    submittedAt: z.coerce.date().optional(),
+    payload: z.record(z.unknown()).optional(),
+    workflowInstanceId: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'INFORMATION_REQUESTED', 'APPROVED', 'REJECTED', 'WITHDRAWN']).optional(),
+    decidedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createServiceAppointmentSchema = z.object({
+  applicationId: z.string().trim().min(1).max(64).optional(),
+  citizenId: z.string().trim().min(1).max(64),
+  office: z.string().trim().min(1).max(255),
+  scheduledFor: z.coerce.date(),
+  status: z.enum(['BOOKED', 'ATTENDED', 'MISSED', 'CANCELLED']).optional(),
+});
+
+const updateServiceAppointmentSchema = z
+  .object({
+    applicationId: z.string().trim().min(1).max(64).optional(),
+    citizenId: z.string().trim().min(1).max(64).optional(),
+    office: z.string().trim().min(1).max(255).optional(),
+    scheduledFor: z.coerce.date().optional(),
+    status: z.enum(['BOOKED', 'ATTENDED', 'MISSED', 'CANCELLED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createPublicNoticeSchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  body: z.string().trim().min(1).max(4000),
+  publishedAt: z.coerce.date().optional(),
+  expiresAt: z.coerce.date().optional(),
+  audience: z.enum(['PUBLIC', 'REGISTERED', 'INTERNAL']).optional(),
+});
+
+const updatePublicNoticeSchema = z
+  .object({
+    title: z.string().trim().min(1).max(255).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    publishedAt: z.coerce.date().optional(),
+    expiresAt: z.coerce.date().optional(),
+    audience: z.enum(['PUBLIC', 'REGISTERED', 'INTERNAL']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('citizens')
+@ApiBearerAuth('access-token')
+@Controller('citizens')
+export class CitizenController {
+  constructor(private readonly product: GovernmentService) {}
+
+  @Get()
+  @RequirePermissions(P.CITIZEN_READ.key)
+  @ApiOperation({ summary: 'List citizens' })
+  list(): Promise<CitizenRow[]> {
+    return this.product.listCitizens();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CITIZEN_READ.key)
+  @ApiOperation({ summary: 'Read one citizen' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CitizenRow> {
+    return this.product.findCitizen(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CITIZEN_CREATE.key)
+  @ApiOperation({ summary: 'Create a citizen' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCitizenSchema))
+    body: z.infer<typeof createCitizenSchema>,
+  ): Promise<CitizenRow> {
+    return this.product.createCitizen(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CITIZEN_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a citizen' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCitizenSchema))
+    body: z.infer<typeof updateCitizenSchema>,
+  ): Promise<CitizenRow> {
+    return this.product.updateCitizen(id, body, organizationId);
+  }
+}
+
+@ApiTags('government-services')
+@ApiBearerAuth('access-token')
+@Controller('government-services')
+export class GovernmentServiceController {
+  constructor(private readonly product: GovernmentService) {}
+
+  @Get()
+  @RequirePermissions(P.GOVERNMENT_SERVICE_READ.key)
+  @ApiOperation({ summary: 'List services' })
+  list(): Promise<GovernmentServiceRow[]> {
+    return this.product.listGovernmentServices();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.GOVERNMENT_SERVICE_READ.key)
+  @ApiOperation({ summary: 'Read one service' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<GovernmentServiceRow> {
+    return this.product.findGovernmentService(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.GOVERNMENT_SERVICE_CREATE.key)
+  @ApiOperation({ summary: 'Create a service' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createGovernmentServiceSchema))
+    body: z.infer<typeof createGovernmentServiceSchema>,
+  ): Promise<GovernmentServiceRow> {
+    return this.product.createGovernmentService(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.GOVERNMENT_SERVICE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a service' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateGovernmentServiceSchema))
+    body: z.infer<typeof updateGovernmentServiceSchema>,
+  ): Promise<GovernmentServiceRow> {
+    return this.product.updateGovernmentService(id, body, organizationId);
+  }
+}
+
+@ApiTags('service-applications')
+@ApiBearerAuth('access-token')
+@Controller('service-applications')
+export class ServiceApplicationController {
+  constructor(private readonly product: GovernmentService) {}
+
+  @Get()
+  @RequirePermissions(P.SERVICE_APPLICATION_READ.key)
+  @ApiOperation({ summary: 'List applications' })
+  list(): Promise<ServiceApplicationRow[]> {
+    return this.product.listServiceApplications();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.SERVICE_APPLICATION_READ.key)
+  @ApiOperation({ summary: 'Read one application' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ServiceApplicationRow> {
+    return this.product.findServiceApplication(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.SERVICE_APPLICATION_CREATE.key)
+  @ApiOperation({ summary: 'Create a application' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createServiceApplicationSchema))
+    body: z.infer<typeof createServiceApplicationSchema>,
+  ): Promise<ServiceApplicationRow> {
+    return this.product.createServiceApplication(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.SERVICE_APPLICATION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a application' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateServiceApplicationSchema))
+    body: z.infer<typeof updateServiceApplicationSchema>,
+  ): Promise<ServiceApplicationRow> {
+    return this.product.updateServiceApplication(id, body, organizationId);
+  }
+}
+
+@ApiTags('service-appointments')
+@ApiBearerAuth('access-token')
+@Controller('service-appointments')
+export class ServiceAppointmentController {
+  constructor(private readonly product: GovernmentService) {}
+
+  @Get()
+  @RequirePermissions(P.SERVICE_APPOINTMENT_READ.key)
+  @ApiOperation({ summary: 'List appointments' })
+  list(): Promise<ServiceAppointmentRow[]> {
+    return this.product.listServiceAppointments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.SERVICE_APPOINTMENT_READ.key)
+  @ApiOperation({ summary: 'Read one appointment' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ServiceAppointmentRow> {
+    return this.product.findServiceAppointment(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.SERVICE_APPOINTMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a appointment' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createServiceAppointmentSchema))
+    body: z.infer<typeof createServiceAppointmentSchema>,
+  ): Promise<ServiceAppointmentRow> {
+    return this.product.createServiceAppointment(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.SERVICE_APPOINTMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a appointment' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateServiceAppointmentSchema))
+    body: z.infer<typeof updateServiceAppointmentSchema>,
+  ): Promise<ServiceAppointmentRow> {
+    return this.product.updateServiceAppointment(id, body, organizationId);
+  }
+}
+
+@ApiTags('public-notices')
+@ApiBearerAuth('access-token')
+@Controller('public-notices')
+export class PublicNoticeController {
+  constructor(private readonly product: GovernmentService) {}
+
+  @Get()
+  @RequirePermissions(P.PUBLIC_NOTICE_READ.key)
+  @ApiOperation({ summary: 'List notices' })
+  list(): Promise<PublicNoticeRow[]> {
+    return this.product.listPublicNotices();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PUBLIC_NOTICE_READ.key)
+  @ApiOperation({ summary: 'Read one notice' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PublicNoticeRow> {
+    return this.product.findPublicNotice(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PUBLIC_NOTICE_CREATE.key)
+  @ApiOperation({ summary: 'Create a notice' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPublicNoticeSchema))
+    body: z.infer<typeof createPublicNoticeSchema>,
+  ): Promise<PublicNoticeRow> {
+    return this.product.createPublicNotice(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PUBLIC_NOTICE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a notice' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePublicNoticeSchema))
+    body: z.infer<typeof updatePublicNoticeSchema>,
+  ): Promise<PublicNoticeRow> {
+    return this.product.updatePublicNotice(id, body, organizationId);
+  }
+}

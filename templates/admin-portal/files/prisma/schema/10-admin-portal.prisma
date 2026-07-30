@@ -1,0 +1,56 @@
+// =============================================================================
+// TrustOS Admin Portal — product models
+//
+// An internal back office over the framework itself: users, roles,
+// permissions, system health, audit and configuration. Almost no domain of
+// its own, by design.
+//
+// Out of scope, deliberately: business domain entities, external monitoring
+// systems, log aggregation, incident management, secret storage backends.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+/// A runtime-editable setting. `isSecret` values are never returned by the API
+/// and never written to the audit trail — only the fact that they changed is.
+model SystemSetting {
+  id             String @id @default(cuid())
+  organizationId String
+  key String
+  value String
+  description String
+  category String
+  isSecret Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, key])
+  @@index([organizationId, category])
+  @@index([organizationId, isSecret])
+  @@index([deletedAt])
+}
+
+/// What an operator did and why, attached to whatever they did it to. The gap
+/// the audit trail cannot fill: audit records the change, this records the
+/// reason.
+model OperatorNote {
+  id             String @id @default(cuid())
+  organizationId String
+  subjectType String
+  subjectId String
+  body String
+  authorUserId String?
+  pinnedUntil DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, subjectType])
+  @@index([deletedAt])
+}

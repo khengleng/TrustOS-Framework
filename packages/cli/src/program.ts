@@ -4,6 +4,8 @@ import { CLI_VERSION } from './version';
 import { createOutput, formatRows, type Output } from './output';
 import { runNew } from './commands/new';
 import { runListTemplates } from './commands/list-templates';
+import { runTemplates } from './commands/templates';
+import { runTemplateDoctor, runUpdateTemplate } from './commands/template-doctor';
 import { runValidateTemplate } from './commands/validate-template';
 import { runWorkflowList, runWorkflowSimulate, runWorkflowValidate } from './commands/workflow';
 import { runDoctor, type DoctorReport } from './commands/doctor';
@@ -33,6 +35,21 @@ export interface BuildProgramOptions {
   output?: Output;
   /** Overridden by tests so nothing calls process.exit. */
   exit?: (code: number) => void;
+}
+
+/**
+ * Merges a `--json` that Commander assigned to the parent command.
+ *
+ * When a parent and a subcommand both declare `--json`, Commander 12 puts the value on the
+ * *parent* — so `trustos doctor template --json` leaves the subcommand's copy undefined and the
+ * flag is silently ignored. A script piping the output into jq gets a table instead, which reads
+ * as the command being broken rather than the flag being dropped.
+ */
+function withParentJson<T extends { json?: boolean }>(
+  opts: T,
+  command: { parent?: { opts: () => { json?: boolean } } },
+): T {
+  return { ...opts, json: opts.json ?? command.parent?.opts().json };
 }
 
 export function buildProgram(options: BuildProgramOptions = {}): Command {
@@ -97,6 +114,36 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
       );
     });
 
+  // --- templates ------------------------------------------------------------
+  //
+  // The catalog, grouped by category and showing inheritance. `list-templates` prints a flat
+  // list, which was right for six templates and is wrong for thirty — it is kept unchanged
+  // because scripts call it.
+  program
+    .command('templates')
+    .description('browse the template library by category')
+    .option('--json', 'machine-readable output')
+    .option('--verbose', 'show apps, entities, children, owner and exclusions')
+    .option('--category <name>', 'only one category')
+    .option('--all', 'include deprecated templates')
+    .action((opts: { json?: boolean; verbose?: boolean; category?: string; all?: boolean }) => {
+      setExit(runTemplates(opts, output));
+    });
+
+  // --- update-template ------------------------------------------------------
+  //
+  // Reports, never rewrites. By the time a project is worth upgrading somebody has edited most
+  // of what the template wrote, and re-rendering over their work would clobber it — see the
+  // header of template-doctor.ts.
+  program
+    .command('update-template')
+    .description('report what has changed in the template since this project was generated')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--json', 'machine-readable output')
+    .action(async (opts: { path?: string; json?: boolean }) => {
+      setExit(await runUpdateTemplate(opts, output));
+    });
+
   // --- list-templates -------------------------------------------------------
   program
     .command('list-templates')
@@ -115,6 +162,7 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
     .option('--json', 'machine-readable output')
     .option('--all', 'validate every registered template')
     .option('--templates-root <path>', 'override the templates directory')
+    .option('--framework-version <version>', 'check compatibility against this framework version')
     .action(async (template: string | undefined, opts: Record<string, unknown>) => {
       setExit(await runValidateTemplate(template, opts, output));
     });
@@ -182,14 +230,33 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
     });
 
   doctor
+    .command('template')
+    .description('check that a generated application still matches the template it came from')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--json', 'machine-readable output')
+    .action(
+      async (
+        opts: { path?: string; json?: boolean },
+        command: { parent?: { opts: () => { json?: boolean } } },
+      ) => {
+        setExit(await runTemplateDoctor(withParentJson(opts, command), output));
+      },
+    );
+
+  doctor
     .command('integrations')
     .description('check an application’s event, webhook, job, schedule and sync wiring')
     .option('--path <dir>', 'application directory (default: nearest trustos.json)')
     .option('--json', 'machine-readable output')
     .option('--verbose', 'explain what this check cannot see')
-    .action(async (opts: { path?: string; json?: boolean; verbose?: boolean }) => {
-      setExit(await runDoctorIntegrations(opts, output));
-    });
+    .action(
+      async (
+        opts: { path?: string; json?: boolean; verbose?: boolean },
+        command: { parent?: { opts: () => { json?: boolean } } },
+      ) => {
+        setExit(await runDoctorIntegrations(withParentJson(opts, command), output));
+      },
+    );
 
   // --- ai -------------------------------------------------------------------
   //
@@ -325,7 +392,8 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
       '  trustos new merchant                     interactive',
       '  trustos new generic-saas --yes           accept every default',
       '  trustos new learning --dry-run --verbose preview every file',
-      '  trustos list-templates --verbose',
+      '  trustos templates --category health',
+      '  trustos templates --verbose',
       '  trustos validate-template --all',
       '  trustos list-modules --verbose',
       '  trustos add-module notification --dry-run',

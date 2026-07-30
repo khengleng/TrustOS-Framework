@@ -1,0 +1,379 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { ECOMMERCE_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  EcommerceService,
+  type CatalogRow,
+  type ProductRow,
+  type ProductVariantRow,
+  type OrderRow,
+  type OrderLineRow,
+} from './ecommerce.service';
+
+/**
+ * TrustOS E-commerce endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createCatalogSchema = z.object({
+  storeId: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  isDefault: z.coerce.boolean().optional(),
+});
+
+const updateCatalogSchema = z
+  .object({
+    storeId: z.string().trim().min(1).max(64).optional(),
+    name: z.string().trim().min(1).max(255).optional(),
+    isDefault: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createProductSchema = z.object({
+  catalogId: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(255),
+  sku: z.string().trim().min(1).max(255),
+  description: z.string().trim().min(1).max(4000).optional(),
+  status: z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']).optional(),
+});
+
+const updateProductSchema = z
+  .object({
+    catalogId: z.string().trim().min(1).max(64).optional(),
+    name: z.string().trim().min(1).max(255).optional(),
+    sku: z.string().trim().min(1).max(255).optional(),
+    description: z.string().trim().min(1).max(4000).optional(),
+    status: z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createProductVariantSchema = z.object({
+  productId: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(255),
+  sku: z.string().trim().min(1).max(255),
+  price: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  isActive: z.coerce.boolean().optional(),
+});
+
+const updateProductVariantSchema = z
+  .object({
+    productId: z.string().trim().min(1).max(64).optional(),
+    name: z.string().trim().min(1).max(255).optional(),
+    sku: z.string().trim().min(1).max(255).optional(),
+    price: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    isActive: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createOrderSchema = z.object({
+  storeId: z.string().trim().min(1).max(64),
+  reference: z.string().trim().min(1).max(255),
+  customerName: z.string().trim().min(1).max(255),
+  customerPhone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  status: z.enum(['PENDING', 'CONFIRMED', 'FULFILLED', 'CANCELLED', 'REFUNDED']).optional(),
+  total: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  placedAt: z.coerce.date(),
+});
+
+const updateOrderSchema = z
+  .object({
+    storeId: z.string().trim().min(1).max(64).optional(),
+    customerName: z.string().trim().min(1).max(255).optional(),
+    customerPhone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    status: z.enum(['PENDING', 'CONFIRMED', 'FULFILLED', 'CANCELLED', 'REFUNDED']).optional(),
+    total: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    placedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createOrderLineSchema = z.object({
+  orderId: z.string().trim().min(1).max(64),
+  variantId: z.string().trim().min(1).max(64),
+  description: z.string().trim().min(1).max(255),
+  quantity: z.coerce.number().int(),
+  unitPrice: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  lineTotal: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+});
+
+const updateOrderLineSchema = z
+  .object({
+    orderId: z.string().trim().min(1).max(64).optional(),
+    variantId: z.string().trim().min(1).max(64).optional(),
+    description: z.string().trim().min(1).max(255).optional(),
+    quantity: z.coerce.number().int().optional(),
+    unitPrice: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    lineTotal: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('catalogs')
+@ApiBearerAuth('access-token')
+@Controller('catalogs')
+export class CatalogController {
+  constructor(private readonly product: EcommerceService) {}
+
+  @Get()
+  @RequirePermissions(P.CATALOG_READ.key)
+  @ApiOperation({ summary: 'List catalogs' })
+  list(): Promise<CatalogRow[]> {
+    return this.product.listCatalogs();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CATALOG_READ.key)
+  @ApiOperation({ summary: 'Read one catalog' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CatalogRow> {
+    return this.product.findCatalog(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CATALOG_CREATE.key)
+  @ApiOperation({ summary: 'Create a catalog' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCatalogSchema))
+    body: z.infer<typeof createCatalogSchema>,
+  ): Promise<CatalogRow> {
+    return this.product.createCatalog(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CATALOG_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a catalog' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCatalogSchema))
+    body: z.infer<typeof updateCatalogSchema>,
+  ): Promise<CatalogRow> {
+    return this.product.updateCatalog(id, body, organizationId);
+  }
+}
+
+@ApiTags('products')
+@ApiBearerAuth('access-token')
+@Controller('products')
+export class ProductController {
+  constructor(private readonly product: EcommerceService) {}
+
+  @Get()
+  @RequirePermissions(P.PRODUCT_READ.key)
+  @ApiOperation({ summary: 'List products' })
+  list(): Promise<ProductRow[]> {
+    return this.product.listProducts();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PRODUCT_READ.key)
+  @ApiOperation({ summary: 'Read one product' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ProductRow> {
+    return this.product.findProduct(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PRODUCT_CREATE.key)
+  @ApiOperation({ summary: 'Create a product' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createProductSchema))
+    body: z.infer<typeof createProductSchema>,
+  ): Promise<ProductRow> {
+    return this.product.createProduct(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PRODUCT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a product' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateProductSchema))
+    body: z.infer<typeof updateProductSchema>,
+  ): Promise<ProductRow> {
+    return this.product.updateProduct(id, body, organizationId);
+  }
+}
+
+@ApiTags('product-variants')
+@ApiBearerAuth('access-token')
+@Controller('product-variants')
+export class ProductVariantController {
+  constructor(private readonly product: EcommerceService) {}
+
+  @Get()
+  @RequirePermissions(P.PRODUCT_VARIANT_READ.key)
+  @ApiOperation({ summary: 'List variants' })
+  list(): Promise<ProductVariantRow[]> {
+    return this.product.listProductVariants();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PRODUCT_VARIANT_READ.key)
+  @ApiOperation({ summary: 'Read one variant' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ProductVariantRow> {
+    return this.product.findProductVariant(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PRODUCT_VARIANT_CREATE.key)
+  @ApiOperation({ summary: 'Create a variant' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createProductVariantSchema))
+    body: z.infer<typeof createProductVariantSchema>,
+  ): Promise<ProductVariantRow> {
+    return this.product.createProductVariant(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PRODUCT_VARIANT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a variant' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateProductVariantSchema))
+    body: z.infer<typeof updateProductVariantSchema>,
+  ): Promise<ProductVariantRow> {
+    return this.product.updateProductVariant(id, body, organizationId);
+  }
+}
+
+@ApiTags('orders')
+@ApiBearerAuth('access-token')
+@Controller('orders')
+export class OrderController {
+  constructor(private readonly product: EcommerceService) {}
+
+  @Get()
+  @RequirePermissions(P.ORDER_READ.key)
+  @ApiOperation({ summary: 'List orders' })
+  list(): Promise<OrderRow[]> {
+    return this.product.listOrders();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.ORDER_READ.key)
+  @ApiOperation({ summary: 'Read one order' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<OrderRow> {
+    return this.product.findOrder(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.ORDER_CREATE.key)
+  @ApiOperation({ summary: 'Create a order' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createOrderSchema))
+    body: z.infer<typeof createOrderSchema>,
+  ): Promise<OrderRow> {
+    return this.product.createOrder(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.ORDER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a order' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateOrderSchema))
+    body: z.infer<typeof updateOrderSchema>,
+  ): Promise<OrderRow> {
+    return this.product.updateOrder(id, body, organizationId);
+  }
+}
+
+@ApiTags('order-lines')
+@ApiBearerAuth('access-token')
+@Controller('order-lines')
+export class OrderLineController {
+  constructor(private readonly product: EcommerceService) {}
+
+  @Get()
+  @RequirePermissions(P.ORDER_LINE_READ.key)
+  @ApiOperation({ summary: 'List order lines' })
+  list(): Promise<OrderLineRow[]> {
+    return this.product.listOrderLines();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.ORDER_LINE_READ.key)
+  @ApiOperation({ summary: 'Read one order line' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<OrderLineRow> {
+    return this.product.findOrderLine(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.ORDER_LINE_CREATE.key)
+  @ApiOperation({ summary: 'Create a order line' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createOrderLineSchema))
+    body: z.infer<typeof createOrderLineSchema>,
+  ): Promise<OrderLineRow> {
+    return this.product.createOrderLine(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.ORDER_LINE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a order line' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateOrderLineSchema))
+    body: z.infer<typeof updateOrderLineSchema>,
+  ): Promise<OrderLineRow> {
+    return this.product.updateOrderLine(id, body, organizationId);
+  }
+}

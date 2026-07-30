@@ -1,0 +1,183 @@
+/**
+ * TrustOS Helpdesk — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { HELPDESK_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const HELPDESK_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'ticket-queues',
+    label: 'Queues',
+    singular: 'Queue',
+    endpoint: '/ticket-queues',
+    description: "Where tickets land before somebody picks them up.",
+    table: {
+      key: 'ticket-queues',
+      label: 'Queues',
+      endpoint: '/ticket-queues',
+      emptyHint: 'Create one with POST /api/ticket-queues.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'name', label: 'Queue' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'description', label: 'Description' },
+        { key: 'isActive', label: 'Active', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    permissions: {
+      list: P.TICKET_QUEUE_READ.key,
+      read: P.TICKET_QUEUE_READ.key,
+      create: P.TICKET_QUEUE_CREATE.key,
+      update: P.TICKET_QUEUE_UPDATE.key,
+    },
+  },
+  {
+    key: 'support-agents',
+    label: 'Agents',
+    singular: 'Agent',
+    endpoint: '/support-agents',
+    description: "Somebody who works tickets.",
+    table: {
+      key: 'support-agents',
+      label: 'Agents',
+      endpoint: '/support-agents',
+      emptyHint: 'Create one with POST /api/support-agents.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'userId', label: 'User', sortable: true },
+        { key: 'displayName', label: 'Agent' },
+        { key: 'queueId', label: 'Primary queue', format: 'reference' },
+        { key: 'isAvailable', label: 'Available', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isAvailable', label: 'Available', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'displayName', label: 'Agent' },
+      ],
+    },
+    permissions: {
+      list: P.SUPPORT_AGENT_READ.key,
+      read: P.SUPPORT_AGENT_READ.key,
+      create: P.SUPPORT_AGENT_CREATE.key,
+      update: P.SUPPORT_AGENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'sla-policies',
+    label: 'SLA policies',
+    singular: 'SLA policy',
+    endpoint: '/sla-policies',
+    description: "Response and resolution targets per priority.",
+    table: {
+      key: 'sla-policies',
+      label: 'SLA policies',
+      endpoint: '/sla-policies',
+      emptyHint: 'Create one with POST /api/sla-policies.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'name', label: 'Policy' },
+        { key: 'priority', label: 'Priority', format: 'badge', sortable: true },
+        { key: 'firstResponseMinutes', label: 'First response (min)', format: 'number' },
+        { key: 'resolutionMinutes', label: 'Resolution (min)', format: 'number' },
+        { key: 'businessHoursOnly', label: 'Business hours', format: 'badge' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    permissions: {
+      list: P.SLA_POLICY_READ.key,
+      read: P.SLA_POLICY_READ.key,
+      create: P.SLA_POLICY_CREATE.key,
+      update: P.SLA_POLICY_UPDATE.key,
+    },
+  },
+  {
+    key: 'tickets',
+    label: 'Tickets',
+    singular: 'Ticket',
+    endpoint: '/tickets',
+    description: "A request for help.",
+    table: {
+      key: 'tickets',
+      label: 'Tickets',
+      endpoint: '/tickets',
+      emptyHint: 'Create one with POST /api/tickets.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'queueId', label: 'Queue', format: 'reference' },
+        { key: 'assigneeId', label: 'Assignee', format: 'reference' },
+        { key: 'requesterName', label: 'Requester' },
+        { key: 'requesterEmail', label: 'Email' },
+        { key: 'subject', label: 'Subject' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'priority', label: 'Priority', type: 'enum', operators: ['eq', 'in'], options: [{"value":"LOW","label":"Low"},{"value":"NORMAL","label":"Normal"},{"value":"HIGH","label":"High"},{"value":"URGENT","label":"Urgent"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"NEW","label":"New"},{"value":"OPEN","label":"Open"},{"value":"PENDING","label":"Pending"},{"value":"RESOLVED","label":"Resolved"},{"value":"CLOSED","label":"Closed"}] },
+      { key: 'openedAt', label: 'Opened', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+        { key: 'requesterName', label: 'Requester' },
+        { key: 'requesterEmail', label: 'Email' },
+        { key: 'subject', label: 'Subject' },
+      ],
+    },
+    permissions: {
+      list: P.TICKET_READ.key,
+      read: P.TICKET_READ.key,
+      create: P.TICKET_CREATE.key,
+      update: P.TICKET_UPDATE.key,
+    },
+  },
+  {
+    key: 'ticket-comments',
+    label: 'Comments',
+    singular: 'Comment',
+    endpoint: '/ticket-comments',
+    description: "A message on a ticket.",
+    table: {
+      key: 'ticket-comments',
+      label: 'Comments',
+      endpoint: '/ticket-comments',
+      emptyHint: 'Create one with POST /api/ticket-comments.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'ticketId', label: 'Ticket', format: 'reference' },
+        { key: 'authorUserId', label: 'Author' },
+        { key: 'body', label: 'Comment' },
+        { key: 'isInternal', label: 'Internal', format: 'badge', sortable: true },
+        { key: 'postedAt', label: 'Posted', format: 'datetime' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isInternal', label: 'Internal', type: 'boolean', operators: ['eq'] },
+    ],
+    permissions: {
+      list: P.TICKET_COMMENT_READ.key,
+      read: P.TICKET_COMMENT_READ.key,
+      create: P.TICKET_COMMENT_CREATE.key,
+      update: P.TICKET_COMMENT_UPDATE.key,
+    },
+  },
+];

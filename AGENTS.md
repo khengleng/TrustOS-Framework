@@ -455,6 +455,68 @@ Read [docs/financial-security.md](docs/financial-security.md) before changing an
 `ledger/ledger.ts`, `financial-core/decimal.ts`, `wallet/service.ts` or the phase 8 section of the
 Prisma migration. The checks in those files look redundant and are not.
 
+## Template rules (phase 9)
+
+The industry template library. Thirty templates, one SDK, one registry. Fourteen rules on top of
+everything above.
+
+1. **Always reuse framework packages.** Auth, RBAC, tenancy, audit, workflow, ledger, limits and
+   `@trustos/template-sdk` already exist. A template that writes its own permission check has
+   written a second, worse one, and the two will disagree.
+
+2. **Never duplicate a module.** If two templates need the same thing, it belongs in `_base` or in
+   a parent template. The shared mini app shell is in `_base` for exactly this reason — three
+   copies of a WebView handshake would be three chances to get the verification wrong.
+
+3. **`templates/` is generated. The source is `scripts/template-specs.mjs`.** Editing a file under
+   `templates/` directly is a change the next regeneration discards. Change the spec, then run all
+   three sync scripts:
+   `scaffold-industry-templates.mjs`, `sync-template-registry.mjs`, `sync-industry-reference.mjs`.
+
+4. **Prefer `extends` to a new standalone template.** A hospital is a clinic plus wards. Copying a
+   parent gives two files identical on the day they are written and quietly different a year
+   later.
+
+5. **Every product model carries `organizationId`.** A model without it cannot be scoped, so every
+   query over it returns every tenant's rows — and nothing fails. `validate-template` refuses it.
+
+6. **No float and no bare `Int` for money.** `Decimal @db.Decimal(28, 8)`, or an integer
+   minor-unit column with a `///` comment saying so. Phase 8's rule, checked mechanically here.
+
+7. **Always audit writes.** A change with no audit row is a change nobody can answer questions
+   about six months later, and the question always arrives at the worst moment.
+
+8. **Personal data gets its own permission.** Mark the field `pii`. The API projects the column
+   away server-side; a column hidden in CSS is still in the payload.
+
+9. **Permission keys are permanent.** Add freely, never rename. A renamed key silently revokes
+   access on every deployment that has not been migrated and grants it on none.
+
+10. **Declare every module and its prerequisites.** A manifest naming `wallet` without `ledger`
+    generates an application whose wallet cannot compute a balance, and it fails on the first
+    request in a project nobody has opened yet.
+
+11. **Always generate documentation.** Every manifest names a `documentation` page and the
+    validator checks it exists. A deprecated template names its successor, or the manifest is
+    refused.
+
+12. **Always generate tests.** Every template ships a tenant-isolation test.
+    `validate-template` fails a template that ships none — tenant leakage is the quietest failure
+    a generated application can have.
+
+13. **Always validate compatibility.** `trustos validate-template <id>` before claiming a template
+    change works, and `trustos new <id> --framework-path .` before claiming it generates.
+
+14. **Stop after completing phase 9.** Do not begin phase 10. Do not add a business-specific
+    integration, a payment provider, a government API, an external AI provider or a cloud vendor
+    service to any template. Every one of those is a seam a deployment fills, and a template that
+    filled one for everybody is a template only one deployment can use.
+
+Read [docs/template-development-guide.md](docs/template-development-guide.md) before adding or
+changing a template, and [docs/template-sdk.md](docs/template-sdk.md) before building a screen.
+The rule that catches people out: **the server reads the resource declaration first.** A column
+permission, a filter allow-list or a menu entry enforced only in the browser is not enforced.
+
 ## Before claiming a change is done
 
 ```bash
@@ -463,6 +525,7 @@ npm run format:check
 npm run build:packages
 npm test
 npm run migrate:drift -w @trustos/database   # needs a database
+npx trustos validate-template --all          # after any template change
 ```
 
 All of them must pass. **Never claim something works because it compiles.** If a test

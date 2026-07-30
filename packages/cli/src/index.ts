@@ -10,6 +10,8 @@ export { CLI_VERSION } from './version';
 export { createOutput, createCapturingOutput, type Output } from './output';
 export { runDoctor, type DoctorReport, type DoctorCheck } from './commands/doctor';
 export { runListTemplates } from './commands/list-templates';
+export { runTemplates } from './commands/templates';
+export { runTemplateDoctor, runUpdateTemplate } from './commands/template-doctor';
 export { runValidateTemplate } from './commands/validate-template';
 export { runNew } from './commands/new';
 export {

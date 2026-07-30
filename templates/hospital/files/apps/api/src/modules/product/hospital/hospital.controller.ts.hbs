@@ -1,0 +1,296 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { HOSPITAL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  HospitalService,
+  type HospitalDepartmentRow,
+  type WardRow,
+  type BedRow,
+  type AdmissionRow,
+} from './hospital.service';
+
+/**
+ * TrustOS Hospital endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createHospitalDepartmentSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  headPractitionerId: z.string().trim().min(1).max(64).optional(),
+  isActive: z.coerce.boolean().optional(),
+});
+
+const updateHospitalDepartmentSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    headPractitionerId: z.string().trim().min(1).max(64).optional(),
+    isActive: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createWardSchema = z.object({
+  departmentId: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  bedCount: z.coerce.number().int(),
+});
+
+const updateWardSchema = z
+  .object({
+    departmentId: z.string().trim().min(1).max(64).optional(),
+    name: z.string().trim().min(1).max(255).optional(),
+    bedCount: z.coerce.number().int().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createBedSchema = z.object({
+  wardId: z.string().trim().min(1).max(64),
+  label: z.string().trim().min(1).max(255),
+  status: z.enum(['AVAILABLE', 'OCCUPIED', 'CLEANING', 'OUT_OF_SERVICE']).optional(),
+});
+
+const updateBedSchema = z
+  .object({
+    wardId: z.string().trim().min(1).max(64).optional(),
+    label: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['AVAILABLE', 'OCCUPIED', 'CLEANING', 'OUT_OF_SERVICE']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createAdmissionSchema = z.object({
+  patientId: z.string().trim().min(1).max(64),
+  bedId: z.string().trim().min(1).max(64),
+  admittingPractitionerId: z.string().trim().min(1).max(64),
+  reference: z.string().trim().min(1).max(255),
+  admittedAt: z.coerce.date(),
+  dischargedAt: z.coerce.date().optional(),
+  status: z.enum(['ADMITTED', 'TRANSFERRED', 'DISCHARGED']).optional(),
+});
+
+const updateAdmissionSchema = z
+  .object({
+    patientId: z.string().trim().min(1).max(64).optional(),
+    bedId: z.string().trim().min(1).max(64).optional(),
+    admittingPractitionerId: z.string().trim().min(1).max(64).optional(),
+    admittedAt: z.coerce.date().optional(),
+    dischargedAt: z.coerce.date().optional(),
+    status: z.enum(['ADMITTED', 'TRANSFERRED', 'DISCHARGED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('hospital-departments')
+@ApiBearerAuth('access-token')
+@Controller('hospital-departments')
+export class HospitalDepartmentController {
+  constructor(private readonly product: HospitalService) {}
+
+  @Get()
+  @RequirePermissions(P.HOSPITAL_DEPARTMENT_READ.key)
+  @ApiOperation({ summary: 'List departments' })
+  list(): Promise<HospitalDepartmentRow[]> {
+    return this.product.listHospitalDepartments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.HOSPITAL_DEPARTMENT_READ.key)
+  @ApiOperation({ summary: 'Read one department' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<HospitalDepartmentRow> {
+    return this.product.findHospitalDepartment(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.HOSPITAL_DEPARTMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a department' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createHospitalDepartmentSchema))
+    body: z.infer<typeof createHospitalDepartmentSchema>,
+  ): Promise<HospitalDepartmentRow> {
+    return this.product.createHospitalDepartment(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.HOSPITAL_DEPARTMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a department' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateHospitalDepartmentSchema))
+    body: z.infer<typeof updateHospitalDepartmentSchema>,
+  ): Promise<HospitalDepartmentRow> {
+    return this.product.updateHospitalDepartment(id, body, organizationId);
+  }
+}
+
+@ApiTags('wards')
+@ApiBearerAuth('access-token')
+@Controller('wards')
+export class WardController {
+  constructor(private readonly product: HospitalService) {}
+
+  @Get()
+  @RequirePermissions(P.WARD_READ.key)
+  @ApiOperation({ summary: 'List wards' })
+  list(): Promise<WardRow[]> {
+    return this.product.listWards();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.WARD_READ.key)
+  @ApiOperation({ summary: 'Read one ward' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<WardRow> {
+    return this.product.findWard(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.WARD_CREATE.key)
+  @ApiOperation({ summary: 'Create a ward' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createWardSchema))
+    body: z.infer<typeof createWardSchema>,
+  ): Promise<WardRow> {
+    return this.product.createWard(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.WARD_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a ward' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateWardSchema))
+    body: z.infer<typeof updateWardSchema>,
+  ): Promise<WardRow> {
+    return this.product.updateWard(id, body, organizationId);
+  }
+}
+
+@ApiTags('beds')
+@ApiBearerAuth('access-token')
+@Controller('beds')
+export class BedController {
+  constructor(private readonly product: HospitalService) {}
+
+  @Get()
+  @RequirePermissions(P.BED_READ.key)
+  @ApiOperation({ summary: 'List beds' })
+  list(): Promise<BedRow[]> {
+    return this.product.listBeds();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.BED_READ.key)
+  @ApiOperation({ summary: 'Read one bed' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<BedRow> {
+    return this.product.findBed(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.BED_CREATE.key)
+  @ApiOperation({ summary: 'Create a bed' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createBedSchema))
+    body: z.infer<typeof createBedSchema>,
+  ): Promise<BedRow> {
+    return this.product.createBed(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.BED_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a bed' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateBedSchema))
+    body: z.infer<typeof updateBedSchema>,
+  ): Promise<BedRow> {
+    return this.product.updateBed(id, body, organizationId);
+  }
+}
+
+@ApiTags('admissions')
+@ApiBearerAuth('access-token')
+@Controller('admissions')
+export class AdmissionController {
+  constructor(private readonly product: HospitalService) {}
+
+  @Get()
+  @RequirePermissions(P.ADMISSION_READ.key)
+  @ApiOperation({ summary: 'List admissions' })
+  list(): Promise<AdmissionRow[]> {
+    return this.product.listAdmissions();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.ADMISSION_READ.key)
+  @ApiOperation({ summary: 'Read one admission' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<AdmissionRow> {
+    return this.product.findAdmission(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.ADMISSION_CREATE.key)
+  @ApiOperation({ summary: 'Create a admission' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createAdmissionSchema))
+    body: z.infer<typeof createAdmissionSchema>,
+  ): Promise<AdmissionRow> {
+    return this.product.createAdmission(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.ADMISSION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a admission' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateAdmissionSchema))
+    body: z.infer<typeof updateAdmissionSchema>,
+  ): Promise<AdmissionRow> {
+    return this.product.updateAdmission(id, body, organizationId);
+  }
+}

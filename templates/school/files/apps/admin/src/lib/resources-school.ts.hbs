@@ -1,0 +1,178 @@
+/**
+ * TrustOS School — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { SCHOOL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const SCHOOL_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'academic-terms',
+    label: 'Terms',
+    singular: 'Term',
+    endpoint: '/academic-terms',
+    description: "A teaching period.",
+    table: {
+      key: 'academic-terms',
+      label: 'Terms',
+      endpoint: '/academic-terms',
+      emptyHint: 'Create one with POST /api/academic-terms.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'name', label: 'Term' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'startsOn', label: 'Starts', format: 'date' },
+        { key: 'endsOn', label: 'Ends', format: 'date' },
+        { key: 'isCurrent', label: 'Current', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isCurrent', label: 'Current', type: 'boolean', operators: ['eq'] },
+    ],
+    permissions: {
+      list: P.ACADEMIC_TERM_READ.key,
+      read: P.ACADEMIC_TERM_READ.key,
+      create: P.ACADEMIC_TERM_CREATE.key,
+      update: P.ACADEMIC_TERM_UPDATE.key,
+    },
+  },
+  {
+    key: 'class-groups',
+    label: 'Classes',
+    singular: 'Class',
+    endpoint: '/class-groups',
+    description: "A set of students taught together for a term.",
+    table: {
+      key: 'class-groups',
+      label: 'Classes',
+      endpoint: '/class-groups',
+      emptyHint: 'Create one with POST /api/class-groups.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'termId', label: 'Term', format: 'reference' },
+        { key: 'courseId', label: 'Course', format: 'reference' },
+        { key: 'teacherId', label: 'Teacher', format: 'reference' },
+        { key: 'name', label: 'Class' },
+        { key: 'room', label: 'Room' },
+        { key: 'capacity', label: 'Capacity', format: 'number' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    search: {
+      fields: [
+        { key: 'name', label: 'Class' },
+      ],
+    },
+    permissions: {
+      list: P.CLASS_GROUP_READ.key,
+      read: P.CLASS_GROUP_READ.key,
+      create: P.CLASS_GROUP_CREATE.key,
+      update: P.CLASS_GROUP_UPDATE.key,
+    },
+  },
+  {
+    key: 'attendances',
+    label: 'Attendance',
+    singular: 'Attendance record',
+    endpoint: '/attendances',
+    description: "One student, one session.",
+    table: {
+      key: 'attendances',
+      label: 'Attendance',
+      endpoint: '/attendances',
+      emptyHint: 'Create one with POST /api/attendances.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'classGroupId', label: 'Class', format: 'reference' },
+        { key: 'studentId', label: 'Student', format: 'reference' },
+        { key: 'sessionOn', label: 'Date', format: 'date', sortable: true },
+        { key: 'period', label: 'Period', format: 'number' },
+        { key: 'state', label: 'State', format: 'badge', sortable: true },
+        { key: 'note', label: 'Note' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'sessionOn', label: 'Date', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'state', label: 'State', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PRESENT","label":"Present"},{"value":"ABSENT","label":"Absent"},{"value":"LATE","label":"Late"},{"value":"EXCUSED","label":"Excused"}] },
+    ],
+    permissions: {
+      list: P.ATTENDANCE_READ.key,
+      read: P.ATTENDANCE_READ.key,
+      create: P.ATTENDANCE_CREATE.key,
+      update: P.ATTENDANCE_UPDATE.key,
+    },
+  },
+  {
+    key: 'grades',
+    label: 'Grades',
+    singular: 'Grade',
+    endpoint: '/grades',
+    description: "A mark for a student in a class, for a term.",
+    table: {
+      key: 'grades',
+      label: 'Grades',
+      endpoint: '/grades',
+      emptyHint: 'Create one with POST /api/grades.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'classGroupId', label: 'Class', format: 'reference' },
+        { key: 'studentId', label: 'Student', format: 'reference' },
+        { key: 'component', label: 'Component' },
+        { key: 'marksAwarded', label: 'Marks', format: 'number' },
+        { key: 'maxMarks', label: 'Out of', format: 'number' },
+        { key: 'recordedAt', label: 'Recorded', format: 'datetime' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    permissions: {
+      list: P.GRADE_READ.key,
+      read: P.GRADE_READ.key,
+      create: P.GRADE_CREATE.key,
+      update: P.GRADE_UPDATE.key,
+    },
+  },
+  {
+    key: 'guardians',
+    label: 'Guardians',
+    singular: 'Guardian',
+    endpoint: '/guardians',
+    description: "A parent or carer.",
+    table: {
+      key: 'guardians',
+      label: 'Guardians',
+      endpoint: '/guardians',
+      emptyHint: 'Create one with POST /api/guardians.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'studentId', label: 'Student', format: 'reference' },
+        { key: 'fullName', label: 'Guardian' },
+        { key: 'relationship', label: 'Relationship' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'email', label: 'Email' },
+        { key: 'isPrimaryContact', label: 'Primary', format: 'badge' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    search: {
+      fields: [
+        { key: 'fullName', label: 'Guardian' },
+      ],
+    },
+    permissions: {
+      list: P.GUARDIAN_READ.key,
+      read: P.GUARDIAN_READ.key,
+      create: P.GUARDIAN_CREATE.key,
+      update: P.GUARDIAN_UPDATE.key,
+    },
+  },
+];

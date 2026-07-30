@@ -1,0 +1,527 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { CRM_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  CrmService,
+  type CustomerRow,
+  type ContactRow,
+  type LeadRow,
+  type PipelineStageRow,
+  type OpportunityRow,
+  type ActivityRow,
+  type CrmTaskRow,
+} from './crm.service';
+
+/**
+ * TrustOS CRM endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createCustomerSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  industry: z.string().trim().min(1).max(255).optional(),
+  website: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['PROSPECT', 'ACTIVE', 'DORMANT', 'LOST']).optional(),
+});
+
+const updateCustomerSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    industry: z.string().trim().min(1).max(255).optional(),
+    website: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['PROSPECT', 'ACTIVE', 'DORMANT', 'LOST']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createContactSchema = z.object({
+  customerId: z.string().trim().min(1).max(64),
+  fullName: z.string().trim().min(1).max(255),
+  title: z.string().trim().min(1).max(255).optional(),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  isPrimary: z.coerce.boolean().optional(),
+});
+
+const updateContactSchema = z
+  .object({
+    customerId: z.string().trim().min(1).max(64).optional(),
+    fullName: z.string().trim().min(1).max(255).optional(),
+    title: z.string().trim().min(1).max(255).optional(),
+    email: z.string().trim().toLowerCase().email().max(254).optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    isPrimary: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createLeadSchema = z.object({
+  fullName: z.string().trim().min(1).max(255),
+  company: z.string().trim().min(1).max(255).optional(),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  source: z.enum(['WEB', 'REFERRAL', 'EVENT', 'OUTBOUND', 'PARTNER', 'OTHER']).optional(),
+  status: z.enum(['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'DISQUALIFIED']).optional(),
+  ownerUserId: z.string().trim().min(1).max(255).optional(),
+});
+
+const updateLeadSchema = z
+  .object({
+    fullName: z.string().trim().min(1).max(255).optional(),
+    company: z.string().trim().min(1).max(255).optional(),
+    email: z.string().trim().toLowerCase().email().max(254).optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    source: z.enum(['WEB', 'REFERRAL', 'EVENT', 'OUTBOUND', 'PARTNER', 'OTHER']).optional(),
+    status: z.enum(['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'DISQUALIFIED']).optional(),
+    ownerUserId: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createPipelineStageSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  position: z.coerce.number().int(),
+  isWon: z.coerce.boolean().optional(),
+  isClosed: z.coerce.boolean().optional(),
+});
+
+const updatePipelineStageSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    position: z.coerce.number().int().optional(),
+    isWon: z.coerce.boolean().optional(),
+    isClosed: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createOpportunitySchema = z.object({
+  customerId: z.string().trim().min(1).max(64),
+  stageId: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(255),
+  amount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  expectedCloseOn: z.coerce.date().optional(),
+  ownerUserId: z.string().trim().min(1).max(255).optional(),
+});
+
+const updateOpportunitySchema = z
+  .object({
+    customerId: z.string().trim().min(1).max(64).optional(),
+    stageId: z.string().trim().min(1).max(64).optional(),
+    name: z.string().trim().min(1).max(255).optional(),
+    amount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    expectedCloseOn: z.coerce.date().optional(),
+    ownerUserId: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createActivitySchema = z.object({
+  customerId: z.string().trim().min(1).max(64).optional(),
+  leadId: z.string().trim().min(1).max(64).optional(),
+  kind: z.enum(['CALL', 'MEETING', 'EMAIL', 'NOTE', 'VISIT']),
+  subject: z.string().trim().min(1).max(255),
+  body: z.string().trim().min(1).max(4000).optional(),
+  occurredAt: z.coerce.date(),
+  actorUserId: z.string().trim().min(1).max(255).optional(),
+});
+
+const updateActivitySchema = z
+  .object({
+    customerId: z.string().trim().min(1).max(64).optional(),
+    leadId: z.string().trim().min(1).max(64).optional(),
+    kind: z.enum(['CALL', 'MEETING', 'EMAIL', 'NOTE', 'VISIT']).optional(),
+    subject: z.string().trim().min(1).max(255).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    occurredAt: z.coerce.date().optional(),
+    actorUserId: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createCrmTaskSchema = z.object({
+  customerId: z.string().trim().min(1).max(64).optional(),
+  opportunityId: z.string().trim().min(1).max(64).optional(),
+  title: z.string().trim().min(1).max(255),
+  dueOn: z.coerce.date().optional(),
+  assigneeUserId: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'DONE', 'CANCELLED']).optional(),
+});
+
+const updateCrmTaskSchema = z
+  .object({
+    customerId: z.string().trim().min(1).max(64).optional(),
+    opportunityId: z.string().trim().min(1).max(64).optional(),
+    title: z.string().trim().min(1).max(255).optional(),
+    dueOn: z.coerce.date().optional(),
+    assigneeUserId: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['OPEN', 'IN_PROGRESS', 'DONE', 'CANCELLED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('customers')
+@ApiBearerAuth('access-token')
+@Controller('customers')
+export class CustomerController {
+  constructor(private readonly product: CrmService) {}
+
+  @Get()
+  @RequirePermissions(P.CUSTOMER_READ.key)
+  @ApiOperation({ summary: 'List customers' })
+  list(): Promise<CustomerRow[]> {
+    return this.product.listCustomers();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CUSTOMER_READ.key)
+  @ApiOperation({ summary: 'Read one customer' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CustomerRow> {
+    return this.product.findCustomer(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CUSTOMER_CREATE.key)
+  @ApiOperation({ summary: 'Create a customer' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCustomerSchema))
+    body: z.infer<typeof createCustomerSchema>,
+  ): Promise<CustomerRow> {
+    return this.product.createCustomer(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CUSTOMER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a customer' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCustomerSchema))
+    body: z.infer<typeof updateCustomerSchema>,
+  ): Promise<CustomerRow> {
+    return this.product.updateCustomer(id, body, organizationId);
+  }
+}
+
+@ApiTags('contacts')
+@ApiBearerAuth('access-token')
+@Controller('contacts')
+export class ContactController {
+  constructor(private readonly product: CrmService) {}
+
+  @Get()
+  @RequirePermissions(P.CONTACT_READ.key)
+  @ApiOperation({ summary: 'List contacts' })
+  list(): Promise<ContactRow[]> {
+    return this.product.listContacts();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CONTACT_READ.key)
+  @ApiOperation({ summary: 'Read one contact' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ContactRow> {
+    return this.product.findContact(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CONTACT_CREATE.key)
+  @ApiOperation({ summary: 'Create a contact' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createContactSchema))
+    body: z.infer<typeof createContactSchema>,
+  ): Promise<ContactRow> {
+    return this.product.createContact(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CONTACT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a contact' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateContactSchema))
+    body: z.infer<typeof updateContactSchema>,
+  ): Promise<ContactRow> {
+    return this.product.updateContact(id, body, organizationId);
+  }
+}
+
+@ApiTags('leads')
+@ApiBearerAuth('access-token')
+@Controller('leads')
+export class LeadController {
+  constructor(private readonly product: CrmService) {}
+
+  @Get()
+  @RequirePermissions(P.LEAD_READ.key)
+  @ApiOperation({ summary: 'List leads' })
+  list(): Promise<LeadRow[]> {
+    return this.product.listLeads();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.LEAD_READ.key)
+  @ApiOperation({ summary: 'Read one lead' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<LeadRow> {
+    return this.product.findLead(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.LEAD_CREATE.key)
+  @ApiOperation({ summary: 'Create a lead' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createLeadSchema))
+    body: z.infer<typeof createLeadSchema>,
+  ): Promise<LeadRow> {
+    return this.product.createLead(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.LEAD_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a lead' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateLeadSchema))
+    body: z.infer<typeof updateLeadSchema>,
+  ): Promise<LeadRow> {
+    return this.product.updateLead(id, body, organizationId);
+  }
+}
+
+@ApiTags('pipeline-stages')
+@ApiBearerAuth('access-token')
+@Controller('pipeline-stages')
+export class PipelineStageController {
+  constructor(private readonly product: CrmService) {}
+
+  @Get()
+  @RequirePermissions(P.PIPELINE_STAGE_READ.key)
+  @ApiOperation({ summary: 'List pipeline stages' })
+  list(): Promise<PipelineStageRow[]> {
+    return this.product.listPipelineStages();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PIPELINE_STAGE_READ.key)
+  @ApiOperation({ summary: 'Read one stage' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PipelineStageRow> {
+    return this.product.findPipelineStage(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PIPELINE_STAGE_CREATE.key)
+  @ApiOperation({ summary: 'Create a stage' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPipelineStageSchema))
+    body: z.infer<typeof createPipelineStageSchema>,
+  ): Promise<PipelineStageRow> {
+    return this.product.createPipelineStage(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PIPELINE_STAGE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a stage' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePipelineStageSchema))
+    body: z.infer<typeof updatePipelineStageSchema>,
+  ): Promise<PipelineStageRow> {
+    return this.product.updatePipelineStage(id, body, organizationId);
+  }
+}
+
+@ApiTags('opportunities')
+@ApiBearerAuth('access-token')
+@Controller('opportunities')
+export class OpportunityController {
+  constructor(private readonly product: CrmService) {}
+
+  @Get()
+  @RequirePermissions(P.OPPORTUNITY_READ.key)
+  @ApiOperation({ summary: 'List opportunities' })
+  list(): Promise<OpportunityRow[]> {
+    return this.product.listOpportunities();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.OPPORTUNITY_READ.key)
+  @ApiOperation({ summary: 'Read one opportunity' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<OpportunityRow> {
+    return this.product.findOpportunity(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.OPPORTUNITY_CREATE.key)
+  @ApiOperation({ summary: 'Create a opportunity' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createOpportunitySchema))
+    body: z.infer<typeof createOpportunitySchema>,
+  ): Promise<OpportunityRow> {
+    return this.product.createOpportunity(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.OPPORTUNITY_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a opportunity' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateOpportunitySchema))
+    body: z.infer<typeof updateOpportunitySchema>,
+  ): Promise<OpportunityRow> {
+    return this.product.updateOpportunity(id, body, organizationId);
+  }
+}
+
+@ApiTags('activities')
+@ApiBearerAuth('access-token')
+@Controller('activities')
+export class ActivityController {
+  constructor(private readonly product: CrmService) {}
+
+  @Get()
+  @RequirePermissions(P.ACTIVITY_READ.key)
+  @ApiOperation({ summary: 'List activities' })
+  list(): Promise<ActivityRow[]> {
+    return this.product.listActivities();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.ACTIVITY_READ.key)
+  @ApiOperation({ summary: 'Read one activity' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ActivityRow> {
+    return this.product.findActivity(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.ACTIVITY_CREATE.key)
+  @ApiOperation({ summary: 'Create a activity' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createActivitySchema))
+    body: z.infer<typeof createActivitySchema>,
+  ): Promise<ActivityRow> {
+    return this.product.createActivity(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.ACTIVITY_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a activity' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateActivitySchema))
+    body: z.infer<typeof updateActivitySchema>,
+  ): Promise<ActivityRow> {
+    return this.product.updateActivity(id, body, organizationId);
+  }
+}
+
+@ApiTags('crm-tasks')
+@ApiBearerAuth('access-token')
+@Controller('crm-tasks')
+export class CrmTaskController {
+  constructor(private readonly product: CrmService) {}
+
+  @Get()
+  @RequirePermissions(P.CRM_TASK_READ.key)
+  @ApiOperation({ summary: 'List tasks' })
+  list(): Promise<CrmTaskRow[]> {
+    return this.product.listCrmTasks();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CRM_TASK_READ.key)
+  @ApiOperation({ summary: 'Read one task' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CrmTaskRow> {
+    return this.product.findCrmTask(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CRM_TASK_CREATE.key)
+  @ApiOperation({ summary: 'Create a task' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCrmTaskSchema))
+    body: z.infer<typeof createCrmTaskSchema>,
+  ): Promise<CrmTaskRow> {
+    return this.product.createCrmTask(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CRM_TASK_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a task' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCrmTaskSchema))
+    body: z.infer<typeof updateCrmTaskSchema>,
+  ): Promise<CrmTaskRow> {
+    return this.product.updateCrmTask(id, body, organizationId);
+  }
+}

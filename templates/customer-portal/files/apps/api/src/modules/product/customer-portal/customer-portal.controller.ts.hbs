@@ -1,0 +1,314 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { CUSTOMER_PORTAL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  CustomerPortalService,
+  type PortalProfileRow,
+  type PortalDocumentRow,
+  type PortalNotificationRow,
+  type SupportRequestRow,
+} from './customer-portal.service';
+
+/**
+ * TrustOS Customer Portal endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createPortalProfileSchema = z.object({
+  userId: z.string().trim().min(1).max(255),
+  displayName: z.string().trim().min(1).max(255),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  locale: z.string().trim().min(1).max(255).optional(),
+  timezone: z.string().trim().min(1).max(255).optional(),
+});
+
+const updatePortalProfileSchema = z
+  .object({
+    displayName: z.string().trim().min(1).max(255).optional(),
+    email: z.string().trim().toLowerCase().email().max(254).optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    locale: z.string().trim().min(1).max(255).optional(),
+    timezone: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createPortalDocumentSchema = z.object({
+  ownerUserId: z.string().trim().min(1).max(255),
+  title: z.string().trim().min(1).max(255),
+  storageKey: z.string().trim().min(1).max(255),
+  contentType: z.string().trim().min(1).max(255),
+  sizeBytes: z.coerce.number().int(),
+  category: z.enum(['STATEMENT', 'CONTRACT', 'INVOICE', 'IDENTITY', 'OTHER']).optional(),
+  availableFrom: z.coerce.date(),
+});
+
+const updatePortalDocumentSchema = z
+  .object({
+    ownerUserId: z.string().trim().min(1).max(255).optional(),
+    title: z.string().trim().min(1).max(255).optional(),
+    contentType: z.string().trim().min(1).max(255).optional(),
+    sizeBytes: z.coerce.number().int().optional(),
+    category: z.enum(['STATEMENT', 'CONTRACT', 'INVOICE', 'IDENTITY', 'OTHER']).optional(),
+    availableFrom: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createPortalNotificationSchema = z.object({
+  recipientUserId: z.string().trim().min(1).max(255),
+  notificationKey: z.string().trim().min(1).max(255),
+  subject: z.string().trim().min(1).max(255),
+  body: z.string().trim().min(1).max(4000),
+  href: z.string().trim().min(1).max(255).optional(),
+  sentAt: z.coerce.date(),
+  readAt: z.coerce.date().optional(),
+});
+
+const updatePortalNotificationSchema = z
+  .object({
+    recipientUserId: z.string().trim().min(1).max(255).optional(),
+    notificationKey: z.string().trim().min(1).max(255).optional(),
+    subject: z.string().trim().min(1).max(255).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    href: z.string().trim().min(1).max(255).optional(),
+    sentAt: z.coerce.date().optional(),
+    readAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createSupportRequestSchema = z.object({
+  requesterUserId: z.string().trim().min(1).max(255),
+  reference: z.string().trim().min(1).max(255),
+  subject: z.string().trim().min(1).max(255),
+  body: z.string().trim().min(1).max(4000),
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'WAITING_ON_CUSTOMER', 'RESOLVED', 'CLOSED']).optional(),
+  openedAt: z.coerce.date(),
+  closedAt: z.coerce.date().optional(),
+});
+
+const updateSupportRequestSchema = z
+  .object({
+    requesterUserId: z.string().trim().min(1).max(255).optional(),
+    subject: z.string().trim().min(1).max(255).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    status: z.enum(['OPEN', 'IN_PROGRESS', 'WAITING_ON_CUSTOMER', 'RESOLVED', 'CLOSED']).optional(),
+    openedAt: z.coerce.date().optional(),
+    closedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('portal-profiles')
+@ApiBearerAuth('access-token')
+@Controller('portal-profiles')
+export class PortalProfileController {
+  constructor(private readonly product: CustomerPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.PORTAL_PROFILE_READ.key)
+  @ApiOperation({ summary: 'List profiles' })
+  list(): Promise<PortalProfileRow[]> {
+    return this.product.listPortalProfiles();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PORTAL_PROFILE_READ.key)
+  @ApiOperation({ summary: 'Read one profile' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PortalProfileRow> {
+    return this.product.findPortalProfile(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PORTAL_PROFILE_CREATE.key)
+  @ApiOperation({ summary: 'Create a profile' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPortalProfileSchema))
+    body: z.infer<typeof createPortalProfileSchema>,
+  ): Promise<PortalProfileRow> {
+    return this.product.createPortalProfile(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PORTAL_PROFILE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a profile' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePortalProfileSchema))
+    body: z.infer<typeof updatePortalProfileSchema>,
+  ): Promise<PortalProfileRow> {
+    return this.product.updatePortalProfile(id, body, organizationId);
+  }
+}
+
+@ApiTags('portal-documents')
+@ApiBearerAuth('access-token')
+@Controller('portal-documents')
+export class PortalDocumentController {
+  constructor(private readonly product: CustomerPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.PORTAL_DOCUMENT_READ.key)
+  @ApiOperation({ summary: 'List documents' })
+  list(): Promise<PortalDocumentRow[]> {
+    return this.product.listPortalDocuments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PORTAL_DOCUMENT_READ.key)
+  @ApiOperation({ summary: 'Read one document' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PortalDocumentRow> {
+    return this.product.findPortalDocument(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PORTAL_DOCUMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a document' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPortalDocumentSchema))
+    body: z.infer<typeof createPortalDocumentSchema>,
+  ): Promise<PortalDocumentRow> {
+    return this.product.createPortalDocument(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PORTAL_DOCUMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a document' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePortalDocumentSchema))
+    body: z.infer<typeof updatePortalDocumentSchema>,
+  ): Promise<PortalDocumentRow> {
+    return this.product.updatePortalDocument(id, body, organizationId);
+  }
+}
+
+@ApiTags('portal-notifications')
+@ApiBearerAuth('access-token')
+@Controller('portal-notifications')
+export class PortalNotificationController {
+  constructor(private readonly product: CustomerPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.PORTAL_NOTIFICATION_READ.key)
+  @ApiOperation({ summary: 'List notifications' })
+  list(): Promise<PortalNotificationRow[]> {
+    return this.product.listPortalNotifications();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PORTAL_NOTIFICATION_READ.key)
+  @ApiOperation({ summary: 'Read one notification' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PortalNotificationRow> {
+    return this.product.findPortalNotification(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PORTAL_NOTIFICATION_CREATE.key)
+  @ApiOperation({ summary: 'Create a notification' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPortalNotificationSchema))
+    body: z.infer<typeof createPortalNotificationSchema>,
+  ): Promise<PortalNotificationRow> {
+    return this.product.createPortalNotification(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PORTAL_NOTIFICATION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a notification' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePortalNotificationSchema))
+    body: z.infer<typeof updatePortalNotificationSchema>,
+  ): Promise<PortalNotificationRow> {
+    return this.product.updatePortalNotification(id, body, organizationId);
+  }
+}
+
+@ApiTags('support-requests')
+@ApiBearerAuth('access-token')
+@Controller('support-requests')
+export class SupportRequestController {
+  constructor(private readonly product: CustomerPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.SUPPORT_REQUEST_READ.key)
+  @ApiOperation({ summary: 'List support requests' })
+  list(): Promise<SupportRequestRow[]> {
+    return this.product.listSupportRequests();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.SUPPORT_REQUEST_READ.key)
+  @ApiOperation({ summary: 'Read one support request' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<SupportRequestRow> {
+    return this.product.findSupportRequest(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.SUPPORT_REQUEST_CREATE.key)
+  @ApiOperation({ summary: 'Create a support request' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createSupportRequestSchema))
+    body: z.infer<typeof createSupportRequestSchema>,
+  ): Promise<SupportRequestRow> {
+    return this.product.createSupportRequest(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.SUPPORT_REQUEST_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a support request' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateSupportRequestSchema))
+    body: z.infer<typeof updateSupportRequestSchema>,
+  ): Promise<SupportRequestRow> {
+    return this.product.updateSupportRequest(id, body, organizationId);
+  }
+}

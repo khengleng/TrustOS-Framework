@@ -1,0 +1,199 @@
+// =============================================================================
+// TrustOS CRM — product models
+//
+// Customer relationship management: customers, leads, contacts, activities,
+// tasks and a configurable pipeline over opportunities.
+//
+// Out of scope, deliberately: email and calendar integration, telephony,
+// marketing automation, lead scoring models, document generation.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum CustomerStatus {
+  PROSPECT
+  ACTIVE
+  DORMANT
+  LOST
+}
+
+enum LeadSource {
+  WEB
+  REFERRAL
+  EVENT
+  OUTBOUND
+  PARTNER
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  DISQUALIFIED
+}
+
+enum ActivityKind {
+  CALL
+  MEETING
+  EMAIL
+  NOTE
+  VISIT
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+/// An organization or person you do business with.
+model Customer {
+  id             String @id @default(cuid())
+  organizationId String
+  name String
+  code String
+  industry String?
+  website String?
+  status CustomerStatus @default(PROSPECT)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, industry])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A person at a customer.
+model Contact {
+  id             String @id @default(cuid())
+  organizationId String
+  customerId String
+  fullName String
+  title String?
+  email String?
+  phone String?
+  isPrimary Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, customerId])
+  @@index([deletedAt])
+}
+
+/// An unqualified opportunity. Becomes a customer and a contact when it
+/// converts.
+model Lead {
+  id             String @id @default(cuid())
+  organizationId String
+  fullName String
+  company String?
+  email String?
+  phone String?
+  source LeadSource @default(OTHER)
+  status LeadStatus @default(NEW)
+  ownerUserId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, source])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A column on the board. A row rather than an enum — see the migration note.
+model PipelineStage {
+  id             String @id @default(cuid())
+  organizationId String
+  name String
+  code String
+  position Int @default(0)
+  isWon Boolean @default(false)
+  isClosed Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([deletedAt])
+}
+
+/// A deal in the pipeline.
+model Opportunity {
+  id             String @id @default(cuid())
+  organizationId String
+  customerId String
+  stageId String
+  name String
+  amount Decimal @db.Decimal(28, 8)
+  currency String @default("USD")
+  expectedCloseOn DateTime? @db.Date
+  ownerUserId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, customerId])
+  @@index([organizationId, stageId])
+  @@index([organizationId, expectedCloseOn])
+  @@index([deletedAt])
+}
+
+/// Something that happened: a call, a meeting, a note.
+model Activity {
+  id             String @id @default(cuid())
+  organizationId String
+  customerId String?
+  leadId String?
+  kind ActivityKind
+  subject String
+  body String?
+  occurredAt DateTime
+  actorUserId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, customerId])
+  @@index([organizationId, leadId])
+  @@index([organizationId, kind])
+  @@index([organizationId, occurredAt])
+  @@index([deletedAt])
+}
+
+/// Something somebody has to do.
+model CrmTask {
+  id             String @id @default(cuid())
+  organizationId String
+  customerId String?
+  opportunityId String?
+  title String
+  dueOn DateTime? @db.Date
+  assigneeUserId String?
+  status TaskStatus @default(OPEN)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, customerId])
+  @@index([organizationId, opportunityId])
+  @@index([organizationId, dueOn])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}

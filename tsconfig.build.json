@@ -305,6 +305,9 @@
       "path": "packages/template-registry"
     },
     {
+      "path": "packages/template-sdk"
+    },
+    {
       "path": "packages/tenancy"
     },
     {

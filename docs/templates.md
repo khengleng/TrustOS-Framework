@@ -4,6 +4,15 @@ A template is a promise: _generating this produces a working, secure TrustOS
 application_. This document is what keeps that promise true as templates
 multiply and change hands.
 
+The library is thirty templates across nine categories. This page is the
+architecture; the other three pages are:
+
+| Page                                                           | For                                             |
+| -------------------------------------------------------------- | ----------------------------------------------- |
+| [industry-reference.md](industry-reference.md)                 | What each template models, and what it does not |
+| [template-development-guide.md](template-development-guide.md) | Writing or changing one                         |
+| [template-sdk.md](template-sdk.md)                             | The building blocks every template shares       |
+
 ---
 
 ## 1. Layout
@@ -20,7 +29,54 @@ templates/
 
 Generation merges `_base` then the template, so a template only contains what
 makes it that template. The framework wiring — guards, error filter, request
-context, health probes, auth module, audit reads — lives in `_base` once.
+context, health probes, auth module, audit reads, and the messaging mini app
+shell — lives in `_base` once.
+
+### Inheritance
+
+A template may `extends` another. The layers then apply parent-first:
+
+```
+_base  →  clinic  →  hospital
+```
+
+A clinic is not a smaller hospital — a hospital is a clinic plus wards, and the
+inheritance runs that way round. `merchant → ecommerce → marketplace`,
+`wallet → digital-bank`, `education → school`, and the three messaging templates
+share one parent for the same reason.
+
+Almost every file a template ships is **additive**: its own Prisma fragment, its
+own NestJS module folder, its own resource list. Exactly three are **aggregators**
+it overrides, and each is a list of imports naming every layer in the chain:
+
+| Aggregator                                       | Composes                                |
+| ------------------------------------------------ | --------------------------------------- |
+| `packages/product-domain/src/index.ts`           | the chain's permissions and role grants |
+| `apps/admin/src/lib/resources.ts`                | the chain's console screens             |
+| `apps/api/src/modules/product/product.module.ts` | the chain's Nest modules                |
+
+That is the whole mechanism, and it is why `hospital` restates no patient field.
+Without it, a child template would be a copy of its parent — correct on the day
+it was made, and quietly different a year later. Templates get the same
+no-duplication rule as everything else in the framework.
+
+### Templates are generated
+
+`templates/` is build output. The source is `scripts/template-specs.mjs`, and
+three scripts derive everything from it:
+
+```bash
+node scripts/scaffold-industry-templates.mjs   # the file trees
+node scripts/sync-template-registry.mjs        # the manifests
+node scripts/sync-industry-reference.mjs       # the reference page
+```
+
+What differs per industry is the domain. What must not differ is the tenant
+scope, the audit trail, the permission wiring and the isolation test — so the
+second category is generated, and there is one correct version of it rather than
+twenty-four copies. See the
+[development guide](template-development-guide.md) before editing anything under
+`templates/` by hand.
 
 ### File naming
 
@@ -123,10 +179,38 @@ reach a caller.
 | `migrationNotes`             | What a maintainer must know when moving versions             |
 | `owner`                      | The team accountable. Not decorative — see below.            |
 | `outOfScope`                 | Deliberate exclusions, echoed into the generated project     |
+| `category`                   | One of nine groups, for `trustos templates`                  |
+| `status`                     | `experimental`, `stable` or `deprecated`                     |
+| `extends`                    | The template this one is layered on                          |
+| `supersededBy`               | Required when deprecated, refused otherwise                  |
+| `documentation`              | A page that must exist, checked by the validator             |
 
 `requiredVariables` is load-bearing: `validate-template` fails on any
 placeholder not declared there, which is what stops a template rendering an
 empty string into a generated config file.
+
+### Status
+
+None of the three statuses blocks generation.
+
+| Status         | `trustos new`                                              |
+| -------------- | ---------------------------------------------------------- |
+| `stable`       | Generates quietly                                          |
+| `experimental` | Generates with a warning that entities and keys may change |
+| `deprecated`   | Generates with a warning naming its successor              |
+
+A template somebody has already built on must keep generating, or an upgrade
+becomes a rewrite. Promotion to `stable` is a decision a person makes, not one
+the passing of time makes for them.
+
+### Module dependencies
+
+`includedModules` must be **closed under its own prerequisites**. A manifest
+naming `wallet` without `ledger`, `accounts` and `financial-core` generates an
+application whose wallet cannot compute a balance — and it fails on the first
+request, in a project nobody has opened yet. `MODULE_DEPENDENCIES` in
+`schema.ts` records the edges and the manifest schema refuses a list that is not
+closed.
 
 ---
 
@@ -139,13 +223,18 @@ Every template names an owner, and the owner is accountable for:
 - deciding what stays out of scope, and defending that in review
 - refreshing `00-framework.prisma` when the framework schema changes
 
-| Template            | Owner                 |
-| ------------------- | --------------------- |
-| `generic-saas`      | TrustOS Platform Team |
-| `merchant`          | TrustOS Merchant Team |
-| `learning`          | TrustOS Learn Team    |
-| `payment-gateway`   | payKH Team            |
-| `telegram-mini-app` | TrustOS Platform Team |
+| Category            | Templates                                                             | Owner                            |
+| ------------------- | --------------------------------------------------------------------- | -------------------------------- |
+| Foundation          | `generic-saas`, `workflow-enabled-saas`                               | TrustOS Platform Team            |
+| Commerce            | `merchant`, `ecommerce`, `marketplace`, `gold-shop`                   | TrustOS Merchant / Commerce Team |
+| Financial services  | `payment-gateway`, `wallet`, `digital-bank`, `insurance`              | TrustOS Financial Team           |
+| Lending             | `microloan`, `collection`                                             | TrustOS Lending Team             |
+| Business operations | `crm`, `erp`, `helpdesk`                                              | TrustOS Platform Team            |
+| Education           | `learning`, `education`, `school`                                     | TrustOS Learn Team               |
+| Health              | `clinic`, `hospital`                                                  | TrustOS Health Team              |
+| Public and social   | `ngo`, `government`                                                   | TrustOS Public Sector Team       |
+| Messaging           | `telegram-miniapp`, `whatsapp-miniapp`, `messenger-miniapp`           | TrustOS Platform Team            |
+| Portals             | `admin-portal`, `customer-portal`, `staff-portal`, `developer-portal` | TrustOS Platform Team            |
 
 An unowned template rots: nobody upgrades it, nobody notices when its security
 assumptions age, and the next product to use it inherits the problem.
@@ -187,20 +276,19 @@ so this is a copy, and it can drift. When the framework schema changes:
 
 1. **Get approval.** A new template is a long-term commitment by a named team,
    not a folder. Agree the scope — and the `outOfScope` list — first.
-2. `mkdir -p templates/<id>/files` and add `template.json` with the id.
-3. Add the manifest to `packages/template-registry/src/registry.ts` and the id
-   to `TEMPLATE_IDS`.
-4. Add only what makes it distinct:
-   - `prisma/schema/10-product.prisma`
-   - `packages/product-domain/src/index.ts` — permissions and role grants
-   - `packages/shared-types/src/index.ts` — runtime-free shared types
-   - `apps/api/src/modules/product/` — module, service, controller(s)
-   - `apps/api/src/modules/product/tenant-isolation.spec.ts`
-   - `apps/admin/src/lib/resources.ts` — the console screens
-5. `trustos validate-template <id>` until it passes.
-6. `trustos new <id> --yes --framework-path .` then, in the generated project:
+2. **Check it should not be a child.** If it is another template plus a few
+   entities, set `extends` and write only the delta. That is the normal shape.
+3. Add the id to `TEMPLATE_IDS` in `packages/template-registry/src/schema.ts`.
+4. Add a spec entry to `scripts/template-specs.mjs` — entities, fields, modules,
+   `outOfScope`, `migrationNotes`.
+5. Re-run all three sync scripts.
+6. `trustos validate-template <id>` until it passes.
+7. `trustos new <id> --yes --framework-path .` then, in the generated project:
    `npm install && npm run db:validate && npm run typecheck && npm test && npm run build`.
-7. Add the id to the CI matrix in `.github/workflows/ci.yml`.
+8. Add the id to the CI matrix in `.github/workflows/ci.yml`.
+
+The full field reference and the review rules are in the
+[development guide](template-development-guide.md).
 
 The `ProductModule` name and its location are fixed by `_base`'s composition
 root, so a template replaces the domain inside that folder rather than editing
@@ -233,3 +321,15 @@ template fetch, no plugin resolution, no marketplace, no paid templates and no
 self-update. The generator can only ever write files that are already in this
 repository and have been through review — which is the property that makes the
 threat model in [`generator-security.md`](generator-security.md) tractable.
+
+No template contains, and none may gain:
+
+- a business-specific integration,
+- a payment provider,
+- a government API,
+- an external AI provider,
+- a cloud vendor service.
+
+Every one of those is a seam a deployment fills. A template that filled one for
+everybody would be a template only one deployment can use — and the industry
+library exists precisely because the domain is shared and the vendors are not.

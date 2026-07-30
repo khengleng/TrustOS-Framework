@@ -1,0 +1,315 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { MARKETPLACE_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  MarketplaceService,
+  type SellerRow,
+  type ListingRow,
+  type SellerPayoutRow,
+  type DisputeRow,
+} from './marketplace.service';
+
+/**
+ * TrustOS Marketplace endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createSellerSchema = z.object({
+  merchantId: z.string().trim().min(1).max(64),
+  displayName: z.string().trim().min(1).max(255),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  status: z.enum(['ONBOARDING', 'ACTIVE', 'SUSPENDED', 'CLOSED']).optional(),
+  commissionRate: z.string().trim().min(1).max(255),
+  payoutCurrency: z.string().trim().min(1).max(255),
+});
+
+const updateSellerSchema = z
+  .object({
+    merchantId: z.string().trim().min(1).max(64).optional(),
+    displayName: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['ONBOARDING', 'ACTIVE', 'SUSPENDED', 'CLOSED']).optional(),
+    commissionRate: z.string().trim().min(1).max(255).optional(),
+    payoutCurrency: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createListingSchema = z.object({
+  sellerId: z.string().trim().min(1).max(64),
+  variantId: z.string().trim().min(1).max(64),
+  price: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  stockOnHand: z.coerce.number().int().optional(),
+  isActive: z.coerce.boolean().optional(),
+});
+
+const updateListingSchema = z
+  .object({
+    sellerId: z.string().trim().min(1).max(64).optional(),
+    variantId: z.string().trim().min(1).max(64).optional(),
+    price: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    stockOnHand: z.coerce.number().int().optional(),
+    isActive: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createSellerPayoutSchema = z.object({
+  sellerId: z.string().trim().min(1).max(64),
+  reference: z.string().trim().min(1).max(255),
+  periodStart: z.coerce.date(),
+  periodEnd: z.coerce.date(),
+  grossAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  commissionAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  netAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  status: z.enum(['DRAFT', 'APPROVED', 'PAID', 'FAILED']).optional(),
+});
+
+const updateSellerPayoutSchema = z
+  .object({
+    sellerId: z.string().trim().min(1).max(64).optional(),
+    periodStart: z.coerce.date().optional(),
+    periodEnd: z.coerce.date().optional(),
+    grossAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    commissionAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    netAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['DRAFT', 'APPROVED', 'PAID', 'FAILED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createDisputeSchema = z.object({
+  orderId: z.string().trim().min(1).max(64),
+  sellerId: z.string().trim().min(1).max(64),
+  reason: z.string().trim().min(1).max(4000),
+  status: z.enum(['OPEN', 'INVESTIGATING', 'RESOLVED', 'REJECTED']).optional(),
+  resolutionNote: z.string().trim().min(1).max(4000).optional(),
+  openedAt: z.coerce.date(),
+});
+
+const updateDisputeSchema = z
+  .object({
+    orderId: z.string().trim().min(1).max(64).optional(),
+    sellerId: z.string().trim().min(1).max(64).optional(),
+    reason: z.string().trim().min(1).max(4000).optional(),
+    status: z.enum(['OPEN', 'INVESTIGATING', 'RESOLVED', 'REJECTED']).optional(),
+    resolutionNote: z.string().trim().min(1).max(4000).optional(),
+    openedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('sellers')
+@ApiBearerAuth('access-token')
+@Controller('sellers')
+export class SellerController {
+  constructor(private readonly product: MarketplaceService) {}
+
+  @Get()
+  @RequirePermissions(P.SELLER_READ.key)
+  @ApiOperation({ summary: 'List sellers' })
+  list(): Promise<SellerRow[]> {
+    return this.product.listSellers();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.SELLER_READ.key)
+  @ApiOperation({ summary: 'Read one seller' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<SellerRow> {
+    return this.product.findSeller(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.SELLER_CREATE.key)
+  @ApiOperation({ summary: 'Create a seller' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createSellerSchema))
+    body: z.infer<typeof createSellerSchema>,
+  ): Promise<SellerRow> {
+    return this.product.createSeller(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.SELLER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a seller' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateSellerSchema))
+    body: z.infer<typeof updateSellerSchema>,
+  ): Promise<SellerRow> {
+    return this.product.updateSeller(id, body, organizationId);
+  }
+}
+
+@ApiTags('listings')
+@ApiBearerAuth('access-token')
+@Controller('listings')
+export class ListingController {
+  constructor(private readonly product: MarketplaceService) {}
+
+  @Get()
+  @RequirePermissions(P.LISTING_READ.key)
+  @ApiOperation({ summary: 'List listings' })
+  list(): Promise<ListingRow[]> {
+    return this.product.listListings();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.LISTING_READ.key)
+  @ApiOperation({ summary: 'Read one listing' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ListingRow> {
+    return this.product.findListing(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.LISTING_CREATE.key)
+  @ApiOperation({ summary: 'Create a listing' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createListingSchema))
+    body: z.infer<typeof createListingSchema>,
+  ): Promise<ListingRow> {
+    return this.product.createListing(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.LISTING_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a listing' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateListingSchema))
+    body: z.infer<typeof updateListingSchema>,
+  ): Promise<ListingRow> {
+    return this.product.updateListing(id, body, organizationId);
+  }
+}
+
+@ApiTags('seller-payouts')
+@ApiBearerAuth('access-token')
+@Controller('seller-payouts')
+export class SellerPayoutController {
+  constructor(private readonly product: MarketplaceService) {}
+
+  @Get()
+  @RequirePermissions(P.SELLER_PAYOUT_READ.key)
+  @ApiOperation({ summary: 'List payouts' })
+  list(): Promise<SellerPayoutRow[]> {
+    return this.product.listSellerPayouts();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.SELLER_PAYOUT_READ.key)
+  @ApiOperation({ summary: 'Read one payout' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<SellerPayoutRow> {
+    return this.product.findSellerPayout(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.SELLER_PAYOUT_CREATE.key)
+  @ApiOperation({ summary: 'Create a payout' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createSellerPayoutSchema))
+    body: z.infer<typeof createSellerPayoutSchema>,
+  ): Promise<SellerPayoutRow> {
+    return this.product.createSellerPayout(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.SELLER_PAYOUT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a payout' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateSellerPayoutSchema))
+    body: z.infer<typeof updateSellerPayoutSchema>,
+  ): Promise<SellerPayoutRow> {
+    return this.product.updateSellerPayout(id, body, organizationId);
+  }
+}
+
+@ApiTags('disputes')
+@ApiBearerAuth('access-token')
+@Controller('disputes')
+export class DisputeController {
+  constructor(private readonly product: MarketplaceService) {}
+
+  @Get()
+  @RequirePermissions(P.DISPUTE_READ.key)
+  @ApiOperation({ summary: 'List disputes' })
+  list(): Promise<DisputeRow[]> {
+    return this.product.listDisputes();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.DISPUTE_READ.key)
+  @ApiOperation({ summary: 'Read one dispute' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<DisputeRow> {
+    return this.product.findDispute(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.DISPUTE_CREATE.key)
+  @ApiOperation({ summary: 'Create a dispute' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createDisputeSchema))
+    body: z.infer<typeof createDisputeSchema>,
+  ): Promise<DisputeRow> {
+    return this.product.createDispute(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.DISPUTE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a dispute' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateDisputeSchema))
+    body: z.infer<typeof updateDisputeSchema>,
+  ): Promise<DisputeRow> {
+    return this.product.updateDispute(id, body, organizationId);
+  }
+}

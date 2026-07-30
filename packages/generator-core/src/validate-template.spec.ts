@@ -31,13 +31,20 @@ describe('validateTemplate', () => {
 
     expect(report.checks.map((check) => check.name).sort()).toEqual([
       'build configuration',
+      'dependencies',
       'deployment configuration',
+      'documentation',
+      'framework version',
       'health endpoint',
+      'model collisions',
+      'monetary precision',
       'no committed secrets',
       'no unresolved placeholders',
       'registry metadata',
       'required files',
+      'required modules',
       'safe paths',
+      'tenant scope',
       'test configuration',
       'valid package references',
     ]);

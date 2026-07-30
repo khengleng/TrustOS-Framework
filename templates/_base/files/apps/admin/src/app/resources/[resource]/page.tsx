@@ -4,7 +4,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EmptyState, ErrorBanner, Loading } from '@/components/states';
 import { RESOURCES } from '@/lib/resources';
-import { readCell, type ResourceDefinition } from '@/lib/resource-types';
+import { cellKind, defaultAlign, readCell, type ResourceDefinition } from '@/lib/resource-types';
 import { useSession } from '@/lib/session';
 
 /**
@@ -31,7 +31,7 @@ export default function ResourcePage({ params }: { params: Promise<{ resource: s
     setError(null);
     setRows(null);
     try {
-      const response = await authedRequest<unknown>(definition.endpoint);
+      const response = await authedRequest<unknown>(definition.table.endpoint);
       // Accept either a bare array or a paginated envelope.
       const items = Array.isArray(response)
         ? response
@@ -77,30 +77,42 @@ export default function ResourcePage({ params }: { params: Promise<{ resource: s
         ) : rows.length === 0 && !error ? (
           <EmptyState
             title={`No ${definition.label.toLowerCase()} yet`}
-            {...(definition.emptyHint ? { hint: definition.emptyHint } : {})}
+            {...(definition.table.emptyHint ? { hint: definition.table.emptyHint } : {})}
           />
         ) : rows.length === 0 ? null : (
           <table>
             <thead>
               <tr>
-                {definition.columns.map((column) => (
-                  <th key={column.key}>{column.label}</th>
+                {definition.table.columns.map((column) => (
+                  <th key={column.key} style={{ textAlign: defaultAlign(column) }}>
+                    {column.label}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((row, index) => (
                 <tr key={String(row.id ?? index)}>
-                  {definition.columns.map((column) => {
+                  {definition.table.columns.map((column) => {
                     const value = readCell(row, column.key);
+                    const kind = cellKind(column.format);
+
+                    /*
+                     * A column the caller may not see is already absent from the payload — the
+                     * API projects it away. Rendering an em dash for it is honest: the row does
+                     * not carry the value, and pretending the column does not exist would make
+                     * two users' screens differ in a way neither can explain to the other.
+                     */
                     return (
-                      <td key={column.key}>
+                      <td key={column.key} style={{ textAlign: defaultAlign(column) }}>
                         {value === null || value === undefined || value === '' ? (
                           <span className="muted">—</span>
-                        ) : column.badge ? (
+                        ) : kind === 'badge' ? (
                           <span className="badge">{String(value)}</span>
-                        ) : column.date ? (
+                        ) : kind === 'date' ? (
                           new Date(String(value)).toLocaleString()
+                        ) : kind === 'money' ? (
+                          `${String(value)}${column.currencyKey ? ` ${String(readCell(row, column.currencyKey) ?? '')}` : ''}`
                         ) : (
                           String(value)
                         )}

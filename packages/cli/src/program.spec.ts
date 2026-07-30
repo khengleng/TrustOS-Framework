@@ -89,7 +89,7 @@ describe('list-templates', () => {
 
     expect(code).toBe(0);
     const parsed = JSON.parse(output) as Array<{ id: string; version: string }>;
-    expect(parsed).toHaveLength(6);
+    expect(parsed.length).toBeGreaterThanOrEqual(30);
     expect(parsed.every((entry) => Boolean(entry.id && entry.version))).toBe(true);
   });
 
@@ -111,7 +111,7 @@ describe('validate-template', () => {
       TEMPLATES_ROOT,
     ]);
 
-    expect(output).toContain('6 template(s) valid.');
+    expect(output).toContain('30 template(s) valid.');
     expect(code).toBe(0);
   });
 
@@ -151,7 +151,7 @@ describe('validate-template', () => {
 
     expect(code).toBe(0);
     const reports = JSON.parse(output) as Array<{ templateId: string; ok: boolean }>;
-    expect(reports).toHaveLength(6);
+    expect(reports.length).toBeGreaterThanOrEqual(30);
     expect(reports.every((report) => report.ok)).toBe(true);
   });
 });
@@ -420,5 +420,234 @@ describe('defaults derived from the application name', () => {
 
   it('uses the application name as the package name', () => {
     expect(defaultPackageName('merchant-portal')).toBe('merchant-portal');
+  });
+});
+
+describe('templates', () => {
+  it('groups the catalog by category', async () => {
+    const { code, output } = await invoke(['templates']);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/Financial services/);
+    expect(output).toMatch(/Messaging mini apps/);
+    expect(output).toMatch(/wallet/);
+  });
+
+  it('shows the inheritance chain', async () => {
+    /*
+     * The single most useful line for somebody choosing: it says "this one already has everything
+     * that one has", which a flat list cannot.
+     */
+    expect((await invoke(['templates'])).output).toMatch(/extends clinic → hospital/);
+  });
+
+  it('hides deprecated templates unless asked', async () => {
+    // A developer picking a template for a new product should not have to work out which of two
+    // similarly-named entries is the dead one.
+    const listed = await invoke(['templates']);
+    const all = await invoke(['templates', '--all']);
+
+    expect(listed.output).not.toMatch(/telegram-mini-app\s/);
+    expect(all.output).toMatch(/telegram-mini-app/);
+    expect(all.output).toMatch(/use telegram-miniapp instead/);
+  });
+
+  it('filters by category', async () => {
+    const { output } = await invoke(['templates', '--category', 'health']);
+
+    expect(output).toMatch(/clinic/);
+    expect(output).toMatch(/hospital/);
+    expect(output).not.toMatch(/microloan/);
+  });
+
+  it('refuses an unknown category and names the real ones', async () => {
+    const { code, output } = await invoke(['templates', '--category', 'hospitals']);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/Unknown category "hospitals". Categories: /);
+  });
+
+  it('emits machine-readable output with the chain resolved', async () => {
+    const { output } = await invoke(['templates', '--json']);
+    const parsed = JSON.parse(output) as Array<{ id: string; chain: string[] }>;
+
+    expect(parsed.find((entry) => entry.id === 'marketplace')?.chain).toEqual([
+      'merchant',
+      'ecommerce',
+      'marketplace',
+    ]);
+  });
+});
+
+describe('update-template', () => {
+  async function generatedProject(overrides: Record<string, unknown> = {}): Promise<string> {
+    const root = join(workspace, 'app');
+    await mkdir(root, { recursive: true });
+    await writeFile(
+      join(root, 'trustos.json'),
+      JSON.stringify({
+        frameworkVersion: '0.1.0',
+        template: 'merchant',
+        templateVersion: '0.1.0',
+        generatedAt: '2026-03-01T09:00:00.000Z',
+        ...overrides,
+      }),
+    );
+    return root;
+  }
+
+  it('reports an up-to-date project', async () => {
+    const root = await generatedProject();
+    const { code, output } = await invoke(['update-template', '--path', root]);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/Up to date/);
+  });
+
+  it('reports drift and prints the owner’s migration notes', async () => {
+    const root = await generatedProject({ templateVersion: '0.0.1' });
+    const { output } = await invoke(['update-template', '--path', root]);
+
+    expect(output).toMatch(/has moved on/);
+    expect(output).toMatch(/Structure only/);
+  });
+
+  it('says plainly that there is no automatic upgrade', async () => {
+    /*
+     * The command is named `update-template` and it does not update anything. Saying so is
+     * better than a tool that silently overwrites a service somebody spent a month on.
+     */
+    const root = await generatedProject({ templateVersion: '0.0.1' });
+
+    expect((await invoke(['update-template', '--path', root])).output).toMatch(
+      /no automatic upgrade/,
+    );
+  });
+
+  it('names the successor of a deprecated template', async () => {
+    const root = await generatedProject({ template: 'telegram-mini-app' });
+
+    expect((await invoke(['update-template', '--path', root])).output).toMatch(
+      /successor is "telegram-miniapp"/,
+    );
+  });
+
+  it('refuses a project with no trustos.json', async () => {
+    const { code, output } = await invoke(['update-template', '--path', workspace]);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/could not be read|No trustos\.json/);
+  });
+});
+
+describe('doctor template', () => {
+  it('passes on a freshly generated project', async () => {
+    const root = join(workspace, 'fresh');
+
+    await invoke([
+      'new',
+      'merchant',
+      '--yes',
+      '--name',
+      'fresh',
+      '--package-name',
+      'fresh',
+      '--target-dir',
+      workspace,
+      '--templates-root',
+      TEMPLATES_ROOT,
+    ]);
+
+    const { code, output } = await invoke(['doctor', 'template', '--path', root]);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/still matches the template/);
+  });
+
+  it('fails when the product module has been deleted', async () => {
+    // The composition root imports it by a fixed name, so the API will not start without it.
+    const root = join(workspace, 'broken');
+
+    await invoke([
+      'new',
+      'merchant',
+      '--yes',
+      '--name',
+      'broken',
+      '--package-name',
+      'broken',
+      '--target-dir',
+      workspace,
+      '--templates-root',
+      TEMPLATES_ROOT,
+    ]);
+
+    await rm(join(root, 'apps/api/src/modules/product'), { recursive: true, force: true });
+
+    const { code, output } = await invoke(['doctor', 'template', '--path', root]);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/product\.module\.ts is missing/);
+  });
+
+  it('reports every layer of an inherited template', async () => {
+    const root = join(workspace, 'ward');
+
+    await invoke([
+      'new',
+      'hospital',
+      '--yes',
+      '--name',
+      'ward',
+      '--package-name',
+      'ward',
+      '--target-dir',
+      workspace,
+      '--templates-root',
+      TEMPLATES_ROOT,
+    ]);
+
+    const { output } = await invoke(['doctor', 'template', '--path', root]);
+
+    expect(output).toMatch(/clinic → hospital/);
+  });
+
+  it('warns when the recorded template version is behind the registry', async () => {
+    const root = join(workspace, 'stale');
+    await mkdir(join(root, 'prisma/schema'), { recursive: true });
+    await mkdir(join(root, 'apps/api/src/modules/product'), { recursive: true });
+    await writeFile(join(root, 'prisma/schema/00-framework.prisma'), '');
+    await writeFile(join(root, 'apps/api/src/modules/product/product.module.ts'), '');
+    await writeFile(
+      join(root, 'trustos.json'),
+      JSON.stringify({ template: 'merchant', templateVersion: '0.0.1', frameworkVersion: '0.1.0' }),
+    );
+
+    const { output } = await invoke(['doctor', 'template', '--path', root]);
+
+    expect(output).toMatch(/the registry now has v0\.1\.0/);
+  });
+
+  it('emits machine-readable findings', async () => {
+    const root = join(workspace, 'json-app');
+    await mkdir(root, { recursive: true });
+    await writeFile(join(root, 'trustos.json'), JSON.stringify({ templateVersion: '0.1.0' }));
+
+    const { output } = await invoke(['doctor', 'template', '--path', root, '--json']);
+    const parsed = JSON.parse(output) as { findings: Array<{ area: string; status: string }> };
+
+    expect(parsed.findings[0]).toMatchObject({ area: 'provenance', status: 'FAIL' });
+  });
+});
+
+describe('templates hidden count', () => {
+  it('does not report a category filter as deprecation', async () => {
+    // Subtracting the visible set from the whole catalog told somebody asking for one category
+    // that twenty-eight templates were dead.
+    const health = await invoke(['templates', '--category', 'health']);
+    const messaging = await invoke(['templates', '--category', 'messaging']);
+
+    expect(health.output).not.toMatch(/deprecated template\(s\) hidden/);
+    expect(messaging.output).toMatch(/1 deprecated template\(s\) hidden/);
   });
 });

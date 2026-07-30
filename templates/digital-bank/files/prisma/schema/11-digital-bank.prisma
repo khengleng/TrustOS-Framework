@@ -1,0 +1,136 @@
+// =============================================================================
+// TrustOS Digital Bank — product models
+//
+// A retail banking front end over the wallet template: customers, accounts,
+// statements and notification preferences. No core banking system is
+// implemented or assumed.
+//
+// Out of scope, deliberately: core banking, card issuing, clearing and
+// settlement rails, credit scoring, regulatory reporting.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum CustomerSegment {
+  RETAIL
+  SME
+  CORPORATE
+}
+
+enum BankCustomerStatus {
+  PENDING
+  ACTIVE
+  DORMANT
+  CLOSED
+}
+
+enum BankAccountStatus {
+  ACTIVE
+  FROZEN
+  DORMANT
+  CLOSED
+}
+
+enum StatementStatus {
+  GENERATED
+  DELIVERED
+  FAILED
+}
+
+enum NotificationChannelName {
+  IN_APP
+  EMAIL
+  SMS
+  PUSH
+}
+
+/// A person or business the bank holds a relationship with.
+model BankCustomer {
+  id             String @id @default(cuid())
+  organizationId String
+  customerNumber String
+  fullName String
+  email String?
+  phone String?
+  segment CustomerSegment @default(RETAIL)
+  status BankCustomerStatus @default(ACTIVE)
+  onboardedAt DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, customerNumber])
+  @@index([organizationId, segment])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A customer-facing account. The money is in the framework wallet named by
+/// `profileId`; this row carries the account number and the product terms.
+model BankAccount {
+  id             String @id @default(cuid())
+  organizationId String
+  customerId String
+  profileId String
+  accountNumber String
+  productName String
+  currency String
+  status BankAccountStatus @default(ACTIVE)
+  openedAt DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, accountNumber])
+  @@index([organizationId, customerId])
+  @@index([organizationId, profileId])
+  @@index([organizationId, currency])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A generated statement for a window. Half-open `[from, to)`, the same
+/// convention the ledger uses for accounting periods — an inclusive end
+/// double-counts the boundary.
+model AccountStatement {
+  id             String @id @default(cuid())
+  organizationId String
+  accountId String
+  periodStart DateTime
+  periodEnd DateTime
+  openingBalance Decimal @db.Decimal(28, 8)
+  closingBalance Decimal @db.Decimal(28, 8)
+  currency String
+  generatedAt DateTime
+  status StatementStatus @default(GENERATED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, accountId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// Which channels a customer has muted. Security notifications ignore this —
+/// see the `optional` flag in @trustos/template-sdk.
+model CustomerNotificationPreference {
+  id             String @id @default(cuid())
+  organizationId String
+  customerId String
+  channel NotificationChannelName
+  muted Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, customerId])
+  @@index([deletedAt])
+}

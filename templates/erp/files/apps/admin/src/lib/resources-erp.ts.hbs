@@ -1,0 +1,203 @@
+/**
+ * TrustOS ERP — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { ERP_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const ERP_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'departments',
+    label: 'Departments',
+    singular: 'Department',
+    endpoint: '/departments',
+    description: "An organizational unit.",
+    table: {
+      key: 'departments',
+      label: 'Departments',
+      endpoint: '/departments',
+      emptyHint: 'Create one with POST /api/departments.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'name', label: 'Department' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'parentId', label: 'Parent', format: 'reference' },
+        { key: 'costCentre', label: 'Cost centre', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'costCentre', label: 'Cost centre', type: 'string', operators: ['eq', 'contains'] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Department' },
+      ],
+    },
+    permissions: {
+      list: P.DEPARTMENT_READ.key,
+      read: P.DEPARTMENT_READ.key,
+      create: P.DEPARTMENT_CREATE.key,
+      update: P.DEPARTMENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'employees',
+    label: 'Employees',
+    singular: 'Employee',
+    endpoint: '/employees',
+    description: "A person working for the organization.",
+    table: {
+      key: 'employees',
+      label: 'Employees',
+      endpoint: '/employees',
+      emptyHint: 'Create one with POST /api/employees.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'employeeNumber', label: 'Employee no.', sortable: true },
+        { key: 'userId', label: 'User' },
+        { key: 'departmentId', label: 'Department', format: 'reference' },
+        { key: 'fullName', label: 'Name' },
+        { key: 'jobTitle', label: 'Job title' },
+        { key: 'email', label: 'Email' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ACTIVE","label":"Active"},{"value":"ON_LEAVE","label":"On Leave"},{"value":"SUSPENDED","label":"Suspended"},{"value":"LEFT","label":"Left"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'employeeNumber', label: 'Employee no.', prefixOnly: true },
+        { key: 'fullName', label: 'Name' },
+      ],
+    },
+    permissions: {
+      list: P.EMPLOYEE_READ.key,
+      read: P.EMPLOYEE_READ.key,
+      create: P.EMPLOYEE_CREATE.key,
+      update: P.EMPLOYEE_UPDATE.key,
+    },
+  },
+  {
+    key: 'projects',
+    label: 'Projects',
+    singular: 'Project',
+    endpoint: '/projects',
+    description: "A piece of work with a budget and an owner.",
+    table: {
+      key: 'projects',
+      label: 'Projects',
+      endpoint: '/projects',
+      emptyHint: 'Create one with POST /api/projects.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'name', label: 'Project' },
+        { key: 'departmentId', label: 'Department', format: 'reference' },
+        { key: 'managerEmployeeId', label: 'Manager', format: 'reference' },
+        { key: 'budget', label: 'Budget', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PLANNED","label":"Planned"},{"value":"ACTIVE","label":"Active"},{"value":"ON_HOLD","label":"On Hold"},{"value":"COMPLETED","label":"Completed"},{"value":"CANCELLED","label":"Cancelled"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Project' },
+      ],
+    },
+    permissions: {
+      list: P.PROJECT_READ.key,
+      read: P.PROJECT_READ.key,
+      create: P.PROJECT_CREATE.key,
+      update: P.PROJECT_UPDATE.key,
+    },
+  },
+  {
+    key: 'inventory-items',
+    label: 'Inventory',
+    singular: 'Item',
+    endpoint: '/inventory-items',
+    description: "What is held, where.",
+    table: {
+      key: 'inventory-items',
+      label: 'Inventory',
+      endpoint: '/inventory-items',
+      emptyHint: 'Create one with POST /api/inventory-items.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'sku', label: 'SKU', sortable: true },
+        { key: 'name', label: 'Item' },
+        { key: 'unit', label: 'Unit' },
+        { key: 'quantityOnHand', label: 'On hand', format: 'number' },
+        { key: 'reorderLevel', label: 'Reorder at', format: 'number' },
+        { key: 'location', label: 'Location', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'location', label: 'Location', type: 'string', operators: ['eq', 'contains'] },
+    ],
+    search: {
+      fields: [
+        { key: 'sku', label: 'SKU', prefixOnly: true },
+        { key: 'name', label: 'Item' },
+      ],
+    },
+    permissions: {
+      list: P.INVENTORY_ITEM_READ.key,
+      read: P.INVENTORY_ITEM_READ.key,
+      create: P.INVENTORY_ITEM_CREATE.key,
+      update: P.INVENTORY_ITEM_UPDATE.key,
+    },
+  },
+  {
+    key: 'purchase-requests',
+    label: 'Purchase requests',
+    singular: 'Purchase request',
+    endpoint: '/purchase-requests',
+    description: "A request to buy something, approved through the framework workflow.",
+    table: {
+      key: 'purchase-requests',
+      label: 'Purchase requests',
+      endpoint: '/purchase-requests',
+      emptyHint: 'Create one with POST /api/purchase-requests.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'departmentId', label: 'Department', format: 'reference' },
+        { key: 'requestedByEmployeeId', label: 'Requested by', format: 'reference' },
+        { key: 'projectId', label: 'Project', format: 'reference' },
+        { key: 'description', label: 'Description' },
+        { key: 'estimatedAmount', label: 'Estimate', format: 'money', currencyKey: 'currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DRAFT","label":"Draft"},{"value":"SUBMITTED","label":"Submitted"},{"value":"APPROVED","label":"Approved"},{"value":"REJECTED","label":"Rejected"},{"value":"ORDERED","label":"Ordered"},{"value":"RECEIVED","label":"Received"},{"value":"CANCELLED","label":"Cancelled"}] },
+      { key: 'neededBy', label: 'Needed by', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.PURCHASE_REQUEST_READ.key,
+      read: P.PURCHASE_REQUEST_READ.key,
+      create: P.PURCHASE_REQUEST_CREATE.key,
+      update: P.PURCHASE_REQUEST_UPDATE.key,
+    },
+  },
+];

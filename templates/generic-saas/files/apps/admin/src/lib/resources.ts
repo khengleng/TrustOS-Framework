@@ -1,4 +1,4 @@
-import type { ResourceDefinition } from './resource-types';
+import type { ResourceDefinition } from '@trustos/template-sdk';
 
 /**
  * Screens for this product.
@@ -11,14 +11,26 @@ export const RESOURCES: ResourceDefinition[] = [
   {
     key: 'workspace-items',
     label: 'Workspace items',
+    singular: 'Workspace item',
     endpoint: '/workspace-items',
     description: 'The example domain entity. Rename or replace it with your own.',
-    emptyHint: 'Create one with POST /api/workspace-items.',
-    columns: [
-      { key: 'name', label: 'Name' },
-      { key: 'description', label: 'Description' },
-      { key: 'status', label: 'Status', badge: true },
-      { key: 'createdAt', label: 'Created', date: true },
-    ],
+    table: {
+      key: 'workspace-items',
+      label: 'Workspace items',
+      endpoint: '/workspace-items',
+      emptyHint: 'Create one with POST /api/workspace-items.',
+      columns: [
+        { key: 'name', label: 'Name' },
+        { key: 'description', label: 'Description' },
+        { key: 'status', label: 'Status', format: 'badge' },
+        { key: 'createdAt', label: 'Created', format: 'datetime' },
+      ],
+    },
+    /*
+     * A framework-backed screen: the guard lives on the endpoint it reads, not here.
+     * `assertCan` refuses to route an action with no permission, so an empty record is
+     * safe precisely because it makes every CRUD action unroutable.
+     */
+    permissions: {},
   },
 ];

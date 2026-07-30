@@ -1,0 +1,199 @@
+/**
+ * TrustOS Insurance — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { INSURANCE_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const INSURANCE_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'policy-holders',
+    label: 'Policyholders',
+    singular: 'Policyholder',
+    endpoint: '/policy-holders',
+    description: "Whoever the policy is issued to.",
+    table: {
+      key: 'policy-holders',
+      label: 'Policyholders',
+      endpoint: '/policy-holders',
+      emptyHint: 'Create one with POST /api/policy-holders.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'holderNumber', label: 'Holder no.', sortable: true },
+        { key: 'fullName', label: 'Name' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'dateOfBirth', label: 'Date of birth', format: 'date' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    search: {
+      fields: [
+        { key: 'holderNumber', label: 'Holder no.', prefixOnly: true },
+        { key: 'fullName', label: 'Name' },
+        { key: 'phone', label: 'Phone' },
+      ],
+    },
+    permissions: {
+      list: P.POLICY_HOLDER_READ.key,
+      read: P.POLICY_HOLDER_READ.key,
+      create: P.POLICY_HOLDER_CREATE.key,
+      update: P.POLICY_HOLDER_UPDATE.key,
+    },
+  },
+  {
+    key: 'insurance-products',
+    label: 'Products',
+    singular: 'Product',
+    endpoint: '/insurance-products',
+    description: "A cover that can be sold.",
+    table: {
+      key: 'insurance-products',
+      label: 'Products',
+      endpoint: '/insurance-products',
+      emptyHint: 'Create one with POST /api/insurance-products.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'name', label: 'Product' },
+        { key: 'category', label: 'Category', format: 'badge', sortable: true },
+        { key: 'currency', label: 'Currency' },
+        { key: 'basePremium', label: 'Base premium', format: 'money', currencyKey: 'currency' },
+        { key: 'defaultSumInsured', label: 'Default cover', format: 'money', currencyKey: 'currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'category', label: 'Category', type: 'enum', operators: ['eq', 'in'], options: [{"value":"LIFE","label":"Life"},{"value":"HEALTH","label":"Health"},{"value":"MOTOR","label":"Motor"},{"value":"PROPERTY","label":"Property"},{"value":"TRAVEL","label":"Travel"}] },
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Product' },
+      ],
+    },
+    permissions: {
+      list: P.INSURANCE_PRODUCT_READ.key,
+      read: P.INSURANCE_PRODUCT_READ.key,
+      create: P.INSURANCE_PRODUCT_CREATE.key,
+      update: P.INSURANCE_PRODUCT_UPDATE.key,
+    },
+  },
+  {
+    key: 'policies',
+    label: 'Policies',
+    singular: 'Policy',
+    endpoint: '/policies',
+    description: "Cover sold to a holder.",
+    table: {
+      key: 'policies',
+      label: 'Policies',
+      endpoint: '/policies',
+      emptyHint: 'Create one with POST /api/policies.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'policyNumber', label: 'Policy no.', sortable: true },
+        { key: 'holderId', label: 'Holder', format: 'reference' },
+        { key: 'productId', label: 'Product', format: 'reference' },
+        { key: 'sumInsured', label: 'Sum insured', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'startsOn', label: 'Starts', format: 'date' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'endsOn', label: 'Ends', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"QUOTED","label":"Quoted"},{"value":"ACTIVE","label":"Active"},{"value":"LAPSED","label":"Lapsed"},{"value":"CANCELLED","label":"Cancelled"},{"value":"EXPIRED","label":"Expired"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'policyNumber', label: 'Policy no.', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.POLICY_READ.key,
+      read: P.POLICY_READ.key,
+      create: P.POLICY_CREATE.key,
+      update: P.POLICY_UPDATE.key,
+    },
+  },
+  {
+    key: 'premiums',
+    label: 'Premiums',
+    singular: 'Premium',
+    endpoint: '/premiums',
+    description: "A premium due or received on a policy.",
+    table: {
+      key: 'premiums',
+      label: 'Premiums',
+      endpoint: '/premiums',
+      emptyHint: 'Create one with POST /api/premiums.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'policyId', label: 'Policy', format: 'reference' },
+        { key: 'dueOn', label: 'Due', format: 'date', sortable: true },
+        { key: 'amount', label: 'Amount', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'paidAt', label: 'Paid', format: 'datetime' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'dueOn', label: 'Due', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DUE","label":"Due"},{"value":"PAID","label":"Paid"},{"value":"OVERDUE","label":"Overdue"},{"value":"WAIVED","label":"Waived"}] },
+    ],
+    permissions: {
+      list: P.PREMIUM_READ.key,
+      read: P.PREMIUM_READ.key,
+      create: P.PREMIUM_CREATE.key,
+      update: P.PREMIUM_UPDATE.key,
+    },
+  },
+  {
+    key: 'claims',
+    label: 'Claims',
+    singular: 'Claim',
+    endpoint: '/claims',
+    description: "A request against a policy.",
+    table: {
+      key: 'claims',
+      label: 'Claims',
+      endpoint: '/claims',
+      emptyHint: 'Create one with POST /api/claims.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'claimNumber', label: 'Claim no.', sortable: true },
+        { key: 'policyId', label: 'Policy', format: 'reference' },
+        { key: 'incidentOn', label: 'Incident', format: 'date', sortable: true },
+        { key: 'reportedAt', label: 'Reported', format: 'datetime' },
+        { key: 'claimedAmount', label: 'Claimed', format: 'money', currencyKey: 'currency' },
+        { key: 'approvedAmount', label: 'Approved', format: 'money', currencyKey: 'currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'incidentOn', label: 'Incident', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"REPORTED","label":"Reported"},{"value":"ASSESSING","label":"Assessing"},{"value":"APPROVED","label":"Approved"},{"value":"REJECTED","label":"Rejected"},{"value":"PAID","label":"Paid"},{"value":"WITHDRAWN","label":"Withdrawn"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'claimNumber', label: 'Claim no.', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.CLAIM_READ.key,
+      read: P.CLAIM_READ.key,
+      create: P.CLAIM_CREATE.key,
+      update: P.CLAIM_UPDATE.key,
+    },
+  },
+];

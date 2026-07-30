@@ -8,6 +8,14 @@ export interface ValidateTemplateOptions {
   templatesRoot?: string;
   /** Validate every registered template. */
   all?: boolean;
+  /**
+   * Framework version to check compatibility against.
+   *
+   * Omitted by default: `validate-template` in a source tree is checking the template, not the
+   * checkout, and failing every template because the caller did not pass a flag is how a
+   * validator gets ignored.
+   */
+  frameworkVersion?: string;
 }
 
 /**
@@ -41,6 +49,7 @@ export async function runValidateTemplate(
     reports.push(
       await validateTemplate(template.id, {
         ...(options.templatesRoot ? { templatesRoot: options.templatesRoot } : {}),
+        ...(options.frameworkVersion ? { frameworkVersion: options.frameworkVersion } : {}),
       }),
     );
   }

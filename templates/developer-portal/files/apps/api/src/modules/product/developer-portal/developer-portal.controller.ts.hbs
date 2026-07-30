@@ -1,0 +1,379 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { DEVELOPER_PORTAL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  DeveloperPortalService,
+  type ApiApplicationRow,
+  type ApiKeyRecordRow,
+  type ApiUsageRecordRow,
+  type CodeExampleRow,
+  type SdkReleaseRow,
+} from './developer-portal.service';
+
+/**
+ * TrustOS Developer Portal endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createApiApplicationSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  slug: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  ownerUserId: z.string().trim().min(1).max(255),
+  description: z.string().trim().min(1).max(4000).optional(),
+  environment: z.enum(['SANDBOX', 'PRODUCTION']).optional(),
+  status: z.enum(['PENDING', 'APPROVED', 'SUSPENDED', 'REVOKED']).optional(),
+});
+
+const updateApiApplicationSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    ownerUserId: z.string().trim().min(1).max(255).optional(),
+    description: z.string().trim().min(1).max(4000).optional(),
+    environment: z.enum(['SANDBOX', 'PRODUCTION']).optional(),
+    status: z.enum(['PENDING', 'APPROVED', 'SUSPENDED', 'REVOKED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createApiKeyRecordSchema = z.object({
+  applicationId: z.string().trim().min(1).max(64),
+  apiKeyId: z.string().trim().min(1).max(255),
+  label: z.string().trim().min(1).max(255),
+  keyPrefix: z.string().trim().min(1).max(255),
+  issuedAt: z.coerce.date(),
+  lastUsedAt: z.coerce.date().optional(),
+  revokedAt: z.coerce.date().optional(),
+});
+
+const updateApiKeyRecordSchema = z
+  .object({
+    applicationId: z.string().trim().min(1).max(64).optional(),
+    label: z.string().trim().min(1).max(255).optional(),
+    issuedAt: z.coerce.date().optional(),
+    lastUsedAt: z.coerce.date().optional(),
+    revokedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createApiUsageRecordSchema = z.object({
+  applicationId: z.string().trim().min(1).max(64),
+  usageOn: z.coerce.date(),
+  endpoint: z.string().trim().min(1).max(255),
+  callCount: z.coerce.number().int(),
+  errorCount: z.coerce.number().int(),
+});
+
+const updateApiUsageRecordSchema = z
+  .object({
+    applicationId: z.string().trim().min(1).max(64).optional(),
+    usageOn: z.coerce.date().optional(),
+    endpoint: z.string().trim().min(1).max(255).optional(),
+    callCount: z.coerce.number().int().optional(),
+    errorCount: z.coerce.number().int().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createCodeExampleSchema = z.object({
+  slug: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: z.string().trim().min(1).max(255),
+  language: z.enum(['CURL', 'TYPESCRIPT', 'PYTHON', 'GO', 'PHP', 'JAVA']),
+  body: z.string().trim().min(1).max(4000),
+  endpoint: z.string().trim().min(1).max(255).optional(),
+  position: z.coerce.number().int().optional(),
+});
+
+const updateCodeExampleSchema = z
+  .object({
+    title: z.string().trim().min(1).max(255).optional(),
+    language: z.enum(['CURL', 'TYPESCRIPT', 'PYTHON', 'GO', 'PHP', 'JAVA']).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    endpoint: z.string().trim().min(1).max(255).optional(),
+    position: z.coerce.number().int().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createSdkReleaseSchema = z.object({
+  language: z.enum(['CURL', 'TYPESCRIPT', 'PYTHON', 'GO', 'PHP', 'JAVA']),
+  version: z.string().trim().min(1).max(255),
+  downloadUrl: z.string().trim().min(1).max(255),
+  checksum: z.string().trim().min(1).max(255),
+  releasedAt: z.coerce.date(),
+  isCurrent: z.coerce.boolean().optional(),
+});
+
+const updateSdkReleaseSchema = z
+  .object({
+    language: z.enum(['CURL', 'TYPESCRIPT', 'PYTHON', 'GO', 'PHP', 'JAVA']).optional(),
+    version: z.string().trim().min(1).max(255).optional(),
+    downloadUrl: z.string().trim().min(1).max(255).optional(),
+    checksum: z.string().trim().min(1).max(255).optional(),
+    releasedAt: z.coerce.date().optional(),
+    isCurrent: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('api-applications')
+@ApiBearerAuth('access-token')
+@Controller('api-applications')
+export class ApiApplicationController {
+  constructor(private readonly product: DeveloperPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.API_APPLICATION_READ.key)
+  @ApiOperation({ summary: 'List applications' })
+  list(): Promise<ApiApplicationRow[]> {
+    return this.product.listApiApplications();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.API_APPLICATION_READ.key)
+  @ApiOperation({ summary: 'Read one application' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ApiApplicationRow> {
+    return this.product.findApiApplication(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.API_APPLICATION_CREATE.key)
+  @ApiOperation({ summary: 'Create a application' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createApiApplicationSchema))
+    body: z.infer<typeof createApiApplicationSchema>,
+  ): Promise<ApiApplicationRow> {
+    return this.product.createApiApplication(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.API_APPLICATION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a application' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateApiApplicationSchema))
+    body: z.infer<typeof updateApiApplicationSchema>,
+  ): Promise<ApiApplicationRow> {
+    return this.product.updateApiApplication(id, body, organizationId);
+  }
+}
+
+@ApiTags('api-key-records')
+@ApiBearerAuth('access-token')
+@Controller('api-key-records')
+export class ApiKeyRecordController {
+  constructor(private readonly product: DeveloperPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.API_KEY_RECORD_READ.key)
+  @ApiOperation({ summary: 'List api keys' })
+  list(): Promise<ApiKeyRecordRow[]> {
+    return this.product.listApiKeyRecords();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.API_KEY_RECORD_READ.key)
+  @ApiOperation({ summary: 'Read one api key' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ApiKeyRecordRow> {
+    return this.product.findApiKeyRecord(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.API_KEY_RECORD_CREATE.key)
+  @ApiOperation({ summary: 'Create a api key' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createApiKeyRecordSchema))
+    body: z.infer<typeof createApiKeyRecordSchema>,
+  ): Promise<ApiKeyRecordRow> {
+    return this.product.createApiKeyRecord(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.API_KEY_RECORD_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a api key' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateApiKeyRecordSchema))
+    body: z.infer<typeof updateApiKeyRecordSchema>,
+  ): Promise<ApiKeyRecordRow> {
+    return this.product.updateApiKeyRecord(id, body, organizationId);
+  }
+}
+
+@ApiTags('api-usage-records')
+@ApiBearerAuth('access-token')
+@Controller('api-usage-records')
+export class ApiUsageRecordController {
+  constructor(private readonly product: DeveloperPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.API_USAGE_RECORD_READ.key)
+  @ApiOperation({ summary: 'List usage' })
+  list(): Promise<ApiUsageRecordRow[]> {
+    return this.product.listApiUsageRecords();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.API_USAGE_RECORD_READ.key)
+  @ApiOperation({ summary: 'Read one usage record' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ApiUsageRecordRow> {
+    return this.product.findApiUsageRecord(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.API_USAGE_RECORD_CREATE.key)
+  @ApiOperation({ summary: 'Create a usage record' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createApiUsageRecordSchema))
+    body: z.infer<typeof createApiUsageRecordSchema>,
+  ): Promise<ApiUsageRecordRow> {
+    return this.product.createApiUsageRecord(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.API_USAGE_RECORD_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a usage record' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateApiUsageRecordSchema))
+    body: z.infer<typeof updateApiUsageRecordSchema>,
+  ): Promise<ApiUsageRecordRow> {
+    return this.product.updateApiUsageRecord(id, body, organizationId);
+  }
+}
+
+@ApiTags('code-examples')
+@ApiBearerAuth('access-token')
+@Controller('code-examples')
+export class CodeExampleController {
+  constructor(private readonly product: DeveloperPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.CODE_EXAMPLE_READ.key)
+  @ApiOperation({ summary: 'List examples' })
+  list(): Promise<CodeExampleRow[]> {
+    return this.product.listCodeExamples();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CODE_EXAMPLE_READ.key)
+  @ApiOperation({ summary: 'Read one example' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CodeExampleRow> {
+    return this.product.findCodeExample(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CODE_EXAMPLE_CREATE.key)
+  @ApiOperation({ summary: 'Create a example' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCodeExampleSchema))
+    body: z.infer<typeof createCodeExampleSchema>,
+  ): Promise<CodeExampleRow> {
+    return this.product.createCodeExample(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CODE_EXAMPLE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a example' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCodeExampleSchema))
+    body: z.infer<typeof updateCodeExampleSchema>,
+  ): Promise<CodeExampleRow> {
+    return this.product.updateCodeExample(id, body, organizationId);
+  }
+}
+
+@ApiTags('sdk-releases')
+@ApiBearerAuth('access-token')
+@Controller('sdk-releases')
+export class SdkReleaseController {
+  constructor(private readonly product: DeveloperPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.SDK_RELEASE_READ.key)
+  @ApiOperation({ summary: 'List sdk downloads' })
+  list(): Promise<SdkReleaseRow[]> {
+    return this.product.listSdkReleases();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.SDK_RELEASE_READ.key)
+  @ApiOperation({ summary: 'Read one sdk release' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<SdkReleaseRow> {
+    return this.product.findSdkRelease(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.SDK_RELEASE_CREATE.key)
+  @ApiOperation({ summary: 'Create a sdk release' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createSdkReleaseSchema))
+    body: z.infer<typeof createSdkReleaseSchema>,
+  ): Promise<SdkReleaseRow> {
+    return this.product.createSdkRelease(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.SDK_RELEASE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a sdk release' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateSdkReleaseSchema))
+    body: z.infer<typeof updateSdkReleaseSchema>,
+  ): Promise<SdkReleaseRow> {
+    return this.product.updateSdkRelease(id, body, organizationId);
+  }
+}

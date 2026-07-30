@@ -1,0 +1,164 @@
+// =============================================================================
+// TrustOS NGO — product models
+//
+// Programme delivery for a non-profit: programmes, projects, donors,
+// donations, beneficiaries and field reports.
+//
+// Out of scope, deliberately: payment providers, donor CRM automation, grant
+// management portals, accounting systems, donor-specific reporting formats.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum ProgrammeStatus {
+  PLANNED
+  ACTIVE
+  CLOSED
+}
+
+enum NgoProjectStatus {
+  PLANNED
+  ACTIVE
+  SUSPENDED
+  COMPLETED
+}
+
+enum DonorKind {
+  INDIVIDUAL
+  CORPORATE
+  FOUNDATION
+  GOVERNMENT
+  MULTILATERAL
+}
+
+/// A long-running area of work.
+model Programme {
+  id             String @id @default(cuid())
+  organizationId String
+  code String
+  name String
+  summary String?
+  status ProgrammeStatus @default(PLANNED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A funded piece of work inside a programme.
+model NgoProject {
+  id             String @id @default(cuid())
+  organizationId String
+  programmeId String
+  code String
+  name String
+  location String?
+  budget Decimal @db.Decimal(28, 8) @default(0)
+  currency String @default("USD")
+  startsOn DateTime? @db.Date
+  endsOn DateTime? @db.Date
+  status NgoProjectStatus @default(PLANNED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, programmeId])
+  @@index([organizationId, location])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// Somebody who funds the work.
+model Donor {
+  id             String @id @default(cuid())
+  organizationId String
+  name String
+  code String
+  kind DonorKind @default(INDIVIDUAL)
+  email String?
+  phone String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, kind])
+  @@index([deletedAt])
+}
+
+/// Money given, optionally earmarked for a project.
+model Donation {
+  id             String @id @default(cuid())
+  organizationId String
+  donorId String
+  projectId String?
+  reference String
+  amount Decimal @db.Decimal(28, 8)
+  currency String @default("USD")
+  receivedOn DateTime @db.Date
+  isRestricted Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, donorId])
+  @@index([organizationId, projectId])
+  @@index([organizationId, receivedOn])
+  @@index([organizationId, isRestricted])
+  @@index([deletedAt])
+}
+
+/// Somebody the work reaches. The most sensitive records in the schema — see
+/// the migration note before exporting any of it.
+model Beneficiary {
+  id             String @id @default(cuid())
+  organizationId String
+  projectId String
+  reference String
+  fullName String
+  phone String?
+  village String?
+  householdSize Int @default(1)
+  enrolledOn DateTime @db.Date
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, projectId])
+  @@index([organizationId, village])
+  @@index([deletedAt])
+}
+
+/// What happened on the ground, and when.
+model FieldReport {
+  id             String @id @default(cuid())
+  organizationId String
+  projectId String
+  title String
+  body String
+  reportedOn DateTime @db.Date
+  authorUserId String?
+  peopleReached Int @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, projectId])
+  @@index([organizationId, reportedOn])
+  @@index([deletedAt])
+}

@@ -1,0 +1,809 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { EDUCATION_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  EducationService,
+  type TeacherRow,
+  type StudentRow,
+  type CourseRow,
+  type LessonRow,
+  type QuizRow,
+  type QuizQuestionRow,
+  type EnrollmentRow,
+  type AssignmentRow,
+  type AssignmentSubmissionRow,
+  type CertificateRow,
+  type TutorSessionRow,
+} from './education.service';
+
+/**
+ * TrustOS Education endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createTeacherSchema = z.object({
+  userId: z.string().trim().min(1).max(255),
+  displayName: z.string().trim().min(1).max(255),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
+  bio: z.string().trim().min(1).max(4000).optional(),
+  isActive: z.coerce.boolean().optional(),
+});
+
+const updateTeacherSchema = z
+  .object({
+    userId: z.string().trim().min(1).max(255).optional(),
+    displayName: z.string().trim().min(1).max(255).optional(),
+    email: z.string().trim().toLowerCase().email().max(254).optional(),
+    bio: z.string().trim().min(1).max(4000).optional(),
+    isActive: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createStudentSchema = z.object({
+  userId: z.string().trim().min(1).max(255),
+  displayName: z.string().trim().min(1).max(255),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
+  enrolledOn: z.coerce.date(),
+  status: z.enum(['ACTIVE', 'PAUSED', 'GRADUATED', 'WITHDRAWN']).optional(),
+});
+
+const updateStudentSchema = z
+  .object({
+    userId: z.string().trim().min(1).max(255).optional(),
+    displayName: z.string().trim().min(1).max(255).optional(),
+    email: z.string().trim().toLowerCase().email().max(254).optional(),
+    enrolledOn: z.coerce.date().optional(),
+    status: z.enum(['ACTIVE', 'PAUSED', 'GRADUATED', 'WITHDRAWN']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createCourseSchema = z.object({
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: z.string().trim().min(1).max(255),
+  summary: z.string().trim().min(1).max(4000).optional(),
+  teacherId: z.string().trim().min(1).max(64),
+  level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+});
+
+const updateCourseSchema = z
+  .object({
+    title: z.string().trim().min(1).max(255).optional(),
+    summary: z.string().trim().min(1).max(4000).optional(),
+    teacherId: z.string().trim().min(1).max(64).optional(),
+    level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
+    status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createLessonSchema = z.object({
+  courseId: z.string().trim().min(1).max(64),
+  title: z.string().trim().min(1).max(255),
+  position: z.coerce.number().int(),
+  body: z.string().trim().min(1).max(4000).optional(),
+  durationMinutes: z.coerce.number().int().optional(),
+  isPublished: z.coerce.boolean().optional(),
+});
+
+const updateLessonSchema = z
+  .object({
+    courseId: z.string().trim().min(1).max(64).optional(),
+    title: z.string().trim().min(1).max(255).optional(),
+    position: z.coerce.number().int().optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    durationMinutes: z.coerce.number().int().optional(),
+    isPublished: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createQuizSchema = z.object({
+  courseId: z.string().trim().min(1).max(64),
+  lessonId: z.string().trim().min(1).max(64).optional(),
+  title: z.string().trim().min(1).max(255),
+  passMarkPercent: z.coerce.number().int(),
+  timeLimitMinutes: z.coerce.number().int().optional(),
+  isPublished: z.coerce.boolean().optional(),
+});
+
+const updateQuizSchema = z
+  .object({
+    courseId: z.string().trim().min(1).max(64).optional(),
+    lessonId: z.string().trim().min(1).max(64).optional(),
+    title: z.string().trim().min(1).max(255).optional(),
+    passMarkPercent: z.coerce.number().int().optional(),
+    timeLimitMinutes: z.coerce.number().int().optional(),
+    isPublished: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createQuizQuestionSchema = z.object({
+  quizId: z.string().trim().min(1).max(64),
+  position: z.coerce.number().int(),
+  prompt: z.string().trim().min(1).max(4000),
+  options: z.record(z.unknown()),
+  correctOption: z.coerce.number().int(),
+  marks: z.coerce.number().int(),
+});
+
+const updateQuizQuestionSchema = z
+  .object({
+    quizId: z.string().trim().min(1).max(64).optional(),
+    position: z.coerce.number().int().optional(),
+    prompt: z.string().trim().min(1).max(4000).optional(),
+    options: z.record(z.unknown()).optional(),
+    correctOption: z.coerce.number().int().optional(),
+    marks: z.coerce.number().int().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createEnrollmentSchema = z.object({
+  courseId: z.string().trim().min(1).max(64),
+  studentId: z.string().trim().min(1).max(64),
+  enrolledAt: z.coerce.date(),
+  completedAt: z.coerce.date().optional(),
+  progressPercent: z.coerce.number().int().optional(),
+  status: z.enum(['ACTIVE', 'COMPLETED', 'DROPPED']).optional(),
+});
+
+const updateEnrollmentSchema = z
+  .object({
+    courseId: z.string().trim().min(1).max(64).optional(),
+    studentId: z.string().trim().min(1).max(64).optional(),
+    enrolledAt: z.coerce.date().optional(),
+    completedAt: z.coerce.date().optional(),
+    progressPercent: z.coerce.number().int().optional(),
+    status: z.enum(['ACTIVE', 'COMPLETED', 'DROPPED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createAssignmentSchema = z.object({
+  courseId: z.string().trim().min(1).max(64),
+  title: z.string().trim().min(1).max(255),
+  instructions: z.string().trim().min(1).max(4000).optional(),
+  dueAt: z.coerce.date().optional(),
+  maxMarks: z.coerce.number().int(),
+});
+
+const updateAssignmentSchema = z
+  .object({
+    courseId: z.string().trim().min(1).max(64).optional(),
+    title: z.string().trim().min(1).max(255).optional(),
+    instructions: z.string().trim().min(1).max(4000).optional(),
+    dueAt: z.coerce.date().optional(),
+    maxMarks: z.coerce.number().int().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createAssignmentSubmissionSchema = z.object({
+  assignmentId: z.string().trim().min(1).max(64),
+  studentId: z.string().trim().min(1).max(64),
+  submittedAt: z.coerce.date(),
+  body: z.string().trim().min(1).max(4000).optional(),
+  marksAwarded: z.coerce.number().int().optional(),
+  feedback: z.string().trim().min(1).max(4000).optional(),
+  status: z.enum(['DRAFT', 'SUBMITTED', 'MARKED', 'RETURNED', 'LATE']).optional(),
+});
+
+const updateAssignmentSubmissionSchema = z
+  .object({
+    assignmentId: z.string().trim().min(1).max(64).optional(),
+    studentId: z.string().trim().min(1).max(64).optional(),
+    submittedAt: z.coerce.date().optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    marksAwarded: z.coerce.number().int().optional(),
+    feedback: z.string().trim().min(1).max(4000).optional(),
+    status: z.enum(['DRAFT', 'SUBMITTED', 'MARKED', 'RETURNED', 'LATE']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createCertificateSchema = z.object({
+  enrollmentId: z.string().trim().min(1).max(64),
+  serial: z.string().trim().min(1).max(255),
+  issuedAt: z.coerce.date(),
+  revokedAt: z.coerce.date().optional(),
+  revocationReason: z.string().trim().min(1).max(255).optional(),
+});
+
+const updateCertificateSchema = z
+  .object({
+    enrollmentId: z.string().trim().min(1).max(64).optional(),
+    issuedAt: z.coerce.date().optional(),
+    revokedAt: z.coerce.date().optional(),
+    revocationReason: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createTutorSessionSchema = z.object({
+  studentId: z.string().trim().min(1).max(64),
+  courseId: z.string().trim().min(1).max(64).optional(),
+  prompt: z.string().trim().min(1).max(4000),
+  response: z.string().trim().min(1).max(4000).optional(),
+  modelId: z.string().trim().min(1).max(255).optional(),
+  askedAt: z.coerce.date(),
+  status: z.enum(['PENDING', 'ANSWERED', 'FAILED', 'BLOCKED']).optional(),
+});
+
+const updateTutorSessionSchema = z
+  .object({
+    studentId: z.string().trim().min(1).max(64).optional(),
+    courseId: z.string().trim().min(1).max(64).optional(),
+    prompt: z.string().trim().min(1).max(4000).optional(),
+    response: z.string().trim().min(1).max(4000).optional(),
+    modelId: z.string().trim().min(1).max(255).optional(),
+    askedAt: z.coerce.date().optional(),
+    status: z.enum(['PENDING', 'ANSWERED', 'FAILED', 'BLOCKED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('teachers')
+@ApiBearerAuth('access-token')
+@Controller('teachers')
+export class TeacherController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.TEACHER_READ.key)
+  @ApiOperation({ summary: 'List teachers' })
+  list(): Promise<TeacherRow[]> {
+    return this.product.listTeachers();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.TEACHER_READ.key)
+  @ApiOperation({ summary: 'Read one teacher' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<TeacherRow> {
+    return this.product.findTeacher(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.TEACHER_CREATE.key)
+  @ApiOperation({ summary: 'Create a teacher' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createTeacherSchema))
+    body: z.infer<typeof createTeacherSchema>,
+  ): Promise<TeacherRow> {
+    return this.product.createTeacher(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.TEACHER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a teacher' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateTeacherSchema))
+    body: z.infer<typeof updateTeacherSchema>,
+  ): Promise<TeacherRow> {
+    return this.product.updateTeacher(id, body, organizationId);
+  }
+}
+
+@ApiTags('students')
+@ApiBearerAuth('access-token')
+@Controller('students')
+export class StudentController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.STUDENT_READ.key)
+  @ApiOperation({ summary: 'List students' })
+  list(): Promise<StudentRow[]> {
+    return this.product.listStudents();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.STUDENT_READ.key)
+  @ApiOperation({ summary: 'Read one student' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<StudentRow> {
+    return this.product.findStudent(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.STUDENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a student' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createStudentSchema))
+    body: z.infer<typeof createStudentSchema>,
+  ): Promise<StudentRow> {
+    return this.product.createStudent(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.STUDENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a student' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateStudentSchema))
+    body: z.infer<typeof updateStudentSchema>,
+  ): Promise<StudentRow> {
+    return this.product.updateStudent(id, body, organizationId);
+  }
+}
+
+@ApiTags('courses')
+@ApiBearerAuth('access-token')
+@Controller('courses')
+export class CourseController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.COURSE_READ.key)
+  @ApiOperation({ summary: 'List courses' })
+  list(): Promise<CourseRow[]> {
+    return this.product.listCourses();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.COURSE_READ.key)
+  @ApiOperation({ summary: 'Read one course' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CourseRow> {
+    return this.product.findCourse(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.COURSE_CREATE.key)
+  @ApiOperation({ summary: 'Create a course' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCourseSchema))
+    body: z.infer<typeof createCourseSchema>,
+  ): Promise<CourseRow> {
+    return this.product.createCourse(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.COURSE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a course' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCourseSchema))
+    body: z.infer<typeof updateCourseSchema>,
+  ): Promise<CourseRow> {
+    return this.product.updateCourse(id, body, organizationId);
+  }
+}
+
+@ApiTags('lessons')
+@ApiBearerAuth('access-token')
+@Controller('lessons')
+export class LessonController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.LESSON_READ.key)
+  @ApiOperation({ summary: 'List lessons' })
+  list(): Promise<LessonRow[]> {
+    return this.product.listLessons();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.LESSON_READ.key)
+  @ApiOperation({ summary: 'Read one lesson' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<LessonRow> {
+    return this.product.findLesson(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.LESSON_CREATE.key)
+  @ApiOperation({ summary: 'Create a lesson' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createLessonSchema))
+    body: z.infer<typeof createLessonSchema>,
+  ): Promise<LessonRow> {
+    return this.product.createLesson(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.LESSON_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a lesson' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateLessonSchema))
+    body: z.infer<typeof updateLessonSchema>,
+  ): Promise<LessonRow> {
+    return this.product.updateLesson(id, body, organizationId);
+  }
+}
+
+@ApiTags('quizes')
+@ApiBearerAuth('access-token')
+@Controller('quizes')
+export class QuizController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.QUIZ_READ.key)
+  @ApiOperation({ summary: 'List quizzes' })
+  list(): Promise<QuizRow[]> {
+    return this.product.listQuizes();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.QUIZ_READ.key)
+  @ApiOperation({ summary: 'Read one quiz' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<QuizRow> {
+    return this.product.findQuiz(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.QUIZ_CREATE.key)
+  @ApiOperation({ summary: 'Create a quiz' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createQuizSchema))
+    body: z.infer<typeof createQuizSchema>,
+  ): Promise<QuizRow> {
+    return this.product.createQuiz(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.QUIZ_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a quiz' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateQuizSchema))
+    body: z.infer<typeof updateQuizSchema>,
+  ): Promise<QuizRow> {
+    return this.product.updateQuiz(id, body, organizationId);
+  }
+}
+
+@ApiTags('quiz-questions')
+@ApiBearerAuth('access-token')
+@Controller('quiz-questions')
+export class QuizQuestionController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.QUIZ_QUESTION_READ.key)
+  @ApiOperation({ summary: 'List questions' })
+  list(): Promise<QuizQuestionRow[]> {
+    return this.product.listQuizQuestions();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.QUIZ_QUESTION_READ.key)
+  @ApiOperation({ summary: 'Read one question' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<QuizQuestionRow> {
+    return this.product.findQuizQuestion(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.QUIZ_QUESTION_CREATE.key)
+  @ApiOperation({ summary: 'Create a question' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createQuizQuestionSchema))
+    body: z.infer<typeof createQuizQuestionSchema>,
+  ): Promise<QuizQuestionRow> {
+    return this.product.createQuizQuestion(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.QUIZ_QUESTION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a question' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateQuizQuestionSchema))
+    body: z.infer<typeof updateQuizQuestionSchema>,
+  ): Promise<QuizQuestionRow> {
+    return this.product.updateQuizQuestion(id, body, organizationId);
+  }
+}
+
+@ApiTags('enrollments')
+@ApiBearerAuth('access-token')
+@Controller('enrollments')
+export class EnrollmentController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.ENROLLMENT_READ.key)
+  @ApiOperation({ summary: 'List enrolments' })
+  list(): Promise<EnrollmentRow[]> {
+    return this.product.listEnrollments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.ENROLLMENT_READ.key)
+  @ApiOperation({ summary: 'Read one enrolment' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<EnrollmentRow> {
+    return this.product.findEnrollment(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.ENROLLMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a enrolment' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createEnrollmentSchema))
+    body: z.infer<typeof createEnrollmentSchema>,
+  ): Promise<EnrollmentRow> {
+    return this.product.createEnrollment(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.ENROLLMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a enrolment' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateEnrollmentSchema))
+    body: z.infer<typeof updateEnrollmentSchema>,
+  ): Promise<EnrollmentRow> {
+    return this.product.updateEnrollment(id, body, organizationId);
+  }
+}
+
+@ApiTags('assignments')
+@ApiBearerAuth('access-token')
+@Controller('assignments')
+export class AssignmentController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.ASSIGNMENT_READ.key)
+  @ApiOperation({ summary: 'List assignments' })
+  list(): Promise<AssignmentRow[]> {
+    return this.product.listAssignments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.ASSIGNMENT_READ.key)
+  @ApiOperation({ summary: 'Read one assignment' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<AssignmentRow> {
+    return this.product.findAssignment(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.ASSIGNMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a assignment' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createAssignmentSchema))
+    body: z.infer<typeof createAssignmentSchema>,
+  ): Promise<AssignmentRow> {
+    return this.product.createAssignment(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.ASSIGNMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a assignment' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateAssignmentSchema))
+    body: z.infer<typeof updateAssignmentSchema>,
+  ): Promise<AssignmentRow> {
+    return this.product.updateAssignment(id, body, organizationId);
+  }
+}
+
+@ApiTags('assignment-submissions')
+@ApiBearerAuth('access-token')
+@Controller('assignment-submissions')
+export class AssignmentSubmissionController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.ASSIGNMENT_SUBMISSION_READ.key)
+  @ApiOperation({ summary: 'List submissions' })
+  list(): Promise<AssignmentSubmissionRow[]> {
+    return this.product.listAssignmentSubmissions();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.ASSIGNMENT_SUBMISSION_READ.key)
+  @ApiOperation({ summary: 'Read one submission' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<AssignmentSubmissionRow> {
+    return this.product.findAssignmentSubmission(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.ASSIGNMENT_SUBMISSION_CREATE.key)
+  @ApiOperation({ summary: 'Create a submission' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createAssignmentSubmissionSchema))
+    body: z.infer<typeof createAssignmentSubmissionSchema>,
+  ): Promise<AssignmentSubmissionRow> {
+    return this.product.createAssignmentSubmission(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.ASSIGNMENT_SUBMISSION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a submission' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateAssignmentSubmissionSchema))
+    body: z.infer<typeof updateAssignmentSubmissionSchema>,
+  ): Promise<AssignmentSubmissionRow> {
+    return this.product.updateAssignmentSubmission(id, body, organizationId);
+  }
+}
+
+@ApiTags('certificates')
+@ApiBearerAuth('access-token')
+@Controller('certificates')
+export class CertificateController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.CERTIFICATE_READ.key)
+  @ApiOperation({ summary: 'List certificates' })
+  list(): Promise<CertificateRow[]> {
+    return this.product.listCertificates();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CERTIFICATE_READ.key)
+  @ApiOperation({ summary: 'Read one certificate' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CertificateRow> {
+    return this.product.findCertificate(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CERTIFICATE_CREATE.key)
+  @ApiOperation({ summary: 'Create a certificate' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCertificateSchema))
+    body: z.infer<typeof createCertificateSchema>,
+  ): Promise<CertificateRow> {
+    return this.product.createCertificate(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CERTIFICATE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a certificate' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCertificateSchema))
+    body: z.infer<typeof updateCertificateSchema>,
+  ): Promise<CertificateRow> {
+    return this.product.updateCertificate(id, body, organizationId);
+  }
+}
+
+@ApiTags('tutor-sessions')
+@ApiBearerAuth('access-token')
+@Controller('tutor-sessions')
+export class TutorSessionController {
+  constructor(private readonly product: EducationService) {}
+
+  @Get()
+  @RequirePermissions(P.TUTOR_SESSION_READ.key)
+  @ApiOperation({ summary: 'List tutor sessions' })
+  list(): Promise<TutorSessionRow[]> {
+    return this.product.listTutorSessions();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.TUTOR_SESSION_READ.key)
+  @ApiOperation({ summary: 'Read one tutor session' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<TutorSessionRow> {
+    return this.product.findTutorSession(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.TUTOR_SESSION_CREATE.key)
+  @ApiOperation({ summary: 'Create a tutor session' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createTutorSessionSchema))
+    body: z.infer<typeof createTutorSessionSchema>,
+  ): Promise<TutorSessionRow> {
+    return this.product.createTutorSession(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.TUTOR_SESSION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a tutor session' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateTutorSessionSchema))
+    body: z.infer<typeof updateTutorSessionSchema>,
+  ): Promise<TutorSessionRow> {
+    return this.product.updateTutorSession(id, body, organizationId);
+  }
+}

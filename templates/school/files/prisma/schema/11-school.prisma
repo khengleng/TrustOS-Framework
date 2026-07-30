@@ -1,0 +1,125 @@
+// =============================================================================
+// TrustOS School — product models
+//
+// School administration on top of the education platform: academic terms,
+// class groups, attendance, grades and guardians.
+//
+// Out of scope, deliberately: timetabling algorithms, payment providers,
+// transport management, government reporting formats, biometric attendance
+// devices.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum AttendanceState {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+/// A teaching period. Half-open `[startsOn, endsOn)`, so two consecutive terms
+/// tile without the boundary day belonging to both.
+model AcademicTerm {
+  id             String @id @default(cuid())
+  organizationId String
+  name String
+  code String
+  startsOn DateTime @db.Date
+  endsOn DateTime @db.Date
+  isCurrent Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isCurrent])
+  @@index([deletedAt])
+}
+
+/// A set of students taught together for a term.
+model ClassGroup {
+  id             String @id @default(cuid())
+  organizationId String
+  termId String
+  courseId String
+  teacherId String
+  name String
+  room String?
+  capacity Int @default(30)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, termId])
+  @@index([organizationId, courseId])
+  @@index([organizationId, teacherId])
+  @@index([deletedAt])
+}
+
+/// One student, one session. See the migration note before summarizing it.
+model Attendance {
+  id             String @id @default(cuid())
+  organizationId String
+  classGroupId String
+  studentId String
+  sessionOn DateTime @db.Date
+  period Int @default(1)
+  state AttendanceState
+  note String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, classGroupId])
+  @@index([organizationId, studentId])
+  @@index([organizationId, sessionOn])
+  @@index([organizationId, state])
+  @@index([deletedAt])
+}
+
+/// A mark for a student in a class, for a term.
+model Grade {
+  id             String @id @default(cuid())
+  organizationId String
+  classGroupId String
+  studentId String
+  component String
+  marksAwarded Int
+  maxMarks Int @default(100)
+  recordedAt DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, classGroupId])
+  @@index([organizationId, studentId])
+  @@index([deletedAt])
+}
+
+/// A parent or carer. Contact details are personal data — the API returns them
+/// only to roles holding the PII permission.
+model Guardian {
+  id             String @id @default(cuid())
+  organizationId String
+  studentId String
+  fullName String
+  relationship String
+  phone String?
+  email String?
+  isPrimaryContact Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, studentId])
+  @@index([deletedAt])
+}

@@ -1,0 +1,200 @@
+/**
+ * TrustOS Government Services — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { GOVERNMENT_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const GOVERNMENT_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'citizens',
+    label: 'Citizens',
+    singular: 'Citizen',
+    endpoint: '/citizens',
+    description: "A person known to the agency.",
+    table: {
+      key: 'citizens',
+      label: 'Citizens',
+      endpoint: '/citizens',
+      emptyHint: 'Create one with POST /api/citizens.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'citizenNumber', label: 'Citizen no.', sortable: true },
+        { key: 'fullName', label: 'Name' },
+        { key: 'nationalIdRef', label: 'National ID ref', permission: 'government.pii.read' },
+        { key: 'dateOfBirth', label: 'Date of birth', format: 'date', permission: 'government.pii.read' },
+        { key: 'phone', label: 'Phone', permission: 'government.pii.read' },
+        { key: 'addressLine', label: 'Address', permission: 'government.pii.read' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ACTIVE","label":"Active"},{"value":"INACTIVE","label":"Inactive"},{"value":"DECEASED","label":"Deceased"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'citizenNumber', label: 'Citizen no.', prefixOnly: true },
+        { key: 'fullName', label: 'Name' },
+      ],
+    },
+    permissions: {
+      list: P.CITIZEN_READ.key,
+      read: P.CITIZEN_READ.key,
+      create: P.CITIZEN_CREATE.key,
+      update: P.CITIZEN_UPDATE.key,
+    },
+  },
+  {
+    key: 'government-services',
+    label: 'Services',
+    singular: 'Service',
+    endpoint: '/government-services',
+    description: "Something a citizen can apply for.",
+    table: {
+      key: 'government-services',
+      label: 'Services',
+      endpoint: '/government-services',
+      emptyHint: 'Create one with POST /api/government-services.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'name', label: 'Service' },
+        { key: 'description', label: 'Description' },
+        { key: 'workflowDefinitionId', label: 'Workflow' },
+        { key: 'processingDays', label: 'Processing days', format: 'number' },
+        { key: 'isActive', label: 'Active', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Service' },
+      ],
+    },
+    permissions: {
+      list: P.GOVERNMENT_SERVICE_READ.key,
+      read: P.GOVERNMENT_SERVICE_READ.key,
+      create: P.GOVERNMENT_SERVICE_CREATE.key,
+      update: P.GOVERNMENT_SERVICE_UPDATE.key,
+    },
+  },
+  {
+    key: 'service-applications',
+    label: 'Applications',
+    singular: 'Application',
+    endpoint: '/service-applications',
+    description: "A citizen applying.",
+    table: {
+      key: 'service-applications',
+      label: 'Applications',
+      endpoint: '/service-applications',
+      emptyHint: 'Create one with POST /api/service-applications.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'citizenId', label: 'Citizen', format: 'reference' },
+        { key: 'serviceId', label: 'Service', format: 'reference' },
+        { key: 'submittedAt', label: 'Submitted', format: 'datetime', sortable: true },
+        { key: 'payload', label: 'Form data' },
+        { key: 'workflowInstanceId', label: 'Workflow' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'submittedAt', label: 'Submitted', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DRAFT","label":"Draft"},{"value":"SUBMITTED","label":"Submitted"},{"value":"IN_REVIEW","label":"In Review"},{"value":"INFORMATION_REQUESTED","label":"Information Requested"},{"value":"APPROVED","label":"Approved"},{"value":"REJECTED","label":"Rejected"},{"value":"WITHDRAWN","label":"Withdrawn"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.SERVICE_APPLICATION_READ.key,
+      read: P.SERVICE_APPLICATION_READ.key,
+      create: P.SERVICE_APPLICATION_CREATE.key,
+      update: P.SERVICE_APPLICATION_UPDATE.key,
+    },
+  },
+  {
+    key: 'service-appointments',
+    label: 'Appointments',
+    singular: 'Appointment',
+    endpoint: '/service-appointments',
+    description: "A slot booked at an office.",
+    table: {
+      key: 'service-appointments',
+      label: 'Appointments',
+      endpoint: '/service-appointments',
+      emptyHint: 'Create one with POST /api/service-appointments.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'applicationId', label: 'Application', format: 'reference' },
+        { key: 'citizenId', label: 'Citizen', format: 'reference' },
+        { key: 'office', label: 'Office', sortable: true },
+        { key: 'scheduledFor', label: 'Scheduled', format: 'datetime', sortable: true },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'office', label: 'Office', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'scheduledFor', label: 'Scheduled', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"BOOKED","label":"Booked"},{"value":"ATTENDED","label":"Attended"},{"value":"MISSED","label":"Missed"},{"value":"CANCELLED","label":"Cancelled"}] },
+    ],
+    permissions: {
+      list: P.SERVICE_APPOINTMENT_READ.key,
+      read: P.SERVICE_APPOINTMENT_READ.key,
+      create: P.SERVICE_APPOINTMENT_CREATE.key,
+      update: P.SERVICE_APPOINTMENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'public-notices',
+    label: 'Notices',
+    singular: 'Notice',
+    endpoint: '/public-notices',
+    description: "Something the agency publishes.",
+    table: {
+      key: 'public-notices',
+      label: 'Notices',
+      endpoint: '/public-notices',
+      emptyHint: 'Create one with POST /api/public-notices.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'title', label: 'Notice' },
+        { key: 'body', label: 'Body' },
+        { key: 'publishedAt', label: 'Published', format: 'datetime', sortable: true },
+        { key: 'expiresAt', label: 'Expires', format: 'datetime' },
+        { key: 'audience', label: 'Audience', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'publishedAt', label: 'Published', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'audience', label: 'Audience', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PUBLIC","label":"Public"},{"value":"REGISTERED","label":"Registered"},{"value":"INTERNAL","label":"Internal"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'title', label: 'Notice' },
+      ],
+    },
+    permissions: {
+      list: P.PUBLIC_NOTICE_READ.key,
+      read: P.PUBLIC_NOTICE_READ.key,
+      create: P.PUBLIC_NOTICE_CREATE.key,
+      update: P.PUBLIC_NOTICE_UPDATE.key,
+    },
+  },
+];

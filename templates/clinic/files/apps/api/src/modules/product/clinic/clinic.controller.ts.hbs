@@ -1,0 +1,384 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { CLINIC_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  ClinicService,
+  type PatientRow,
+  type PractitionerRow,
+  type AppointmentRow,
+  type MedicalRecordEntryRow,
+  type ClinicInvoiceRow,
+} from './clinic.service';
+
+/**
+ * TrustOS Clinic endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createPatientSchema = z.object({
+  patientNumber: z.string().trim().min(1).max(255),
+  fullName: z.string().trim().min(1).max(255),
+  dateOfBirth: z.coerce.date().optional(),
+  sex: z.enum(['FEMALE', 'MALE', 'OTHER', 'UNDISCLOSED']).optional(),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  addressLine: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'DECEASED']).optional(),
+});
+
+const updatePatientSchema = z
+  .object({
+    fullName: z.string().trim().min(1).max(255).optional(),
+    dateOfBirth: z.coerce.date().optional(),
+    sex: z.enum(['FEMALE', 'MALE', 'OTHER', 'UNDISCLOSED']).optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    addressLine: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['ACTIVE', 'INACTIVE', 'DECEASED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createPractitionerSchema = z.object({
+  userId: z.string().trim().min(1).max(255),
+  displayName: z.string().trim().min(1).max(255),
+  speciality: z.string().trim().min(1).max(255).optional(),
+  licenceNumber: z.string().trim().min(1).max(255).optional(),
+  isAcceptingPatients: z.coerce.boolean().optional(),
+});
+
+const updatePractitionerSchema = z
+  .object({
+    userId: z.string().trim().min(1).max(255).optional(),
+    displayName: z.string().trim().min(1).max(255).optional(),
+    speciality: z.string().trim().min(1).max(255).optional(),
+    licenceNumber: z.string().trim().min(1).max(255).optional(),
+    isAcceptingPatients: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createAppointmentSchema = z.object({
+  patientId: z.string().trim().min(1).max(64),
+  practitionerId: z.string().trim().min(1).max(64),
+  reference: z.string().trim().min(1).max(255),
+  scheduledFor: z.coerce.date(),
+  durationMinutes: z.coerce.number().int(),
+  reason: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['BOOKED', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']).optional(),
+});
+
+const updateAppointmentSchema = z
+  .object({
+    patientId: z.string().trim().min(1).max(64).optional(),
+    practitionerId: z.string().trim().min(1).max(64).optional(),
+    scheduledFor: z.coerce.date().optional(),
+    durationMinutes: z.coerce.number().int().optional(),
+    reason: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['BOOKED', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createMedicalRecordEntrySchema = z.object({
+  patientId: z.string().trim().min(1).max(64),
+  appointmentId: z.string().trim().min(1).max(64).optional(),
+  authorPractitionerId: z.string().trim().min(1).max(64),
+  kind: z.enum(['CONSULTATION', 'OBSERVATION', 'PRESCRIPTION', 'REFERRAL', 'ATTACHMENT']),
+  body: z.string().trim().min(1).max(4000),
+  recordedAt: z.coerce.date(),
+});
+
+const updateMedicalRecordEntrySchema = z
+  .object({
+    patientId: z.string().trim().min(1).max(64).optional(),
+    appointmentId: z.string().trim().min(1).max(64).optional(),
+    authorPractitionerId: z.string().trim().min(1).max(64).optional(),
+    kind: z.enum(['CONSULTATION', 'OBSERVATION', 'PRESCRIPTION', 'REFERRAL', 'ATTACHMENT']).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    recordedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createClinicInvoiceSchema = z.object({
+  patientId: z.string().trim().min(1).max(64),
+  appointmentId: z.string().trim().min(1).max(64).optional(),
+  number: z.string().trim().min(1).max(255),
+  issuedAt: z.coerce.date(),
+  total: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  status: z.enum(['DRAFT', 'ISSUED', 'PAID', 'VOID']).optional(),
+});
+
+const updateClinicInvoiceSchema = z
+  .object({
+    patientId: z.string().trim().min(1).max(64).optional(),
+    appointmentId: z.string().trim().min(1).max(64).optional(),
+    issuedAt: z.coerce.date().optional(),
+    total: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['DRAFT', 'ISSUED', 'PAID', 'VOID']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('patients')
+@ApiBearerAuth('access-token')
+@Controller('patients')
+export class PatientController {
+  constructor(private readonly product: ClinicService) {}
+
+  @Get()
+  @RequirePermissions(P.PATIENT_READ.key)
+  @ApiOperation({ summary: 'List patients' })
+  list(): Promise<PatientRow[]> {
+    return this.product.listPatients();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PATIENT_READ.key)
+  @ApiOperation({ summary: 'Read one patient' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PatientRow> {
+    return this.product.findPatient(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PATIENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a patient' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPatientSchema))
+    body: z.infer<typeof createPatientSchema>,
+  ): Promise<PatientRow> {
+    return this.product.createPatient(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PATIENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a patient' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePatientSchema))
+    body: z.infer<typeof updatePatientSchema>,
+  ): Promise<PatientRow> {
+    return this.product.updatePatient(id, body, organizationId);
+  }
+}
+
+@ApiTags('practitioners')
+@ApiBearerAuth('access-token')
+@Controller('practitioners')
+export class PractitionerController {
+  constructor(private readonly product: ClinicService) {}
+
+  @Get()
+  @RequirePermissions(P.PRACTITIONER_READ.key)
+  @ApiOperation({ summary: 'List doctors' })
+  list(): Promise<PractitionerRow[]> {
+    return this.product.listPractitioners();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PRACTITIONER_READ.key)
+  @ApiOperation({ summary: 'Read one doctor' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PractitionerRow> {
+    return this.product.findPractitioner(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PRACTITIONER_CREATE.key)
+  @ApiOperation({ summary: 'Create a doctor' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPractitionerSchema))
+    body: z.infer<typeof createPractitionerSchema>,
+  ): Promise<PractitionerRow> {
+    return this.product.createPractitioner(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PRACTITIONER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a doctor' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePractitionerSchema))
+    body: z.infer<typeof updatePractitionerSchema>,
+  ): Promise<PractitionerRow> {
+    return this.product.updatePractitioner(id, body, organizationId);
+  }
+}
+
+@ApiTags('appointments')
+@ApiBearerAuth('access-token')
+@Controller('appointments')
+export class AppointmentController {
+  constructor(private readonly product: ClinicService) {}
+
+  @Get()
+  @RequirePermissions(P.APPOINTMENT_READ.key)
+  @ApiOperation({ summary: 'List appointments' })
+  list(): Promise<AppointmentRow[]> {
+    return this.product.listAppointments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.APPOINTMENT_READ.key)
+  @ApiOperation({ summary: 'Read one appointment' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<AppointmentRow> {
+    return this.product.findAppointment(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.APPOINTMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a appointment' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createAppointmentSchema))
+    body: z.infer<typeof createAppointmentSchema>,
+  ): Promise<AppointmentRow> {
+    return this.product.createAppointment(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.APPOINTMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a appointment' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateAppointmentSchema))
+    body: z.infer<typeof updateAppointmentSchema>,
+  ): Promise<AppointmentRow> {
+    return this.product.updateAppointment(id, body, organizationId);
+  }
+}
+
+@ApiTags('medical-record-entries')
+@ApiBearerAuth('access-token')
+@Controller('medical-record-entries')
+export class MedicalRecordEntryController {
+  constructor(private readonly product: ClinicService) {}
+
+  @Get()
+  @RequirePermissions(P.MEDICAL_RECORD_ENTRY_READ.key)
+  @ApiOperation({ summary: 'List medical records' })
+  list(): Promise<MedicalRecordEntryRow[]> {
+    return this.product.listMedicalRecordEntries();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.MEDICAL_RECORD_ENTRY_READ.key)
+  @ApiOperation({ summary: 'Read one record entry' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<MedicalRecordEntryRow> {
+    return this.product.findMedicalRecordEntry(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.MEDICAL_RECORD_ENTRY_CREATE.key)
+  @ApiOperation({ summary: 'Create a record entry' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createMedicalRecordEntrySchema))
+    body: z.infer<typeof createMedicalRecordEntrySchema>,
+  ): Promise<MedicalRecordEntryRow> {
+    return this.product.createMedicalRecordEntry(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.MEDICAL_RECORD_ENTRY_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a record entry' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateMedicalRecordEntrySchema))
+    body: z.infer<typeof updateMedicalRecordEntrySchema>,
+  ): Promise<MedicalRecordEntryRow> {
+    return this.product.updateMedicalRecordEntry(id, body, organizationId);
+  }
+}
+
+@ApiTags('clinic-invoices')
+@ApiBearerAuth('access-token')
+@Controller('clinic-invoices')
+export class ClinicInvoiceController {
+  constructor(private readonly product: ClinicService) {}
+
+  @Get()
+  @RequirePermissions(P.CLINIC_INVOICE_READ.key)
+  @ApiOperation({ summary: 'List invoices' })
+  list(): Promise<ClinicInvoiceRow[]> {
+    return this.product.listClinicInvoices();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CLINIC_INVOICE_READ.key)
+  @ApiOperation({ summary: 'Read one invoice' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ClinicInvoiceRow> {
+    return this.product.findClinicInvoice(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CLINIC_INVOICE_CREATE.key)
+  @ApiOperation({ summary: 'Create a invoice' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createClinicInvoiceSchema))
+    body: z.infer<typeof createClinicInvoiceSchema>,
+  ): Promise<ClinicInvoiceRow> {
+    return this.product.createClinicInvoice(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CLINIC_INVOICE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a invoice' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateClinicInvoiceSchema))
+    body: z.infer<typeof updateClinicInvoiceSchema>,
+  ): Promise<ClinicInvoiceRow> {
+    return this.product.updateClinicInvoice(id, body, organizationId);
+  }
+}

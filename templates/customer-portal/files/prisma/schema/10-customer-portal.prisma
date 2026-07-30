@@ -1,0 +1,115 @@
+// =============================================================================
+// TrustOS Customer Portal — product models
+//
+// A self-service portal: profile, notifications, documents, settings and
+// support requests.
+//
+// Out of scope, deliberately: payment providers, live chat, document
+// e-signing, identity verification providers, cloud storage backends.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum DocumentCategory {
+  STATEMENT
+  CONTRACT
+  INVOICE
+  IDENTITY
+  OTHER
+}
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+/// What a customer can see and edit about themselves.
+model PortalProfile {
+  id             String @id @default(cuid())
+  organizationId String
+  userId String
+  displayName String
+  email String?
+  phone String?
+  locale String @default("en")
+  timezone String @default("Asia/Phnom_Penh")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, userId])
+  @@index([deletedAt])
+}
+
+/// A file made available to a customer. `storageKey` is opaque and never a
+/// filename the customer supplied — see the upload guidance in
+/// @trustos/template-sdk.
+model PortalDocument {
+  id             String @id @default(cuid())
+  organizationId String
+  ownerUserId String
+  title String
+  storageKey String
+  contentType String
+  sizeBytes Int
+  category DocumentCategory @default(OTHER)
+  availableFrom DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, category])
+  @@index([organizationId, availableFrom])
+  @@index([deletedAt])
+}
+
+/// Something the customer should see when they next log in.
+model PortalNotification {
+  id             String @id @default(cuid())
+  organizationId String
+  recipientUserId String
+  notificationKey String
+  subject String
+  body String
+  href String?
+  sentAt DateTime
+  readAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, notificationKey])
+  @@index([organizationId, sentAt])
+  @@index([deletedAt])
+}
+
+/// A customer asking for help.
+model SupportRequest {
+  id             String @id @default(cuid())
+  organizationId String
+  requesterUserId String
+  reference String
+  subject String
+  body String
+  status SupportStatus @default(OPEN)
+  openedAt DateTime
+  closedAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, status])
+  @@index([organizationId, openedAt])
+  @@index([deletedAt])
+}

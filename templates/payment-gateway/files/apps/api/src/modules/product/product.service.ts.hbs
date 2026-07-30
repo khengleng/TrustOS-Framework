@@ -99,9 +99,9 @@ export class ProductService {
     @Inject(AUDIT_SERVICE) private readonly audit: AuditService,
   ) {
     this.accounts = new TenantRepository<MerchantAccountRow>(prisma, 'merchantAccount');
-    this.apiKeys = new TenantRepository<ApiKeyRow>(prisma, 'apiKey');
+    this.apiKeys = new TenantRepository<ApiKeyRow>(prisma, 'gatewayApiKey');
     this.payments = new TenantRepository<PaymentRow>(prisma, 'payment');
-    this.webhooks = new TenantRepository<WebhookEndpointRow>(prisma, 'webhookEndpoint');
+    this.webhooks = new TenantRepository<WebhookEndpointRow>(prisma, 'gatewayWebhookEndpoint');
     // Swap for a real adapter when one is approved; nothing else changes.
     this.provider = new MockPaymentProvider();
   }

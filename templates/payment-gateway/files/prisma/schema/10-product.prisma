@@ -43,9 +43,9 @@ model MerchantAccount {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  apiKeys  ApiKey[]
+  apiKeys  GatewayApiKey[]
   payments Payment[]
-  webhooks WebhookEndpoint[]
+  webhooks GatewayWebhookEndpoint[]
 
   @@unique([organizationId, reference])
   @@index([organizationId, status])
@@ -53,7 +53,7 @@ model MerchantAccount {
 }
 
 /// An API credential. The key itself is never stored.
-model ApiKey {
+model GatewayApiKey {
   id                String  @id @default(cuid())
   organizationId    String
   merchantAccountId String
@@ -131,7 +131,7 @@ model PaymentStatusHistory {
 }
 
 /// Where the gateway will deliver events once delivery is implemented.
-model WebhookEndpoint {
+model GatewayWebhookEndpoint {
   id                String  @id @default(cuid())
   organizationId    String
   merchantAccountId String

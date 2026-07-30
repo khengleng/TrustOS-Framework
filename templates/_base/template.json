@@ -12,8 +12,16 @@
       "reason": "The admin application is optional."
     },
     {
+      "prefix": "apps/miniapp",
+      "when": "includeMiniapp",
+      "reason": "The mini app shell is shared by every messaging template and excluded from the rest."
+    },
+    {
       "prefix": "railway.toml",
-      "whenEquals": { "variable": "deploymentTarget", "value": "railway" },
+      "whenEquals": {
+        "variable": "deploymentTarget",
+        "value": "railway"
+      },
       "reason": "Railway configuration is meaningless for a local-only deployment."
     }
   ]

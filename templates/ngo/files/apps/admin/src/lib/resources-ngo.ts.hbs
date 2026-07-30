@@ -1,0 +1,238 @@
+/**
+ * TrustOS NGO — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { NGO_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const NGO_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'programmes',
+    label: 'Programmes',
+    singular: 'Programme',
+    endpoint: '/programmes',
+    description: "A long-running area of work.",
+    table: {
+      key: 'programmes',
+      label: 'Programmes',
+      endpoint: '/programmes',
+      emptyHint: 'Create one with POST /api/programmes.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'name', label: 'Programme' },
+        { key: 'summary', label: 'Summary' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PLANNED","label":"Planned"},{"value":"ACTIVE","label":"Active"},{"value":"CLOSED","label":"Closed"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Programme' },
+      ],
+    },
+    permissions: {
+      list: P.PROGRAMME_READ.key,
+      read: P.PROGRAMME_READ.key,
+      create: P.PROGRAMME_CREATE.key,
+      update: P.PROGRAMME_UPDATE.key,
+    },
+  },
+  {
+    key: 'ngo-projects',
+    label: 'Projects',
+    singular: 'Project',
+    endpoint: '/ngo-projects',
+    description: "A funded piece of work inside a programme.",
+    table: {
+      key: 'ngo-projects',
+      label: 'Projects',
+      endpoint: '/ngo-projects',
+      emptyHint: 'Create one with POST /api/ngo-projects.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'programmeId', label: 'Programme', format: 'reference' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'name', label: 'Project' },
+        { key: 'location', label: 'Location', sortable: true },
+        { key: 'budget', label: 'Budget', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'location', label: 'Location', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PLANNED","label":"Planned"},{"value":"ACTIVE","label":"Active"},{"value":"SUSPENDED","label":"Suspended"},{"value":"COMPLETED","label":"Completed"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Project' },
+      ],
+    },
+    permissions: {
+      list: P.NGO_PROJECT_READ.key,
+      read: P.NGO_PROJECT_READ.key,
+      create: P.NGO_PROJECT_CREATE.key,
+      update: P.NGO_PROJECT_UPDATE.key,
+    },
+  },
+  {
+    key: 'donors',
+    label: 'Donors',
+    singular: 'Donor',
+    endpoint: '/donors',
+    description: "Somebody who funds the work.",
+    table: {
+      key: 'donors',
+      label: 'Donors',
+      endpoint: '/donors',
+      emptyHint: 'Create one with POST /api/donors.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'name', label: 'Donor' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'kind', label: 'Kind', format: 'badge', sortable: true },
+        { key: 'email', label: 'Email', permission: 'ngo.pii.read' },
+        { key: 'phone', label: 'Phone', permission: 'ngo.pii.read' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'kind', label: 'Kind', type: 'enum', operators: ['eq', 'in'], options: [{"value":"INDIVIDUAL","label":"Individual"},{"value":"CORPORATE","label":"Corporate"},{"value":"FOUNDATION","label":"Foundation"},{"value":"GOVERNMENT","label":"Government"},{"value":"MULTILATERAL","label":"Multilateral"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Donor' },
+      ],
+    },
+    permissions: {
+      list: P.DONOR_READ.key,
+      read: P.DONOR_READ.key,
+      create: P.DONOR_CREATE.key,
+      update: P.DONOR_UPDATE.key,
+    },
+  },
+  {
+    key: 'donations',
+    label: 'Donations',
+    singular: 'Donation',
+    endpoint: '/donations',
+    description: "Money given, optionally earmarked for a project.",
+    table: {
+      key: 'donations',
+      label: 'Donations',
+      endpoint: '/donations',
+      emptyHint: 'Create one with POST /api/donations.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'donorId', label: 'Donor', format: 'reference' },
+        { key: 'projectId', label: 'Project', format: 'reference' },
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'amount', label: 'Amount', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'receivedOn', label: 'Received', format: 'date', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'receivedOn', label: 'Received', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'isRestricted', label: 'Restricted', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.DONATION_READ.key,
+      read: P.DONATION_READ.key,
+      create: P.DONATION_CREATE.key,
+      update: P.DONATION_UPDATE.key,
+    },
+  },
+  {
+    key: 'beneficiaries',
+    label: 'Beneficiaries',
+    singular: 'Beneficiary',
+    endpoint: '/beneficiaries',
+    description: "Somebody the work reaches.",
+    table: {
+      key: 'beneficiaries',
+      label: 'Beneficiaries',
+      endpoint: '/beneficiaries',
+      emptyHint: 'Create one with POST /api/beneficiaries.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'projectId', label: 'Project', format: 'reference' },
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'fullName', label: 'Name', permission: 'ngo.pii.read' },
+        { key: 'phone', label: 'Phone', permission: 'ngo.pii.read' },
+        { key: 'village', label: 'Village', sortable: true },
+        { key: 'householdSize', label: 'Household', format: 'number' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'village', label: 'Village', type: 'string', operators: ['eq', 'contains'] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.BENEFICIARY_READ.key,
+      read: P.BENEFICIARY_READ.key,
+      create: P.BENEFICIARY_CREATE.key,
+      update: P.BENEFICIARY_UPDATE.key,
+    },
+  },
+  {
+    key: 'field-reports',
+    label: 'Field reports',
+    singular: 'Field report',
+    endpoint: '/field-reports',
+    description: "What happened on the ground, and when.",
+    table: {
+      key: 'field-reports',
+      label: 'Field reports',
+      endpoint: '/field-reports',
+      emptyHint: 'Create one with POST /api/field-reports.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'projectId', label: 'Project', format: 'reference' },
+        { key: 'title', label: 'Report' },
+        { key: 'body', label: 'Report' },
+        { key: 'reportedOn', label: 'Reported', format: 'date', sortable: true },
+        { key: 'authorUserId', label: 'Author' },
+        { key: 'peopleReached', label: 'People reached', format: 'number' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'reportedOn', label: 'Reported', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'title', label: 'Report' },
+      ],
+    },
+    permissions: {
+      list: P.FIELD_REPORT_READ.key,
+      read: P.FIELD_REPORT_READ.key,
+      create: P.FIELD_REPORT_CREATE.key,
+      update: P.FIELD_REPORT_UPDATE.key,
+    },
+  },
+];

@@ -1,0 +1,155 @@
+/**
+ * TrustOS Marketplace — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { MARKETPLACE_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const MARKETPLACE_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'sellers',
+    label: 'Sellers',
+    singular: 'Seller',
+    endpoint: '/sellers',
+    description: "A third party selling through the marketplace.",
+    table: {
+      key: 'sellers',
+      label: 'Sellers',
+      endpoint: '/sellers',
+      emptyHint: 'Create one with POST /api/sellers.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'merchantId', label: 'Merchant', format: 'reference' },
+        { key: 'displayName', label: 'Seller' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'commissionRate', label: 'Commission' },
+        { key: 'payoutCurrency', label: 'Currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ONBOARDING","label":"Onboarding"},{"value":"ACTIVE","label":"Active"},{"value":"SUSPENDED","label":"Suspended"},{"value":"CLOSED","label":"Closed"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'displayName', label: 'Seller' },
+      ],
+    },
+    permissions: {
+      list: P.SELLER_READ.key,
+      read: P.SELLER_READ.key,
+      create: P.SELLER_CREATE.key,
+      update: P.SELLER_UPDATE.key,
+    },
+  },
+  {
+    key: 'listings',
+    label: 'Listings',
+    singular: 'Listing',
+    endpoint: '/listings',
+    description: "A seller offering a product variant at their own price.",
+    table: {
+      key: 'listings',
+      label: 'Listings',
+      endpoint: '/listings',
+      emptyHint: 'Create one with POST /api/listings.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'sellerId', label: 'Seller', format: 'reference' },
+        { key: 'variantId', label: 'Variant', format: 'reference' },
+        { key: 'price', label: 'Price', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'stockOnHand', label: 'Stock', format: 'number' },
+        { key: 'isActive', label: 'Active', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    permissions: {
+      list: P.LISTING_READ.key,
+      read: P.LISTING_READ.key,
+      create: P.LISTING_CREATE.key,
+      update: P.LISTING_UPDATE.key,
+    },
+  },
+  {
+    key: 'seller-payouts',
+    label: 'Payouts',
+    singular: 'Payout',
+    endpoint: '/seller-payouts',
+    description: "What is owed to a seller for a period.",
+    table: {
+      key: 'seller-payouts',
+      label: 'Payouts',
+      endpoint: '/seller-payouts',
+      emptyHint: 'Create one with POST /api/seller-payouts.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'sellerId', label: 'Seller', format: 'reference' },
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'periodStart', label: 'From', format: 'date' },
+        { key: 'periodEnd', label: 'To', format: 'date' },
+        { key: 'grossAmount', label: 'Gross', format: 'money', currencyKey: 'currency' },
+        { key: 'commissionAmount', label: 'Commission', format: 'money', currencyKey: 'currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DRAFT","label":"Draft"},{"value":"APPROVED","label":"Approved"},{"value":"PAID","label":"Paid"},{"value":"FAILED","label":"Failed"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.SELLER_PAYOUT_READ.key,
+      read: P.SELLER_PAYOUT_READ.key,
+      create: P.SELLER_PAYOUT_CREATE.key,
+      update: P.SELLER_PAYOUT_UPDATE.key,
+    },
+  },
+  {
+    key: 'disputes',
+    label: 'Disputes',
+    singular: 'Dispute',
+    endpoint: '/disputes',
+    description: "A buyer contesting an order.",
+    table: {
+      key: 'disputes',
+      label: 'Disputes',
+      endpoint: '/disputes',
+      emptyHint: 'Create one with POST /api/disputes.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'orderId', label: 'Order', format: 'reference' },
+        { key: 'sellerId', label: 'Seller', format: 'reference' },
+        { key: 'reason', label: 'Reason' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'resolutionNote', label: 'Resolution' },
+        { key: 'openedAt', label: 'Opened', format: 'datetime' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"OPEN","label":"Open"},{"value":"INVESTIGATING","label":"Investigating"},{"value":"RESOLVED","label":"Resolved"},{"value":"REJECTED","label":"Rejected"}] },
+    ],
+    permissions: {
+      list: P.DISPUTE_READ.key,
+      read: P.DISPUTE_READ.key,
+      create: P.DISPUTE_CREATE.key,
+      update: P.DISPUTE_UPDATE.key,
+    },
+  },
+];

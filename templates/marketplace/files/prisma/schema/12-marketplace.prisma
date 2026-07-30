@@ -1,0 +1,124 @@
+// =============================================================================
+// TrustOS Marketplace — product models
+//
+// Multi-seller commerce on top of the e-commerce catalog: sellers, listings,
+// commission rules, seller payouts and disputes.
+//
+// Out of scope, deliberately: payment providers, seller KYC providers,
+// shipping carriers, ratings and reviews, automated payout execution.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum SellerStatus {
+  ONBOARDING
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum PayoutStatus {
+  DRAFT
+  APPROVED
+  PAID
+  FAILED
+}
+
+enum DisputeStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  REJECTED
+}
+
+/// A third party selling through the marketplace.
+model Seller {
+  id             String @id @default(cuid())
+  organizationId String
+  merchantId String
+  displayName String
+  code String
+  status SellerStatus @default(ONBOARDING)
+  commissionRate String @default("0.1000")
+  payoutCurrency String @default("USD")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, merchantId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A seller offering a product variant at their own price.
+model Listing {
+  id             String @id @default(cuid())
+  organizationId String
+  sellerId String
+  variantId String
+  price Decimal @db.Decimal(28, 8)
+  currency String @default("USD")
+  stockOnHand Int @default(0)
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, sellerId])
+  @@index([organizationId, variantId])
+  @@index([organizationId, isActive])
+  @@index([deletedAt])
+}
+
+/// What is owed to a seller for a period. Recorded here and executed elsewhere
+/// — the framework has a settlement package for the execution, and this
+/// template does not assume which rail.
+model SellerPayout {
+  id             String @id @default(cuid())
+  organizationId String
+  sellerId String
+  reference String
+  periodStart DateTime @db.Date
+  periodEnd DateTime @db.Date
+  grossAmount Decimal @db.Decimal(28, 8)
+  commissionAmount Decimal @db.Decimal(28, 8)
+  netAmount Decimal @db.Decimal(28, 8)
+  currency String @default("USD")
+  status PayoutStatus @default(DRAFT)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, sellerId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A buyer contesting an order.
+model Dispute {
+  id             String @id @default(cuid())
+  organizationId String
+  orderId String
+  sellerId String
+  reason String
+  status DisputeStatus @default(OPEN)
+  resolutionNote String?
+  openedAt DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, orderId])
+  @@index([organizationId, sellerId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}

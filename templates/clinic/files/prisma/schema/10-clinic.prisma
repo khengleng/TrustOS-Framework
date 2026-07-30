@@ -1,0 +1,166 @@
+// =============================================================================
+// TrustOS Clinic — product models
+//
+// Outpatient clinic administration: patients, doctors, appointments, medical
+// record entries and invoices. No clinical logic of any kind.
+//
+// Out of scope, deliberately: clinical decision support, diagnosis and
+// treatment logic, drug interaction checking, lab and imaging device
+// integration, insurance claim submission, HL7 and FHIR.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum PatientSex {
+  FEMALE
+  MALE
+  OTHER
+  UNDISCLOSED
+}
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+  DECEASED
+}
+
+enum AppointmentStatus {
+  BOOKED
+  ARRIVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum RecordKind {
+  CONSULTATION
+  OBSERVATION
+  PRESCRIPTION
+  REFERRAL
+  ATTACHMENT
+}
+
+enum ClinicInvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  VOID
+}
+
+/// A person receiving care. Contact fields are sensitive: they sit behind
+/// `clinic.patient.pii.read`, not the general read permission.
+model Patient {
+  id             String @id @default(cuid())
+  organizationId String
+  patientNumber String
+  fullName String
+  dateOfBirth DateTime? @db.Date
+  sex PatientSex?
+  phone String?
+  addressLine String?
+  status PatientStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, patientNumber])
+  @@index([organizationId, sex])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A clinician. `userId` is the framework identity.
+model Practitioner {
+  id             String @id @default(cuid())
+  organizationId String
+  userId String
+  displayName String
+  speciality String?
+  licenceNumber String?
+  isAcceptingPatients Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, speciality])
+  @@index([organizationId, isAcceptingPatients])
+  @@index([deletedAt])
+}
+
+/// A booked slot.
+model Appointment {
+  id             String @id @default(cuid())
+  organizationId String
+  patientId String
+  practitionerId String
+  reference String
+  scheduledFor DateTime
+  durationMinutes Int @default(30)
+  reason String?
+  status AppointmentStatus @default(BOOKED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, patientId])
+  @@index([organizationId, practitionerId])
+  @@index([organizationId, scheduledFor])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A note against a patient. Free text with an author and a time — nothing here
+/// interprets it, and nothing here should. Behind its own permission.
+model MedicalRecordEntry {
+  id             String @id @default(cuid())
+  organizationId String
+  patientId String
+  appointmentId String?
+  authorPractitionerId String
+  kind RecordKind
+  body String
+  recordedAt DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, patientId])
+  @@index([organizationId, appointmentId])
+  @@index([organizationId, authorPractitionerId])
+  @@index([organizationId, kind])
+  @@index([deletedAt])
+}
+
+/// What the visit cost.
+model ClinicInvoice {
+  id             String @id @default(cuid())
+  organizationId String
+  patientId String
+  appointmentId String?
+  number String
+  issuedAt DateTime
+  total Decimal @db.Decimal(28, 8)
+  currency String @default("USD")
+  status ClinicInvoiceStatus @default(ISSUED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, number])
+  @@index([organizationId, patientId])
+  @@index([organizationId, appointmentId])
+  @@index([organizationId, issuedAt])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}

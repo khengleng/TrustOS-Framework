@@ -1,0 +1,154 @@
+// =============================================================================
+// TrustOS Government Services — product models
+//
+// Citizen-facing service delivery: citizen records, service catalogue,
+// applications running on the framework workflow engine, appointments and
+// public notices.
+//
+// Out of scope, deliberately: national ID system integration, government
+// payment rails, e-signature providers, inter-agency data exchange,
+// country-specific legal workflows.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum CitizenStatus {
+  ACTIVE
+  INACTIVE
+  DECEASED
+}
+
+enum ServiceApplicationStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  INFORMATION_REQUESTED
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ServiceAppointmentStatus {
+  BOOKED
+  ATTENDED
+  MISSED
+  CANCELLED
+}
+
+enum NoticeAudience {
+  PUBLIC
+  REGISTERED
+  INTERNAL
+}
+
+/// A person known to the agency. `nationalIdRef` is an opaque reference, never
+/// a validated national identifier — validating one means encoding a country,
+/// and this template does not.
+model Citizen {
+  id             String @id @default(cuid())
+  organizationId String
+  citizenNumber String
+  fullName String
+  nationalIdRef String?
+  dateOfBirth DateTime? @db.Date
+  phone String?
+  addressLine String?
+  status CitizenStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, citizenNumber])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// Something a citizen can apply for.
+model GovernmentService {
+  id             String @id @default(cuid())
+  organizationId String
+  code String
+  name String
+  description String?
+  workflowDefinitionId String?
+  processingDays Int @default(0)
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@index([deletedAt])
+}
+
+/// A citizen applying. The decision lives in the workflow instance; this row
+/// holds what was submitted.
+model ServiceApplication {
+  id             String @id @default(cuid())
+  organizationId String
+  reference String
+  citizenId String
+  serviceId String
+  submittedAt DateTime
+  payload Json?
+  workflowInstanceId String?
+  status ServiceApplicationStatus @default(SUBMITTED)
+  decidedAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, citizenId])
+  @@index([organizationId, serviceId])
+  @@index([organizationId, submittedAt])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A slot booked at an office.
+model ServiceAppointment {
+  id             String @id @default(cuid())
+  organizationId String
+  applicationId String?
+  citizenId String
+  office String
+  scheduledFor DateTime
+  status ServiceAppointmentStatus @default(BOOKED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, applicationId])
+  @@index([organizationId, citizenId])
+  @@index([organizationId, office])
+  @@index([organizationId, scheduledFor])
+  @@index([deletedAt])
+}
+
+/// Something the agency publishes.
+model PublicNotice {
+  id             String @id @default(cuid())
+  organizationId String
+  title String
+  body String
+  publishedAt DateTime?
+  expiresAt DateTime?
+  audience NoticeAudience @default(PUBLIC)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, publishedAt])
+  @@index([organizationId, audience])
+  @@index([deletedAt])
+}

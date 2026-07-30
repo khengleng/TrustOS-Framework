@@ -1,7 +1,13 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { requireTemplate, type TemplateManifest } from '@trustos/template-registry';
+import {
+  checkCompatibility,
+  missingModuleDependencies,
+  requireTemplate,
+  resolveTemplateChain,
+  type TemplateManifest,
+} from '@trustos/template-registry';
 import { GeneratorError } from './errors';
 import { collectTemplateVariables } from './render';
 import { listFilesRecursively, toTargetPath } from './plan';
@@ -61,14 +67,13 @@ const SECRET_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
 
 export async function validateTemplate(
   templateId: string,
-  options: { templatesRoot?: string } = {},
+  options: { templatesRoot?: string; frameworkVersion?: string } = {},
 ): Promise<ValidationReport> {
   const template = requireTemplate(templateId);
   const templatesRoot = options.templatesRoot ?? resolveTemplatesRoot();
   const checks: ValidationCheck[] = [];
 
   const templateRoot = join(templatesRoot, template.id);
-  const baseRoot = join(templatesRoot, '_base');
 
   if (!existsSync(join(templateRoot, 'files'))) {
     throw new GeneratorError(
@@ -77,46 +82,353 @@ export async function validateTemplate(
     );
   }
 
+  /*
+   * Every layer that will actually be applied — `_base`, each ancestor, then the template. A
+   * validator that checked only the template's own directory would pass a child whose parent
+   * ships a secret, and would fail one whose imports are satisfied by a parent layer.
+   */
+  const layerNames = ['_base', ...resolveTemplateChain(template.id).map((entry) => entry.id)];
+  const layers: Array<{ root: string; files: string[] }> = [];
+
+  for (const name of layerNames) {
+    const root = join(templatesRoot, name, 'files');
+    layers.push({ root, files: await listFilesRecursively(root) });
+  }
+
+  const allFiles = layers.flatMap((layer) => layer.files);
+  const targets = new Set(allFiles.map((file) => toTargetPath(file)));
+
   // --- registry metadata ----------------------------------------------------
   checks.push(await checkManifest(template, templateRoot));
+  checks.push(checkFrameworkVersion(template, options.frameworkVersion));
+  checks.push(checkDependencies(template));
+  checks.push(await checkDocumentation(template, templatesRoot));
 
   // --- the file set ---------------------------------------------------------
-  const baseFiles = await listFilesRecursively(join(baseRoot, 'files'));
-  const templateFiles = await listFilesRecursively(join(templateRoot, 'files'));
-  const targets = new Set([...baseFiles, ...templateFiles].map((file) => toTargetPath(file)));
-
   checks.push(checkRequiredFiles(targets));
-  checks.push(checkUnsafePaths([...baseFiles, ...templateFiles]));
+  checks.push(checkUnsafePaths(allFiles));
   checks.push(checkBuildConfiguration(targets));
   checks.push(checkHealthEndpoint(targets));
   checks.push(checkTestConfiguration(targets));
   checks.push(checkDeploymentConfiguration(template, targets));
+  checks.push(checkRequiredModules(template, targets));
 
   // --- file contents --------------------------------------------------------
-  checks.push(
-    await checkPlaceholders(template, [
-      { root: join(baseRoot, 'files'), files: baseFiles },
-      { root: join(templateRoot, 'files'), files: templateFiles },
-    ]),
-  );
-  checks.push(
-    await checkNoSecrets([
-      { root: join(baseRoot, 'files'), files: baseFiles },
-      { root: join(templateRoot, 'files'), files: templateFiles },
-    ]),
-  );
-  checks.push(
-    await checkPackageReferences(template, [
-      { root: join(baseRoot, 'files'), files: baseFiles },
-      { root: join(templateRoot, 'files'), files: templateFiles },
-    ]),
-  );
+  checks.push(await checkPlaceholders(template, layers));
+  checks.push(await checkNoSecrets(layers));
+  checks.push(await checkPackageReferences(template, layers));
+  checks.push(await checkMonetaryPrecision(layers));
+  checks.push(await checkTenantScope(layers));
+  checks.push(await checkModelCollisions(layers));
 
   return {
     templateId: template.id,
     checks,
     ok: checks.every((check) => check.status !== 'fail'),
   };
+}
+
+/**
+ * Whether the template can run on this checkout.
+ *
+ * Skipped when no version is supplied — `trustos validate-template` in a source tree is checking
+ * the template, not the checkout, and failing every template because the caller did not pass a
+ * flag is how a validator gets ignored.
+ */
+function checkFrameworkVersion(
+  template: TemplateManifest,
+  frameworkVersion: string | undefined,
+): ValidationCheck {
+  if (!frameworkVersion) {
+    return {
+      name: 'framework version',
+      status: 'pass',
+      detail: `Requires ${template.minimumFrameworkVersion} or newer; no checkout version supplied.`,
+    };
+  }
+
+  const report = checkCompatibility(template, frameworkVersion);
+
+  if (!report.compatible) {
+    return { name: 'framework version', status: 'fail', detail: report.reason ?? 'Incompatible.' };
+  }
+
+  return report.warnings.length > 0
+    ? { name: 'framework version', status: 'warn', detail: report.warnings.join(' ') }
+    : {
+        name: 'framework version',
+        status: 'pass',
+        detail: `Compatible with ${frameworkVersion}.`,
+      };
+}
+
+/**
+ * Whether the declared modules are closed under their own prerequisites.
+ *
+ * The manifest schema refuses one that is not, so reaching this with a failure means a manifest
+ * was constructed around the schema. Checked anyway, because a validator that trusts the thing it
+ * is validating has nothing to say.
+ */
+function checkDependencies(template: TemplateManifest): ValidationCheck {
+  const missing = missingModuleDependencies(template.includedModules);
+
+  return missing.length === 0
+    ? {
+        name: 'dependencies',
+        status: 'pass',
+        detail: `${template.includedModules.length} module(s) declared, prerequisites all present.`,
+      }
+    : {
+        name: 'dependencies',
+        status: 'fail',
+        detail:
+          `Declares module(s) whose prerequisites are missing: ${missing.join(', ')}. The ` +
+          'generated application would compile and fail on the first request.',
+      };
+}
+
+/** Whether the documentation the manifest points at exists. */
+async function checkDocumentation(
+  template: TemplateManifest,
+  templatesRoot: string,
+): Promise<ValidationCheck> {
+  const repositoryRoot = join(templatesRoot, '..');
+  const path = join(repositoryRoot, template.documentation);
+
+  if (!existsSync(path)) {
+    return {
+      name: 'documentation',
+      status: 'fail',
+      detail: `documentation points at "${template.documentation}", which does not exist.`,
+    };
+  }
+
+  const source = await readFile(path, 'utf8');
+
+  /*
+   * A page that never mentions the template is a page the manifest points at rather than
+   * documents. A warning, not a failure: a shared reference page is legitimate, and a template
+   * blocked from generating over a missing paragraph helps nobody.
+   */
+  return source.includes(template.id)
+    ? {
+        name: 'documentation',
+        status: 'pass',
+        detail: `${template.documentation} exists and covers "${template.id}".`,
+      }
+    : {
+        name: 'documentation',
+        status: 'warn',
+        detail: `${template.documentation} exists but never mentions "${template.id}".`,
+      };
+}
+
+/**
+ * Whether the template ships the modules its manifest claims.
+ *
+ * Specifically: a template declaring an app must ship files for it. A manifest that promises an
+ * admin console and generates none is a manifest somebody chose the template on.
+ */
+function checkRequiredModules(template: TemplateManifest, targets: Set<string>): ValidationCheck {
+  const missing: string[] = [];
+
+  for (const app of template.includedApps) {
+    const prefix = app === 'miniapp' ? 'apps/miniapp/' : `apps/${app}/`;
+    if (![...targets].some((target) => target.startsWith(prefix))) missing.push(app);
+  }
+
+  if (template.entities.length === 0) missing.push('entities');
+
+  const hasProductModule = targets.has('apps/api/src/modules/product/product.module.ts');
+
+  if (template.includedApps.includes('api') && !hasProductModule) {
+    missing.push('apps/api/src/modules/product/product.module.ts');
+  }
+
+  return missing.length === 0
+    ? {
+        name: 'required modules',
+        status: 'pass',
+        detail: `Ships every declared app (${template.includedApps.join(', ')}) and a product module.`,
+      }
+    : {
+        name: 'required modules',
+        status: 'fail',
+        detail: `Declared but not generated: ${missing.join(', ')}.`,
+      };
+}
+
+/**
+ * No monetary value stored as a float.
+ *
+ * Phase 8's rule, enforced at template review rather than at runtime. A `Float` amount column
+ * accepts every value, agrees with every test, and disagrees with the counterparty once in ten
+ * thousand transactions — by which time there is production data in it.
+ */
+async function checkMonetaryPrecision(
+  layers: Array<{ root: string; files: string[] }>,
+): Promise<ValidationCheck> {
+  const findings: string[] = [];
+
+  for (const layer of layers) {
+    for (const file of layer.files) {
+      /*
+       * Product fragments only. `00-framework.prisma` is the framework's own copy — a template
+       * did not write it, cannot change it, and failing every template over a framework column
+       * makes the check noise that gets switched off.
+       */
+      if (!file.endsWith('.prisma') || file.includes('00-framework')) continue;
+
+      const source = await readFile(join(layer.root, file), 'utf8');
+
+      const lines = source.split('\n');
+
+      for (let index = 0; index < lines.length; index += 1) {
+        const match =
+          /^\s*(\w*(?:[Aa]mount|[Pp]rice|[Bb]alance|[Tt]otal|[Cc]ost|[Ff]ee|[Ss]alary)\w*)\s+(Float|Int)\b/.exec(
+            lines[index] ?? '',
+          );
+
+        if (!match) continue;
+
+        const name = match[1] ?? '';
+
+        // Float is never right for money, whatever the comment above it says.
+        if (match[2] === 'Int') {
+          /*
+           * `Int` is right for a count, and right for a whole number of minor units. The name is
+           * a weak signal, so the documented convention counts too: a column whose doc comment
+           * says "minor units" has made the decision explicitly, and that is exactly the habit
+           * this check should reward rather than punish.
+           */
+          if (
+            /count|quantity|days|months|minutes|seconds|tokens|permillion|cents|minor/i.test(name)
+          ) {
+            continue;
+          }
+
+          const preceding = lines
+            .slice(Math.max(0, index - 3), index)
+            .filter((line) => line.trimStart().startsWith('///'))
+            .join(' ');
+
+          if (/minor unit|in cents/i.test(preceding)) continue;
+        }
+
+        findings.push(`${name} ${match[2]} in ${file}`);
+      }
+    }
+  }
+
+  return findings.length === 0
+    ? {
+        name: 'monetary precision',
+        status: 'pass',
+        detail: 'No monetary column declared Float or Int.',
+      }
+    : {
+        name: 'monetary precision',
+        status: 'fail',
+        detail:
+          `${findings.join('; ')}. Use Decimal @db.Decimal(28, 8), or document the column as ` +
+          'minor units. A float agrees with every test and disagrees with the counterparty once ' +
+          'in ten thousand transactions.',
+      };
+}
+
+/**
+ * No two layers define the same Prisma model.
+ *
+ * Prisma concatenates every fragment in `prisma/schema/`, so two models with one name is a schema
+ * that does not compile — and the failure surfaces at `prisma generate` in a project the developer
+ * has already installed, with a message that names the model and not the template.
+ *
+ * Inheritance makes this much likelier: a child no longer sees its parent's fragment while
+ * writing, and the framework's own copy grows models every phase. `ApiKey` and `WebhookEndpoint`
+ * both became framework models after a template had already claimed them, which is exactly the
+ * collision this check exists to catch before it ships.
+ */
+async function checkModelCollisions(
+  layers: Array<{ root: string; files: string[] }>,
+): Promise<ValidationCheck> {
+  const owners = new Map<string, string[]>();
+
+  for (const layer of layers) {
+    for (const file of layer.files) {
+      if (!file.endsWith('.prisma')) continue;
+
+      const source = await readFile(join(layer.root, file), 'utf8');
+
+      for (const match of source.matchAll(/^(?:model|enum)\s+(\w+)\s*\{/gm)) {
+        const name = match[1] as string;
+        owners.set(name, [...(owners.get(name) ?? []), file]);
+      }
+    }
+  }
+
+  const collisions = [...owners.entries()].filter(([, files]) => files.length > 1);
+
+  return collisions.length === 0
+    ? {
+        name: 'model collisions',
+        status: 'pass',
+        detail: `${owners.size} model/enum name(s) across the chain, all distinct.`,
+      }
+    : {
+        name: 'model collisions',
+        status: 'fail',
+        detail:
+          collisions
+            .map(([name, files]) => `${name} (${[...new Set(files)].join(' and ')})`)
+            .join('; ') +
+          '. Prisma concatenates every fragment, so a duplicate name is a schema that does not ' +
+          'compile. Prefix the product model — GatewayApiKey rather than ApiKey.',
+      };
+}
+
+/**
+ * Every product model carries an `organizationId`.
+ *
+ * The quietest failure a generated application can have. A model without the column cannot be
+ * scoped, so every query over it returns every tenant's rows — and nothing fails, which is why
+ * this is checked mechanically rather than left to review.
+ */
+async function checkTenantScope(
+  layers: Array<{ root: string; files: string[] }>,
+): Promise<ValidationCheck> {
+  const unscoped: string[] = [];
+  let models = 0;
+
+  for (const layer of layers) {
+    for (const file of layer.files) {
+      // Only product fragments. `00-framework.prisma` owns the framework's own models, some of
+      // which are deliberately global — Organization itself, for one.
+      if (!file.endsWith('.prisma') || file.includes('00-framework')) continue;
+
+      const source = await readFile(join(layer.root, file), 'utf8');
+
+      for (const match of source.matchAll(/^model\s+(\w+)\s*\{([\s\S]*?)^\}/gm)) {
+        models += 1;
+        if (!/^\s*organizationId\s+String/m.test(match[2] ?? '')) {
+          unscoped.push(`${match[1]} (${file})`);
+        }
+      }
+    }
+  }
+
+  return unscoped.length === 0
+    ? {
+        name: 'tenant scope',
+        status: 'pass',
+        detail: `${models} product model(s), every one carrying organizationId.`,
+      }
+    : {
+        name: 'tenant scope',
+        status: 'fail',
+        detail:
+          `Model(s) with no organizationId: ${unscoped.join(', ')}. A model that cannot be ` +
+          'scoped returns every tenant’s rows, and nothing fails.',
+      };
 }
 
 // ---------------------------------------------------------------------------
@@ -274,6 +586,7 @@ async function checkPlaceholders(
     ...template.requiredVariables.map((variable) => variable.name),
     // Values the generator always supplies.
     'adminPort',
+    'miniappPort',
     'isRailway',
     'includeMiniapp',
     'databaseProvider',
@@ -387,7 +700,9 @@ async function checkPackageReferences(
 
   const known = new Set([
     ...template.includedModules,
+    // Always installed. See FRAMEWORK_PACKAGES in generate.ts.
     'shared-types',
+    'template-sdk',
     'template-registry',
     'generator-core',
     'cli',

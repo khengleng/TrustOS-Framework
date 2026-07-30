@@ -1,26 +1,14 @@
 import { Module } from '@nestjs/common';
-import {
-  BranchesController,
-  MerchantMembersController,
-  MerchantsController,
-  StoresController,
-} from './product.controller';
-import { ProductService } from './product.service';
+import { MerchantDomainModule } from './merchant/merchant.module';
 
 /**
- * Merchant product module.
+ * The product module `AppModule` imports.
  *
- * `AppModule` imports this by a fixed name, so replacing the domain is a
- * change inside this folder rather than a change to the composition root.
+ * An aggregator with one layer today. It exists so the composition root has one fixed name to
+ * import, and so a template extending this one can add a layer without editing app.module.ts.
  */
 @Module({
-  controllers: [
-    MerchantsController,
-    StoresController,
-    BranchesController,
-    MerchantMembersController,
-  ],
-  providers: [ProductService],
-  exports: [ProductService],
+  imports: [MerchantDomainModule],
+  exports: [MerchantDomainModule],
 })
 export class ProductModule {}
