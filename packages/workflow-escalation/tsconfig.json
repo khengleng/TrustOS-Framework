@@ -21,6 +21,9 @@
       "path": "../workflow-core"
     },
     {
+      "path": "../workflow-definition"
+    },
+    {
       "path": "../workflow-sla"
     }
   ]

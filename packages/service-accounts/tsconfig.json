@@ -18,6 +18,9 @@
       "path": "../identity"
     },
     {
+      "path": "../rbac"
+    },
+    {
       "path": "../security-events"
     },
     {

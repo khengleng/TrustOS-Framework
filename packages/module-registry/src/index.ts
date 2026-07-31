@@ -17,6 +17,7 @@
  */
 export * from './errors';
 export * from './schema';
+export * from './provenance';
 export * from './catalog';
 export * from './declarations';
 export * from './resolve';

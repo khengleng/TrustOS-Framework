@@ -16,6 +16,9 @@
     },
     {
       "path": "../workflow-core"
+    },
+    {
+      "path": "../workflow-definition"
     }
   ]
 }

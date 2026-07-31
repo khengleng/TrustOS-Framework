@@ -1,0 +1,21 @@
+{
+  "name": "@trustos/analytics",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Summaries over collected telemetry: adoption, popularity, error trends.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/telemetry": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

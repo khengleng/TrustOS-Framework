@@ -7,5 +7,15 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.spec.ts", "dist", "node_modules", "prisma"],
-  "references": [{ "path": "../config" }, { "path": "../errors" }]
+  "references": [
+    {
+      "path": "../config"
+    },
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../rbac"
+    }
+  ]
 }

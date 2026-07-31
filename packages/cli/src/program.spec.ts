@@ -361,17 +361,6 @@ describe('add-module', () => {
   });
 });
 
-describe('placeholder commands', () => {
-  it('upgrade explains itself and exits non-zero', async () => {
-    const { code, output } = await invoke(['upgrade']);
-
-    expect(code).toBe(2);
-    expect(output).toContain('not implemented yet');
-    // A non-zero exit stops a script mistaking "not implemented" for success.
-    expect(output).toContain('Framework migrations are deliberately out of scope');
-  });
-});
-
 describe('resolveAnswersFromFlags', () => {
   const template = requireTemplate('merchant');
 
@@ -649,5 +638,252 @@ describe('templates hidden count', () => {
 
     expect(health.output).not.toMatch(/deprecated template\(s\) hidden/);
     expect(messaging.output).toMatch(/1 deprecated template\(s\) hidden/);
+  });
+});
+
+describe('platform', () => {
+  it('summarizes the platform offline, with no application present', async () => {
+    /*
+     * The moment somebody most needs this is when they are deciding whether to start a system, or
+     * during an incident when it will not start. It must work with nothing running.
+     */
+    const { code, output } = await invoke(['platform', 'info', '--path', workspace]);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/framework/);
+    expect(output).toMatch(/licence\s+open-source/);
+  });
+
+  it('says telemetry is off and that nothing is sent', async () => {
+    const { output } = await invoke(['platform', 'info', '--path', workspace]);
+
+    expect(output).toMatch(/Telemetry is off\. Nothing is collected and nothing is sent\./);
+  });
+
+  it('emits a machine-readable summary', async () => {
+    const { output } = await invoke(['platform', 'info', '--path', workspace, '--json']);
+    const parsed = JSON.parse(output) as { health: { state: string }; license: { state: string } };
+
+    expect(parsed.health.state).toBeDefined();
+    expect(parsed.license.state).toBe('valid');
+  });
+});
+
+describe('marketplace', () => {
+  it('lists the local catalogue', async () => {
+    const { code, output } = await invoke(['marketplace']);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/module\(s\)/);
+  });
+
+  it('searches by term', async () => {
+    const { output } = await invoke(['marketplace', 'notification']);
+
+    expect(output).toMatch(/notification/);
+  });
+
+  it('says so when nothing matches rather than printing an empty list', async () => {
+    const { output } = await invoke(['marketplace', 'zzzznotathing']);
+
+    expect(output).toMatch(/Nothing matches "zzzznotathing"/);
+  });
+
+  it('lists categories with counts', async () => {
+    const { code, output } = await invoke(['marketplace', 'categories']);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/categor/);
+  });
+
+  it('reports every module as unsigned, honestly', async () => {
+    // The framework ships verification, not signatures. A deployment signs what it publishes.
+    const { output } = await invoke(['marketplace']);
+
+    expect(output).toMatch(/unsigned/);
+  });
+});
+
+describe('architecture-check', () => {
+  it('passes on this repository', async () => {
+    const { code, output } = await invoke([
+      'architecture-check',
+      '--path',
+      join(__dirname, '..', '..', '..'),
+    ]);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/Every rule holds/);
+  }, 120_000);
+
+  it('refuses when there is nothing to check', async () => {
+    const { code, output } = await invoke(['architecture-check', '--path', workspace]);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/No packages directory/);
+  });
+});
+
+describe('validate', () => {
+  it('skips every gate it has no results for rather than passing them', async () => {
+    // A gate that passes because nothing was measured is a gate that always passes.
+    const { code, output } = await invoke(['validate']);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/did not run/);
+  });
+
+  it('fails on a blocking gate and says which', async () => {
+    const results = join(workspace, 'results.json');
+    await writeFile(results, JSON.stringify({ tests: { passed: 10, failed: 3 } }));
+
+    const { code, output } = await invoke(['validate', '--results', results]);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/3 test\(s\) failing/);
+    expect(output).toMatch(/1 blocking gate\(s\) failed/);
+  });
+
+  it('never blocks on performance', async () => {
+    const results = join(workspace, 'perf.json');
+    await writeFile(
+      results,
+      JSON.stringify({ performance: { budgetMs: 10, measuredMs: 900, label: 'boot' } }),
+    );
+
+    const { code, output } = await invoke(['validate', '--results', results]);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/Advisory — this does not block/);
+  });
+});
+
+describe('docs', () => {
+  it('prints what it would write rather than writing it', async () => {
+    // A command that silently overwrote a docs tree the first time somebody ran it to see what it
+    // did would be a bad first impression at best.
+    const { code, output } = await invoke(['docs']);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/Nothing was written\. Run with --write/);
+    expect(output).toMatch(/docs\/generated\/cli\.md/);
+  });
+
+  it('writes when asked', async () => {
+    const { code } = await invoke(['docs', '--write', '--output-dir', workspace]);
+
+    expect(code).toBe(0);
+    expect(existsSync(join(workspace, 'docs/generated/cli.md'))).toBe(true);
+    expect(existsSync(join(workspace, 'docs/generated/index.md'))).toBe(true);
+  });
+});
+
+describe('plugins', () => {
+  it('says nothing is installed and points at the guidance', async () => {
+    const { code, output } = await invoke(['plugins']);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/No plugins installed/);
+    expect(output).toMatch(/docs\/plugin-development\.md/);
+  });
+});
+
+describe('release', () => {
+  it('says so when no release is registered', async () => {
+    // A version nobody registered is a version nobody has committed to fixing.
+    const { code, output } = await invoke(['release', 'list']);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/No releases registered/);
+  });
+});
+
+describe('upgrade', () => {
+  async function project(overrides: Record<string, unknown> = {}): Promise<string> {
+    const root = join(workspace, 'app');
+    await mkdir(join(root, '.trustos'), { recursive: true });
+
+    await writeFile(
+      join(root, 'trustos.json'),
+      JSON.stringify({ frameworkVersion: '0.4.0', modules: [], ...overrides }),
+    );
+
+    await writeFile(
+      join(root, '.trustos/releases.json'),
+      JSON.stringify([
+        { version: '0.4.0', channel: 'stable', releasedAt: '2026-03-01' },
+        { version: '0.5.0', channel: 'stable', releasedAt: '2026-06-01' },
+      ]),
+    );
+
+    await writeFile(
+      join(root, '.trustos/migrations.json'),
+      JSON.stringify([
+        {
+          id: '20260601000000_platform',
+          kind: 'database',
+          description: 'Adds the platform tables.',
+          targetVersion: '0.5.0',
+          destructive: true,
+        },
+      ]),
+    );
+
+    return root;
+  }
+
+  it('plans without touching anything', async () => {
+    /*
+     * It plans and refuses; it never executes. The actions in an upgrade are the ones where a
+     * mistake is expensive, and a CLI that performs them is one somebody runs in the wrong
+     * terminal.
+     */
+    const root = await project();
+    const { code, output } = await invoke(['upgrade', '--path', root]);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/Nothing has been touched/);
+    expect(output).toMatch(/no backup has been recorded/);
+  });
+
+  it('proceeds once a backup is recorded, and still does not execute', async () => {
+    const root = await project({
+      backup: { id: 'b1', takenAt: '2026-07-01', includes: ['database'], location: '/b1' },
+    });
+
+    const { code, output } = await invoke(['upgrade', '--path', root]);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/The plan is safe to run/);
+    expect(output).toMatch(/This command plans; it does not execute/);
+  });
+
+  it('says what recovery would look like before it starts', async () => {
+    const root = await project({
+      backup: { id: 'b1', takenAt: '2026-07-01', includes: ['database'], location: '/b1' },
+    });
+
+    expect((await invoke(['upgrade', '--path', root])).output).toMatch(
+      /Recovery means restoring the backup/,
+    );
+  });
+
+  it('refuses a downgrade rather than planning one', async () => {
+    const root = await project();
+    const { code, output } = await invoke(['upgrade', '--path', root, '--to', '0.3.0']);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/Downgrade refused|Cannot upgrade/);
+  });
+
+  it('refuses a project that does not record its version', async () => {
+    const root = join(workspace, 'unknown');
+    await mkdir(root, { recursive: true });
+    await writeFile(join(root, 'trustos.json'), JSON.stringify({}));
+
+    const { code, output } = await invoke(['upgrade', '--path', root]);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/a guess would be a plan/);
   });
 });

@@ -11,6 +11,14 @@ export { createOutput, createCapturingOutput, type Output } from './output';
 export { runDoctor, type DoctorReport, type DoctorCheck } from './commands/doctor';
 export { runListTemplates } from './commands/list-templates';
 export { runTemplates } from './commands/templates';
+export {
+  runArchitectureCheck,
+  runMarketplace,
+  runMarketplaceCategories,
+  runPlatformInfo,
+} from './commands/platform';
+export { runDocs, runPlugins, runReleaseList, runValidate } from './commands/lifecycle';
+export { runUpgrade } from './commands/upgrade';
 export { runTemplateDoctor, runUpdateTemplate } from './commands/template-doctor';
 export { runValidateTemplate } from './commands/validate-template';
 export { runNew } from './commands/new';

@@ -5,6 +5,16 @@ import { createOutput, formatRows, type Output } from './output';
 import { runNew } from './commands/new';
 import { runListTemplates } from './commands/list-templates';
 import { runTemplates } from './commands/templates';
+import {
+  runArchitectureCheck,
+  runMarketplace,
+  runMarketplaceCategories,
+  runPlatformInfo,
+} from './commands/platform';
+import { runDocs, runPlugins, runReleaseList, runValidate } from './commands/lifecycle';
+import { generateCliDocs } from '@trustos/documentation-center';
+import { PluginRegistry } from '@trustos/plugin-framework';
+import { ReleaseManager } from '@trustos/release-manager';
 import { runTemplateDoctor, runUpdateTemplate } from './commands/template-doctor';
 import { runValidateTemplate } from './commands/validate-template';
 import { runWorkflowList, runWorkflowSimulate, runWorkflowValidate } from './commands/workflow';
@@ -20,7 +30,7 @@ import {
 import { runFinancialDoctor } from './commands/financial';
 import { runAddModule } from './commands/add-module';
 import { runListModules } from './commands/list-modules';
-import { runUpgrade } from './commands/placeholders';
+import { runUpgrade } from './commands/upgrade';
 
 /**
  * The CLI program.
@@ -112,6 +122,138 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
           output,
         ),
       );
+    });
+
+  // --- platform -------------------------------------------------------------
+  //
+  // A group, like `ai` and `workflow`. Every subcommand is offline and read-only: they report
+  // state and refuse operations, which is what makes them usable at the moment they are most
+  // needed — deciding whether to start a system, or during an incident when it will not start.
+  const platform = program
+    .command('platform')
+    .description('inspect the platform: version, modules, health, licence, compatibility');
+
+  platform
+    .command('info')
+    .description('one view of the platform, offline')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--json', 'machine-readable output')
+    .option('--verbose', 'show what to do about each finding')
+    .action(async (opts: { path?: string; json?: boolean; verbose?: boolean }) => {
+      setExit(await runPlatformInfo(opts, output));
+    });
+
+  // --- marketplace ----------------------------------------------------------
+  const marketplace = program
+    .command('marketplace')
+    .argument('[term]', 'search text')
+    .description('browse the local module catalogue')
+    .option('--json', 'machine-readable output')
+    .option('--category <tag>', 'only one category')
+    .option('--signed-only', 'only modules with a signature')
+    .option('--verbose', 'show dependencies and exclusions')
+    .action(
+      async (
+        term: string | undefined,
+        opts: { json?: boolean; category?: string; signedOnly?: boolean; verbose?: boolean },
+        command: { args: string[] },
+      ) => {
+        // Commander runs the parent action for an unknown subcommand too.
+        if (command?.args?.[0] === 'categories') return;
+        setExit(await runMarketplace(term, opts, output));
+      },
+    );
+
+  marketplace
+    .command('categories')
+    .description('list the categories and how many modules are in each')
+    .action(() => {
+      setExit(runMarketplaceCategories(output));
+    });
+
+  // --- architecture-check ---------------------------------------------------
+  program
+    .command('architecture-check')
+    .description('layering, naming, dependency direction and the security rules')
+    .option('--path <dir>', 'repository root (default: cwd)')
+    .option('--json', 'machine-readable output')
+    .option('--strict', 'treat warnings as failures')
+    .action(async (opts: { path?: string; json?: boolean; strict?: boolean }) => {
+      setExit(await runArchitectureCheck(opts, output));
+    });
+
+  // --- plugins --------------------------------------------------------------
+  //
+  // Reads whatever registry it is handed. There is deliberately no global plugin state for it to
+  // discover: a CLI that could find and load plugins on its own would run them in order to list
+  // them.
+  program
+    .command('plugins')
+    .description('list installed plugins and what each one can do')
+    .option('--json', 'machine-readable output')
+    .option('--privileged', 'only those holding a permission that makes them arbitrary code')
+    .option('--unsigned', 'only those installed without a signature')
+    .action((opts: { json?: boolean; privileged?: boolean; unsigned?: boolean }) => {
+      setExit(runPlugins(new PluginRegistry(), opts, output));
+    });
+
+  // --- release --------------------------------------------------------------
+  const release = program
+    .command('release')
+    .description('the release register and the support lifecycle');
+
+  release
+    .command('list')
+    .description('what is released, on which channel, and until when')
+    .option('--json', 'machine-readable output')
+    .option('--all', 'include end-of-life releases')
+    .action((opts: { json?: boolean; all?: boolean }) => {
+      setExit(runReleaseList(new ReleaseManager([]), opts, output));
+    });
+
+  // --- validate -------------------------------------------------------------
+  //
+  // Takes the results of the tools that already run rather than running them: a gate that shelled
+  // out would behave differently in CI, on a laptop and in a pre-commit hook.
+  program
+    .command('validate')
+    .description('run the quality gates against supplied results')
+    .option('--json', 'machine-readable output')
+    .option('--verbose', 'show what to do about each failure')
+    .option('--results <file>', 'JSON file of tool results to gate on')
+    .action(async (opts: { json?: boolean; verbose?: boolean; results?: string }) => {
+      let input = {};
+
+      if (opts.results) {
+        const { readFile } = await import('node:fs/promises');
+        input = JSON.parse(await readFile(opts.results, 'utf8'));
+      }
+
+      setExit(runValidate(input, opts, output));
+    });
+
+  // --- docs -----------------------------------------------------------------
+  program
+    .command('docs')
+    .description('generate the reference documentation')
+    .option('--json', 'machine-readable output')
+    .option('--write', 'write the pages (prints them by default)')
+    .option('--output-dir <dir>', 'where to write (default: cwd)')
+    .action(async (opts: { json?: boolean; write?: boolean; outputDir?: string }) => {
+      const pages = [
+        generateCliDocs(
+          program.commands.map((command) => ({
+            name: command.name(),
+            description: command.description(),
+            subcommands: command.commands.map((sub) => ({
+              name: sub.name(),
+              description: sub.description(),
+            })),
+          })),
+        ),
+      ];
+
+      setExit(await runDocs(pages, { ...opts, outputDirectory: opts.outputDir }, output));
     });
 
   // --- templates ------------------------------------------------------------
@@ -379,9 +521,13 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
 
   program
     .command('upgrade')
-    .description('(not implemented in this phase) upgrade an application to a newer framework')
-    .action(() => {
-      setExit(runUpgrade(output));
+    .description('plan an upgrade to a newer framework version')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--to <version>', 'target version (default: the newest supported release)')
+    .option('--registry-dir <dir>', 'where releases.json, history.json and migrations.json live')
+    .option('--json', 'machine-readable output')
+    .action(async (opts: { path?: string; to?: string; registryDir?: string; json?: boolean }) => {
+      setExit(await runUpgrade(opts, output));
     });
 
   program.addHelpText(
@@ -392,6 +538,9 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
       '  trustos new merchant                     interactive',
       '  trustos new generic-saas --yes           accept every default',
       '  trustos new learning --dry-run --verbose preview every file',
+      '  trustos platform info',
+      '  trustos marketplace search',
+      '  trustos architecture-check',
       '  trustos templates --category health',
       '  trustos templates --verbose',
       '  trustos validate-template --all',

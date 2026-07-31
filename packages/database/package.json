@@ -33,7 +33,8 @@
     "@nestjs/common": "^11.1.28",
     "@prisma/client": "^6.19.3",
     "@trustos/config": "0.1.0",
-    "@trustos/errors": "0.1.0"
+    "@trustos/errors": "0.1.0",
+    "@trustos/rbac": "0.1.0"
   },
   "devDependencies": {
     "@trustos/rbac": "0.1.0",

@@ -19,6 +19,7 @@
     "@trustos/ai-policy": "0.1.0",
     "@trustos/ai-sdk": "0.1.0",
     "@trustos/audit": "0.1.0",
+    "@trustos/content-filter": "0.1.0",
     "@trustos/cost-monitor": "0.1.0",
     "@trustos/errors": "0.1.0",
     "@trustos/guardrails": "0.1.0",

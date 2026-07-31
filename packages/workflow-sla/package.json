@@ -17,6 +17,7 @@
     "@trustos/errors": "0.1.0",
     "@trustos/shared-types": "0.1.0",
     "@trustos/workflow-core": "0.1.0",
+    "@trustos/workflow-definition": "0.1.0",
     "zod": "^3.24.1"
   }
 }

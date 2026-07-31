@@ -1,0 +1,26 @@
+{
+  "name": "@trustos/developer-portal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A self-contained developer site: documentation, API explorer, SDK downloads, marketplace, templates and release notes.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/documentation-center": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/module-marketplace": "0.1.0",
+    "@trustos/module-registry": "0.1.0",
+    "@trustos/release-manager": "0.1.0",
+    "@trustos/template-registry": "0.1.0",
+    "@trustos/version-manager": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

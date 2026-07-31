@@ -21,6 +21,9 @@
       "path": "../audit"
     },
     {
+      "path": "../content-filter"
+    },
+    {
       "path": "../cost-monitor"
     },
     {

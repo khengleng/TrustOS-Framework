@@ -18,6 +18,7 @@
     "@trustos/api-keys": "0.1.0",
     "@trustos/errors": "0.1.0",
     "@trustos/identity": "0.1.0",
+    "@trustos/rbac": "0.1.0",
     "@trustos/security-events": "0.1.0",
     "@trustos/security-policy": "0.1.0",
     "@trustos/shared-types": "0.1.0",

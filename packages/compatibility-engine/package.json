@@ -1,0 +1,23 @@
+{
+  "name": "@trustos/compatibility-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Whether a framework version, module, database, CLI, template and API can run together.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/module-registry": "0.1.0",
+    "@trustos/template-registry": "0.1.0",
+    "@trustos/version-manager": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

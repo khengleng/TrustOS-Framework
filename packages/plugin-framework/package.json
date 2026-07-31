@@ -1,0 +1,21 @@
+{
+  "name": "@trustos/plugin-framework",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plugin manifests, declared permissions, signature verification and the extension points a plugin may claim.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/version-manager": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

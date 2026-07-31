@@ -176,10 +176,16 @@
       "path": "packages/adapter-framework"
     },
     {
+      "path": "packages/analytics"
+    },
+    {
       "path": "packages/api-client-generator"
     },
     {
       "path": "packages/api-keys"
+    },
+    {
+      "path": "packages/architecture-validator"
     },
     {
       "path": "packages/audit"
@@ -197,10 +203,25 @@
       "path": "packages/cli"
     },
     {
+      "path": "packages/code-generator"
+    },
+    {
+      "path": "packages/compatibility-engine"
+    },
+    {
       "path": "packages/config"
     },
     {
       "path": "packages/database"
+    },
+    {
+      "path": "packages/dependency-analyzer"
+    },
+    {
+      "path": "packages/developer-portal"
+    },
+    {
+      "path": "packages/documentation-center"
     },
     {
       "path": "packages/errors"
@@ -216,6 +237,9 @@
     },
     {
       "path": "packages/export"
+    },
+    {
+      "path": "packages/framework-health"
     },
     {
       "path": "packages/generator-core"
@@ -236,7 +260,16 @@
       "path": "packages/job-runtime"
     },
     {
+      "path": "packages/license-manager"
+    },
+    {
       "path": "packages/logging"
+    },
+    {
+      "path": "packages/migration-tools"
+    },
+    {
+      "path": "packages/module-marketplace"
     },
     {
       "path": "packages/module-registry"
@@ -269,10 +302,25 @@
       "path": "packages/observability"
     },
     {
+      "path": "packages/package-manager"
+    },
+    {
+      "path": "packages/platform-manager"
+    },
+    {
+      "path": "packages/plugin-framework"
+    },
+    {
       "path": "packages/provider-sdk"
     },
     {
+      "path": "packages/quality-gates"
+    },
+    {
       "path": "packages/rbac"
+    },
+    {
+      "path": "packages/release-manager"
     },
     {
       "path": "packages/retry"
@@ -302,6 +350,9 @@
       "path": "packages/sync"
     },
     {
+      "path": "packages/telemetry"
+    },
+    {
       "path": "packages/template-registry"
     },
     {
@@ -311,7 +362,13 @@
       "path": "packages/tenancy"
     },
     {
+      "path": "packages/upgrade-manager"
+    },
+    {
       "path": "packages/validation"
+    },
+    {
+      "path": "packages/version-manager"
     },
     {
       "path": "packages/webhook-runtime"

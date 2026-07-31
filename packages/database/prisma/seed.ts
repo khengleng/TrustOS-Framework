@@ -33,6 +33,7 @@ const DEMO_USERS = [
  * Development-only password. Long enough to satisfy the policy, obviously fake
  * so nobody mistakes it for a real credential.
  */
+// architecture-ignore: no-secret-in-source — a development seed password, never used outside seeding
 const DEMO_PASSWORD = 'TrustOSDemo2026!';
 
 async function seedPermissions(): Promise<void> {

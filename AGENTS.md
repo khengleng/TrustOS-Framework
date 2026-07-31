@@ -517,6 +517,77 @@ changing a template, and [docs/template-sdk.md](docs/template-sdk.md) before bui
 The rule that catches people out: **the server reads the resource declaration first.** A column
 permission, a filter allow-list or a menu entry enforced only in the browser is not enforced.
 
+## Platform rules (phase 10)
+
+Governance, versioning, the supply chain and the tooling that operates the framework for years.
+Fourteen rules on top of everything above.
+
+1. **Always validate architecture.** `trustos architecture-check` before claiming a change is
+   done. The rules a codebase lives by are the ones a machine checks; everything else is a
+   document people agree with and then violate.
+
+2. **Never break backward compatibility without migration guidance.** A breaking change needs an
+   entry in the version history saying what to change, and a deprecation needs a `removedIn`. A
+   rename announced and removed in the same release is a breaking change with a courtesy note
+   attached.
+
+3. **Always enforce semantic versioning — and below 1.0.0 the minor is the breaking position.**
+   Treating `0.x` as "anything goes" is how a framework at 0.9 breaks every application on a patch
+   release and calls itself compliant.
+
+4. **Always validate compatibility, and treat unverified as unverified.** An unrecorded pairing is
+   `unknown`, never `compatible`. A rule that says "any framework at or above the minimum works"
+   is right until the framework removes something, and then it is silently wrong for every module
+   ever published.
+
+5. **Always require signed modules and plugins.** A missing signature is a failure, not a skip.
+   `--allow-unsigned` permits exactly one failure code and is recorded; it never permits a bad
+   signature, an unknown key or a revoked one — those are "signed by someone you do not trust".
+
+6. **Plan, then apply.** Every operation that changes something produces an inspectable plan
+   first. `--dry-run` is _not calling apply_, never a second code path — a tool with two paths
+   stops predicting the real run the first time they diverge.
+
+7. **Never execute the irreversible act.** The framework decides and refuses; it does not run
+   migrations, take backups, publish releases or send telemetry. Those are ports a deployment
+   supplies, wired to whatever change control it already has.
+
+8. **A destructive migration without a backup is refused, not warned about.** The most expensive
+   failure available happens because a warning scrolled past. And never mark a destructive
+   migration reversible: a dropped column does not come back, and a `down` that claims otherwise
+   is trusted and wrong.
+
+9. **Never gate a security capability behind a licence.** Audit, tenant isolation, encryption and
+   RBAC are not entitlements. A framework that puts authentication behind a paid tier produces
+   deployments that turn it off, and the people harmed never saw the invoice.
+
+10. **Never waive the architecture, security or testing gate.** Enforced in code, not by policy.
+    The first time a security gate fires under deadline pressure the waiver is used; by the fourth
+    it is a formality. Every other waiver needs a reason, an owner and an expiry.
+
+11. **Always preserve tenant isolation.** Generated code is tenant-scoped with no flag to disable
+    it. A generator that could emit an unscoped repository would eventually emit one, and the
+    endpoint returns every tenant's rows while passing every test written against a single-tenant
+    fixture.
+
+12. **Telemetry is off unless switched on, local unless an exporter is wired, and never carries
+    tenant data.** An event has a name, bounded low-cardinality dimensions and numbers — no
+    free-text field for a customer name to land in.
+
+13. **Always generate documentation and tests.** Anything derivable from the code is generated;
+    anything not derivable is hand-written, because a generator cannot produce a reason. Every new
+    behaviour gets a test for the true positive _and_ for the false positive you are most worried
+    about.
+
+14. **Stop after completing phase 10.** This is the final core phase. Do not begin phase 11. Do
+    not add a business application, a payment provider, a bank or government integration, or a
+    cloud-vendor dependency to the platform — the framework stays provider-neutral, and every
+    vendor added here is carried by every deployment built on it.
+
+Read [docs/platform-governance.md](docs/platform-governance.md) before changing anything in
+`version-manager`, `plugin-framework/signing.ts`, `quality-gates`, or the layer definitions in
+`architecture-validator/rules.ts`. The refusals in those files look excessive and are not.
+
 ## Before claiming a change is done
 
 ```bash
@@ -526,6 +597,7 @@ npm run build:packages
 npm test
 npm run migrate:drift -w @trustos/database   # needs a database
 npx trustos validate-template --all          # after any template change
+npx trustos architecture-check               # layering, naming, dependencies, security rules
 ```
 
 All of them must pass. **Never claim something works because it compiles.** If a test

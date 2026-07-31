@@ -12,28 +12,85 @@
       "path": "../agent-framework"
     },
     {
+      "path": "../analytics"
+    },
+    {
+      "path": "../architecture-validator"
+    },
+    {
+      "path": "../code-generator"
+    },
+    {
+      "path": "../compatibility-engine"
+    },
+    {
+      "path": "../dependency-analyzer"
+    },
+    {
+      "path": "../developer-portal"
+    },
+    {
+      "path": "../documentation-center"
+    },
+    {
       "path": "../evaluation"
     },
     {
       "path": "../financial-core"
     },
     {
+      "path": "../framework-health"
+    },
+    {
       "path": "../generator-core"
+    },
+    {
+      "path": "../license-manager"
+    },
+    {
+      "path": "../migration-tools"
     },
     {
       "path": "../model-registry"
     },
     {
+      "path": "../module-marketplace"
+    },
+    {
       "path": "../module-registry"
+    },
+    {
+      "path": "../package-manager"
+    },
+    {
+      "path": "../platform-manager"
+    },
+    {
+      "path": "../plugin-framework"
     },
     {
       "path": "../prompt-registry"
     },
     {
+      "path": "../quality-gates"
+    },
+    {
       "path": "../rbac"
     },
     {
+      "path": "../release-manager"
+    },
+    {
+      "path": "../telemetry"
+    },
+    {
       "path": "../template-registry"
+    },
+    {
+      "path": "../upgrade-manager"
+    },
+    {
+      "path": "../version-manager"
     },
     {
       "path": "../workflow-core"
