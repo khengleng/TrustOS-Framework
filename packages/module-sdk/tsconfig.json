@@ -8,10 +8,23 @@
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
   "references": [
-    { "path": "../errors" },
-    { "path": "../logging" },
-    { "path": "../observability" },
-    { "path": "../shared-types" },
-    { "path": "../tenancy" }
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../logging"
+    },
+    {
+      "path": "../observability"
+    },
+    {
+      "path": "../shared-types"
+    },
+    {
+      "path": "../tenancy"
+    },
+    {
+      "path": "../version-manager"
+    }
   ]
 }

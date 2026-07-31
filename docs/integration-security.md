@@ -177,4 +177,4 @@ Stated because an undocumented limit is one people over-trust:
 ---
 
 **See also:** [webhooks.md](webhooks.md) · [events.md](events.md) ·
-[integration-architecture.md](integration-architecture.md) · [security.md](security.md)
+[integration-architecture.md](integration-architecture.md) · [security-standards.md](security-standards.md)

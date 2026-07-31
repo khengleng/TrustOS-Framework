@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { isGeneratorError } from '@trustos/generator-core';
 import { CLI_VERSION } from './version';
-import { createOutput, formatRows, type Output } from './output';
+import { createOutput, formatRows, style, type Output } from './output';
 import { runNew } from './commands/new';
 import { runListTemplates } from './commands/list-templates';
 import { runTemplates } from './commands/templates';
@@ -12,6 +12,14 @@ import {
   runPlatformInfo,
 } from './commands/platform';
 import { runDocs, runPlugins, runReleaseList, runValidate } from './commands/lifecycle';
+import {
+  runInstall,
+  runOutdated,
+  runRemove,
+  runTelemetryReview,
+  runUpdate,
+} from './commands/packages';
+import { generateSlice, parseSlice, describeGeneration } from '@trustos/code-generator';
 import { generateCliDocs } from '@trustos/documentation-center';
 import { PluginRegistry } from '@trustos/plugin-framework';
 import { ReleaseManager } from '@trustos/release-manager';
@@ -122,6 +130,123 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
           output,
         ),
       );
+    });
+
+  // --- install / update / remove --------------------------------------------
+  //
+  // These change the lockfile — what is recorded as installed, at which version, hashing to what.
+  // Wiring a module into the composition root stays `add-module`, which writes code and therefore
+  // has a different blast radius.
+  //
+  // Every one plans first. `--dry-run` is the same plan, unapplied.
+  program
+    .command('install')
+    .argument('<module>', 'module id from the catalogue')
+    .description('record a module and its dependencies in the lockfile')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--version <range>', 'version range, e.g. ^1.2.0')
+    .option('--dry-run', 'show the plan without applying it')
+    .option('--json', 'machine-readable output')
+    .action(async (module: string, opts: Record<string, never>) => {
+      setExit(await runInstall(module, opts, output));
+    });
+
+  program
+    .command('update')
+    .argument('[module]', 'module id; omit to update everything')
+    .description('move modules to their newest compatible version')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--version <range>', 'version range, e.g. ^1.2.0')
+    .option('--dry-run', 'show the plan without applying it')
+    .option('--json', 'machine-readable output')
+    .action(async (module: string | undefined, opts: Record<string, never>) => {
+      setExit(await runUpdate(module, opts, output));
+    });
+
+  program
+    .command('remove')
+    .argument('<module>', 'module id')
+    .description('remove a module, refusing while something depends on it')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--dry-run', 'show the plan without applying it')
+    .option('--json', 'machine-readable output')
+    .action(async (module: string, opts: Record<string, never>) => {
+      setExit(await runRemove(module, opts, output));
+    });
+
+  program
+    .command('outdated')
+    .description('list modules with a newer version available')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .option('--json', 'machine-readable output')
+    .action(async (opts: Record<string, never>) => {
+      setExit(await runOutdated(opts, output));
+    });
+
+  // --- generate -------------------------------------------------------------
+  //
+  // Emits a whole CRUD slice from one declaration. Prints the files by default: generation writes
+  // code into somebody's project, and a command that did that the first time it was run to see
+  // what it does would be a bad first impression at best.
+  const generate = program.command('generate').description('generate code from a declaration');
+
+  generate
+    .command('crud')
+    .description(
+      'a tenant-scoped CRUD slice: model, types, repository, service, controller, tests, docs',
+    )
+    .requiredOption('--spec <file>', 'JSON slice declaration')
+    .option('--out <dir>', 'where to write (default: cwd)')
+    .option('--write', 'write the files (prints them by default)')
+    .option('--json', 'machine-readable output')
+    .action(async (opts: { spec: string; out?: string; write?: boolean; json?: boolean }) => {
+      const { readFile, mkdir, writeFile } = await import('node:fs/promises');
+      const { dirname, join } = await import('node:path');
+
+      const slice = parseSlice(JSON.parse(await readFile(opts.spec, 'utf8')));
+      const files = generateSlice(slice);
+
+      if (opts.json) {
+        output.info(JSON.stringify(files, null, 2));
+        setExit(0);
+        return;
+      }
+
+      output.info(describeGeneration(files));
+      output.blank();
+      output.info(files.map((file) => `  ${file.path}`).join('\n'));
+      output.blank();
+
+      if (!opts.write) {
+        output.detail('  Nothing was written. Re-run with --write to generate them.');
+        setExit(0);
+        return;
+      }
+
+      const root = opts.out ?? process.cwd();
+
+      for (const file of files) {
+        const target = join(root, file.path);
+        await mkdir(dirname(target), { recursive: true });
+        await writeFile(target, file.content, 'utf8');
+      }
+
+      output.success(`Wrote ${files.length} file(s).`);
+      output.detail('  Every query is tenant-scoped, every write audited, every route guarded.');
+      setExit(0);
+    });
+
+  // --- telemetry ------------------------------------------------------------
+  const telemetry = program
+    .command('telemetry')
+    .description('what this installation collects, and where it goes');
+
+  telemetry
+    .command('review')
+    .description('show exactly what an export would contain')
+    .option('--json', 'machine-readable output')
+    .action((opts: { json?: boolean }) => {
+      setExit(runTelemetryReview(opts, output));
     });
 
   // --- platform -------------------------------------------------------------
@@ -372,6 +497,44 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
     });
 
   doctor
+    .command('all')
+    .description('every doctor check: machine, template, integrations, financial and platform')
+    .option('--path <dir>', 'application directory (default: nearest trustos.json)')
+    .action(async (opts: { path?: string }) => {
+      /*
+       * Runs each check and reports the worst outcome. Sequential rather than parallel: the output
+       * is read top to bottom by a person, and interleaved sections from five checks are unreadable
+       * exactly when somebody is debugging.
+       */
+      const checks: Array<[string, () => Promise<number>]> = [
+        ['machine', async () => printDoctorReport(await runDoctor(), {}, output)],
+        ['template', () => runTemplateDoctor(opts, output)],
+        ['integrations', () => runDoctorIntegrations(opts, output)],
+        ['financial', () => runFinancialDoctor(opts, output)],
+        ['platform', () => runPlatformInfo(opts, output)],
+      ];
+
+      let worst = 0;
+
+      for (const [name, run] of checks) {
+        output.blank();
+        output.info(style.bold(`── ${name} ${'─'.repeat(Math.max(0, 60 - name.length))}`));
+        output.blank();
+
+        try {
+          worst = Math.max(worst, await run());
+        } catch (error) {
+          output.error(
+            `${name} check failed: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          worst = 1;
+        }
+      }
+
+      setExit(worst);
+    });
+
+  doctor
     .command('template')
     .description('check that a generated application still matches the template it came from')
     .option('--path <dir>', 'application directory (default: nearest trustos.json)')
@@ -539,6 +702,8 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
       '  trustos new generic-saas --yes           accept every default',
       '  trustos new learning --dry-run --verbose preview every file',
       '  trustos platform info',
+      '  trustos doctor all',
+      '  trustos install search --dry-run',
       '  trustos marketplace search',
       '  trustos architecture-check',
       '  trustos templates --category health',

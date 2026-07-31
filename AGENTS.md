@@ -598,6 +598,7 @@ npm test
 npm run migrate:drift -w @trustos/database   # needs a database
 npx trustos validate-template --all          # after any template change
 npx trustos architecture-check               # layering, naming, dependencies, security rules
+npm run test:coverage                        # every package must have a spec file
 ```
 
 All of them must pass. **Never claim something works because it compiles.** If a test

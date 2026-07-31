@@ -20,6 +20,7 @@
     "@trustos/observability": "0.1.0",
     "@trustos/shared-types": "0.1.0",
     "@trustos/tenancy": "0.1.0",
+    "@trustos/version-manager": "0.1.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

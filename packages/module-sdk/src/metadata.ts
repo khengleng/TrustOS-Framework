@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { compareVersions, satisfies } from '@trustos/version-manager';
 
 /**
  * Module identity and versioning.
@@ -83,33 +84,19 @@ export type ModuleDependency = z.infer<typeof moduleDependencySchema>;
 // ---------------------------------------------------------------------------
 // Version comparison
 //
-// Implemented here rather than taken from a dependency because the whole of
-// what the module system needs is "is this version at least that one" and "does
-// it satisfy a caret range". A semver library would add a transitive dependency
-// to every module package to answer two questions in twenty lines.
+// Delegated to `@trustos/version-manager`, which is the framework's one complete implementation.
 //
-// `@trustos/template-registry` carries its own `compareSemver` for the same
-// reason and must stay dependency-free for the CLI; this one additionally
-// understands ranges, which templates do not use.
+// This was a local copy, justified at the time by keeping the module system free of a semver
+// dependency. The justification did not survive: the copy stripped prerelease identifiers, so
+// `1.0.0-rc.1` and `1.0.0` compared equal and `^1.0.0` accepted `2.0.0-rc.1`. Both are exactly
+// the failures a version comparison exists to prevent, and neither was visible without a test.
+//
+// `version-manager` depends only on `@trustos/errors`, which every module package already has.
 // ---------------------------------------------------------------------------
 
 /** Returns <0, 0 or >0, comparing major, then minor, then patch. */
 export function compareSemver(left: string, right: string): number {
-  const parse = (value: string): number[] =>
-    value
-      .trim()
-      .replace(/^[\^~=v]/, '')
-      .split('.')
-      .map((part) => Number.parseInt(part, 10) || 0);
-
-  const a = parse(left);
-  const b = parse(right);
-
-  for (let index = 0; index < 3; index += 1) {
-    const difference = (a[index] ?? 0) - (b[index] ?? 0);
-    if (difference !== 0) return difference;
-  }
-  return 0;
+  return compareVersions(left, right);
 }
 
 /** True when `version` is at least `minimum`. */
@@ -120,23 +107,14 @@ export function satisfiesMinimum(version: string, minimum: string): boolean {
 /**
  * True when `version` satisfies `range`.
  *
- * Caret semantics follow npm, including the pre-1.0 rule: `^0.2.3` allows
- * `0.2.x` but not `0.3.0`. That rule matters here because every module in this
- * repository is still `0.x`, so treating `^0.1.0` as "any 0.x" would let a
- * breaking change through unnoticed.
+ * Delegates to `@trustos/version-manager`. Caret semantics follow npm, including the pre-1.0
+ * rule — `^0.2.3` allows `0.2.x` but not `0.3.0` — which matters because every module here is
+ * still `0.x`, so treating `^0.1.0` as "any 0.x" would let a breaking change through unnoticed.
+ *
+ * The local copy this replaced also ignored prerelease identifiers, so `^1.0.0` accepted
+ * `2.0.0-rc.1`: a release candidate of the *next major* installed into an application that asked
+ * for compatible updates.
  */
 export function satisfiesVersionRange(version: string, range: string): boolean {
-  if (!range.startsWith('^')) return compareSemver(version, range) === 0;
-
-  const minimum = range.slice(1);
-  if (compareSemver(version, minimum) < 0) return false;
-
-  const [major = 0, minor = 0] = minimum.split('.').map((part) => Number.parseInt(part, 10) || 0);
-  const [candidateMajor = 0, candidateMinor = 0] = version
-    .split('.')
-    .map((part) => Number.parseInt(part, 10) || 0);
-
-  if (major > 0) return candidateMajor === major;
-  // 0.x: the minor acts as the major.
-  return candidateMajor === 0 && candidateMinor === minor;
+  return satisfies(version, range);
 }

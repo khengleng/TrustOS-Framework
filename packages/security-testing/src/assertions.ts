@@ -23,17 +23,52 @@ export interface LeakFinding {
  * up in `context.detail` is found even though `detail` is not a secret-looking name.
  */
 export function findLeakedValues(subject: unknown, secrets: string[]): LeakFinding[] {
-  const serialized = JSON.stringify(subject) ?? '';
   const findings: LeakFinding[] = [];
 
-  for (const secret of secrets) {
-    // Short values would match by coincidence — a two-character password would be
-    // "found" in any text — so anything under eight characters is skipped, and the
-    // caller is expected to use realistic values.
-    if (secret.length < 8) continue;
-    if (serialized.includes(secret)) findings.push({ path: '(serialized)', value: secret });
-  }
+  // Short values would match by coincidence — a two-character password would be "found" in any
+  // text — so anything under eight characters is skipped, and the caller is expected to use
+  // realistic values.
+  const candidates = secrets.filter((secret) => secret.length >= 8);
 
+  if (candidates.length === 0) return findings;
+
+  /*
+   * Walks the structure rather than searching the serialized form.
+   *
+   * Serializing and substring-matching answers *whether* a secret leaked but not *where*, and a
+   * finding reported at `(serialized)` leaves the caller to search a large object by hand — at
+   * which point the harness has found the bug and handed back a puzzle. The path is the part that
+   * gets it fixed.
+   */
+  const seen = new Set<object>();
+
+  const walk = (value: unknown, path: string, depth: number): void => {
+    if (depth > 12) return;
+
+    if (typeof value === 'string') {
+      for (const secret of candidates) {
+        if (value.includes(secret)) findings.push({ path: path || '(root)', value: secret });
+      }
+      return;
+    }
+
+    if (value === null || typeof value !== 'object') return;
+
+    // A cycle would otherwise recurse until the depth cap, reporting the same leak repeatedly.
+    if (seen.has(value)) return;
+    seen.add(value);
+
+    if (Array.isArray(value)) {
+      value.forEach((entry, index) => walk(entry, `${path}[${index}]`, depth + 1));
+      return;
+    }
+
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      walk(entry, path ? `${path}.${key}` : key, depth + 1);
+    }
+  };
+
+  walk(subject, '', 0);
   return findings;
 }
 
@@ -43,7 +78,8 @@ export function assertNoLeakedValues(subject: unknown, secrets: string[], label 
   if (findings.length === 0) return;
 
   throw new Error(
-    `${label} contains ${findings.length} secret value(s) that must have been redacted. ` +
+    `${label} contains ${findings.length} secret value(s) that must have been redacted, at: ` +
+      `${findings.map((finding) => finding.path).join(', ')}. ` +
       'Redact at the point the context is built, not at the sink.',
   );
 }
@@ -71,7 +107,7 @@ export function findUnredactedSecretFields(subject: unknown): string[] {
       // identifiers derived from a secret — otherwise this would flag `sessionId`.
       const looksSecret = isSecretFieldName(key);
 
-      if (looksSecret && typeof entry === 'string' && entry !== '[redacted]' && entry !== '') {
+      if (looksSecret && typeof entry === 'string' && !isRedacted(entry)) {
         findings.push(childPath);
         continue;
       }
@@ -81,6 +117,24 @@ export function findUnredactedSecretFields(subject: unknown): string[] {
 
   walk(subject, '', 0);
   return findings;
+}
+
+/**
+ * Whether a value has already been redacted.
+ *
+ * Accepts the common markers rather than one exact string. A codebase that redacts with `***` or
+ * `[REDACTED]` is redacting correctly, and a harness that reported those as leaks would produce
+ * false positives on exactly the code that got it right — which is how a security check earns a
+ * reputation for noise and stops being run.
+ */
+function isRedacted(value: string): boolean {
+  const trimmed = value.trim();
+
+  if (trimmed === '') return true;
+  if (/^\*+$/.test(trimmed)) return true;
+  if (/^[<[(]?\s*(redacted|hidden|masked|removed|filtered)\s*[>\])]?$/i.test(trimmed)) return true;
+
+  return false;
 }
 
 export function assertSecretFieldsRedacted(subject: unknown, label = 'value'): void {

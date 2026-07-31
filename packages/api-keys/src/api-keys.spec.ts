@@ -67,7 +67,17 @@ describe('key format and hashing', () => {
     const { key, keyHash } = generateApiKey();
 
     expect(verifyApiKey(key, keyHash)).toBe(true);
-    expect(verifyApiKey(`${key.slice(0, -1)}z`, keyHash)).toBe(false);
+
+    /*
+     * A near-miss must differ from the key. Appending a fixed character produced the *same* key
+     * whenever the last one already matched it — roughly one run in thirty, which is frequent
+     * enough to be seen and rare enough to be dismissed as "flaky CI".
+     */
+    const lastCharacter = key.slice(-1);
+    const nearMiss = `${key.slice(0, -1)}${lastCharacter === 'z' ? 'y' : 'z'}`;
+
+    expect(nearMiss).not.toBe(key);
+    expect(verifyApiKey(nearMiss, keyHash)).toBe(false);
     expect(verifyApiKey(generateApiKey().key, keyHash)).toBe(false);
     expect(verifyApiKey(key, '')).toBe(false);
   });

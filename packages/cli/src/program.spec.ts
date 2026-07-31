@@ -887,3 +887,144 @@ describe('upgrade', () => {
     expect(output).toMatch(/a guess would be a plan/);
   });
 });
+
+describe('install, update and remove', () => {
+  async function application(): Promise<string> {
+    const root = join(workspace, 'app');
+    await mkdir(root, { recursive: true });
+    await writeFile(join(root, 'trustos.json'), JSON.stringify({ frameworkVersion: '0.1.0' }));
+    return root;
+  }
+
+  it('plans an install without changing anything under --dry-run', async () => {
+    // `--dry-run` is the same plan, unapplied — not a second code path that predicts the first.
+    const root = await application();
+    const { code, output } = await invoke(['install', 'search', '--path', root, '--dry-run']);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/install search/);
+    expect(output).toMatch(/Nothing was changed/);
+    expect(existsSync(join(root, 'trustos-lock.json'))).toBe(false);
+  });
+
+  it('records the install in a lockfile with an integrity digest', async () => {
+    /*
+     * The digest is the point of the lockfile. Without it, it is a version list, and a package
+     * whose contents changed since it was locked installs silently.
+     */
+    const root = await application();
+
+    expect((await invoke(['install', 'search', '--path', root])).code).toBe(0);
+
+    const lockfile = JSON.parse(await readFile(join(root, 'trustos-lock.json'), 'utf8')) as {
+      packages: Array<{ id: string; integrity: string }>;
+    };
+
+    expect(lockfile.packages.map((entry) => entry.id)).toContain('search');
+    expect(lockfile.packages[0]?.integrity).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('says a module is unsigned rather than staying quiet about it', async () => {
+    // The framework ships verification, not signatures. Saying so beats implying otherwise.
+    const root = await application();
+
+    expect((await invoke(['install', 'search', '--path', root])).output).toMatch(/unsigned/);
+  });
+
+  it('refuses to install something that is not in the catalogue', async () => {
+    const root = await application();
+    const { code, output } = await invoke(['install', 'not-a-module', '--path', root]);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/not available offline. The installer never fetches/);
+    expect(output).toMatch(/Nothing has been changed/);
+  });
+
+  it('refuses to remove something that is not installed', async () => {
+    const root = await application();
+    const { code, output } = await invoke(['remove', 'search', '--path', root]);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/not installed/);
+  });
+
+  it('reports nothing outdated on a fresh install', async () => {
+    const root = await application();
+    await invoke(['install', 'search', '--path', root]);
+
+    const { code, output } = await invoke(['outdated', '--path', root]);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/newest compatible version/);
+  });
+
+  it('refuses to run outside a generated application', async () => {
+    const { code, output } = await invoke(['install', 'search', '--path', join(workspace, 'nope')]);
+
+    expect(code).toBe(1);
+    expect(output).toMatch(/No trustos\.json/);
+  });
+});
+
+describe('generate crud', () => {
+  async function spec(): Promise<string> {
+    const path = join(workspace, 'slice.json');
+
+    await writeFile(
+      path,
+      JSON.stringify({
+        entity: 'Invoice',
+        plural: 'invoices',
+        label: 'Invoices',
+        singular: 'Invoice',
+        description: 'A bill issued to a customer.',
+        namespace: 'billing',
+        fields: [
+          { name: 'number', label: 'Number', type: 'text', required: true, unique: true },
+          { name: 'total', label: 'Total', type: 'money', required: true },
+        ],
+      }),
+    );
+
+    return path;
+  }
+
+  it('prints the files it would write rather than writing them', async () => {
+    // Generation writes code into somebody's project. Doing that the first time it is run to see
+    // what it does would be a bad first impression at best.
+    const { code, output } = await invoke(['generate', 'crud', '--spec', await spec()]);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/7 file\(s\)/);
+    expect(output).toMatch(/Nothing was written/);
+  });
+
+  it('writes when asked, and what it writes is tenant-scoped and audited', async () => {
+    const out = join(workspace, 'generated');
+
+    expect(
+      (await invoke(['generate', 'crud', '--spec', await spec(), '--write', '--out', out])).code,
+    ).toBe(0);
+
+    const schema = await readFile(join(out, 'prisma/schema/20-invoices.prisma'), 'utf8');
+    const service = await readFile(join(out, 'src/modules/invoices/invoices.service.ts'), 'utf8');
+
+    expect(schema).toMatch(/organizationId String/);
+    // Money is a Decimal, never a Float. Phase 8's rule reaching the generator.
+    expect(schema).toMatch(/total Decimal @db\.Decimal\(28, 8\)/);
+    expect(service).toMatch(/billing\.invoices\.created/);
+    expect(existsSync(join(out, 'src/modules/invoices/tenant-isolation.spec.ts'))).toBe(true);
+  });
+});
+
+describe('telemetry review', () => {
+  it('says what would be sent, and that nothing is', async () => {
+    // Nobody should have to read source to find out what a framework would transmit.
+    const { code, output } = await invoke(['telemetry', 'review']);
+
+    expect(code).toBe(0);
+    expect(output).toMatch(/No events recorded/);
+    expect(output).toMatch(/ships no exporter and has no endpoint/);
+    expect(output).toMatch(/nowhere for tenant data to land/);
+  });
+});

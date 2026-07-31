@@ -197,6 +197,21 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       include: ['packages/*/src/**/*.ts', 'packages/modules/*/src/**/*.ts'],
       exclude: ['**/index.ts', '**/*.spec.ts', '**/nest/**'],
+
+      /*
+       * Report every file the include matches, not only the ones a test happened to load.
+       *
+       * Worth knowing, and measured rather than assumed: this does **not** fully close the gap.
+       * The v8 provider still omits a file that no test and no importer ever loads, so a package
+       * with neither is invisible in the table *and* absent from the headline total. The number
+       * then answers "how well tested is the code we test", which trends toward 100% by
+       * construction.
+       *
+       * So the total is a floor, not a measurement, and the only real fix is a spec file per
+       * package. `trustos architecture-check` and the package-has-tests check in CI are what
+       * actually catch the gap; this setting narrows it.
+       */
+      all: true,
     },
   },
 });

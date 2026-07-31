@@ -303,12 +303,24 @@ export function explainIncomparable(
  * Written here rather than taken from a library because it is eight lines and every vector store
  * adapter needs it for its in-memory fallback.
  */
+/**
+ * Refuses vectors of different lengths.
+ *
+ * Applied to every metric, not just cosine. Without it, `euclideanDistance` and `dotProduct` read
+ * past the end of the shorter vector, arithmetic on `undefined` yields `NaN`, and the `NaN`
+ * propagates into a ranking where it sorts unpredictably — a search that returns a confident,
+ * wrong order and never errors.
+ */
+function assertSameDimensions(a: number[], b: number[]): void {
+  if (a.length === b.length) return;
+
+  throw ApiError.internal(
+    `Cannot compare a ${a.length}-dimension vector with a ${b.length}-dimension one.`,
+  );
+}
+
 export function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) {
-    throw ApiError.internal(
-      `Cannot compare a ${a.length}-dimension vector with a ${b.length}-dimension one.`,
-    );
-  }
+  assertSameDimensions(a, b);
 
   let dot = 0;
   let normA = 0;
@@ -328,6 +340,8 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 export function euclideanDistance(a: number[], b: number[]): number {
+  assertSameDimensions(a, b);
+
   let sum = 0;
   for (let index = 0; index < a.length; index += 1) {
     const delta = a[index]! - b[index]!;
@@ -337,6 +351,8 @@ export function euclideanDistance(a: number[], b: number[]): number {
 }
 
 export function dotProduct(a: number[], b: number[]): number {
+  assertSameDimensions(a, b);
+
   let sum = 0;
   for (let index = 0; index < a.length; index += 1) sum += a[index]! * b[index]!;
   return sum;

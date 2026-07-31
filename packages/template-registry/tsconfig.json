@@ -6,5 +6,10 @@
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"]
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../version-manager"
+    }
+  ]
 }

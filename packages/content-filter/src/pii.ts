@@ -78,8 +78,18 @@ const PATTERNS: PiiPattern[] = [
   },
   {
     type: 'iban',
-    pattern: /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g,
+    /*
+     * Both written forms. The electronic form is unspaced; the *printed* form groups in fours,
+     * and that is how an IBAN appears in an email, an invoice or a support ticket — which is
+     * exactly the text this runs over. The earlier pattern matched only the unspaced form, so the
+     * common case went undetected.
+     *
+     * The mod-97 check is what makes it usable, for the same reason Luhn is on the card pattern:
+     * without it every long alphanumeric run starting with two letters is a false positive.
+     */
+    pattern: /\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]){11,30}\b/g,
     confidence: 'medium',
+    verify: iban97,
   },
   {
     type: 'private_key',
@@ -105,10 +115,21 @@ const PATTERNS: PiiPattern[] = [
   },
   {
     type: 'phone',
-    // Deliberately conservative: an international prefix or a long grouped run. A bare
-    // seven-digit number is indistinguishable from an order reference.
-    pattern: /(?:\+\d{1,3}[ -]?)?(?:\(\d{1,4}\)[ -]?)?\d{3,4}[ -]\d{3,4}[ -]?\d{0,4}\b/g,
+    /*
+     * Two or more digit groups, with an optional international prefix or area code.
+     *
+     * The earlier pattern required the country code to be followed immediately by a 3–4 digit
+     * group, so `+855 12 345 678` — a Cambodian mobile, with a two-digit operator code — matched
+     * only the trailing `345 678`. That is worse than not matching at all: `redactPii` uses the
+     * match offset, so redaction left `+855 12 [PHONE]` in the text, and the visible prefix plus
+     * context identifies the number. A partial redaction reads as a successful one.
+     *
+     * Still deliberately conservative — see `verify`. A bare seven-digit run with no separators is
+     * indistinguishable from an order reference and is not matched at all.
+     */
+    pattern: /(?:\+\d{1,3}[ -]?)?(?:\(\d{1,4}\)[ -]?)?\d{2,4}(?:[ -]\d{2,4}){1,3}\b/g,
     confidence: 'low',
+    verify: plausiblePhone,
   },
   {
     type: 'passport',
@@ -143,6 +164,32 @@ function luhn(value: string): boolean {
   }
 
   return sum % 10 === 0;
+}
+
+/**
+ * The IBAN mod-97 checksum, per ISO 13616.
+ *
+ * Move the first four characters to the end, map letters to numbers (A=10 … Z=35), and the whole
+ * value read as an integer must be congruent to 1 modulo 97. Computed digit by digit because the
+ * number is far larger than a JavaScript integer can hold.
+ */
+function iban97(value: string): boolean {
+  const compact = value.replace(/\s/g, '').toUpperCase();
+
+  if (compact.length < 15 || compact.length > 34) return false;
+
+  const rearranged = compact.slice(4) + compact.slice(0, 4);
+  let remainder = 0;
+
+  for (const character of rearranged) {
+    const mapped = /[A-Z]/.test(character) ? String(character.charCodeAt(0) - 55) : character;
+
+    for (const digit of mapped) {
+      remainder = (remainder * 10 + Number(digit)) % 97;
+    }
+  }
+
+  return remainder === 1;
 }
 
 export const contentFilterPolicySchema = z
@@ -227,6 +274,30 @@ export function redactPii(
   }
 
   return { text: output, redactedTypes: scan.types, count: scan.matches.length };
+}
+
+/**
+ * Whether a grouped digit run is plausibly a phone number.
+ *
+ * Two rules, both learned from false positives:
+ *
+ *   * **8 to 15 digits.** E.164 caps at 15; below 8 nothing is dialable internationally, and a
+ *     shorter run is far more likely to be a reference or a quantity.
+ *   * **Not a date.** `2026 03 01` and `2026-03-01` are eight digits in three groups and match the
+ *     shape exactly. A date redacted as a phone number is a visible wrong answer that costs the
+ *     detector its credibility.
+ */
+function plausiblePhone(value: string): boolean {
+  const digits = value.replace(/\D/g, '');
+
+  if (digits.length < 8 || digits.length > 15) return false;
+
+  // YYYY MM DD / YYYY-MM-DD, with or without a leading sign.
+  if (/^\+?(?:19|20)\d{2}[ -](?:0[1-9]|1[0-2])[ -](?:0[1-9]|[12]\d|3[01])$/.test(value.trim())) {
+    return false;
+  }
+
+  return true;
 }
 
 /** Keeps the shape and the last four characters. Enough to recognise, useless to reuse. */

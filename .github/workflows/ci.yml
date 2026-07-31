@@ -122,6 +122,45 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # The rules the framework holds itself to. Layering, dependency direction and the security
+      # patterns are all invisible in a diff and only caught by running this.
+      - name: Architecture rules
+        run: node packages/cli/bin/trustos.js architecture-check
+
+      # A package with no spec file is a package whose coverage is invisible: the v8 provider
+      # reports over the files a test loaded, so one that nothing imports is absent from the table
+      # *and* from the total. The number then measures the code we test, which trends to 100% by
+      # construction. This is the check that actually catches the gap.
+      - name: Every package has tests
+        run: |
+          missing=""
+          for dir in packages/*/; do
+            [ -d "$dir/src" ] || continue
+            name=$(basename "$dir")
+            case "$name" in
+              # Types only, and a Prisma wrapper exercised by test:tenancy against a real database.
+              shared-types|database) continue ;;
+              # The module packages are thin contracts covered generically by
+              # packages/modules/modules.spec.ts — sixteen near-identical spec files would be the
+              # duplication the framework forbids everywhere else.
+              modules) continue ;;
+            esac
+            specs=$(find "$dir" -name '*.spec.ts' -not -path '*/node_modules/*' | wc -l)
+            sources=$(find "$dir/src" -name '*.ts' ! -name '*.spec.ts' ! -name 'index.ts' | wc -l)
+            if [ "$specs" -eq 0 ] && [ "$sources" -ne 0 ]; then
+              missing="$missing $name"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "Packages with source and no tests:$missing"
+            exit 1
+          fi
+          if [ ! -f packages/modules/modules.spec.ts ]; then
+            echo "packages/modules/modules.spec.ts is missing — nothing would exercise the module contracts."
+            exit 1
+          fi
+          echo "Every package with source has tests."
+
       - name: Build applications
         run: npm run build:apps
 

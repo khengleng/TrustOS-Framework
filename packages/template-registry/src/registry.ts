@@ -1,3 +1,4 @@
+import { compareVersions } from '@trustos/version-manager';
 import { industryManifests } from './industry';
 import { registrySchema, type TemplateManifest, type TemplateVariable } from './schema';
 
@@ -436,14 +437,21 @@ export function checkCompatibility(
   };
 }
 
-/** Numeric semantic-version comparison. Returns -1, 0 or 1. */
+/**
+ * Semantic-version comparison.
+ *
+ * Delegates to `@trustos/version-manager`, which is the framework's one complete implementation.
+ *
+ * This used to be a local copy that stripped everything after the patch, so `1.0.0-rc.1` and
+ * `1.0.0` compared *equal* — and `isFrameworkCompatible` therefore accepted a release candidate
+ * wherever the release was required. A template generated against an rc while its author believed
+ * it was the stable release, and nothing said otherwise.
+ *
+ * The reason the copy existed — keeping this package dependency-free for the CLI — did not
+ * survive examination: `version-manager` depends only on `@trustos/errors`, which the CLI already
+ * installs. Three implementations of one thing is the duplication the framework refuses
+ * everywhere else, and it was wrong in two of them.
+ */
 export function compareSemver(a: string, b: string): number {
-  const parse = (value: string) => value.split('.').map((part) => Number(part) || 0);
-  const [aMajor = 0, aMinor = 0, aPatch = 0] = parse(a);
-  const [bMajor = 0, bMinor = 0, bPatch = 0] = parse(b);
-
-  if (aMajor !== bMajor) return aMajor > bMajor ? 1 : -1;
-  if (aMinor !== bMinor) return aMinor > bMinor ? 1 : -1;
-  if (aPatch !== bPatch) return aPatch > bPatch ? 1 : -1;
-  return 0;
+  return compareVersions(a, b);
 }

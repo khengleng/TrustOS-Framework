@@ -8,8 +8,36 @@ describe('compareSemver', () => {
     expect(compareSemver('0.1.2', '0.1.2')).toBe(0);
   });
 
-  it('tolerates a leading v or range marker', () => {
-    expect(compareSemver('v1.2.3', '^1.2.3')).toBe(0);
+  it('tolerates a leading v', () => {
+    expect(compareSemver('v1.2.3', '1.2.3')).toBe(0);
+  });
+
+  it('refuses a range where a version was expected', () => {
+    /*
+     * A behaviour change, and a deliberate one. The previous implementation stripped `^` and `~`
+     * before comparing, so `compareSemver('^1.2.3', '1.2.3')` returned 0 — which invites a caller
+     * to compare a *range* as though it were a version and get a confident wrong answer.
+     * Comparing a range is a category error; `satisfiesVersionRange` is the function for that.
+     */
+    expect(() => compareSemver('^1.2.3', '1.2.3')).toThrow();
+  });
+
+  it('orders a prerelease below the release it leads to', () => {
+    /*
+     * The bug this consolidation fixed. The local copy stripped everything after the patch, so
+     * these compared equal — and `satisfiesMinimum('1.0.0-rc.1', '1.0.0')` was therefore true,
+     * accepting a release candidate wherever the release was required.
+     */
+    expect(compareSemver('1.0.0-rc.1', '1.0.0')).toBeLessThan(0);
+    expect(satisfiesMinimum('1.0.0-rc.1', '1.0.0')).toBe(false);
+    // And numeric prerelease identifiers order numerically, not as strings.
+    expect(compareSemver('1.0.0-rc.10', '1.0.0-rc.2')).toBeGreaterThan(0);
+  });
+
+  it('does not let a caret range accept a prerelease of the next major', () => {
+    // `^1.0.0` matching `2.0.0-rc.1` would install a release candidate of the next major into an
+    // application that asked for compatible updates.
+    expect(satisfiesVersionRange('2.0.0-rc.1', '^1.0.0')).toBe(false);
   });
 });
 
