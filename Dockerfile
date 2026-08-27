@@ -17,49 +17,35 @@
 # references mean an application's build already needs its packages built, and building the
 # workspace once is both simpler and faster than resolving which subset a given service needs.
 
-# --- dependencies -------------------------------------------------------------
-#
-# Separated so a source change does not reinstall node_modules. `npm ci` installs strictly from
-# the lockfile: a build that resolved different versions than the ones reviewed would make every
-# audit result meaningless.
-FROM node:20.19.1-bookworm-slim AS deps
-
-WORKDIR /app
-
-# The lockfile and every workspace manifest, and nothing else. Copying source here would defeat
-# the layer.
-COPY package.json package-lock.json ./
-COPY packages/database/package.json packages/database/
-COPY packages/database/prisma packages/database/prisma
-
-# `postinstall` runs `prisma generate`, which needs the schema — copied above.
-# No BuildKit cache mount.
-#
-# A `--mount=type=cache` here would make the npm install faster on a warm builder, and Railway's
-# builder rejects the portable spelling: it wants an id carrying its own cacheKey prefix. Writing
-# that prefix into the Dockerfile would make the file build on exactly one platform, which is the
-# thing AGENTS.md's deployment rules say not to do.
-#
-# The cost of leaving it out is a slower cold build. The cost of putting it in is a Dockerfile that
-# only Railway can build.
-RUN npm ci --ignore-scripts && npm run db:generate
-
 # --- build --------------------------------------------------------------------
+#
+# One stage, and the whole repository copied before `npm ci`.
+#
+# The first version of this file had a separate dependency stage copying only the root manifest
+# and `packages/database`, so a source change would not reinvalidate `node_modules`. That is the
+# standard optimization and it is **wrong for an npm workspace**: `npm ci` creates the
+# `node_modules/@trustos/*` symlinks from the workspace manifests, and with 170 of them missing it
+# creates none. The build then fails at the first cross-package import —
+#
+#   error TS2307: Cannot find module '@trustos/module-sdk/nest'
+#
+# — which looks like a broken import and is a broken install. Correct beats cached.
 FROM node:20.19.1-bookworm-slim AS build
 
 ARG SERVICE
 WORKDIR /app
 
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Prisma client, then the workspace, then the one application.
-RUN npm run db:generate \
+# `--ignore-scripts` so `postinstall` does not run `prisma generate` before the schema is in place;
+# it is run explicitly on the next line.
+RUN npm ci --ignore-scripts \
+    && npm run db:generate \
     && npm run build:packages \
     && npm run build -w "@trustos/${SERVICE}"
 
-# Development dependencies removed *after* the build rather than installed separately, so the
-# build and the runtime resolve identical versions from one lockfile.
+# Development dependencies removed after the build rather than installed separately, so the build
+# and the runtime resolve identical versions from one lockfile.
 RUN npm prune --omit=dev
 
 # --- runtime ------------------------------------------------------------------
