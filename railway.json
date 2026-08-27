@@ -8,7 +8,7 @@
     }
   },
   "deploy": {
-    "startCommand": "npm run db:deploy && node apps/api-example/dist/main.js",
+    "startCommand": "sh -c 'npm run db:deploy && node apps/api-example/dist/main.js'",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE",
