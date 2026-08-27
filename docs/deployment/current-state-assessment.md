@@ -131,10 +131,14 @@ Railway project: trustos-dev
 provisioned — a production project created "ready for later" is a production project somebody
 deploys to.
 
-Note that a Railway project named `TrustOS-Framework` **already exists** and is linked to this
-repository, with one service in an environment named `production`. It predates this work and its
-contents were not inspected, because the CLI session had expired. See
-[`pilot-readiness.md`](pilot-readiness.md#the-two-unverified-items).
+Note that a Railway project named `TrustOS-Framework` **already exists and is serving traffic**,
+with two services in a single environment named `production`. It predates this work — the running
+build is from 2026-08-12, before phase 11 — and it fails two security checks. See
+[`pilot-readiness.md`](pilot-readiness.md#the-live-deployment).
+
+That environment being named `production` is worth noticing on its own: this phase prepares DEV and
+UAT and explicitly does not authorise production, and the only environment that exists carries that
+name.
 
 ### What is deliberately absent
 
