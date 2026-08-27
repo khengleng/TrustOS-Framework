@@ -66,7 +66,7 @@
       "journalsPosted": 933,
       "settlementsCreated": 933,
       "compensationsRun": 0,
-      "wallClockMs": 139,
+      "wallClockMs": 118,
       "refusalsByCode": [
         {
           "code": "limit_exceeded",
@@ -107,7 +107,7 @@
       "journalsPosted": 93207,
       "settlementsCreated": 93207,
       "compensationsRun": 0,
-      "wallClockMs": 10424,
+      "wallClockMs": 10523,
       "refusalsByCode": [
         {
           "code": "limit_exceeded",

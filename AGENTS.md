@@ -856,6 +856,76 @@ Read [docs/enterprise-governance/architecture.md](docs/enterprise-governance/arc
 before changing anything in the data-governance, policy, SRE, API-management or continuity
 packages.
 
+## Deployment rules (phase 15)
+
+The framework is packaged for Railway. These rules are about keeping it _portable_ while it is
+deployed to one platform, and about not weakening anything to make a deploy succeed.
+
+1. **Do not introduce a new architecture while preparing deployment.** Packaging is packaging. If a
+   deployment need seems to require an architectural change, it is a sign the packaging is wrong.
+
+2. **Do not turn a package into a service.** 168 of 171 packages are libraries.
+   `@trustos/job-runtime`, `@trustos/scheduler`, `@trustos/workflow-runtime` and
+   `@trustos/ai-gateway` are libraries whose names suggest otherwise — a deployment hosts them
+   inside its own process, and none ships a `main`.
+
+3. **Do not add infrastructure that nothing requires.** No Redis, no broker, no object storage.
+   Each would be an operational dependency added to satisfy a diagram, and each is something
+   somebody then has to run, patch and pay for.
+
+4. **Do not hardcode Railway into anything.** No `RAILWAY_*` variable is read outside
+   `railway.json`. The Dockerfile is a Dockerfile and the application is a Node process; both run
+   anywhere.
+
+5. **Never commit a secret**, and never let one into a build context. `.dockerignore` excludes
+   `.env` first, because a `.env` copied into an image is a secret in every layer and
+   `docker history` shows it.
+
+6. **Never bypass a migration.** `migrate deploy` in every environment; `db push` and
+   `migrate reset` are development commands and appear in no deployment path.
+
+7. **Never edit an applied migration.** Prisma tracks checksums, and an edited migration makes
+   `migrate deploy` refuse against every database that ran it. A correction is a new migration.
+
+8. **A destructive migration needs an approval marker**, naming a reason and an approver.
+   `npm run migrations:check` refuses without one, in CI.
+
+9. **One service runs migrations.** Seven services each migrating on boot is seven concurrent
+   attempts against one database.
+
+10. **Never disable a test to make CI green**, and that includes the security gates. A fix that
+    cannot pass the tests is a fix nobody has evidence for, applied under time pressure. The
+    exception process records a finding with an owner and an expiry; disabling a test records
+    nothing.
+
+11. **Always add `/health` and `/ready` to a deployable HTTP service**, and keep them different
+    questions. `/health` must not touch a dependency — a liveness probe that queried the database
+    turns a database blip into a restart loop, which is worse than the blip.
+
+12. **Point the platform health check at `/health`**, never at `/ready`.
+
+13. **Always document a new environment variable** in `.env.example`, and only add one the code
+    actually reads. A template full of variables nothing consumes teaches people to ignore it.
+
+14. **Never let a readiness or error response leak infrastructure.** No connection string, no
+    hostname, no credential — a readiness body is one of the least access-controlled surfaces a
+    service has.
+
+15. **Use an immutable release version, and promote the artefact.** The image deployed to UAT is
+    the one built for DEV and smoke-tested there. Rebuilding for UAT means the thing tested is not
+    the thing running.
+
+16. **Never weaken tenant isolation or RBAC to make a deployment work.** If a deployment appears
+    to need it, the deployment is wrong.
+
+17. **Stop after TrustOS is pilot-ready.** Do not begin another framework expansion, do not create
+    a production Railway project, and do not build SME OS.
+
+Read [docs/deployment/railway.md](docs/deployment/railway.md) and
+[docs/deployment/database-migrations.md](docs/deployment/database-migrations.md) before changing
+anything in `Dockerfile`, `railway.json`, `.github/workflows/ci.yml` or
+`packages/database/prisma/migrations`.
+
 ## Before claiming a change is done
 
 ```bash
