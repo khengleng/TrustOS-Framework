@@ -277,6 +277,14 @@ model AuditLog {
   before Json?
   after  Json?
 
+  /// Provenance a writer knows and the trail could not infer.
+  ///
+  /// Added in phase 11/12 for the Governance Tool, whose value is precisely this: a record
+  /// saying "usr_7 froze wallet wlt_3" becomes "…from the customer support console, in
+  /// production, because of case cas_9, correlated to req_abc". Bounded scalars, redacted like
+  /// `before` and `after` — it is provenance, not a second place to put state.
+  metadata Json?
+
   requestId String?
   ipAddress String?
   userAgent String?

@@ -102,6 +102,8 @@ export class AuditService {
       organizationId: supplied(input.organizationId, context?.organizationId ?? null),
       before: input.before === undefined ? null : deepRedact(input.before),
       after: input.after === undefined ? null : deepRedact(input.after),
+      metadata:
+        input.metadata === undefined || input.metadata === null ? null : deepRedact(input.metadata),
       requestId: supplied(input.requestId, context?.requestId ?? null),
       ipAddress: supplied(input.ipAddress, context?.ipAddress ?? null),
       userAgent: supplied(input.userAgent, context?.userAgent ?? null),

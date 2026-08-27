@@ -60,11 +60,37 @@ describe('AuditService', () => {
       organizationId: 'org_acme',
       before: null,
       after: { email: 'new@acme.test', role: 'operator' },
+      // Null unless a writer supplies provenance. See the field's comment: it is where a caller
+      // says *which application* caused this, not a second place to put state.
+      metadata: null,
       requestId: 'req_abc123',
       ipAddress: '203.0.113.9',
       userAgent: 'Mozilla/5.0 (admin console)',
       occurredAt: FIXED_NOW,
     });
+  });
+
+  it('carries provenance a writer supplies, redacted like everything else', async () => {
+    await runWithRequestContext(requestContext(), () =>
+      audit.record({
+        action: AUDIT_ACTIONS.MEMBER_INVITED,
+        entityType: AUDIT_ENTITY.ORGANIZATION_MEMBER,
+        entityId: 'member_1',
+        metadata: {
+          governanceAppId: 'customer-support-console',
+          reason: 'Customer called about a payment.',
+          apiKey: 'tos_live_should_not_survive',
+        },
+      }),
+    );
+
+    const metadata = sink.records[0]?.metadata as Record<string, unknown>;
+
+    expect(metadata.governanceAppId).toBe('customer-support-console');
+    expect(metadata.reason).toBe('Customer called about a payment.');
+    // Redaction applies here exactly as it does to before and after — provenance is not an
+    // exemption from it.
+    expect(metadata.apiKey).not.toBe('tos_live_should_not_survive');
   });
 
   it('records the actor type, so the trail does not attribute a machine action to a person', async () => {

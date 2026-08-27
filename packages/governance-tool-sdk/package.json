@@ -1,0 +1,22 @@
+{
+  "name": "@trustos/governance-tool-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The client SDK an internal application is built against: actor context, permission checks, paging, correlation, reveal and export requests.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/governance-tool-core": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

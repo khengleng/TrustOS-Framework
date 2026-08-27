@@ -215,6 +215,45 @@
       "path": "packages/generator-core"
     },
     {
+      "path": "packages/governance-ai-bridge"
+    },
+    {
+      "path": "packages/governance-audit-bridge"
+    },
+    {
+      "path": "packages/governance-auth-context"
+    },
+    {
+      "path": "packages/governance-data-access"
+    },
+    {
+      "path": "packages/governance-environment-config"
+    },
+    {
+      "path": "packages/governance-export-control"
+    },
+    {
+      "path": "packages/governance-pii-policy"
+    },
+    {
+      "path": "packages/governance-resource-policy"
+    },
+    {
+      "path": "packages/governance-tool-core"
+    },
+    {
+      "path": "packages/governance-tool-integration"
+    },
+    {
+      "path": "packages/governance-tool-runtime"
+    },
+    {
+      "path": "packages/governance-tool-sdk"
+    },
+    {
+      "path": "packages/governance-workflow-bridge"
+    },
+    {
       "path": "./packages/guardrails"
     },
     {

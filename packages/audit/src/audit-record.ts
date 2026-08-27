@@ -27,6 +27,16 @@ export interface AuditRecordInput {
   /** State after the change. Redacted before it is written. */
   after?: unknown;
 
+  /**
+   * Provenance the writer knows and the trail could not infer.
+   *
+   * Which application caused this, in which environment, under which correlation id, for which
+   * stated reason. Redacted like `before` and `after`, and deliberately *not* a second place to
+   * put state — a record whose `metadata` carries the changed values is a record whose `after`
+   * is now optional, and then two writers disagree about where to look.
+   */
+  metadata?: Record<string, unknown> | null;
+
   /** Overrides for the ambient request context. Rarely needed. */
   requestId?: RequestId | null;
   ipAddress?: string | null;
@@ -44,6 +54,7 @@ export interface AuditRecord {
   organizationId: OrganizationId | null;
   before: unknown;
   after: unknown;
+  metadata: unknown;
   requestId: RequestId | null;
   ipAddress: string | null;
   userAgent: string | null;

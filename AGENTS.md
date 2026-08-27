@@ -692,6 +692,75 @@ The second is the one worth running before every commit that touches a template.
 validates and needs six approvals nobody has is a product that stops at the review board, and
 finding that out from a command is cheaper than finding it out from the board.
 
+## Governance Tool rules (phase 12)
+
+The internal experience layer. Thirteen packages, two applications, ten console templates, and
+fourteen rules on top of everything above.
+
+1. **The Governance Tool is an experience layer, not the system of record.** TrustOS stays
+   authoritative for authentication, authorization, tenancy, workflow, maker-checker, the ledger,
+   product rules, AI governance, audit and security policy. This layer decides what a person
+   _sees_; it never decides what is _true_.
+
+2. **Never duplicate TrustOS business logic here.** No fee calculation, no eligibility check, no
+   approval count. A fee recomputed in a browser is a second implementation, and the one the
+   customer sees is the browser's while the one that settles is the server's.
+
+3. **Never mutate authoritative data directly.** A mutation outside Class B is refused, and one
+   not routed through `/internal/v1` is refused. A direct write skips authorization, workflow,
+   maker-checker and audit — and looks exactly like a working feature.
+
+4. **Never add a query field.** Not SQL, not an expression, not a script, and not a "just this
+   once" escape. Every low-code platform that has gone wrong went wrong the same way: a query
+   editor, a production connection, and a button whose behaviour nobody could enumerate.
+
+5. **Never trust a claim for authorization.** `normalizeActor` returns an empty permission list,
+   always. Groups are mapped explicitly with no fallback role, and the organization comes from the
+   membership lookup. A `default` role for unmapped groups turns a directory change into an access
+   grant.
+
+6. **Never treat a Governance Tool permission as the control.** It decides whether a button
+   renders. Grant them generously and never rely on them — a button hidden in a browser is a
+   request anybody can still make with curl.
+
+7. **Never mask in the browser.** A value masked in CSS is in the payload, the network tab and
+   every screenshot. Masking happens server-side, on the way out of the runtime.
+
+8. **A reveal is an event, not a state.** Requester, reason, subject, expiry, audit record. Never
+   a standing grant, never longer than the cap, and never audited with the values — an audit
+   record of a reveal must not itself be a reveal.
+
+9. **Never widen an export without widening the ceiling deliberately.** Row ceilings descend
+   sharply with classification because a hundred thousand public rows is a report and a hundred
+   thousand restricted rows is an incident. Every mass-extraction incident looks like a legitimate
+   export with the filters removed.
+
+10. **Never let a lower-environment credential reach production.** Refused at load, not at first
+    use — by first use it has already worked once. `TRUSTOS_ENVIRONMENT` is its own variable
+    because a UAT service runs with `NODE_ENV=production`.
+
+11. **Always audit through the bridge, including the refusals.** Into the TrustOS trail, never a
+    second one. A trail of successful reads answers "what did they see" and not "what did they
+    try", and the second is the question an investigation opens with.
+
+12. **Never hold authoritative approval state in a view.** Every view carries the engine's version
+    and every decision submits it back. A stale screen is refused rather than submitted and hoped
+    for — which is what produces a retry, and then a force flag.
+
+13. **AI proposes; it never acts.** No return type carries an action. Every request goes through
+    the AI Gateway, runs as the _actor_ rather than the application, and takes only the inputs its
+    feature declares — widening them "for more context" is how a summarizer becomes a way to read
+    a record the requester cannot open.
+
+14. **Stop after completing phase 12.** Do not build payKH or dbank business logic, a real bank
+    integration, a second identity system, a second workflow engine or a second AI gateway. The
+    Governance Tool must stay replaceable and provider-neutral.
+
+Read [docs/governance-tool/security.md](docs/governance-tool/security.md) and
+[docs/governance-tool/database-access-policy.md](docs/governance-tool/database-access-policy.md)
+before changing anything in `internal-app-gateway`, `governance-data-access`,
+`governance-auth-context` or `governance-pii-policy`.
+
 ## Before claiming a change is done
 
 ```bash

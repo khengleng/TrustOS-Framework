@@ -170,6 +170,21 @@ export default defineConfig({
       '@trustos/financial-product-api': pkg('financial-product-api'),
       '@trustos/financial-product-observability': pkg('financial-product-observability'),
 
+      // Phase 12 — the Governance Tool.
+      '@trustos/governance-tool-core': pkg('governance-tool-core'),
+      '@trustos/governance-auth-context': pkg('governance-auth-context'),
+      '@trustos/governance-resource-policy': pkg('governance-resource-policy'),
+      '@trustos/governance-data-access': pkg('governance-data-access'),
+      '@trustos/governance-pii-policy': pkg('governance-pii-policy'),
+      '@trustos/governance-export-control': pkg('governance-export-control'),
+      '@trustos/governance-audit-bridge': pkg('governance-audit-bridge'),
+      '@trustos/governance-workflow-bridge': pkg('governance-workflow-bridge'),
+      '@trustos/governance-ai-bridge': pkg('governance-ai-bridge'),
+      '@trustos/governance-environment-config': pkg('governance-environment-config'),
+      '@trustos/governance-tool-runtime': pkg('governance-tool-runtime'),
+      '@trustos/governance-tool-sdk': pkg('governance-tool-sdk'),
+      '@trustos/governance-tool-integration': pkg('governance-tool-integration'),
+
       /*
        * Subpath aliases, listed before their package so the more specific key
        * matches first: vite tries alias entries in order, and '@trustos/module-sdk'
