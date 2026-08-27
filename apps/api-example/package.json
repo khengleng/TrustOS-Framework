@@ -24,6 +24,8 @@
     "@trustos/logging": "0.1.0",
     "@trustos/observability": "0.1.0",
     "@trustos/rbac": "0.1.0",
+    "@trustos/security-policy": "0.1.0",
+    "@trustos/session-security": "0.1.0",
     "@trustos/shared-types": "0.1.0",
     "@trustos/tenancy": "0.1.0",
     "@trustos/validation": "0.1.0",

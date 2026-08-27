@@ -15,44 +15,44 @@
     {
       "concurrency": 10,
       "payments": 200,
-      "wallClockMs": 40.8,
-      "throughputPerSecond": 4901.6,
-      "p50Ms": 1.283,
-      "p95Ms": 4.472,
-      "p99Ms": 6.258,
-      "maxMs": 6.259,
+      "wallClockMs": 37.9,
+      "throughputPerSecond": 5274.2,
+      "p50Ms": 1.387,
+      "p95Ms": 3.459,
+      "p99Ms": 4.858,
+      "maxMs": 4.952,
       "errorRate": 0,
       "accepted": 200,
       "refused": 0,
-      "heapUsedMb": 36.5
+      "heapUsedMb": 26.1
     },
     {
       "concurrency": 50,
       "payments": 1000,
-      "wallClockMs": 137.8,
-      "throughputPerSecond": 7256.9,
-      "p50Ms": 5.779,
-      "p95Ms": 11.621,
-      "p99Ms": 14.326,
-      "maxMs": 14.327,
+      "wallClockMs": 111.5,
+      "throughputPerSecond": 8966.2,
+      "p50Ms": 5.895,
+      "p95Ms": 6.564,
+      "p99Ms": 6.675,
+      "maxMs": 6.726,
       "errorRate": 0,
       "accepted": 1000,
       "refused": 0,
-      "heapUsedMb": 39.9
+      "heapUsedMb": 32.3
     },
     {
       "concurrency": 100,
       "payments": 2000,
-      "wallClockMs": 278.9,
-      "throughputPerSecond": 7171.9,
-      "p50Ms": 13.192,
-      "p95Ms": 18.813,
-      "p99Ms": 20.554,
-      "maxMs": 20.555,
+      "wallClockMs": 293.6,
+      "throughputPerSecond": 6813,
+      "p50Ms": 14.332,
+      "p95Ms": 22.039,
+      "p99Ms": 24.109,
+      "maxMs": 24.116,
       "errorRate": 0,
       "accepted": 2000,
       "refused": 0,
-      "heapUsedMb": 52
+      "heapUsedMb": 45.2
     }
   ]
 }

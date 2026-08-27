@@ -707,3 +707,153 @@ jobs:
             }
             console.log(advisories.length + ' exception(s), none expired.');
           "
+
+  # ---------------------------------------------------------------------------
+  # Deployment readiness.
+  #
+  # Three gates that only matter when something is going to be deployed, kept in
+  # their own job so a failure names the reason rather than being one of forty
+  # steps in `verify`.
+  # ---------------------------------------------------------------------------
+  deployment:
+    name: deployment readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # --- migration safety --------------------------------------------------
+      #
+      # Prisma applies migrations with `migrate deploy` and no review step of its
+      # own, so the review has to happen before the file is merged. This is that
+      # review. A destructive change needs an approval marker in the migration
+      # file naming a reason and an approver.
+      - name: No unapproved destructive migration
+        run: npm run migrations:check
+
+      # --- the image builds --------------------------------------------------
+      #
+      # One service is enough to prove the Dockerfile. Building all seven would
+      # take four times as long to find the same class of failure, because every
+      # service is built from the same file with one argument changed.
+      #
+      # `api-example` is the one built because it is the smoke target: if its
+      # image is broken, the smoke tests below could not run anyway.
+      - name: The runtime image builds
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: SERVICE=api-example
+          push: false
+          load: true
+          tags: trustos/api-example:ci
+
+      # --- the image runs, and the smoke tests pass against it ---------------
+      #
+      # A build that succeeds and an image that starts are different claims. This
+      # makes the second one, against a real PostgreSQL, with migrations applied.
+      - name: Start PostgreSQL
+        run: |
+          docker run -d --name trustos-ci-db \
+            -e POSTGRES_USER=trustos \
+            -e POSTGRES_PASSWORD=trustos \
+            -e POSTGRES_DB=trustos_ci \
+            -p 5432:5432 \
+            postgres:17-alpine
+
+          for attempt in $(seq 1 30); do
+            if docker exec trustos-ci-db pg_isready -U trustos >/dev/null 2>&1; then
+              echo "PostgreSQL is accepting connections."
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "::error::PostgreSQL did not become ready."
+          docker logs trustos-ci-db
+          exit 1
+
+      - name: Apply migrations
+        env:
+          DATABASE_URL: postgresql://trustos:trustos@localhost:5432/trustos_ci?schema=public
+        run: npm run db:deploy
+
+      - name: Seed the demo data
+        env:
+          DATABASE_URL: postgresql://trustos:trustos@localhost:5432/trustos_ci?schema=public
+          NODE_ENV: development
+        run: npm run db:seed
+
+      - name: Start the image
+        run: |
+          docker run -d --name trustos-ci-api \
+            --network host \
+            -e NODE_ENV=production \
+            -e TRUSTOS_ENVIRONMENT=dev \
+            -e PORT=3000 \
+            -e DATABASE_URL='postgresql://trustos:trustos@localhost:5432/trustos_ci?schema=public' \
+            -e JWT_SECRET='ci-only-jwt-secret-long-enough-for-the-policy-to-accept' \
+            -e JWT_REFRESH_SECRET='ci-only-refresh-secret-also-long-enough-to-accept-ok' \
+            -e CORS_ORIGINS='https://ci.example.com' \
+            -e OPENAPI_ENABLED=false \
+            -e IDENTITY_PROVIDER=local \
+            -e SECURITY_ALLOW_LOCAL_IDENTITY_IN_PRODUCTION=true \
+            -e LOG_LEVEL=info \
+            trustos/api-example:ci
+
+          for attempt in $(seq 1 40); do
+            if curl -sf http://localhost:3000/health >/dev/null 2>&1; then
+              echo "The service is answering."
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "::error::The service did not become healthy."
+          docker logs trustos-ci-api
+          exit 1
+
+      - name: Smoke tests
+        env:
+          TRUSTOS_BASE_URL: http://localhost:3000
+          TRUSTOS_SMOKE_EMAIL: owner@acme.test
+          TRUSTOS_SMOKE_PASSWORD: TrustOSDemo2026!
+        run: npm run smoke
+
+      - name: The container stops on SIGTERM
+        run: |
+          # Without dumb-init as PID 1, Node ignores SIGTERM and the platform waits
+          # for its timeout before killing the process mid-request. This measures
+          # how long a stop actually takes.
+          started=$(date +%s)
+          docker stop --timeout 20 trustos-ci-api >/dev/null
+          elapsed=$(( $(date +%s) - started ))
+
+          echo "The container stopped in ${elapsed}s."
+
+          if [ "$elapsed" -ge 15 ]; then
+            echo "::error::The container took ${elapsed}s to stop. SIGTERM is not reaching Node."
+            exit 1
+          fi
+
+      - name: Upload the smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report
+          path: smoke-report.json
+          if-no-files-found: warn
+
+      - name: Container logs on failure
+        if: failure()
+        run: |
+          docker logs trustos-ci-api 2>&1 | tail -100 || true
+          docker logs trustos-ci-db 2>&1 | tail -30 || true

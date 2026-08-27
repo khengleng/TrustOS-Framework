@@ -545,3 +545,51 @@ describe('the safe-identifier allow-list', () => {
     }
   });
 });
+
+describe('HSTS in production', () => {
+  const productionInput = {
+    environment: 'production' as const,
+    allowedIdentityProviders: ['oidc' as const],
+    tokens: { issuer: 'trustos', audience: 'trustos-api' },
+    http: { corsOrigins: ['https://app.example.com'] },
+  };
+
+  const secrets = {
+    oidcIssuerUrl: 'https://issuer.example.com',
+    oidcClientId: 'trustos',
+  };
+
+  it('is on when the caller did not mention it', () => {
+    /*
+     * The schema has said "Forced on in production" since it was written and the loader refused
+     * instead, so every application would have failed to start in production having to pass the
+     * one value the policy permits in order to say it.
+     */
+    expect(loadSecurityPolicy(productionInput, secrets).http.hsts).toBe(true);
+  });
+
+  it('is still refused when the caller deliberately turns it off', () => {
+    /*
+     * The distinction that keeps the default from being a weakening. `hsts: false` in production is
+     * a statement the policy disagrees with; not mentioning it is not.
+     */
+    expect(() =>
+      loadSecurityPolicy(
+        { ...productionInput, http: { ...productionInput.http, hsts: false } },
+        secrets,
+      ),
+    ).toThrow(/hsts/);
+  });
+
+  it('stays off outside production when unmentioned', () => {
+    // Development over plain HTTP with HSTS on is a browser that refuses to reach localhost again.
+    const development = loadSecurityPolicy({
+      ...productionInput,
+      environment: 'development',
+      allowedIdentityProviders: ['local'],
+      http: { corsOrigins: ['http://localhost:3001'] },
+    });
+
+    expect(development.http.hsts).toBe(false);
+  });
+});

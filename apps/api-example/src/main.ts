@@ -5,6 +5,8 @@ import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trus
 import { AllExceptionsFilter } from '@trustos/errors/nest';
 import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
 import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
+import { SecurityPolicyError, loadSecurityPolicy } from '@trustos/security-policy';
+import { securityHeadersMiddleware } from '@trustos/session-security';
 import { tenantScopeMiddleware } from '@trustos/tenancy';
 import { AppModule } from './app.module';
 
@@ -15,13 +17,47 @@ import { AppModule } from './app.module';
  *      invalid aborts before a port is bound, so a misconfigured deploy fails
  *      immediately and visibly rather than serving broken traffic.
  *   2. Build the logger, so every later step is observable.
- *   3. Install the request-context middleware *before* anything else, so even
- *      a failure inside a guard has a request id.
+ *   3. Install the security headers first among the middleware, so they are
+ *      present on 404s and on error responses — the responses a misconfigured
+ *      client is most likely to see.
+ *   4. Install the request-context middleware, so even a failure inside a guard
+ *      has a request id.
  */
 async function bootstrap(): Promise<void> {
   loadDotenv();
 
   const config = loadConfig();
+
+  /*
+   * The security policy, validated before a port is bound.
+   *
+   * This application predates `@trustos/security-policy` and went without it until a smoke test
+   * against a running instance found no `X-Content-Type-Options` and no `X-Frame-Options` on any
+   * response. Every other application in the repository mounts the headers; the reference API —
+   * the one people copy — did not.
+   */
+  const identityProvider = process.env.IDENTITY_PROVIDER === 'oidc' ? 'oidc' : 'local';
+
+  const policy = loadSecurityPolicy(
+    {
+      environment: config.env,
+      allowedIdentityProviders: [identityProvider],
+      tokens: {
+        issuer: process.env.SECURITY_TOKEN_ISSUER ?? 'trustos',
+        audience: process.env.SECURITY_TOKEN_AUDIENCE ?? 'trustos-api',
+      },
+      http: { corsOrigins: config.http.corsOrigins },
+    },
+    {
+      localJwtSecret: config.auth.jwtSecret,
+      localJwtRefreshSecret: config.auth.jwtRefreshSecret,
+      ...(process.env.OIDC_ISSUER_URL ? { oidcIssuerUrl: process.env.OIDC_ISSUER_URL } : {}),
+      ...(process.env.OIDC_CLIENT_ID ? { oidcClientId: process.env.OIDC_CLIENT_ID } : {}),
+      allowLocalIdentityInProduction:
+        process.env.SECURITY_ALLOW_LOCAL_IDENTITY_IN_PRODUCTION === 'true',
+    },
+  );
+
   const logger = createLogger(config);
   const metrics = new InMemoryMetricsRecorder();
 
@@ -29,6 +65,16 @@ async function bootstrap(): Promise<void> {
     logger: new NestPinoLogger(logger),
     bufferLogs: true,
   });
+
+  // First among the middleware, so the headers are present on 404s and on error responses — the
+  // responses a misconfigured client is most likely to see.
+  app.use(
+    securityHeadersMiddleware({
+      policy: policy.http,
+      environment: config.env,
+      relaxedPaths: ['/docs'],
+    }),
+  );
 
   // Registered with app.use rather than a MiddlewareConsumer so that it runs
   // ahead of Nest's routing, giving 404s and guard failures a request id too.
@@ -94,6 +140,11 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((error) => {
+  if (error instanceof SecurityPolicyError) {
+    // eslint-disable-next-line no-console -- bootstrap failure, before the logger exists
+    console.error(`Refusing to start. ${error.message}`);
+    process.exit(1);
+  }
   if (error instanceof ConfigurationError) {
     // No logger yet, and this must be readable in a deploy log.
     // eslint-disable-next-line no-console -- bootstrap failure, before the logger exists

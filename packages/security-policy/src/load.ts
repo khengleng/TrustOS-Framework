@@ -210,7 +210,34 @@ export function loadSecurityPolicy(
     );
   }
 
-  const policy = parsed.data;
+  /*
+   * HSTS is forced on in production when the caller did not mention it.
+   *
+   * The schema has said "Forced on in production" since it was written and the loader refused
+   * instead, so every application in this repository would have failed to start in production with
+   * `http.hsts: must be enabled in production` — each having to pass the one value the policy
+   * permits in order to say it.
+   *
+   * The distinction that keeps this from being a weakening is between *unset* and *false*. A
+   * deployment that says `hsts: false` in production still gets the refusal below, because that is
+   * a deliberate statement the policy disagrees with. A deployment that did not mention it gets
+   * the safe value rather than a startup failure.
+   *
+   * The raw input is inspected rather than the parsed policy, because the schema defaults `hsts`
+   * to `false` and the two are indistinguishable afterwards.
+   */
+  const mentionedHsts =
+    typeof input === 'object' &&
+    input !== null &&
+    typeof (input as { http?: unknown }).http === 'object' &&
+    (input as { http: Record<string, unknown> }).http !== null &&
+    'hsts' in (input as { http: Record<string, unknown> }).http;
+
+  const policy: SecurityPolicy =
+    parsed.data.environment === 'production' && !mentionedHsts
+      ? { ...parsed.data, http: { ...parsed.data.http, hsts: true } }
+      : parsed.data;
+
   let problems = productionPolicyProblems(policy, options);
 
   if (options.allowLocalIdentityInProduction) {

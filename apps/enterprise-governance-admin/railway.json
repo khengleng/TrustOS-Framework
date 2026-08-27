@@ -5,13 +5,12 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "node apps/api-example/dist/main.js",
+    "startCommand": "node apps/enterprise-governance-admin/dist/main.js",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 5,
     "numReplicas": 1,
-    "sleepApplication": false,
-    "preDeployCommand": "npm run db:deploy"
+    "sleepApplication": false
   }
 }

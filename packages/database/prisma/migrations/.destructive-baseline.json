@@ -1,0 +1,12 @@
+{
+  "note": "Approvals for migrations that were already applied when the safety check was introduced. Read scripts/migration-safety.mjs for why this file exists rather than markers in the files themselves.",
+  "approvals": [
+    {
+      "migration": "20260731000000_phase4_identity_and_security",
+      "patterns": ["data_migration"],
+      "reason": "A backfill, not a deletion. The migration adds RefreshToken.usedAt and sets it from revokedAt for tokens already revoked with reason 'rotated', so reuse detection reads a consistent history for tokens issued before the column existed. It writes to one new column, touches no other data, and is idempotent.",
+      "approvedBy": "usr_platform_lead",
+      "approvedAt": "2026-08-27T00:00:00.000Z"
+    }
+  ]
+}

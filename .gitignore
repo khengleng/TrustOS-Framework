@@ -53,3 +53,4 @@ npm-debug.log*
 # Local tooling caches
 .eslintcache
 .turbo/
+smoke-report.json
