@@ -1,0 +1,21 @@
+{
+  "name": "@trustos/financial-block-registry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The approved catalog of reusable financial blocks: schema, categories, versions and the registry that resolves them.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/financial-product-core": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

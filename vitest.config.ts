@@ -152,6 +152,24 @@ export default defineConfig({
       '@trustos/cli': pkg('cli'),
       '@trustos/validation': pkg('validation'),
 
+      // Phase 11 — the financial product composition layer.
+      '@trustos/financial-product-core': pkg('financial-product-core'),
+      '@trustos/financial-block-registry': pkg('financial-block-registry'),
+      '@trustos/connector-registry': pkg('connector-registry'),
+      '@trustos/financial-product-rules': pkg('financial-product-rules'),
+      '@trustos/financial-product-state-machine': pkg('financial-product-state-machine'),
+      '@trustos/financial-product-variants': pkg('financial-product-variants'),
+      '@trustos/financial-product-versioning': pkg('financial-product-versioning'),
+      '@trustos/financial-product-policy': pkg('financial-product-policy'),
+      '@trustos/financial-product-governance': pkg('financial-product-governance'),
+      '@trustos/financial-product-composer': pkg('financial-product-composer'),
+      '@trustos/financial-product-registry': pkg('financial-product-registry'),
+      '@trustos/financial-product-runtime': pkg('financial-product-runtime'),
+      '@trustos/financial-product-sandbox': pkg('financial-product-sandbox'),
+      '@trustos/financial-product-simulator': pkg('financial-product-simulator'),
+      '@trustos/financial-product-api': pkg('financial-product-api'),
+      '@trustos/financial-product-observability': pkg('financial-product-observability'),
+
       /*
        * Subpath aliases, listed before their package so the more specific key
        * matches first: vite tries alias entries in order, and '@trustos/module-sdk'
