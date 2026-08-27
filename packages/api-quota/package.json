@@ -1,0 +1,21 @@
+{
+  "name": "@trustos/api-quota",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Daily, monthly and plan quotas, with the usage that is reported rather than inferred.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/api-consumer": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

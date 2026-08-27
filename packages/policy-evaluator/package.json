@@ -1,0 +1,22 @@
+{
+  "name": "@trustos/policy-evaluator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic evaluation of a policy against an attribute set, with obligations and a full trace.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/policy-registry": "0.1.0",
+    "@trustos/workflow-definition": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

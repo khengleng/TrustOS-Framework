@@ -1,0 +1,24 @@
+{
+  "name": "@trustos/continuity",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Critical services, RTO and RPO, and the continuity gaps between what is promised and what is proven.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/backup": "0.1.0",
+    "@trustos/disaster-recovery": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/recovery": "0.1.0",
+    "@trustos/sre-core": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

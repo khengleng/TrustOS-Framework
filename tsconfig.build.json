@@ -92,6 +92,27 @@
       "path": "./packages/cost-monitor"
     },
     {
+      "path": "packages/data-access-policy"
+    },
+    {
+      "path": "packages/data-catalog"
+    },
+    {
+      "path": "packages/data-classification"
+    },
+    {
+      "path": "packages/data-governance"
+    },
+    {
+      "path": "packages/data-lineage"
+    },
+    {
+      "path": "packages/data-masking"
+    },
+    {
+      "path": "packages/data-retention"
+    },
+    {
       "path": "packages/database"
     },
     {
@@ -333,6 +354,18 @@
     },
     {
       "path": "packages/plugin-framework"
+    },
+    {
+      "path": "packages/policy-decision-log"
+    },
+    {
+      "path": "packages/policy-engine"
+    },
+    {
+      "path": "packages/policy-evaluator"
+    },
+    {
+      "path": "packages/policy-registry"
     },
     {
       "path": "./packages/prompt-registry"

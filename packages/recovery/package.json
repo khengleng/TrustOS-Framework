@@ -1,0 +1,21 @@
+{
+  "name": "@trustos/recovery",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Restore procedures and restore *tests*, because a backup that has never been restored is not validated.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/backup": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

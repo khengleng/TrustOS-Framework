@@ -185,6 +185,19 @@ export default defineConfig({
       '@trustos/governance-tool-sdk': pkg('governance-tool-sdk'),
       '@trustos/governance-tool-integration': pkg('governance-tool-integration'),
 
+      // Phase 13 — enterprise hardening.
+      '@trustos/data-classification': pkg('data-classification'),
+      '@trustos/data-catalog': pkg('data-catalog'),
+      '@trustos/data-lineage': pkg('data-lineage'),
+      '@trustos/data-retention': pkg('data-retention'),
+      '@trustos/data-masking': pkg('data-masking'),
+      '@trustos/data-access-policy': pkg('data-access-policy'),
+      '@trustos/data-governance': pkg('data-governance'),
+      '@trustos/policy-registry': pkg('policy-registry'),
+      '@trustos/policy-evaluator': pkg('policy-evaluator'),
+      '@trustos/policy-decision-log': pkg('policy-decision-log'),
+      '@trustos/policy-engine': pkg('policy-engine'),
+
       /*
        * Subpath aliases, listed before their package so the more specific key
        * matches first: vite tries alias entries in order, and '@trustos/module-sdk'

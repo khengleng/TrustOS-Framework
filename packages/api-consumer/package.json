@@ -1,0 +1,21 @@
+{
+  "name": "@trustos/api-consumer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API consumers: scopes, environments, credential metadata and status. Reuses the framework key store.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/api-catalog": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

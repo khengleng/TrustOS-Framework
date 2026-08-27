@@ -1,0 +1,22 @@
+{
+  "name": "@trustos/api-versioning",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Compatibility analysis between two API versions, and the deprecation a breaking change owes its consumers.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/api-catalog": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/version-manager": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

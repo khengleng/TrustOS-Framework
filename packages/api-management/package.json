@@ -1,0 +1,26 @@
+{
+  "name": "@trustos/api-management",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The API management surface: catalog, lifecycle, consumers, quotas, limits and analytics, in one place.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/api-catalog": "0.1.0",
+    "@trustos/api-consumer": "0.1.0",
+    "@trustos/api-policy": "0.1.0",
+    "@trustos/api-quota": "0.1.0",
+    "@trustos/api-rate-limit": "0.1.0",
+    "@trustos/api-versioning": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}
