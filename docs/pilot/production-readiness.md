@@ -29,7 +29,7 @@ where it is least comfortable.
 
 ### Architecture — PASS
 
-The pilot composes 61 framework packages and adds 1,822 lines. `architecture-check` enforces
+The pilot composes 61 framework packages and adds 1,849 lines. `architecture-check` enforces
 declared-dependencies-only, no deep imports and the layering rules, and passes. No framework
 capability was duplicated.
 
@@ -115,8 +115,9 @@ trace because nothing collects one.
 
 ### Performance — PARTIAL
 
-Measured at three concurrency levels with zero errors: 6,512/s at 10 users, 10,605/s at 50, 9,257/s
-at 100, with p95 of 1.28ms, 5.56ms and 16.32ms.
+Measured at three concurrency levels with zero errors: 4,686/s at 10 users, 9,043/s at 50,
+8,504/s at 100, with p95 of 4.611ms, 6.619ms and 19.77ms. These move by roughly 1.8x with machine
+load; see the evidence document.
 
 **Why not PASS:** it measures the pilot's payment path in one process against in-memory stores. No
 HTTP, no database, no network. A production p95 will be larger by an amount dominated by exactly
@@ -176,7 +177,7 @@ In order of what should be done first.
 ## The gate
 
 **GO for the next pilot.** The framework produced a complete, tested, governed payment product with
-86.7% reuse on the payment path and no duplicated capability, and the six issues found are
+86.6% reuse on the payment path and no duplicated capability, and the six issues found are
 discoverability problems rather than design ones.
 
 **NOT go for production banking use**, and the two FAIL scores are the reason rather than a caveat.

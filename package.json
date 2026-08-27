@@ -34,6 +34,7 @@
     "dev:governance": "npm run dev -w @trustos/governance-tool",
     "dev:product-admin": "npm run dev -w @trustos/financial-product-admin",
     "docker:build": "docker build --build-arg SERVICE=$npm_config_service -t trustos/$npm_config_service .",
+    "evidence": "TRUSTOS_WRITE_EVIDENCE=1 vitest run apps/merchant-wallet-basic && node scripts/pilot-reuse.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
     "lint": "eslint .",

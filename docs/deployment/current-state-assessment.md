@@ -127,9 +127,14 @@ Railway project: trustos-dev
 
 `trustos-uat` is the same shape with a separate database, separate secrets and separate endpoints.
 
-**No PROD project is created.** Its configuration is documented and nothing is provisioned — the
-specification is explicit, and a production project created "ready for later" is a production
-project somebody deploys to.
+**No PROD project is created by this work.** Its configuration is documented and nothing was
+provisioned — a production project created "ready for later" is a production project somebody
+deploys to.
+
+Note that a Railway project named `TrustOS-Framework` **already exists** and is linked to this
+repository, with one service in an environment named `production`. It predates this work and its
+contents were not inspected, because the CLI session had expired. See
+[`pilot-readiness.md`](pilot-readiness.md#the-two-unverified-items).
 
 ### What is deliberately absent
 

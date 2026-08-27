@@ -5,12 +5,12 @@ provided, what the pilot wrote, and whether anything was duplicated.
 
 ## Summary
 
-|                                                 |                                  |
-| ----------------------------------------------- | -------------------------------- |
-| Framework reuse, payment path                   | **86.7%**                        |
-| Framework reuse, including the configured layer | **96.4%**                        |
-| Application-specific code                       | **1,822 lines** across six files |
-| Duplicated framework capability                 | **none found**                   |
+|                                                 |                                |
+| ----------------------------------------------- | ------------------------------ |
+| Framework reuse, payment path                   | **86.6%**                      |
+| Framework reuse, including the configured layer | **96.3%**                      |
+| Application-specific code                       | **1,849 lines** across 6 files |
+| Duplicated framework capability                 | **none found**                 |
 
 Both percentages are computed by [`scripts/pilot-reuse.mjs`](../../scripts/pilot-reuse.mjs) from
 the repository and written to [`evidence/framework-reuse.json`](evidence/framework-reuse.json).

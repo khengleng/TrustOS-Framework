@@ -192,6 +192,22 @@ describe('payment path performance', () => {
   });
 
   it('writes the measurements to the evidence pack', async () => {
+    /*
+     * Written only when explicitly asked for.
+     *
+     * An ordinary `npm test` used to rewrite this file, so the committed artefact drifted from the
+     * prose that quoted it on every run — and the working tree was dirty after every test. Worse,
+     * the numbers here move with whatever else the machine is doing: the same suite has produced
+     * 3,848 and 6,512 payments per second on this laptop depending on load.
+     *
+     * So the artefact is produced by a deliberate measurement run, and the documentation quotes
+     * that run. `npm run evidence` sets the flag.
+     */
+    if (process.env.TRUSTOS_WRITE_EVIDENCE !== '1') {
+      expect(measurements).toHaveLength(CONCURRENCY_LEVELS.length);
+      return;
+    }
+
     const path = resolve(__dirname, '../../../docs/pilot/evidence/performance-results.json');
     await mkdir(dirname(path), { recursive: true });
 

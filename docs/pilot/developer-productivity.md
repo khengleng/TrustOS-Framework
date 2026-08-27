@@ -19,7 +19,7 @@ build.
 
 The generation step is not the interesting number. A template that produces a valid product
 definition in a third of a second is useful, and it is not what a pilot measures: what matters is
-how much was still left to write afterwards, which is the 1,822 lines in the reuse report.
+how much was still left to write afterwards, which is the 1,849 lines in the reuse report.
 
 ## Framework issues discovered
 
@@ -124,7 +124,7 @@ commands behaved as documented on first use.
 
 ## Manual work required
 
-Beyond the 1,822 lines of application code:
+Beyond the 1,849 lines of application code:
 
 - **Opening the platform's own accounts.** The clearing account and the fee revenue account are
   opened in `pilot.ts`. This is correct — a framework that invented a chart of accounts would be

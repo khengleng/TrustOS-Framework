@@ -78,13 +78,27 @@ network latency, or any real provider.
 
 Environment: Apple M4 Pro, 12 cores, 48GB, Node v20.19.1, darwin arm64.
 
-| Concurrent merchants | Payments | Wall clock |   Throughput |     p50 |     p95 |     p99 |     Max | Errors |   Heap |
-| -------------------: | -------: | ---------: | -----------: | ------: | ------: | ------: | ------: | -----: | -----: |
-|                   10 |      200 |     30.7ms |  **6,512/s** |  1.28ms |  2.63ms |  4.08ms |  4.11ms |      0 | 27.2MB |
-|                   50 |    1,000 |     94.3ms | **10,605/s** |  4.78ms |  5.56ms |  5.84ms |  5.85ms |      0 | 30.3MB |
-|                  100 |    2,000 |    216.1ms |  **9,257/s** | 10.65ms | 16.32ms | 18.95ms | 18.95ms |      0 | 44.4MB |
+| Concurrent merchants | Payments | Wall clock |  Throughput |      p50 |     p95 |      p99 |      Max | Errors |   Heap |
+| -------------------: | -------: | ---------: | ----------: | -------: | ------: | -------: | -------: | -----: | -----: |
+|                   10 |      200 |     42.7ms | **4,686/s** |  1.604ms | 4.611ms |  5.041ms |  5.111ms |      0 | 26.1MB |
+|                   50 |    1,000 |    110.6ms | **9,043/s** |  5.669ms | 6.619ms |  6.664ms |  6.685ms |      0 | 31.4MB |
+|                  100 |    2,000 |    235.2ms | **8,504/s** | 11.215ms | 19.77ms | 22.301ms | 22.314ms |      0 | 38.6MB |
 
 Zero errors at every level. Every payment accepted.
+
+### These numbers move, and by how much
+
+The same suite on the same laptop has produced **4,686/s** and **6,512/s** at ten concurrent
+merchants, and **5,265/s** to **9,257/s** at a hundred, depending on what else the machine was
+doing. That is a spread of roughly 1.8×.
+
+So the table above is _one run_, produced deliberately by `npm run evidence` with nothing else
+competing — not the last run that happened to overwrite the file. An ordinary `npm test` no longer
+writes it, because it used to, and the committed artefact then drifted from the prose quoting it on
+every run.
+
+Treat the magnitude as an order of magnitude. What is stable across every run is the shape: zero
+errors, and latency growing roughly linearly with concurrency.
 
 ### The only assertion that is machine-independent
 

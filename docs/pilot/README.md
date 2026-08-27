@@ -30,7 +30,7 @@ apps/merchant-wallet-basic/src/
   pilot.ts               237 lines   the assembly
   console.ts             233 lines   the Merchant Operations Console, as data
                        ─────────
-                       1,822 lines of application code
+                       1,849 lines of application code
                        3,006 lines of tests, 153 of them
 ```
 
@@ -38,12 +38,12 @@ apps/merchant-wallet-basic/src/
 
 |                                                           |                                                     |
 | --------------------------------------------------------- | --------------------------------------------------- |
-| Framework reuse, payment path                             | **86.7%** — 15 packages, 11,912 lines against 1,822 |
-| Framework reuse, including the layer the pilot configures | **96.4%** — 61 packages, 48,315 lines               |
+| Framework reuse, payment path                             | **86.6%** — 15 packages, 11,912 lines against 1,849 |
+| Framework reuse, including the layer the pilot configures | **96.3%** — 61 packages, 48,342 lines               |
 | Duplicated framework capability found                     | **none**                                            |
 | Tests                                                     | 153, all passing                                    |
 | Simulation, 100,000 transactions                          | 95.11% success, 7.5s, 93,207 journals               |
-| Throughput, 100 concurrent merchants                      | 9,257 payments/second, p95 16.3ms                   |
+| Throughput, 100 concurrent merchants                      | 8,504 payments/second, p95 19.77ms                  |
 | Dependency advisories                                     | 6 high, all with fixes available, 1 direct          |
 | Backup, restore and DR                                    | **not performed** — see below                       |
 
@@ -65,10 +65,14 @@ not transcribed.
 Stated here rather than in a footnote, because the sentence that gets quoted from a pilot report is
 usually the summary.
 
-**Nothing was deployed.** The pilot runs in a test process against in-memory stores. Every port has
-a Prisma implementation in the framework and the pilot binds none of them, so nothing here says
-anything about the application under a real database, a real network or real concurrency across
-processes.
+**The pilot itself was not deployed.** It runs in a test process against in-memory stores. Every
+port has a Prisma implementation in the framework and the pilot binds none of them, so nothing here
+says anything about the application under a real database, a real network or real concurrency
+across processes.
+
+(A Railway project named `TrustOS-Framework` exists and is linked to this repository. It predates
+this work, carries one service, and its contents were not inspected — see
+[`../deployment/pilot-readiness.md`](../deployment/pilot-readiness.md#the-two-unverified-items).)
 
 **No backup was taken, no restore was performed, and no DR exercise was run.** There is no
 database and no deployment to take one of. Those three sections of the pilot specification are

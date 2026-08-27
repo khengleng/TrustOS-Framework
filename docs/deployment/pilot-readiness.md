@@ -5,45 +5,66 @@ than PARTIAL.
 
 ## The scorecard
 
-| #   | Category           | Score       | Evidence                                                                                                                 |
-| --- | ------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| 1   | Build              | **PASS**    | `npm run build` clean; `tsc -b` across 171 packages and 11 apps                                                          |
-| 2   | Tests              | **PASS**    | 5,493 tests across 225 files, all passing                                                                                |
-| 3   | Security           | **PARTIAL** | [`../security/pilot-security-review.md`](../security/pilot-security-review.md) — 6 advisories open, all with fixes       |
-| 4   | Identity           | **PARTIAL** | Local provider verified live; OIDC configured and not exercised                                                          |
-| 5   | RBAC               | **PASS**    | Live: auditor 403, owner 201, same route                                                                                 |
-| 6   | Tenant isolation   | **PASS**    | Live: 403 on a foreign organization; 11 pilot tests against services                                                     |
-| 7   | Audit              | **PASS**    | Append-only trigger verified **after a restore** — see below                                                             |
-| 8   | Workflow           | **PASS**    | Framework suite; the pilot's maker-checker in [`../pilot/evidence/maker-checker.md`](../pilot/evidence/maker-checker.md) |
-| 9   | Policy             | **PASS**    | Live ALLOW and DENY, both recorded with the policy version                                                               |
-| 10  | Database migration | **PASS**    | 9 migrations applied clean; safety gate in CI, both paths verified                                                       |
-| 11  | Health             | **PASS**    | Live: `/health` 200 and `/ready` 503 with the database stopped                                                           |
-| 12  | Observability      | **PARTIAL** | Structured logs with correlation ids verified live; no metrics backend                                                   |
-| 13  | Backup             | **PASS**    | [`evidence/restore-test.md`](evidence/restore-test.md) — taken, restored, validated                                      |
-| 14  | Restore            | **PASS**    | Performed. Schema, data, migration history and append-only all intact                                                    |
-| 15  | DEV deployment     | **FAIL**    | **Not performed.** No Railway project exists                                                                             |
-| 16  | UAT deployment     | **FAIL**    | **Not performed.** No Railway project exists                                                                             |
-| 17  | Smoke tests        | **PASS**    | 10 passed, 0 failed, 1 skipped, against a live service                                                                   |
-| 18  | Documentation      | **PASS**    | This directory, plus the release and security documents                                                                  |
+| #   | Category           | Score          | Evidence                                                                                                                       |
+| --- | ------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Build              | **PASS**       | `npm run build` clean; `tsc -b` across 171 packages and 11 apps                                                                |
+| 2   | Tests              | **PASS**       | 5,493 tests across 225 files, all passing                                                                                      |
+| 3   | Security           | **PARTIAL**    | [`../security/pilot-security-review.md`](../security/pilot-security-review.md) — 6 advisories open, all with fixes             |
+| 4   | Identity           | **PARTIAL**    | Local provider verified live; OIDC configured and not exercised                                                                |
+| 5   | RBAC               | **PASS**       | Live: auditor 403, owner 201, same route                                                                                       |
+| 6   | Tenant isolation   | **PASS**       | Live: 403 on a foreign organization; 11 pilot tests against services                                                           |
+| 7   | Audit              | **PASS**       | Append-only trigger verified **after a restore** — see below                                                                   |
+| 8   | Workflow           | **PASS**       | Framework suite; the pilot's maker-checker in [`../pilot/evidence/maker-checker.md`](../pilot/evidence/maker-checker.md)       |
+| 9   | Policy             | **PASS**       | Live ALLOW and DENY, both recorded with the policy version                                                                     |
+| 10  | Database migration | **PASS**       | 9 migrations applied clean; safety gate in CI, both paths verified                                                             |
+| 11  | Health             | **PASS**       | Live: `/health` 200 and `/ready` 503 with the database stopped                                                                 |
+| 12  | Observability      | **PARTIAL**    | Structured logs with correlation ids verified live; no metrics backend                                                         |
+| 13  | Backup             | **PASS**       | [`evidence/restore-test.md`](evidence/restore-test.md) — taken, restored, validated                                            |
+| 14  | Restore            | **PASS**       | Performed. Schema, data, migration history and append-only all intact                                                          |
+| 15  | DEV deployment     | **UNVERIFIED** | A `TrustOS-Framework` Railway project exists and is linked to this repository. Its contents could not be inspected — see below |
+| 16  | UAT deployment     | **UNVERIFIED** | No `trustos-uat` project is linked. Whether one exists could not be checked                                                    |
+| 17  | Smoke tests        | **PASS**       | 10 passed, 0 failed, 1 skipped, against a live service                                                                         |
+| 18  | Documentation      | **PASS**       | This directory, plus the release and security documents                                                                        |
 
-**12 PASS · 4 PARTIAL · 2 FAIL**
+**12 PASS · 4 PARTIAL · 2 UNVERIFIED**
 
-## The two FAILs
+## The two unverified items
 
-**Nothing has been deployed to Railway.** No project was created, no service was provisioned, no
-domain was assigned.
+**A Railway project exists.** `~/.railway/config.json` links `/Users/mlh/TrustOS-Framework` to a
+project named `TrustOS-Framework` (`cc96d5fe-…`), environment `production`, with **one** service
+(`e99a167e-…`).
 
-This is FAIL rather than PARTIAL because nothing was demonstrated. Everything needed to deploy
-exists and is verified locally — the image builds, the container runs, the migrations apply, the
-smoke tests pass — and none of that is a deployment.
+**Its contents have not been inspected.** The Railway CLI session expired on 2026-08-25 and
+`railway whoami` returns `Unauthorized`, so nothing here could query what is deployed, whether it
+is healthy, which image it runs, or whether it corresponds to this framework at all rather than to
+an earlier attempt.
 
-Creating a Railway project requires an account, a billing relationship and a decision about who
-owns it. The specification says not to silently create external paid services, and provisioning
-infrastructure on somebody's account is the clearest possible case of that.
+These are therefore **UNVERIFIED** rather than FAIL or PASS. An earlier draft of this document
+asserted that no Railway project existed. That was wrong: it was written from the CLI's
+`Unauthorized` response, which says nothing about what exists.
 
-**What is ready:** the topology, the Dockerfile, seven `railway.json` files, the variable list, the
-migration strategy, the health checks and the exact commands, in
-[`railway.md`](railway.md).
+What can be said without authenticating:
+
+- The linked project has **one** service. The topology in [`railway.md`](railway.md) proposes
+  **seven**, and no `trustos-dev` or `trustos-uat` project is linked from this repository.
+- The linked environment is named `production`, not `dev` or `uat`.
+- Whatever is deployed there predates this work.
+
+### To verify
+
+```bash
+railway login                  # or: export RAILWAY_TOKEN=<project token>
+railway status
+railway service                # what is running
+railway variables              # which variables are set
+railway logs --service <name>  # whether it is healthy
+
+# Then, against its public URL:
+TRUSTOS_BASE_URL=https://<domain> npm run smoke
+```
+
+Then re-score items 15 and 16 against what is found. Until then, treating the project's existence
+as a passing deployment would be the rounding-up this scorecard refuses everywhere else.
 
 ## Why each score
 
@@ -128,25 +149,28 @@ production behaviour against a development service where the debug payload is in
 ## Remediation, in order
 
 1. **Apply the six dependency fixes.** All have fixes available.
-2. **Create `trustos-dev` on Railway and deploy.** Everything needed exists.
-3. **Run the smoke tests against the deployment.** The same command, a different URL.
-4. **Create `trustos-uat`** with its own database and its own secrets.
-5. **Exercise Railway's own backup and restore.** Different from the one performed here, with
+2. **Inspect the existing `TrustOS-Framework` project** and decide whether to adopt, rename or
+   replace it. It carries one service against a proposed seven, and its environment is named
+   `production`.
+3. **Deploy the services.** Everything needed exists.
+4. **Run the smoke tests against the deployment.** The same command, a different URL.
+5. **Create `trustos-uat`** with its own database and its own secrets.
+6. **Exercise Railway's own backup and restore.** Different from the one performed here, with
    different failure modes.
-6. **Configure OIDC** in UAT, which moves Identity off PARTIAL.
-7. **Adopt a metrics backend.** One adapter.
+7. **Configure OIDC** in UAT, which moves Identity off PARTIAL.
+8. **Adopt a metrics backend.** One adapter.
 
 ## The gate
 
-**GO for a Railway DEV and UAT pilot.**
+**GO for a Railway DEV and UAT pilot**, once the existing project is inspected.
 
 The framework builds from a clean checkout, 5,493 tests pass, the image builds and runs, the
 migrations apply, the health split behaves correctly under a real database failure, the audit
 guarantee survives a restore, and ten of eleven smoke checks pass against a live service.
 
-**NOT go for production.** The two FAILs are deployment, and beyond them: no OIDC, no metrics
-backend, no multi-replica testing, six open advisories, and Railway's own backup and restore
-unexercised.
+**NOT go for production.** The two unverified items are deployment, and beyond them: no OIDC, no
+metrics backend, no multi-replica testing, six open advisories, and Railway's own backup and
+restore unexercised.
 
 **`v0.1.0-alpha` is the honest tag today.** `v0.1.0-pilot` after a DEV deployment with its smoke
 tests green. Not `v1.0.0` — a `1.0` says the API is stable and the operational story is proven, and

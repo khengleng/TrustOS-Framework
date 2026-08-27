@@ -311,6 +311,16 @@ describe('simulation at three volumes', () => {
      * that drifts from the run that produced it. Re-running this suite regenerates the file, so
      * the pack and the run cannot disagree.
      */
+    /*
+     * Written only when explicitly asked for — see the note in `performance.spec.ts`. The
+     * simulation itself is deterministic; only `wallClockMs` moves, and rewriting the file on
+     * every test run left the working tree dirty for a number nothing quotes.
+     */
+    if (process.env.TRUSTOS_WRITE_EVIDENCE !== '1') {
+      expect(measured.length).toBeGreaterThanOrEqual(4);
+      return;
+    }
+
     const path = resolve(__dirname, '../../../docs/pilot/evidence/simulation-results.json');
     await mkdir(dirname(path), { recursive: true });
 
