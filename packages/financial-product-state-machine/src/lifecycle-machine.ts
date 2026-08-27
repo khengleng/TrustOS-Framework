@@ -60,11 +60,7 @@ export interface LifecyclePrecondition {
 export interface LifecycleCheck {
   allowed: boolean;
   refusals: Array<{
-    code:
-      | 'missing_permission'
-      | 'self_approval'
-      | 'missing_approval'
-      | 'definition_changed';
+    code: 'missing_permission' | 'self_approval' | 'missing_approval' | 'definition_changed';
     message: string;
   }>;
   transition: TransitionRule<ProductLifecycleStatus, LifecycleAction>;

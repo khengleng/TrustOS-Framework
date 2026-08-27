@@ -717,7 +717,9 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
   financialProduct
     .command('publish')
     .argument('<file>', 'a product definition, as JSON')
-    .description('show what publishing would need: approvals, blockers, what changed (writes nothing)')
+    .description(
+      'show what publishing would need: approvals, blockers, what changed (writes nothing)',
+    )
     .option('--previous <file>', 'the version this supersedes')
     .option('--json', 'machine-readable output')
     .action(async (file: string, opts: Record<string, never>) => {

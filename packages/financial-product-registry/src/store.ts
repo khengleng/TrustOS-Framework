@@ -141,18 +141,27 @@ export class InMemoryProductStore implements ProductStore {
     return clone(next);
   }
 
-  async findVariant(organizationId: string | null, variantId: string): Promise<ProductVariant | null> {
+  async findVariant(
+    organizationId: string | null,
+    variantId: string,
+  ): Promise<ProductVariant | null> {
     const variant = this.variants.get(key(organizationId, variantId));
     return variant ? structuredClone(variant) : null;
   }
 
   async listVariants(organizationId: string | null, productId: string): Promise<ProductVariant[]> {
     return [...this.variants.entries()]
-      .filter(([id, variant]) => id.startsWith(`${organizationId ?? 'platform'}|`) && variant.baseProductId === productId)
+      .filter(
+        ([id, variant]) =>
+          id.startsWith(`${organizationId ?? 'platform'}|`) && variant.baseProductId === productId,
+      )
       .map(([, variant]) => structuredClone(variant));
   }
 
-  async saveVariant(organizationId: string | null, variant: ProductVariant): Promise<ProductVariant> {
+  async saveVariant(
+    organizationId: string | null,
+    variant: ProductVariant,
+  ): Promise<ProductVariant> {
     this.variants.set(key(organizationId, variant.variantId), structuredClone(variant));
     return structuredClone(variant);
   }

@@ -169,7 +169,10 @@ export async function simulate(input: SimulationInput): Promise<SimulationReport
       clock: { now: () => now },
     });
 
-    const amountMinorUnits = (min + (BigInt(Math.floor(random() * 1_000_000)) * span) / 1_000_000n).toString();
+    const amountMinorUnits = (
+      min +
+      (BigInt(Math.floor(random() * 1_000_000)) * span) / 1_000_000n
+    ).toString();
 
     const executionInput: ExecutionInput = {
       amountMinorUnits,

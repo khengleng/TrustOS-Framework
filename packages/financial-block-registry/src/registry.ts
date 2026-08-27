@@ -172,6 +172,7 @@ export function blockCatalogSummary(registry: BlockRegistry = APPROVED_BLOCKS): 
     total: registry.size(),
     byCategory,
     movesMoney: registry.all().filter((block) => block.monetaryEffect === 'moves').length,
-    requiresProvider: registry.all().filter((block) => block.providerInterface !== undefined).length,
+    requiresProvider: registry.all().filter((block) => block.providerInterface !== undefined)
+      .length,
   };
 }

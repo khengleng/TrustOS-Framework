@@ -41,15 +41,39 @@ export interface ProductActor {
 export const executionInputSchema = z
   .object({
     /** Minor units as a string. Never a number. See `definition.ts`. */
-    amountMinorUnits: z.string().regex(/^[0-9]{1,24}$/).optional(),
+    amountMinorUnits: z
+      .string()
+      .regex(/^[0-9]{1,24}$/)
+      .optional(),
     currency: z.string().min(3).max(8).optional(),
-    country: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/).optional(),
-    transactionType: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/).optional(),
-    customerType: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/).optional(),
-    merchantType: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/).optional(),
-    merchantTier: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/).optional(),
-    channel: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/).optional(),
-    kycLevel: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/).optional(),
+    country: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]{0,39}$/)
+      .optional(),
+    transactionType: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]{0,39}$/)
+      .optional(),
+    customerType: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]{0,39}$/)
+      .optional(),
+    merchantType: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]{0,39}$/)
+      .optional(),
+    merchantTier: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]{0,39}$/)
+      .optional(),
+    channel: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]{0,39}$/)
+      .optional(),
+    kycLevel: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]{0,39}$/)
+      .optional(),
     /** Opaque references the blocks resolve. Ids, never records. */
     references: z.record(z.string().max(120)).default({}),
     /** Anything else a block reads. Scalars only, bounded. */
@@ -195,7 +219,9 @@ export function collectingEventPublisher(): ProductEventPublisher & { events: Pr
 }
 
 /** An audit recorder that collects. For tests, and for the sandbox. */
-export function collectingAuditRecorder(): ProductAuditRecorder & { records: ProductAuditRecord[] } {
+export function collectingAuditRecorder(): ProductAuditRecorder & {
+  records: ProductAuditRecord[];
+} {
   const records: ProductAuditRecord[] = [];
   return {
     records,

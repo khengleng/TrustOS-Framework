@@ -36,7 +36,11 @@ const ALL_PERMISSIONS = [
   'financial.product.variant.manage',
 ];
 
-function actor(actorId: string, organizationId = 'org_a', permissions = ALL_PERMISSIONS): RegistryActor {
+function actor(
+  actorId: string,
+  organizationId = 'org_a',
+  permissions = ALL_PERMISSIONS,
+): RegistryActor {
   return { actorId, organizationId, permissions };
 }
 
@@ -84,7 +88,11 @@ async function activate(
   }
 
   await registry.transition(checkerA, productId, 'approve');
-  await registry.publish(publisher, productId, 'The first published version of the worked example.');
+  await registry.publish(
+    publisher,
+    productId,
+    'The first published version of the worked example.',
+  );
   await registry.activate(publisher, productId, definition.version);
 
   return definition.version;
@@ -151,9 +159,7 @@ describe('the registry', () => {
   it('refuses a duplicate product id within a tenant, and permits it across tenants', async () => {
     await registry.create(maker, draft());
     await expect(registry.create(maker, draft())).rejects.toThrow(/already exists/);
-    await expect(
-      registry.create(actor('usr_b', 'org_b'), draft()),
-    ).resolves.toBeDefined();
+    await expect(registry.create(actor('usr_b', 'org_b'), draft())).resolves.toBeDefined();
   });
 });
 
@@ -161,7 +167,11 @@ describe('sensitive changes', () => {
   let registry: ProductRegistry;
 
   beforeEach(() => {
-    registry = new ProductRegistry({ store: new InMemoryProductStore(), audit: collectingAuditRecorder(), clock });
+    registry = new ProductRegistry({
+      store: new InMemoryProductStore(),
+      audit: collectingAuditRecorder(),
+      clock,
+    });
   });
 
   it('refuses a fee change from an actor without the fee permission', async () => {
@@ -191,7 +201,11 @@ describe('sensitive changes', () => {
     const editor = actor('usr_editor', 'org_a', ['financial.product.update']);
 
     await expect(
-      registry.updateDraft(editor, 'merchant-wallet-basic', draft({ description: 'A clearer description of the same product.' })),
+      registry.updateDraft(
+        editor,
+        'merchant-wallet-basic',
+        draft({ description: 'A clearer description of the same product.' }),
+      ),
     ).resolves.toBeDefined();
   });
 
@@ -200,21 +214,27 @@ describe('sensitive changes', () => {
     const local = new ProductRegistry({ store: new InMemoryProductStore(), audit, clock });
 
     await local.create(maker, draft());
-    await local.updateDraft(maker, 'merchant-wallet-basic', draft({
-      fees: [
-        {
-          code: 'ACCEPTANCE',
-          feeType: 'PERCENTAGE',
-          basis: 'percentage',
-          rate: { hundredthsOfBasisPoint: '9000' },
-          bearer: 'payee',
-          rounding: 'half_even',
-        },
-      ],
-    }));
+    await local.updateDraft(
+      maker,
+      'merchant-wallet-basic',
+      draft({
+        fees: [
+          {
+            code: 'ACCEPTANCE',
+            feeType: 'PERCENTAGE',
+            basis: 'percentage',
+            rate: { hundredthsOfBasisPoint: '9000' },
+            bearer: 'payee',
+            rounding: 'half_even',
+          },
+        ],
+      }),
+    );
 
     // An auditor searching for fee changes will search for the action name, not read every edit.
-    expect(audit.records.some((record) => record.action === 'financial.product.fee.changed')).toBe(true);
+    expect(audit.records.some((record) => record.action === 'financial.product.fee.changed')).toBe(
+      true,
+    );
   });
 });
 
@@ -222,7 +242,11 @@ describe('maker-checker through the registry', () => {
   let registry: ProductRegistry;
 
   beforeEach(() => {
-    registry = new ProductRegistry({ store: new InMemoryProductStore(), audit: collectingAuditRecorder(), clock });
+    registry = new ProductRegistry({
+      store: new InMemoryProductStore(),
+      audit: collectingAuditRecorder(),
+      clock,
+    });
   });
 
   it('refuses the maker approving their own product', async () => {
@@ -277,7 +301,11 @@ describe('maker-checker through the registry', () => {
 
 describe('immutability and concurrency', () => {
   it('refuses an edit once the draft is under review', async () => {
-    const registry = new ProductRegistry({ store: new InMemoryProductStore(), audit: collectingAuditRecorder(), clock });
+    const registry = new ProductRegistry({
+      store: new InMemoryProductStore(),
+      audit: collectingAuditRecorder(),
+      clock,
+    });
 
     await registry.create(maker, draft());
     await registry.transition(maker, 'merchant-wallet-basic', 'design');
@@ -286,7 +314,11 @@ describe('immutability and concurrency', () => {
     await registry.transition(maker, 'merchant-wallet-basic', 'submit');
 
     try {
-      await registry.updateDraft(maker, 'merchant-wallet-basic', draft({ description: 'Changed after freezing.' }));
+      await registry.updateDraft(
+        maker,
+        'merchant-wallet-basic',
+        draft({ description: 'Changed after freezing.' }),
+      );
       expect.unreachable('should have refused');
     } catch (error) {
       expect(productErrorCode(error)).toBe('product_definition_immutable');
@@ -300,19 +332,30 @@ describe('immutability and concurrency', () => {
     await registry.create(maker, draft());
     const stale = await store.find('org_a', 'merchant-wallet-basic');
 
-    await registry.updateDraft(maker, 'merchant-wallet-basic', draft({ description: 'The first edit lands.' }));
+    await registry.updateDraft(
+      maker,
+      'merchant-wallet-basic',
+      draft({ description: 'The first edit lands.' }),
+    );
 
     // Zero rows updated is the signal that somebody else won. Retrying would re-apply a decision
     // made against a page that is now stale.
     await expect(
-      store.update({ ...(stale as never), draft: draft({ description: 'The second edit is refused.' }) }, 0),
+      store.update(
+        { ...(stale as never), draft: draft({ description: 'The second edit is refused.' }) },
+        0,
+      ),
     ).rejects.toThrow(/changed while you were working on it/);
   });
 });
 
 describe('publication and activation', () => {
   it('refuses publication by the author', async () => {
-    const registry = new ProductRegistry({ store: new InMemoryProductStore(), audit: collectingAuditRecorder(), clock });
+    const registry = new ProductRegistry({
+      store: new InMemoryProductStore(),
+      audit: collectingAuditRecorder(),
+      clock,
+    });
 
     await registry.create(maker, draft());
     await registry.transition(maker, 'merchant-wallet-basic', 'design');
@@ -333,7 +376,11 @@ describe('publication and activation', () => {
     await registry.transition(checkerA, 'merchant-wallet-basic', 'approve');
 
     await expect(
-      registry.publish(maker, 'merchant-wallet-basic', 'The author trying to publish their own work.'),
+      registry.publish(
+        maker,
+        'merchant-wallet-basic',
+        'The author trying to publish their own work.',
+      ),
     ).rejects.toThrow(/cannot publish their own version/);
   });
 
@@ -354,7 +401,10 @@ describe('publication and activation', () => {
     });
 
     const record = await registry.get(maker, 'merchant-wallet-basic');
-    await store.update({ ...record, draft: withExtraBlock, draftAuthorId: 'usr_maker' }, record.revision);
+    await store.update(
+      { ...record, draft: withExtraBlock, draftAuthorId: 'usr_maker' },
+      record.revision,
+    );
 
     await registry.transition(maker, 'merchant-wallet-basic', 'design');
     await registry.transition(maker, 'merchant-wallet-basic', 'validate');
@@ -376,18 +426,30 @@ describe('publication and activation', () => {
     await registry.transition(checkerA, 'merchant-wallet-basic', 'approve');
 
     await expect(
-      registry.publish(publisher, 'merchant-wallet-basic', 'Added a notification step after reconciliation.'),
+      registry.publish(
+        publisher,
+        'merchant-wallet-basic',
+        'Added a notification step after reconciliation.',
+      ),
     ).rejects.toThrow(/breaking change/);
   });
 });
 
 describe('pause and rollback', () => {
   it('pauses without an approval, because an incident response that waits is not one', async () => {
-    const registry = new ProductRegistry({ store: new InMemoryProductStore(), audit: collectingAuditRecorder(), clock });
+    const registry = new ProductRegistry({
+      store: new InMemoryProductStore(),
+      audit: collectingAuditRecorder(),
+      clock,
+    });
     await activate(registry);
 
     const operator = actor('usr_oncall', 'org_a', ['financial.product.pause']);
-    const state = await registry.pause(operator, 'merchant-wallet-basic', 'Fee applied to the wrong tier.');
+    const state = await registry.pause(
+      operator,
+      'merchant-wallet-basic',
+      'Fee applied to the wrong tier.',
+    );
 
     expect(state.activeVersion).toBeNull();
   });
@@ -400,7 +462,10 @@ describe('pause and rollback', () => {
     await activate(registry);
 
     // A second version, published and activated.
-    const second = draft({ version: '1.1.0', description: 'The second version, with a different fee.' });
+    const second = draft({
+      version: '1.1.0',
+      description: 'The second version, with a different fee.',
+    });
     const record = await registry.get(maker, 'merchant-wallet-basic');
     await store.update({ ...record, draft: second, draftAuthorId: 'usr_maker' }, record.revision);
 
@@ -410,7 +475,11 @@ describe('pause and rollback', () => {
     await registry.transition(maker, 'merchant-wallet-basic', 'submit');
     // A description-only change touches nothing sensitive, so no approval level is required.
     await registry.transition(checkerA, 'merchant-wallet-basic', 'approve');
-    await registry.publish(publisher, 'merchant-wallet-basic', 'A second version with a different description.');
+    await registry.publish(
+      publisher,
+      'merchant-wallet-basic',
+      'A second version with a different description.',
+    );
     await registry.activate(publisher, 'merchant-wallet-basic', '1.1.0');
 
     store.setInFlight('org_a', 'merchant-wallet-basic', '1.1.0', 12);
@@ -425,12 +494,16 @@ describe('pause and rollback', () => {
     expect(plan.from).toBe('1.1.0');
     expect(plan.to).toBe('1.0.0');
     expect(plan.inFlightCount).toBe(12);
-    expect(plan.effects.some((effect) => effect.includes('Nothing historical is rewritten'))).toBe(true);
+    expect(plan.effects.some((effect) => effect.includes('Nothing historical is rewritten'))).toBe(
+      true,
+    );
 
     const state = await registry.rollback(publisher, plan);
     expect(state.activeVersion).toBe('1.0.0');
 
-    const rollbackRecord = audit.records.find((entry) => entry.action === 'financial.product.rolled_back');
+    const rollbackRecord = audit.records.find(
+      (entry) => entry.action === 'financial.product.rolled_back',
+    );
     expect(rollbackRecord?.detail.historicalExecutionsRewritten).toBe(0);
 
     // The versions themselves are untouched, which is what "does not rewrite history" means.
@@ -444,14 +517,23 @@ describe('pause and rollback', () => {
     await activate(registry);
 
     await expect(
-      registry.planRollback(publisher, 'merchant-wallet-basic', '9.9.9', 'A version that does not exist.'),
+      registry.planRollback(
+        publisher,
+        'merchant-wallet-basic',
+        '9.9.9',
+        'A version that does not exist.',
+      ),
     ).rejects.toThrow(/no version/);
   });
 });
 
 describe('variants through the registry', () => {
   it('refuses a variant whose overrides are illegal against the pinned base', async () => {
-    const registry = new ProductRegistry({ store: new InMemoryProductStore(), audit: collectingAuditRecorder(), clock });
+    const registry = new ProductRegistry({
+      store: new InMemoryProductStore(),
+      audit: collectingAuditRecorder(),
+      clock,
+    });
     await activate(registry);
 
     const variant = parseVariant({
@@ -471,7 +553,11 @@ describe('variants through the registry', () => {
   });
 
   it('resolves a legal variant against its base', async () => {
-    const registry = new ProductRegistry({ store: new InMemoryProductStore(), audit: collectingAuditRecorder(), clock });
+    const registry = new ProductRegistry({
+      store: new InMemoryProductStore(),
+      audit: collectingAuditRecorder(),
+      clock,
+    });
     await activate(registry);
 
     const variant = parseVariant({
@@ -503,7 +589,9 @@ describe('variants through the registry', () => {
 
     expect(resolved.definition.fees[0]?.rate?.hundredthsOfBasisPoint).toBe('4000');
     // The workflow is the base's, untouched.
-    expect(resolved.definition.blocks).toEqual((await registry.activeVersion(maker, 'merchant-wallet-basic')).definition.blocks);
+    expect(resolved.definition.blocks).toEqual(
+      (await registry.activeVersion(maker, 'merchant-wallet-basic')).definition.blocks,
+    );
   });
 });
 
@@ -522,7 +610,9 @@ describe('the catalog', () => {
     // Only `payment.execute` and `payment.refund` declare a provider dependency in this product;
     // `settlement.create` records an obligation without instructing anybody.
     expect(entry?.providers).toEqual(['PaymentProvider']);
-    expect(entry?.apis.some((api) => api.includes('/v1/products/merchant-wallet-basic/payments'))).toBe(true);
+    expect(
+      entry?.apis.some((api) => api.includes('/v1/products/merchant-wallet-basic/payments')),
+    ).toBe(true);
   });
 
   it('narrows with every filter rather than widening', async () => {

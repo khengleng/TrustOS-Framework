@@ -1,9 +1,9 @@
+import { END_NODES, START_NODE, type ProductDefinition } from '@trustos/financial-product-core';
 import {
-  END_NODES,
-  START_NODE,
-  type ProductDefinition,
-} from '@trustos/financial-product-core';
-import { APPROVED_BLOCKS, BLOCK_CATEGORIES, type BlockRegistry } from '@trustos/financial-block-registry';
+  APPROVED_BLOCKS,
+  BLOCK_CATEGORIES,
+  type BlockRegistry,
+} from '@trustos/financial-block-registry';
 import { validateProduct, type ValidationFinding } from './validate';
 
 /**
@@ -204,7 +204,16 @@ export function compareDesigns(
   const afterEdges = new Set(after.transitions.map(edgeKey));
 
   const changedFields: string[] = [];
-  for (const field of ['fees', 'limits', 'rules', 'providers', 'settlementPolicy', 'riskPolicy', 'compliancePolicy', 'apiExposurePolicy'] as const) {
+  for (const field of [
+    'fees',
+    'limits',
+    'rules',
+    'providers',
+    'settlementPolicy',
+    'riskPolicy',
+    'compliancePolicy',
+    'apiExposurePolicy',
+  ] as const) {
     if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) changedFields.push(field);
   }
 
@@ -234,8 +243,16 @@ export const DESIGNER_NAVIGATION = [
   { id: 'simulator', label: 'Simulator', description: 'Volume runs and the path distribution.' },
   { id: 'sandbox', label: 'Sandbox', description: 'Mock providers and the failure scenarios.' },
   { id: 'approvals', label: 'Approvals', description: 'What is waiting, and on whom.' },
-  { id: 'deployments', label: 'Deployments', description: 'Versions, staging, activation, rollback.' },
-  { id: 'monitoring', label: 'Monitoring', description: 'Usage, latency, failures and SLA breaches.' },
+  {
+    id: 'deployments',
+    label: 'Deployments',
+    description: 'Versions, staging, activation, rollback.',
+  },
+  {
+    id: 'monitoring',
+    label: 'Monitoring',
+    description: 'Usage, latency, failures and SLA breaches.',
+  },
   { id: 'audit', label: 'Audit', description: 'Every governed action, immutable.' },
 ] as const;
 

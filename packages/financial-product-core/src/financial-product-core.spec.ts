@@ -55,7 +55,11 @@ function baseDefinition(overrides: Record<string, unknown> = {}) {
     ],
     riskPolicy: {},
     compliancePolicy: { dataClassification: 'confidential', retentionDays: 2555 },
-    apiExposurePolicy: { slug: 'merchant-wallet-basic', authentication: ['bearer'], tenantScoped: true },
+    apiExposurePolicy: {
+      slug: 'merchant-wallet-basic',
+      authentication: ['bearer'],
+      tenantScoped: true,
+    },
     auditClassification: 'sensitive',
     ...overrides,
   };
@@ -318,7 +322,12 @@ describe('the product definition schema', () => {
   it('refuses a monetary amount written as a number', () => {
     const definition = baseDefinition({
       limits: [
-        { code: 'DAILY_IN', limitType: 'DAILY', scope: 'merchant', amount: { minorUnits: 500000, currency: 'USD' } },
+        {
+          code: 'DAILY_IN',
+          limitType: 'DAILY',
+          scope: 'merchant',
+          amount: { minorUnits: 500000, currency: 'USD' },
+        },
       ],
     });
     expect(() => productDefinitionSchema.parse(definition)).toThrow();

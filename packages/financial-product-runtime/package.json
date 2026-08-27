@@ -25,6 +25,7 @@
     "@trustos/financial-product-versioning": "0.1.0",
     "@trustos/logging": "0.1.0",
     "@trustos/retry": "0.1.0",
+    "@trustos/workflow-definition": "0.1.0",
     "zod": "^3.24.1"
   }
 }

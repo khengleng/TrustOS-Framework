@@ -19,6 +19,7 @@
     "@trustos/financial-product-core": "0.1.0",
     "@trustos/financial-product-runtime": "0.1.0",
     "@trustos/financial-product-sandbox": "0.1.0",
+    "@trustos/financial-product-versioning": "0.1.0",
     "zod": "^3.24.1"
   }
 }

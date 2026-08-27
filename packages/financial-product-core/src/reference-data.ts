@@ -226,7 +226,12 @@ export const STRUCTURAL_REFERENCE_DATA: ReferenceEntry[] = [
   entry('approvalLevel', 'RISK', 'Risk', 'Reviews limits, exposure and the risk policy.'),
   entry('approvalLevel', 'COMPLIANCE', 'Compliance', 'Reviews screening, KYC and retention.'),
   entry('approvalLevel', 'SECURITY', 'Security', 'Reviews connectors, secrets and API exposure.'),
-  entry('approvalLevel', 'OPERATIONS', 'Operations', 'Reviews settlement, reconciliation and SLAs.'),
+  entry(
+    'approvalLevel',
+    'OPERATIONS',
+    'Operations',
+    'Reviews settlement, reconciliation and SLAs.',
+  ),
   entry('approvalLevel', 'FINANCE', 'Finance', 'Reviews fees, revenue share and ledger mapping.'),
 
   entry('feeType', 'FLAT', 'Flat', 'A fixed amount per transaction.'),
@@ -259,7 +264,12 @@ export const STRUCTURAL_REFERENCE_DATA: ReferenceEntry[] = [
   entry('channel', 'BACK_OFFICE', 'Back office', 'An operator acting on a customer’s behalf.'),
 
   entry('settlementCalendar', 'CONTINUOUS', 'Continuous', 'Every day, including weekends.'),
-  entry('settlementCalendar', 'BUSINESS_DAYS', 'Business days', 'Weekdays, less the holiday calendar.'),
+  entry(
+    'settlementCalendar',
+    'BUSINESS_DAYS',
+    'Business days',
+    'Weekdays, less the holiday calendar.',
+  ),
 ];
 
 /** A registry seeded with the structural domains. A deployment adds its own currencies and countries. */

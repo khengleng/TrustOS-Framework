@@ -66,7 +66,12 @@ export type CompositionRequest = z.infer<typeof compositionRequestSchema>;
 export interface CompositionBrief {
   intent: string;
   /** Every approved block, as `id@version — description`. The model's entire vocabulary. */
-  availableBlocks: Array<{ blockId: string; version: string; category: string; description: string }>;
+  availableBlocks: Array<{
+    blockId: string;
+    version: string;
+    category: string;
+    description: string;
+  }>;
   availableTemplates: Array<{ id: string; name: string; description: string }>;
   availableCurrencies: string[];
   availableCountries: string[];
@@ -135,7 +140,9 @@ export const productProposalSchema = z
             key: z.string().regex(/^[a-z][a-z0-9-]{0,59}$/),
             blockId: z.string().max(80),
             blockVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
-            configuration: z.record(z.union([z.string().max(400), z.number(), z.boolean()])).default({}),
+            configuration: z
+              .record(z.union([z.string().max(400), z.number(), z.boolean()]))
+              .default({}),
             connectorId: z.string().max(80).optional(),
           })
           .strict(),
@@ -218,7 +225,10 @@ export function draftFromProposal(input: DraftFromProposalInput): ProposalOutcom
     throw productError(
       'product_definition_invalid',
       'The proposal names no currency the deployment supports.',
-      { expected: request.availableCurrencies.join(', '), actual: proposal.supportedCurrencies.join(', ') },
+      {
+        expected: request.availableCurrencies.join(', '),
+        actual: proposal.supportedCurrencies.join(', '),
+      },
     );
   }
 

@@ -94,10 +94,7 @@ export function requestHash(payload: Record<string, unknown>): string {
 function stringify(value: unknown): string {
   if (value === null) return 'null';
   if (typeof value === 'object') {
-    return JSON.stringify(
-      value,
-      Object.keys(value as Record<string, unknown>).sort(),
-    );
+    return JSON.stringify(value, Object.keys(value as Record<string, unknown>).sort());
   }
   return String(value);
 }
@@ -139,9 +136,9 @@ export function idempotencyConflict(record: IdempotencyRecord, sameHash: boolean
     'product_idempotency_conflict',
     sameHash
       ? `Idempotency key "${record.key}" is still in progress on execution ${record.executionId}. ` +
-        'Returning a partial result would tell you an operation completed that has not.'
+          'Returning a partial result would tell you an operation completed that has not.'
       : `Idempotency key "${record.key}" was used for a different request. Reusing a key with a ` +
-        'changed payload would tell you an operation succeeded that never ran for your request.',
+          'changed payload would tell you an operation succeeded that never ran for your request.',
     { productId: record.productId, expected: record.requestHash },
   );
 }

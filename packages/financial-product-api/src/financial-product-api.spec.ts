@@ -63,7 +63,12 @@ describe('routes', () => {
   });
 
   it('exposes nothing for a product that is not exposed', () => {
-    expect(productRoutes({ ...definition(), apiExposurePolicy: { ...definition().apiExposurePolicy, exposed: false } })).toEqual([]);
+    expect(
+      productRoutes({
+        ...definition(),
+        apiExposurePolicy: { ...definition().apiExposurePolicy, exposed: false },
+      }),
+    ).toEqual([]);
   });
 
   it('refuses two products claiming the same path', () => {
@@ -168,9 +173,7 @@ describe('the dispatcher', () => {
     });
 
     const runtime = new ProductRuntime({
-      handlers: new BlockHandlerRegistry(
-        sandboxHandlers({ state: createSandboxState() }),
-      ),
+      handlers: new BlockHandlerRegistry(sandboxHandlers({ state: createSandboxState() })),
       events: collectingEventPublisher(),
       audit: collectingAuditRecorder(),
       connectors: sandboxConnectorRegistry('org_a'),
@@ -180,7 +183,11 @@ describe('the dispatcher', () => {
     dispatcher = new ProductDispatcher({
       registry,
       runtime: {
-        execute: (input) => runtime.execute({ ...input, definition: bindSandboxConnectors(input.version.definition) }),
+        execute: (input) =>
+          runtime.execute({
+            ...input,
+            definition: bindSandboxConnectors(input.version.definition),
+          }),
       } as never,
       clock,
       rateLimiter: new InMemoryRateLimiter(),

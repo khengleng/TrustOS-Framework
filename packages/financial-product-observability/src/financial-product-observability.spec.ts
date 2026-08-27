@@ -35,7 +35,9 @@ describe('the metric catalog', () => {
   it('declares no unbounded dimension anywhere', () => {
     for (const metric of PRODUCT_METRIC_CATALOG) {
       for (const dimension of metric.dimensions) {
-        expect(FORBIDDEN_DIMENSIONS, `${metric.name} carries ${dimension}`).not.toContain(dimension);
+        expect(FORBIDDEN_DIMENSIONS, `${metric.name} carries ${dimension}`).not.toContain(
+          dimension,
+        );
       }
     }
   });
@@ -74,7 +76,10 @@ describe('cardinality', () => {
 
   it('refuses an amount dimension', () => {
     expect(() =>
-      assertLowCardinality(PRODUCT_METRICS.FEE_TOTAL_MINOR_UNITS, { product: 'p', amount: '150000' }),
+      assertLowCardinality(PRODUCT_METRICS.FEE_TOTAL_MINOR_UNITS, {
+        product: 'p',
+        amount: '150000',
+      }),
     ).toThrow();
   });
 
@@ -123,7 +128,11 @@ describe('the collector', () => {
     const collector = new MetricCollector();
 
     for (const value of [10, 20, 30, 40, 50]) {
-      collector.observe(PRODUCT_METRICS.BLOCK_LATENCY, { product: 'p', block: 'b', outcome: 'success' }, value);
+      collector.observe(
+        PRODUCT_METRICS.BLOCK_LATENCY,
+        { product: 'p', block: 'b', outcome: 'success' },
+        value,
+      );
     }
 
     const [histogram] = collector.histogramSnapshots();
@@ -149,7 +158,9 @@ describe('the collector', () => {
 
   it('refuses an unbounded dimension on the way in', () => {
     const collector = new MetricCollector();
-    expect(() => collector.increment(PRODUCT_METRICS.EXECUTIONS, { customer_id: 'cus_1' })).toThrow();
+    expect(() =>
+      collector.increment(PRODUCT_METRICS.EXECUTIONS, { customer_id: 'cus_1' }),
+    ).toThrow();
   });
 
   it('reports dropped series rather than growing without bound', () => {

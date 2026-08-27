@@ -1,8 +1,5 @@
 import { productError } from '@trustos/financial-product-core';
-import {
-  connectorDefinitionSchema,
-  type ConnectorDefinition,
-} from './schema';
+import { connectorDefinitionSchema, type ConnectorDefinition } from './schema';
 import {
   FRAMEWORK_FORBIDDEN_PROVIDER_NAMES,
   PROVIDER_INTERFACE_NAMES,
@@ -185,7 +182,8 @@ export const FRAMEWORK_CONNECTORS: readonly ConnectorDefinition[] = Object.freez
  * for. This guards the framework's catalog against the reasonable-sounding first exception.
  */
 export function assertNoFrameworkProvider(connector: ConnectorDefinition): void {
-  const document = `${connector.connectorId} ${connector.name} ${connector.description}`.toLowerCase();
+  const document =
+    `${connector.connectorId} ${connector.name} ${connector.description}`.toLowerCase();
 
   for (const vendor of FRAMEWORK_FORBIDDEN_PROVIDER_NAMES) {
     if (new RegExp(`\\b${vendor}\\b`).test(document)) {

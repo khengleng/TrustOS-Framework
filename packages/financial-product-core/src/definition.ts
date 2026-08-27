@@ -251,13 +251,25 @@ export const productFeeSchema = z
   .strict()
   .superRefine((fee, ctx) => {
     if (fee.basis === 'flat' && !fee.flat) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['flat'], message: 'A flat fee needs an amount.' });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['flat'],
+        message: 'A flat fee needs an amount.',
+      });
     }
     if (fee.basis === 'percentage' && !fee.rate) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['rate'], message: 'A percentage fee needs a rate.' });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['rate'],
+        message: 'A percentage fee needs a rate.',
+      });
     }
     if (fee.basis === 'tiered' && (!fee.tiers || fee.tiers.length === 0)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['tiers'], message: 'A tiered fee needs tiers.' });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['tiers'],
+        message: 'A tiered fee needs tiers.',
+      });
     }
     if (fee.tiers) {
       for (let index = 1; index < fee.tiers.length; index += 1) {
@@ -302,7 +314,10 @@ export const settlementPolicySchema = z
     /** A `settlementCalendar` reference code. */
     calendar: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/),
     /** Local time of the cut-off, `HH:MM`. The time zone is the tenant's, never the server's. */
-    cutoff: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+    cutoff: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+      .optional(),
     /** Days money waits in transit before it is released. */
     holdDays: z.number().int().min(0).max(90).default(0),
     /** Minimum batch value below which settlement waits for the next window. */
@@ -340,7 +355,10 @@ export const riskPolicySchema = z
     /** Above this, the transaction needs an enhanced review before it completes. */
     enhancedReviewAbove: definitionMoneySchema.optional(),
     /** `riskLevel` reference codes that are refused outright. */
-    prohibitedRiskLevels: z.array(z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/)).max(10).default([]),
+    prohibitedRiskLevels: z
+      .array(z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/))
+      .max(10)
+      .default([]),
     /** Which checks must have run. Names of block categories, not of vendors. */
     requiredChecks: z.array(z.string().min(1).max(60)).max(20).default([]),
     /** Score at or above which the transaction routes to manual review. */
@@ -353,10 +371,16 @@ export const compliancePolicySchema = z
     /** How sensitive the product's data is. Drives retention and who may read an execution. */
     dataClassification: z.enum(['public', 'internal', 'confidential', 'restricted']),
     /** The minimum KYC level a customer must hold. A reference code, never a number. */
-    minimumKycLevel: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/).optional(),
+    minimumKycLevel: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]{0,39}$/)
+      .optional(),
     retentionDays: z.number().int().min(1).max(36_500),
     /** Screening categories the product requires. Provider-neutral names. */
-    screening: z.array(z.enum(['aml', 'sanctions', 'pep', 'fraud', 'adverse_media'])).max(5).default([]),
+    screening: z
+      .array(z.enum(['aml', 'sanctions', 'pep', 'fraud', 'adverse_media']))
+      .max(5)
+      .default([]),
   })
   .strict();
 
@@ -524,7 +548,10 @@ export const productDefinitionSchema = z
     auditClassification: z.enum(['standard', 'sensitive', 'restricted']),
 
     /** Free-form labels for the catalog. Bounded, and never load-bearing. */
-    tags: z.array(z.string().regex(/^[a-z][a-z0-9-]{0,39}$/)).max(20).default([]),
+    tags: z
+      .array(z.string().regex(/^[a-z][a-z0-9-]{0,39}$/))
+      .max(20)
+      .default([]),
   })
   .strict()
   .superRefine((definition, ctx) => {
@@ -592,17 +619,11 @@ export function parseProductDefinition(input: unknown): ProductDefinition {
 }
 
 /** The block with this key, or undefined. */
-export function findBlock(
-  definition: ProductDefinition,
-  key: string,
-): ProductBlock | undefined {
+export function findBlock(definition: ProductDefinition, key: string): ProductBlock | undefined {
   return definition.blocks.find((block) => block.key === key);
 }
 
 /** Every transition leaving a node, in declaration order. */
-export function transitionsFrom(
-  definition: ProductDefinition,
-  from: string,
-): ProductTransition[] {
+export function transitionsFrom(definition: ProductDefinition, from: string): ProductTransition[] {
   return definition.transitions.filter((transition) => transition.from === from);
 }

@@ -48,7 +48,10 @@ export function productOpenApi(
       description: definition.description,
     },
     servers: [
-      { url: options.serverUrl ?? '/', description: 'The deployment this product is exposed from.' },
+      {
+        url: options.serverUrl ?? '/',
+        description: 'The deployment this product is exposed from.',
+      },
     ],
     paths,
     components: {
@@ -72,7 +75,10 @@ export function productOpenApi(
              * gets a figure that disagrees with the ledger. Documenting it as a string is what
              * stops a generated client from parsing it as one.
              */
-            feeMinorUnits: { type: 'string', description: 'Minor units as a string. Never a number.' },
+            feeMinorUnits: {
+              type: 'string',
+              description: 'Minor units as a string. Never a number.',
+            },
             refusalCode: { type: 'string', nullable: true },
           },
         },
@@ -146,7 +152,9 @@ function operationObject(route: ProductRoute): Record<string, unknown> {
     responses: {
       '200': {
         description: 'The execution result.',
-        content: { 'application/json': { schema: { $ref: '#/components/schemas/ExecutionResult' } } },
+        content: {
+          'application/json': { schema: { $ref: '#/components/schemas/ExecutionResult' } },
+        },
       },
       '403': {
         description: 'Refused by a control: a permission, a policy or a rule.',
@@ -159,7 +167,8 @@ function operationObject(route: ProductRoute): Record<string, unknown> {
         content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
       },
       '409': {
-        description: 'A conflict: an idempotency key reused with a different payload, or a stale version.',
+        description:
+          'A conflict: an idempotency key reused with a different payload, or a stale version.',
         content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
       },
       '429': {

@@ -159,7 +159,8 @@ export function searchCatalog(
       if (query.currency && !entry.currencies.includes(query.currency)) return false;
       if (query.exposed !== undefined && entry.apis.length > 0 !== query.exposed) return false;
 
-      if (query.reviewOverdueAt && new Date(entry.reviewDate) >= query.reviewOverdueAt) return false;
+      if (query.reviewOverdueAt && new Date(entry.reviewDate) >= query.reviewOverdueAt)
+        return false;
 
       if (text) {
         const haystack =

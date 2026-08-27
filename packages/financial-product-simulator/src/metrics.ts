@@ -142,7 +142,12 @@ export function summarise(input: {
       latency.set(step.blockId, entry);
     }
 
-    compensationsRun += record.steps.filter((step) => step.blockKey.startsWith('reverse') || step.blockKey.startsWith('adjust') || step.blockKey.startsWith('refund')).length;
+    compensationsRun += record.steps.filter(
+      (step) =>
+        step.blockKey.startsWith('reverse') ||
+        step.blockKey.startsWith('adjust') ||
+        step.blockKey.startsWith('refund'),
+    ).length;
   }
 
   const executed = seenExecutions.size;
@@ -239,7 +244,8 @@ export function formatReport(report: SimulationReport): string[] {
 
   if (report.refusalsByCode.length > 0) {
     lines.push('', '  refusals by code:');
-    for (const entry of report.refusalsByCode) lines.push(`    ${entry.count.toString().padStart(7)}  ${entry.code}`);
+    for (const entry of report.refusalsByCode)
+      lines.push(`    ${entry.count.toString().padStart(7)}  ${entry.code}`);
   }
 
   lines.push('', `  wall clock: ${report.wallClockMs}ms`, '', '  caveats:');

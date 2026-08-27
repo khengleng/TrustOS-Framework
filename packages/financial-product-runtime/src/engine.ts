@@ -30,11 +30,7 @@ import {
   executionOutcome,
   type ExecutionState,
 } from '@trustos/financial-product-state-machine';
-import {
-  bindVersion,
-  type PublishedVersion,
-  type VersionBinding,
-} from '@trustos/financial-product-versioning';
+import { bindVersion, type PublishedVersion } from '@trustos/financial-product-versioning';
 import { BlockHandlerRegistry, type BlockOutputs, type BlockResult } from './handlers';
 import {
   InMemoryIdempotencyStore,
@@ -195,7 +191,11 @@ export class ProductRuntime {
     const definition = input.definition ?? input.version.definition;
 
     // --- 4: claim the idempotency key --------------------------------------
-    const hash = requestHash({ ...input.input.attributes, ...input.input.references, ...describeAmount(input.input) });
+    const hash = requestHash({
+      ...input.input.attributes,
+      ...input.input.references,
+      ...describeAmount(input.input),
+    });
     const executionId = newProductId('execution');
 
     if (input.idempotencyKey) {
@@ -505,11 +505,15 @@ export class ProductRuntime {
 
     record.steps.push(step);
 
-    this.metrics.observe('financial_product.block_latency_ms', {
-      product: definition.productId,
-      block: block.blockId,
-      outcome: result.outcome,
-    }, durationMs);
+    this.metrics.observe(
+      'financial_product.block_latency_ms',
+      {
+        product: definition.productId,
+        block: block.blockId,
+        outcome: result.outcome,
+      },
+      durationMs,
+    );
 
     if (result.outcome === 'success') {
       await this.emit(context, PRODUCT_EVENTS.EXECUTION_STEP_COMPLETED, {
@@ -615,9 +619,7 @@ export class ProductRuntime {
       return entryBlock;
     }
 
-    return (
-      definition.transitions.find((transition) => transition.from === START_NODE)?.to ?? null
-    );
+    return definition.transitions.find((transition) => transition.from === START_NODE)?.to ?? null;
   }
 
   /**
@@ -678,11 +680,7 @@ export class ProductRuntime {
       );
     }
 
-    return this.connectors.requireBindable(
-      context.organizationId,
-      connectorId,
-      providerInterface,
-    );
+    return this.connectors.requireBindable(context.organizationId, connectorId, providerInterface);
   }
 
   // --- finishing -----------------------------------------------------------
@@ -729,7 +727,11 @@ export class ProductRuntime {
         : record.outcome === 'refusal'
           ? PRODUCT_AUDIT_ACTIONS.EXECUTION_REFUSED
           : PRODUCT_AUDIT_ACTIONS.EXECUTION_FAILED,
-      record.outcome === 'refusal' ? 'refused' : record.outcome === 'failure' ? 'failed' : 'allowed',
+      record.outcome === 'refusal'
+        ? 'refused'
+        : record.outcome === 'failure'
+          ? 'failed'
+          : 'allowed',
       {
         state: record.state,
         steps: record.steps.length,

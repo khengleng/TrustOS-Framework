@@ -221,7 +221,9 @@ export function projectExecution(record: ExecutionRecord): Record<string, unknow
     productVersion: record.productVersion,
     state: record.state,
     outcome: record.outcome,
-    ...(record.refusal ? { refusalCode: record.refusal.code, refusalReason: record.refusal.reason } : {}),
+    ...(record.refusal
+      ? { refusalCode: record.refusal.code, refusalReason: record.refusal.reason }
+      : {}),
     ...(record.pendingReview ? { pendingReviewLevel: record.pendingReview.level } : {}),
     startedAt: record.startedAt.toISOString(),
     ...(record.finishedAt ? { finishedAt: record.finishedAt.toISOString() } : {}),
@@ -246,7 +248,9 @@ function statusFor(record: ExecutionRecord): number {
 
 function readInput(body: Readonly<Record<string, unknown>>): ExecutionInput {
   return {
-    ...(typeof body.amountMinorUnits === 'string' ? { amountMinorUnits: body.amountMinorUnits } : {}),
+    ...(typeof body.amountMinorUnits === 'string'
+      ? { amountMinorUnits: body.amountMinorUnits }
+      : {}),
     ...(typeof body.currency === 'string' ? { currency: body.currency } : {}),
     ...(typeof body.country === 'string' ? { country: body.country } : {}),
     ...(typeof body.transactionType === 'string' ? { transactionType: body.transactionType } : {}),
@@ -284,7 +288,8 @@ function isScalarRecord(value: unknown): value is Record<string, string | number
     typeof value === 'object' &&
     value !== null &&
     Object.values(value).every(
-      (entry) => typeof entry === 'string' || typeof entry === 'number' || typeof entry === 'boolean',
+      (entry) =>
+        typeof entry === 'string' || typeof entry === 'number' || typeof entry === 'boolean',
     )
   );
 }
@@ -317,7 +322,9 @@ function errorFromRefusal(error: unknown, requestId: string | undefined): Produc
   }
 
   const status =
-    code === 'product_not_found' || code === 'product_version_not_found' || code === 'product_tenant_mismatch'
+    code === 'product_not_found' ||
+    code === 'product_version_not_found' ||
+    code === 'product_tenant_mismatch'
       ? 404
       : code === 'product_idempotency_conflict' || code === 'product_version_binding_broken'
         ? 409

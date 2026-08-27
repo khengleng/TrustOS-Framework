@@ -71,10 +71,10 @@ export function bindVersion(input: {
       input.environment === 'sandbox' ? 'product_sandbox_only' : 'product_not_executable',
       input.environment === 'production'
         ? `Product ${input.version.productId}@${input.version.version} is "${status}". Only an ` +
-          'active product executes in production — a draft that could execute would make every ' +
-          'control above it optional.'
+            'active product executes in production — a draft that could execute would make every ' +
+            'control above it optional.'
         : `Product ${input.version.productId}@${input.version.version} is "${status}" and cannot ` +
-          'be exercised even in the sandbox.',
+            'be exercised even in the sandbox.',
       { productId: input.version.productId, version: input.version.version, actual: status },
     );
   }

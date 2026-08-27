@@ -49,10 +49,7 @@ export interface ResolvedVariant {
   additionalApprovalLevels: string[];
 }
 
-export function resolveVariant(
-  base: ProductDefinition,
-  variant: ProductVariant,
-): ResolvedVariant {
+export function resolveVariant(base: ProductDefinition, variant: ProductVariant): ResolvedVariant {
   if (variant.baseProductId !== base.productId || variant.baseVersion !== base.version) {
     throw productError(
       'product_version_binding_broken',
@@ -88,8 +85,22 @@ export function resolveVariant(
     provenance,
   );
 
-  const fees = mergeById('fees', base.fees, overrides.fees, (fee) => fee.code, variant.variantId, provenance);
-  const limits = mergeById('limits', base.limits, overrides.limits, (limit) => limit.code, variant.variantId, provenance);
+  const fees = mergeById(
+    'fees',
+    base.fees,
+    overrides.fees,
+    (fee) => fee.code,
+    variant.variantId,
+    provenance,
+  );
+  const limits = mergeById(
+    'limits',
+    base.limits,
+    overrides.limits,
+    (limit) => limit.code,
+    variant.variantId,
+    provenance,
+  );
   const providers = mergeById(
     'providers',
     base.providers,
@@ -258,7 +269,11 @@ function mergeRules(
           'product_variant_override_refused',
           `Variant "${variantId}" replaces rule "${rule.id}" with one that no longer refuses or ` +
             'demands review. That is a control removed through a configuration change.',
-          { rule: rule.id, expected: 'deny or require_review', actual: replacement.then.map((outcome) => outcome.kind).join(', ') },
+          {
+            rule: rule.id,
+            expected: 'deny or require_review',
+            actual: replacement.then.map((outcome) => outcome.kind).join(', '),
+          },
         );
       }
     }

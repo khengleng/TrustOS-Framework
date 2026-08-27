@@ -209,7 +209,9 @@ describe('isolation', () => {
   it('runs in the sandbox environment, never in production', async () => {
     const result = await runSandbox({ version: activeVersion(), input: payment });
     // Every audit record carries the execution's own environment through the context.
-    expect(result.audit.every((record) => record.entityType === 'FinancialProductExecution')).toBe(true);
+    expect(result.audit.every((record) => record.entityType === 'FinancialProductExecution')).toBe(
+      true,
+    );
   });
 
   it('starts from a synthetic balance and never reads one from anywhere', async () => {

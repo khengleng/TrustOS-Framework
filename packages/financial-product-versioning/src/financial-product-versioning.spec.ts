@@ -38,7 +38,14 @@ function definition(overrides: Record<string, unknown> = {}): ProductDefinition 
     lifecycleStatus: 'active',
     effectiveDate: '2026-01-01T00:00:00.000Z',
     reviewDate: '2027-01-01T00:00:00.000Z',
-    blocks: [{ key: 'accept-payment', blockId: 'payment.execute', blockVersion: '1.0.0', name: 'Accept payment' }],
+    blocks: [
+      {
+        key: 'accept-payment',
+        blockId: 'payment.execute',
+        blockVersion: '1.0.0',
+        name: 'Accept payment',
+      },
+    ],
     transitions: [
       { from: 'start', to: 'accept-payment', kind: 'always' },
       { from: 'accept-payment', to: 'completed', kind: 'on_success' },
@@ -110,7 +117,11 @@ describe('immutability', () => {
   it('permits an edit while the product is still editable', () => {
     const draft = definition({ lifecycleStatus: 'draft' });
     expect(() =>
-      assertUnpublishedOrIdentical('draft', definitionContentHash(draft), definition({ lifecycleStatus: 'draft', description: 'Changed.' })),
+      assertUnpublishedOrIdentical(
+        'draft',
+        definitionContentHash(draft),
+        definition({ lifecycleStatus: 'draft', description: 'Changed.' }),
+      ),
     ).not.toThrow();
   });
 
@@ -146,7 +157,9 @@ describe('version bumps', () => {
   });
 
   it('treats the minor as the breaking position below 1.0.0', () => {
-    expect(() => assertSufficientBump('0.9.0', '0.9.1', ['apiExposurePolicy'])).toThrow(/minor is the breaking position/);
+    expect(() => assertSufficientBump('0.9.0', '0.9.1', ['apiExposurePolicy'])).toThrow(
+      /minor is the breaking position/,
+    );
     expect(() => assertSufficientBump('0.9.0', '0.10.0', ['apiExposurePolicy'])).not.toThrow();
   });
 
@@ -220,7 +233,9 @@ describe('version binding', () => {
     const binding = bindVersion({ version: published(), environment: 'production', now: NOW });
     const edited: PublishedVersion = { ...published(), contentHash: `sha256:${'0'.repeat(64)}` };
 
-    expect(() => assertBindingIntact(binding, edited)).toThrow(/has changed since this execution started/);
+    expect(() => assertBindingIntact(binding, edited)).toThrow(
+      /has changed since this execution started/,
+    );
   });
 
   it('reports a binding as stale when a newer version is active', () => {
@@ -250,7 +265,9 @@ describe('rollback', () => {
     expect(plan.from).toBe('2.1.0');
     expect(plan.to).toBe('2.0.0');
     expect(plan.isDowngrade).toBe(true);
-    expect(plan.effects.some((effect) => effect.includes('Nothing historical is rewritten'))).toBe(true);
+    expect(plan.effects.some((effect) => effect.includes('Nothing historical is rewritten'))).toBe(
+      true,
+    );
   });
 
   it('does not rewrite historical executions', () => {
@@ -278,7 +295,12 @@ describe('rollback', () => {
     });
 
     try {
-      planRollback({ current, target: unapproved, reason: 'Incident on the live version.', inFlightCount: 0 });
+      planRollback({
+        current,
+        target: unapproved,
+        reason: 'Incident on the live version.',
+        inFlightCount: 0,
+      });
       expect.unreachable('should have refused');
     } catch (error) {
       expect(productErrorCode(error)).toBe('product_approval_required');
@@ -286,12 +308,19 @@ describe('rollback', () => {
   });
 
   it('refuses a rollback with no reason', () => {
-    expect(() => planRollback({ current, target, reason: 'fix', inFlightCount: 0 })).toThrow(/needs a reason/);
+    expect(() => planRollback({ current, target, reason: 'fix', inFlightCount: 0 })).toThrow(
+      /needs a reason/,
+    );
   });
 
   it('refuses a rollback to the version already live', () => {
     expect(() =>
-      planRollback({ current, target: current, reason: 'Trying to roll back to now.', inFlightCount: 0 }),
+      planRollback({
+        current,
+        target: current,
+        reason: 'Trying to roll back to now.',
+        inFlightCount: 0,
+      }),
     ).toThrow(/already live/);
   });
 
@@ -304,7 +333,12 @@ describe('rollback', () => {
     });
 
     try {
-      planRollback({ current, target: otherTenant, reason: 'Incident on the live version.', inFlightCount: 0 });
+      planRollback({
+        current,
+        target: otherTenant,
+        reason: 'Incident on the live version.',
+        inFlightCount: 0,
+      });
       expect.unreachable('should have refused');
     } catch (error) {
       expect(productErrorCode(error)).toBe('product_not_found');

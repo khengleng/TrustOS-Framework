@@ -166,7 +166,9 @@ export function isTerminalExecution(state: ExecutionState): boolean {
  * belongs in — which is the point. A metric that counts refusals as failures reports a product
  * enforcing its limits correctly as a product that is broken.
  */
-export function executionOutcome(state: ExecutionState): 'success' | 'refusal' | 'failure' | 'open' {
+export function executionOutcome(
+  state: ExecutionState,
+): 'success' | 'refusal' | 'failure' | 'open' {
   if (state === 'completed') return 'success';
   if (state === 'refused') return 'refusal';
   if (state === 'failed' || state === 'compensation_failed') return 'failure';

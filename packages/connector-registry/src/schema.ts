@@ -50,7 +50,12 @@ export const CONNECTOR_DATA_CLASSIFICATIONS = [
   'restricted',
 ] as const;
 
-export const CONNECTOR_LIFECYCLE_STATUSES = ['draft', 'approved', 'deprecated', 'withdrawn'] as const;
+export const CONNECTOR_LIFECYCLE_STATUSES = [
+  'draft',
+  'approved',
+  'deprecated',
+  'withdrawn',
+] as const;
 
 /** The same field descriptor shape the block catalog uses, restated so the packages stay independent. */
 export const connectorFieldSchema = z
@@ -68,9 +73,7 @@ const URL_SHAPED = /(https?:\/\/|\bwww\.|:\/\/)/i;
 
 export const connectorDefinitionSchema = z
   .object({
-    connectorId: z
-      .string()
-      .regex(/^[a-z][a-z0-9-]{2,79}$/, 'Lowercase kebab-case.'),
+    connectorId: z.string().regex(/^[a-z][a-z0-9-]{2,79}$/, 'Lowercase kebab-case.'),
     name: z.string().min(1).max(120),
     description: z.string().min(1).max(400),
     version: z.string().regex(/^\d+\.\d+\.\d+$/),

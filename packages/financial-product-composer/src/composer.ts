@@ -128,7 +128,10 @@ export class ProductComposer {
       requiresApproval: input.requiresApproval ?? false,
     });
 
-    if (catalog.providerInterface && !this.providers.some((provider) => provider.providerInterface === catalog.providerInterface)) {
+    if (
+      catalog.providerInterface &&
+      !this.providers.some((provider) => provider.providerInterface === catalog.providerInterface)
+    ) {
       this.providers.push({
         providerInterface: catalog.providerInterface,
         required: true,
@@ -141,7 +144,12 @@ export class ProductComposer {
   }
 
   /** Connects two nodes unconditionally, or on success. */
-  connect(from: string, to: string, kind: 'always' | 'on_success' = 'on_success', description?: string): this {
+  connect(
+    from: string,
+    to: string,
+    kind: 'always' | 'on_success' = 'on_success',
+    description?: string,
+  ): this {
     this.transitions.push({
       from,
       to,
@@ -196,8 +204,14 @@ export class ProductComposer {
    * absence is the point: a composer that accepted `bindProvider('ABA', …)` would be a composer
    * through which vendor names enter product definitions.
    */
-  bindProvider(providerInterface: string, connectorId: string, fallbackConnectorIds: string[] = []): this {
-    const existing = this.providers.find((provider) => provider.providerInterface === providerInterface);
+  bindProvider(
+    providerInterface: string,
+    connectorId: string,
+    fallbackConnectorIds: string[] = [],
+  ): this {
+    const existing = this.providers.find(
+      (provider) => provider.providerInterface === providerInterface,
+    );
 
     if (existing) {
       this.providers[this.providers.indexOf(existing)] = {

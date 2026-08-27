@@ -5,14 +5,8 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "src/**/*.spec.ts",
-    "dist",
-    "node_modules"
-  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
   "references": [
     {
       "path": "../errors"
@@ -28,6 +22,9 @@
     },
     {
       "path": "../financial-product-sandbox"
+    },
+    {
+      "path": "../financial-product-versioning"
     }
   ]
 }

@@ -196,7 +196,9 @@ describe('resolution', () => {
 
   it('distinguishes an unknown block from an unknown version of a known one', () => {
     expect(() => APPROVED_BLOCKS.require('wallet.debit', '9.9.9')).toThrow(/has no version/);
-    expect(() => APPROVED_BLOCKS.require('wallet.nonexistent', '1.0.0')).toThrow(/No approved block/);
+    expect(() => APPROVED_BLOCKS.require('wallet.nonexistent', '1.0.0')).toThrow(
+      /No approved block/,
+    );
   });
 
   it('refuses a duplicate registration', () => {
@@ -219,7 +221,9 @@ describe('resolution', () => {
     expect(() => registry.requireComposable('wallet.draft_block', '1.0.0')).toThrow(/is draft/);
     // Deprecated stays composable: refusing it would break every published product containing
     // it the moment somebody deprecates a block.
-    expect(registry.requireComposable('wallet.old_block', '1.0.0').blockId).toBe('wallet.old_block');
+    expect(registry.requireComposable('wallet.old_block', '1.0.0').blockId).toBe(
+      'wallet.old_block',
+    );
   });
 });
 
@@ -239,12 +243,12 @@ describe('successor patterns', () => {
   it('refuses a successor a money-moving block did not declare', () => {
     // A debit may be followed by a ledger posting or a notification. It may not be followed by
     // another authentication — that ordering is a composition mistake, not a workflow.
-    expect(APPROVED_BLOCKS.transitionAllowed('wallet.debit', '1.0.0', 'ledger.create_journal')).toBe(
-      true,
-    );
-    expect(APPROVED_BLOCKS.transitionAllowed('wallet.debit', '1.0.0', 'identity.authenticate')).toBe(
-      false,
-    );
+    expect(
+      APPROVED_BLOCKS.transitionAllowed('wallet.debit', '1.0.0', 'ledger.create_journal'),
+    ).toBe(true);
+    expect(
+      APPROVED_BLOCKS.transitionAllowed('wallet.debit', '1.0.0', 'identity.authenticate'),
+    ).toBe(false);
   });
 
   it('refuses a transition from a block that does not exist', () => {

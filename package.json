@@ -19,7 +19,7 @@
     "bench:ai": "node scripts/bench-ai.mjs",
     "bench:financial": "node scripts/bench-financial.mjs",
     "build": "npm run build:packages && npm run build:apps",
-    "build:apps": "npm run build -w @trustos/api-example && npm run build -w @trustos/security-admin-example && npm run build -w @trustos/workflow-admin-example && npm run build -w @trustos/saas-starter && npm run build -w @trustos/admin-example",
+    "build:apps": "npm run build -w @trustos/api-example && npm run build -w @trustos/security-admin-example && npm run build -w @trustos/workflow-admin-example && npm run build -w @trustos/saas-starter && npm run build -w @trustos/admin-example && npm run build -w @trustos/financial-product-admin",
     "build:packages": "tsc -b tsconfig.build.json",
     "clean": "tsc -b tsconfig.build.json --clean && rimraf \"packages/*/dist\" \"apps/*/dist\" \"apps/admin-example/.next\" \"templates/*/dist\"",
     "cli": "node packages/cli/bin/trustos.js",
@@ -30,6 +30,7 @@
     "db:validate": "npm run validate -w @trustos/database",
     "dev:admin": "npm run dev -w @trustos/admin-example",
     "dev:api": "npm run dev -w @trustos/api-example",
+    "dev:product-admin": "npm run dev -w @trustos/financial-product-admin",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
     "lint": "eslint .",
@@ -42,7 +43,7 @@
     "test:modules": "vitest run packages/module-sdk packages/module-registry packages/modules",
     "test:tenancy": "vitest run packages/tenancy",
     "test:watch": "vitest",
-    "typecheck": "npm run build:packages && npm run typecheck -w @trustos/api-example && npm run typecheck -w @trustos/security-admin-example && npm run typecheck -w @trustos/workflow-admin-example && npm run typecheck -w @trustos/saas-starter && npm run typecheck -w @trustos/admin-example"
+    "typecheck": "npm run build:packages && npm run typecheck -w @trustos/api-example && npm run typecheck -w @trustos/security-admin-example && npm run typecheck -w @trustos/workflow-admin-example && npm run typecheck -w @trustos/saas-starter && npm run typecheck -w @trustos/admin-example && npm run typecheck -w @trustos/financial-product-admin"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

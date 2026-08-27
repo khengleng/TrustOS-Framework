@@ -5,17 +5,18 @@ import {
   blockCatalogSummary,
   type BlockCategory,
 } from '@trustos/financial-block-registry';
-import { PROVIDER_INTERFACES, PROVIDER_INTERFACE_NAMES, connectorDefinitionSchema } from '@trustos/connector-registry';
+import {
+  PROVIDER_INTERFACES,
+  PROVIDER_INTERFACE_NAMES,
+  connectorDefinitionSchema,
+} from '@trustos/connector-registry';
 import {
   PRODUCT_TEMPLATES,
   findTemplate,
   validateProduct,
   type ValidationFinding,
 } from '@trustos/financial-product-composer';
-import {
-  classifyChange,
-  assessGovernance,
-} from '@trustos/financial-product-governance';
+import { classifyChange, assessGovernance } from '@trustos/financial-product-governance';
 import {
   parseProductDefinition,
   structuralReferenceData,
@@ -105,7 +106,9 @@ async function readDocument(path: string): Promise<{ document: unknown } | { err
   try {
     raw = await readFile(absolute, 'utf8');
   } catch (error) {
-    return { error: `Cannot read ${path}: ${error instanceof Error ? error.message : String(error)}` };
+    return {
+      error: `Cannot read ${path}: ${error instanceof Error ? error.message : String(error)}`,
+    };
   }
 
   try {
@@ -117,10 +120,7 @@ async function readDocument(path: string): Promise<{ document: unknown } | { err
   }
 }
 
-async function readDefinition(
-  path: string,
-  output: Output,
-): Promise<ProductDefinition | null> {
+async function readDefinition(path: string, output: Output): Promise<ProductDefinition | null> {
   const result = await readDocument(path);
 
   if ('error' in result) {
@@ -157,13 +157,15 @@ function printFindings(findings: readonly ValidationFinding[], output: Output): 
 
 export function runProductList(options: ProductCommandOptions, output: Output): number {
   if (options.json) {
-    output.info(json(
-      PRODUCT_TEMPLATES.map((template) => ({
-        id: template.id,
-        name: template.name,
-        description: template.description,
-      })),
-    ));
+    output.info(
+      json(
+        PRODUCT_TEMPLATES.map((template) => ({
+          id: template.id,
+          name: template.name,
+          description: template.description,
+        })),
+      ),
+    );
     return 0;
   }
 
@@ -229,14 +231,16 @@ export async function runProductValidate(
   const governance = assessGovernance(definition, new Date());
 
   if (options.json) {
-    output.info(json({
-      productId: definition.productId,
-      version: definition.version,
-      valid: result.valid,
-      findings: result.findings,
-      executionOrder: result.executionOrder,
-      governance: governance.findings,
-    }));
+    output.info(
+      json({
+        productId: definition.productId,
+        version: definition.version,
+        valid: result.valid,
+        findings: result.findings,
+        executionOrder: result.executionOrder,
+        governance: governance.findings,
+      }),
+    );
     return result.valid ? 0 : 1;
   }
 
@@ -294,7 +298,9 @@ export async function runProductSimulate(
 
   const validation = validateProduct(definition);
   if (!validation.valid) {
-    output.error('The product does not validate. Simulating it would measure a product nobody can run.');
+    output.error(
+      'The product does not validate. Simulating it would measure a product nobody can run.',
+    );
     output.blank();
     printFindings(validation.findings, output);
     return 1;
@@ -368,15 +374,17 @@ export async function runProductPublishPlan(
   ];
 
   if (options.json) {
-    output.info(json({
-      productId: definition.productId,
-      version: definition.version,
-      wouldSucceed: blockers.length === 0,
-      requiredApprovalLevels: classification.requiredApprovalLevels,
-      changedPaths: classification.changedPaths,
-      blockers,
-      wrote: null,
-    }));
+    output.info(
+      json({
+        productId: definition.productId,
+        version: definition.version,
+        wouldSucceed: blockers.length === 0,
+        requiredApprovalLevels: classification.requiredApprovalLevels,
+        changedPaths: classification.changedPaths,
+        blockers,
+        wrote: null,
+      }),
+    );
     return blockers.length === 0 ? 0 : 1;
   }
 
@@ -388,7 +396,9 @@ export async function runProductPublishPlan(
 
   output.info(style.bold('What changed'));
   if (!previous) {
-    output.detail('  A new product. Every field it declares is a change, so every approval applies.');
+    output.detail(
+      '  A new product. Every field it declares is a change, so every approval applies.',
+    );
   } else if (classification.changedPaths.length === 0) {
     output.detail('  Nothing. This version is identical to the previous one.');
   } else {
@@ -456,13 +466,18 @@ export async function runProductVersions(
   });
 
   if (options.json) {
-    output.info(json(
-      sorted.map((definition, index) => ({
-        version: definition.version,
-        lifecycleStatus: definition.lifecycleStatus,
-        ...classifyChange(index === 0 ? null : (sorted[index - 1] as ProductDefinition), definition),
-      })),
-    ));
+    output.info(
+      json(
+        sorted.map((definition, index) => ({
+          version: definition.version,
+          lifecycleStatus: definition.lifecycleStatus,
+          ...classifyChange(
+            index === 0 ? null : (sorted[index - 1] as ProductDefinition),
+            definition,
+          ),
+        })),
+      ),
+    );
     return 0;
   }
 
@@ -492,13 +507,15 @@ export async function runProductRollbackPlan(
   const differences = classifyChange(target, current);
 
   if (options.json) {
-    output.info(json({
-      productId: current.productId,
-      from: current.version,
-      to: target.version,
-      revertedPaths: differences.changedPaths,
-      wrote: null,
-    }));
+    output.info(
+      json({
+        productId: current.productId,
+        from: current.version,
+        to: target.version,
+        revertedPaths: differences.changedPaths,
+        wrote: null,
+      }),
+    );
     return 0;
   }
 
@@ -506,7 +523,9 @@ export async function runProductRollbackPlan(
   output.blank();
   output.warn('  Nothing was written. This is what a rollback would change.');
   output.blank();
-  output.detail(`  New transactions would start on ${target.version} instead of ${current.version}.`);
+  output.detail(
+    `  New transactions would start on ${target.version} instead of ${current.version}.`,
+  );
   output.detail(`  Executions already bound to ${current.version} finish on it.`);
   output.detail('  Completed transactions keep recording the version they ran under.');
   output.detail('  Nothing historical is rewritten.');
@@ -555,7 +574,9 @@ export async function runProductDoctor(
     detail: validation.valid
       ? 'The composition is structurally sound.'
       : `${validation.findings.filter((finding) => finding.severity === 'error').length} error(s).`,
-    ...(validation.valid ? {} : { remediation: 'Run `trustos financial-product validate` for detail.' }),
+    ...(validation.valid
+      ? {}
+      : { remediation: 'Run `trustos financial-product validate` for detail.' }),
   });
 
   const unbound = definition.providers.filter((provider) => !provider.connectorId);
@@ -584,7 +605,9 @@ export async function runProductDoctor(
     detail: testCurrency
       ? 'Still denominated in XTS, the ISO 4217 testing code. This is a template nobody configured.'
       : `Denominated in ${definition.supportedCurrencies.join(', ')}.`,
-    ...(testCurrency ? { remediation: 'Set supportedCurrencies to what this product settles in.' } : {}),
+    ...(testCurrency
+      ? { remediation: 'Set supportedCurrencies to what this product settles in.' }
+      : {}),
   });
 
   /*
@@ -641,7 +664,9 @@ export async function runProductDoctor(
   const ok = !findings.some((finding) => finding.status === 'FAIL');
 
   if (options.json) {
-    output.info(json({ productId: definition.productId, version: definition.version, findings, ok }));
+    output.info(
+      json({ productId: definition.productId, version: definition.version, findings, ok }),
+    );
     return ok ? 0 : 1;
   }
 
@@ -720,13 +745,15 @@ export function runBlockList(options: BlockListOptions, output: Output): number 
 
 export function runConnectorList(options: ProductCommandOptions, output: Output): number {
   if (options.json) {
-    output.info(json(
-      PROVIDER_INTERFACE_NAMES.map((name) => ({
-        providerInterface: name,
-        description: PROVIDER_INTERFACES[name].description,
-        operations: PROVIDER_INTERFACES[name].operations,
-      })),
-    ));
+    output.info(
+      json(
+        PROVIDER_INTERFACE_NAMES.map((name) => ({
+          providerInterface: name,
+          description: PROVIDER_INTERFACES[name].description,
+          operations: PROVIDER_INTERFACES[name].operations,
+        })),
+      ),
+    );
     return 0;
   }
 

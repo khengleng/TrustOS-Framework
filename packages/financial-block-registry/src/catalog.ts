@@ -38,7 +38,8 @@ import { blockDefinitionSchema, type BlockDefinition, type BlockCategory } from 
  * three hundred fields, and the alternative reads as a wall of `{ name: …, type: … }` in which
  * a wrong type is invisible. The zod schema is what checks it; this is only how it is written.
  */
-type FieldSpec = readonly [string, string, string] | readonly [string, string, string, Record<string, unknown>];
+type FieldSpec =
+  readonly [string, string, string] | readonly [string, string, string, Record<string, unknown>];
 
 interface BlockInput {
   id: string;
@@ -90,10 +91,22 @@ function block(category: BlockCategory, input: BlockInput): BlockDefinition {
   });
 }
 
-const MONEY_IN: FieldSpec = ['amount', 'money', 'The transaction amount, as minor units plus currency.'];
-const CUSTOMER_REF: FieldSpec = ['customerRef', 'id', 'Opaque customer reference. Never a name or a document number.'];
+const MONEY_IN: FieldSpec = [
+  'amount',
+  'money',
+  'The transaction amount, as minor units plus currency.',
+];
+const CUSTOMER_REF: FieldSpec = [
+  'customerRef',
+  'id',
+  'Opaque customer reference. Never a name or a document number.',
+];
 const WALLET_REF: FieldSpec = ['walletRef', 'id', 'The wallet this operation acts on.'];
-const IDEMPOTENCY: FieldSpec = ['idempotencyKey', 'string', 'The caller’s key. Scoped to tenant, product and operation.'];
+const IDEMPOTENCY: FieldSpec = [
+  'idempotencyKey',
+  'string',
+  'The caller’s key. Scoped to tenant, product and operation.',
+];
 
 // --- identity ---------------------------------------------------------------
 
@@ -104,7 +117,10 @@ const IDENTITY: BlockDefinition[] = [
     description:
       'Confirms the caller is who the credential says. Never reads an identifier from the request body.',
     inputs: [['credentialRef', 'id', 'A reference to the credential already verified upstream.']],
-    outputs: [['actorRef', 'id', 'The verified actor.'], ['assuranceLevel', 'string', 'How strongly identity was proven.']],
+    outputs: [
+      ['actorRef', 'id', 'The verified actor.'],
+      ['assuranceLevel', 'string', 'How strongly identity was proven.'],
+    ],
     provider: 'IdentityProvider',
     audit: ['identity.authenticated'],
     classification: 'sensitive',
@@ -112,8 +128,12 @@ const IDENTITY: BlockDefinition[] = [
   block('identity', {
     id: 'verify_otp',
     name: 'Verify one-time password',
-    description: 'Confirms possession of a second factor. Refuses on expiry, reuse and attempt exhaustion alike.',
-    inputs: [['challengeRef', 'id', 'The challenge issued earlier.'], ['code', 'string', 'The submitted code.', { pii: false }]],
+    description:
+      'Confirms possession of a second factor. Refuses on expiry, reuse and attempt exhaustion alike.',
+    inputs: [
+      ['challengeRef', 'id', 'The challenge issued earlier.'],
+      ['code', 'string', 'The submitted code.', { pii: false }],
+    ],
     outputs: [['verified', 'boolean', 'Whether the factor was proven.']],
     provider: 'IdentityProvider',
     audit: ['identity.otp_verified', 'identity.otp_refused'],
@@ -125,7 +145,14 @@ const IDENTITY: BlockDefinition[] = [
     description:
       'Resolves the customer’s verification level. Returns a level, never the underlying documents.',
     inputs: [CUSTOMER_REF],
-    outputs: [['kycLevel', 'reference', 'The verification level reached.', { referenceDomain: 'riskLevel' }]],
+    outputs: [
+      [
+        'kycLevel',
+        'reference',
+        'The verification level reached.',
+        { referenceDomain: 'riskLevel' },
+      ],
+    ],
     provider: 'KycProvider',
     audit: ['identity.kyc_checked'],
     classification: 'sensitive',
@@ -133,10 +160,16 @@ const IDENTITY: BlockDefinition[] = [
   block('identity', {
     id: 'customer_lookup',
     name: 'Customer lookup',
-    description: 'Resolves a customer reference to their status and type. Tenant-scoped by construction.',
+    description:
+      'Resolves a customer reference to their status and type. Tenant-scoped by construction.',
     inputs: [CUSTOMER_REF],
     outputs: [
-      ['customerType', 'reference', 'Individual, merchant, agent or partner.', { referenceDomain: 'customerType' }],
+      [
+        'customerType',
+        'reference',
+        'Individual, merchant, agent or partner.',
+        { referenceDomain: 'customerType' },
+      ],
       ['status', 'string', 'Active, suspended or closed.'],
     ],
     permissions: ['financial.product.execute'],
@@ -147,13 +180,17 @@ const IDENTITY: BlockDefinition[] = [
     name: 'Customer eligibility',
     description: 'Decides whether this customer may hold this product, against declared criteria.',
     inputs: [CUSTOMER_REF],
-    outputs: [['eligible', 'boolean', 'Whether the customer qualifies.'], ['reasonCode', 'string', 'Why not, when not.']],
+    outputs: [
+      ['eligible', 'boolean', 'Whether the customer qualifies.'],
+      ['reasonCode', 'string', 'Why not, when not.'],
+    ],
     configuration: [['criteria', 'string', 'The eligibility rule set this product applies.']],
   }),
   block('identity', {
     id: 'consent_check',
     name: 'Consent check',
-    description: 'Confirms an active consent covers this processing. A missing consent is a refusal, not a warning.',
+    description:
+      'Confirms an active consent covers this processing. A missing consent is a refusal, not a warning.',
     inputs: [CUSTOMER_REF, ['purpose', 'string', 'What the data is being used for.']],
     outputs: [['granted', 'boolean', 'Whether consent covers the purpose.']],
     audit: ['identity.consent_checked'],
@@ -175,8 +212,12 @@ const WALLET: BlockDefinition[] = [
   block('wallet', {
     id: 'create',
     name: 'Create wallet',
-    description: 'Opens a wallet as a view over ledger accounts. A wallet never carries its own balance column.',
-    inputs: [CUSTOMER_REF, ['currency', 'string', 'The wallet currency. One wallet, one currency.']],
+    description:
+      'Opens a wallet as a view over ledger accounts. A wallet never carries its own balance column.',
+    inputs: [
+      CUSTOMER_REF,
+      ['currency', 'string', 'The wallet currency. One wallet, one currency.'],
+    ],
     outputs: [WALLET_REF],
     permissions: ['financial.product.execute'],
     next: ['wallet.activate', 'limit.*', 'notification.*'],
@@ -186,7 +227,8 @@ const WALLET: BlockDefinition[] = [
   block('wallet', {
     id: 'activate',
     name: 'Activate wallet',
-    description: 'Makes a wallet usable. Separate from creation so a wallet can exist while checks finish.',
+    description:
+      'Makes a wallet usable. Separate from creation so a wallet can exist while checks finish.',
     inputs: [WALLET_REF],
     outputs: [['status', 'string', 'The wallet status after activation.']],
     audit: ['wallet.activated'],
@@ -194,8 +236,12 @@ const WALLET: BlockDefinition[] = [
   block('wallet', {
     id: 'freeze',
     name: 'Freeze wallet',
-    description: 'Stops movement without closing. Existing holds stand; new debits and credits are refused.',
-    inputs: [WALLET_REF, ['reasonCode', 'string', 'Why. Recorded, and shown to whoever unfreezes.']],
+    description:
+      'Stops movement without closing. Existing holds stand; new debits and credits are refused.',
+    inputs: [
+      WALLET_REF,
+      ['reasonCode', 'string', 'Why. Recorded, and shown to whoever unfreezes.'],
+    ],
     outputs: [['status', 'string', 'The wallet status after freezing.']],
     audit: ['wallet.frozen'],
     classification: 'sensitive',
@@ -224,7 +270,8 @@ const WALLET: BlockDefinition[] = [
   block('wallet', {
     id: 'hold_funds',
     name: 'Hold funds',
-    description: 'Reserves against the available balance. The reservation, not the check, is what closes the race.',
+    description:
+      'Reserves against the available balance. The reservation, not the check, is what closes the race.',
     inputs: [WALLET_REF, MONEY_IN, IDEMPOTENCY],
     outputs: [['holdRef', 'id', 'The reservation.']],
     after: ['limit'],
@@ -235,7 +282,8 @@ const WALLET: BlockDefinition[] = [
   block('wallet', {
     id: 'release_hold',
     name: 'Release hold',
-    description: 'Returns reserved funds to available. Releasing a hold that was already captured is refused.',
+    description:
+      'Returns reserved funds to available. Releasing a hold that was already captured is refused.',
     inputs: [['holdRef', 'id', 'The reservation to release.'], IDEMPOTENCY],
     outputs: [['released', 'money', 'What returned to available.']],
     after: ['wallet'],
@@ -245,7 +293,8 @@ const WALLET: BlockDefinition[] = [
   block('wallet', {
     id: 'debit',
     name: 'Debit wallet',
-    description: 'Moves money out. Posts through the ledger; the wallet balance is derived, never written.',
+    description:
+      'Moves money out. Posts through the ledger; the wallet balance is derived, never written.',
     inputs: [WALLET_REF, MONEY_IN, IDEMPOTENCY],
     outputs: [['journalRef', 'id', 'The journal that recorded it.']],
     after: ['limit'],
@@ -258,7 +307,8 @@ const WALLET: BlockDefinition[] = [
   block('wallet', {
     id: 'credit',
     name: 'Credit wallet',
-    description: 'Moves money in. A customer wallet is a liability: crediting it increases what the business owes.',
+    description:
+      'Moves money in. A customer wallet is a liability: crediting it increases what the business owes.',
     inputs: [WALLET_REF, MONEY_IN, IDEMPOTENCY],
     outputs: [['journalRef', 'id', 'The journal that recorded it.']],
     after: ['limit'],
@@ -276,9 +326,13 @@ const PAYMENT: BlockDefinition[] = [
   block('payment', {
     id: 'create',
     name: 'Create payment',
-    description: 'Records a claim on a payer. Every payment request expires; one that does not is a claim forever.',
+    description:
+      'Records a claim on a payer. Every payment request expires; one that does not is a claim forever.',
     inputs: [MONEY_IN, ['payerRef', 'id', 'Who is being asked to pay.'], IDEMPOTENCY],
-    outputs: [['paymentRef', 'id', 'The payment request.'], ['expiresAt', 'timestamp', 'When the claim lapses.']],
+    outputs: [
+      ['paymentRef', 'id', 'The payment request.'],
+      ['expiresAt', 'timestamp', 'When the claim lapses.'],
+    ],
     next: ['payment.authorize', 'payment.execute', 'payment.cancel', 'risk.*'],
     audit: ['payment.created'],
   }),
@@ -297,7 +351,8 @@ const PAYMENT: BlockDefinition[] = [
   block('payment', {
     id: 'execute',
     name: 'Execute payment',
-    description: 'Captures. The step where money actually moves, and the one every control above exists to gate.',
+    description:
+      'Captures. The step where money actually moves, and the one every control above exists to gate.',
     inputs: [['paymentRef', 'id', 'The payment to capture.'], IDEMPOTENCY],
     outputs: [['transactionRef', 'id', 'The resulting transaction.']],
     provider: 'PaymentProvider',
@@ -311,7 +366,8 @@ const PAYMENT: BlockDefinition[] = [
   block('payment', {
     id: 'verify',
     name: 'Verify payment',
-    description: 'Confirms with the counterparty that a payment landed. Read-only, and safe to repeat.',
+    description:
+      'Confirms with the counterparty that a payment landed. Read-only, and safe to repeat.',
     inputs: [['paymentRef', 'id', 'The payment to verify.']],
     outputs: [['status', 'string', 'The counterparty’s view of the payment.']],
     provider: 'PaymentProvider',
@@ -343,7 +399,8 @@ const PAYMENT: BlockDefinition[] = [
   block('payment', {
     id: 'query_status',
     name: 'Query payment status',
-    description: 'Reads current status. Present so a workflow can poll without a block that moves anything.',
+    description:
+      'Reads current status. Present so a workflow can poll without a block that moves anything.',
     inputs: [['paymentRef', 'id', 'The payment to read.']],
     outputs: [['status', 'string', 'Current status.']],
   }),
@@ -351,12 +408,22 @@ const PAYMENT: BlockDefinition[] = [
 
 // --- transfer ---------------------------------------------------------------
 
-function transferBlock(id: string, name: string, description: string, next: string[]): BlockDefinition {
+function transferBlock(
+  id: string,
+  name: string,
+  description: string,
+  next: string[],
+): BlockDefinition {
   return block('transfer', {
     id,
     name,
     description,
-    inputs: [['fromRef', 'id', 'The debited position.'], ['toRef', 'id', 'The credited position.'], MONEY_IN, IDEMPOTENCY],
+    inputs: [
+      ['fromRef', 'id', 'The debited position.'],
+      ['toRef', 'id', 'The credited position.'],
+      MONEY_IN,
+      IDEMPOTENCY,
+    ],
     outputs: [['transactionRef', 'id', 'The resulting transaction.']],
     provider: 'PaymentProvider',
     after: ['limit', 'risk'],
@@ -371,11 +438,36 @@ function transferBlock(id: string, name: string, description: string, next: stri
 const LEDGER_NEXT = ['ledger.*', 'fee.*', 'settlement.*', 'reconciliation.*', 'notification.*'];
 
 const TRANSFER: BlockDefinition[] = [
-  transferBlock('p2p', 'Person to person transfer', 'Moves value between two wallets on the platform.', LEDGER_NEXT),
-  transferBlock('wallet_to_bank', 'Wallet to bank', 'Moves value out to an external account through a provider interface.', LEDGER_NEXT),
-  transferBlock('bank_to_wallet', 'Bank to wallet', 'Moves value in from an external account through a provider interface.', LEDGER_NEXT),
-  transferBlock('merchant_payment', 'Merchant payment', 'Moves value from a customer position to a merchant position.', LEDGER_NEXT),
-  transferBlock('payout', 'Payout', 'Moves value from a platform position to a beneficiary.', LEDGER_NEXT),
+  transferBlock(
+    'p2p',
+    'Person to person transfer',
+    'Moves value between two wallets on the platform.',
+    LEDGER_NEXT,
+  ),
+  transferBlock(
+    'wallet_to_bank',
+    'Wallet to bank',
+    'Moves value out to an external account through a provider interface.',
+    LEDGER_NEXT,
+  ),
+  transferBlock(
+    'bank_to_wallet',
+    'Bank to wallet',
+    'Moves value in from an external account through a provider interface.',
+    LEDGER_NEXT,
+  ),
+  transferBlock(
+    'merchant_payment',
+    'Merchant payment',
+    'Moves value from a customer position to a merchant position.',
+    LEDGER_NEXT,
+  ),
+  transferBlock(
+    'payout',
+    'Payout',
+    'Moves value from a platform position to a beneficiary.',
+    LEDGER_NEXT,
+  ),
   block('transfer', {
     id: 'bulk',
     name: 'Bulk transfer',
@@ -403,7 +495,14 @@ const LEDGER: BlockDefinition[] = [
     name: 'Create journal',
     description:
       'Posts a balanced journal. Debits equal credits per currency before anything posts, and never net across currencies.',
-    inputs: [['entries', 'string', 'The entry set, each with an account, a direction and a positive amount.'], IDEMPOTENCY],
+    inputs: [
+      [
+        'entries',
+        'string',
+        'The entry set, each with an account, a direction and a positive amount.',
+      ],
+      IDEMPOTENCY,
+    ],
     outputs: [['journalRef', 'id', 'The posted journal.']],
     after: ['limit'],
     effect: 'moves',
@@ -425,7 +524,8 @@ const LEDGER: BlockDefinition[] = [
   block('ledger', {
     id: 'credit_account',
     name: 'Credit account',
-    description: 'The other side. A journal containing only one of these will not balance and will not post.',
+    description:
+      'The other side. A journal containing only one of these will not balance and will not post.',
     inputs: [['accountRef', 'id', 'The account.'], MONEY_IN],
     outputs: [['entryRef', 'id', 'The entry.']],
     after: ['limit'],
@@ -438,7 +538,11 @@ const LEDGER: BlockDefinition[] = [
     name: 'Reverse journal',
     description:
       'Corrects by posting the opposite journal. The original stands — there is no update and no delete, here or in the database.',
-    inputs: [['journalRef', 'id', 'The journal to reverse.'], ['reasonCode', 'string', 'Why.'], IDEMPOTENCY],
+    inputs: [
+      ['journalRef', 'id', 'The journal to reverse.'],
+      ['reasonCode', 'string', 'Why.'],
+      IDEMPOTENCY,
+    ],
     outputs: [['reversalRef', 'id', 'The reversing journal.']],
     after: ['ledger'],
     effect: 'moves',
@@ -450,15 +554,24 @@ const LEDGER: BlockDefinition[] = [
   block('ledger', {
     id: 'verify_balance',
     name: 'Verify balance',
-    description: 'Recomputes a balance from entries and compares. The check that catches a ledger that has drifted.',
+    description:
+      'Recomputes a balance from entries and compares. The check that catches a ledger that has drifted.',
     inputs: [['accountRef', 'id', 'The account.']],
-    outputs: [['balanced', 'boolean', 'Whether the recomputation agrees.'], ['difference', 'money', 'By how much, when it does not.']],
+    outputs: [
+      ['balanced', 'boolean', 'Whether the recomputation agrees.'],
+      ['difference', 'money', 'By how much, when it does not.'],
+    ],
   }),
 ];
 
 // --- fee --------------------------------------------------------------------
 
-function feeBlock(id: string, name: string, description: string, configuration: BlockInput['configuration']): BlockDefinition {
+function feeBlock(
+  id: string,
+  name: string,
+  description: string,
+  configuration: BlockInput['configuration'],
+): BlockDefinition {
   return block('fee', {
     id,
     name,
@@ -466,7 +579,11 @@ function feeBlock(id: string, name: string, description: string, configuration: 
     inputs: [MONEY_IN],
     outputs: [
       ['fee', 'money', 'The computed fee.'],
-      ['workings', 'string', 'How it was reached. Present so "why is this 2.47" has an answer nobody re-derives.'],
+      [
+        'workings',
+        'string',
+        'How it was reached. Present so "why is this 2.47" has an answer nobody re-derives.',
+      ],
     ],
     configuration,
     next: ['ledger.*', 'wallet.*', 'payment.*', 'transfer.*', 'settlement.*'],
@@ -477,25 +594,39 @@ const FEE: BlockDefinition[] = [
   feeBlock('flat', 'Flat fee', 'A fixed amount, independent of the transaction value.', [
     ['amount', 'money', 'The fee charged.'],
   ]),
-  feeBlock('percentage', 'Percentage fee', 'A proportion of the transaction. The rate is an integer of hundredths of a basis point, never a float.', [
-    ['rate', 'rate', 'Hundredths of a basis point. 0.5% is 5000.'],
-  ]),
-  feeBlock('tiered', 'Tiered fee', 'A rate that changes by band. Bands ascend, and the first match wins.', [
-    ['tiers', 'string', 'Ascending bands, each with a lower bound and a rate or amount.'],
-  ]),
+  feeBlock(
+    'percentage',
+    'Percentage fee',
+    'A proportion of the transaction. The rate is an integer of hundredths of a basis point, never a float.',
+    [['rate', 'rate', 'Hundredths of a basis point. 0.5% is 5000.']],
+  ),
+  feeBlock(
+    'tiered',
+    'Tiered fee',
+    'A rate that changes by band. Bands ascend, and the first match wins.',
+    [['tiers', 'string', 'Ascending bands, each with a lower bound and a rate or amount.']],
+  ),
   feeBlock('minimum', 'Minimum fee', 'A floor applied after the base calculation.', [
     ['floor', 'money', 'The smallest fee that may be charged.'],
   ]),
   feeBlock('maximum', 'Maximum fee', 'A cap applied after the base calculation.', [
     ['cap', 'money', 'The largest fee that may be charged.'],
   ]),
-  feeBlock('waiver', 'Fee waiver', 'Removes a fee that would otherwise apply, and records that it was waived rather than never charged.', [
-    ['reasonCode', 'string', 'Why the fee was waived.'],
-  ]),
-  feeBlock('promotional', 'Promotional fee', 'A time-boxed override. Expires by date; a promotion with no end never ends.', [
-    ['rate', 'rate', 'The promotional rate.'],
-    ['endsAt', 'timestamp', 'When the promotion stops applying.'],
-  ]),
+  feeBlock(
+    'waiver',
+    'Fee waiver',
+    'Removes a fee that would otherwise apply, and records that it was waived rather than never charged.',
+    [['reasonCode', 'string', 'Why the fee was waived.']],
+  ),
+  feeBlock(
+    'promotional',
+    'Promotional fee',
+    'A time-boxed override. Expires by date; a promotion with no end never ends.',
+    [
+      ['rate', 'rate', 'The promotional rate.'],
+      ['endsAt', 'timestamp', 'When the promotion stops applying.'],
+    ],
+  ),
   block('fee', {
     id: 'revenue_share',
     name: 'Revenue share',
@@ -520,21 +651,57 @@ function limitBlock(id: string, name: string, description: string): BlockDefinit
       ['allowed', 'boolean', 'Whether the amount fits.'],
       ['remaining', 'money', 'What is left in the window after consumption.'],
     ],
-    configuration: [['limitCode', 'reference', 'Which configured limit applies.', { referenceDomain: 'limitType' }]],
+    configuration: [
+      [
+        'limitCode',
+        'reference',
+        'Which configured limit applies.',
+        { referenceDomain: 'limitType' },
+      ],
+    ],
     after: ['identity'],
     effect: 'reserves',
-    next: ['wallet.*', 'payment.*', 'transfer.*', 'ledger.*', 'lending.*', 'loyalty.*', 'fee.*', 'risk.*'],
+    next: [
+      'wallet.*',
+      'payment.*',
+      'transfer.*',
+      'ledger.*',
+      'lending.*',
+      'loyalty.*',
+      'fee.*',
+      'risk.*',
+    ],
     audit: ['limit.consumed', 'limit.refused'],
   });
 }
 
 const LIMIT: BlockDefinition[] = [
-  limitBlock('transaction', 'Transaction limit', 'The largest single amount. Checked and consumed in one step, because checking and then posting reopens the race.'),
-  limitBlock('daily', 'Daily limit', 'Cumulative within a calendar day in the tenant’s time zone — never the server’s, or a customer is refused at 00:30 for yesterday.'),
+  limitBlock(
+    'transaction',
+    'Transaction limit',
+    'The largest single amount. Checked and consumed in one step, because checking and then posting reopens the race.',
+  ),
+  limitBlock(
+    'daily',
+    'Daily limit',
+    'Cumulative within a calendar day in the tenant’s time zone — never the server’s, or a customer is refused at 00:30 for yesterday.',
+  ),
   limitBlock('monthly', 'Monthly limit', 'Cumulative within a calendar month.'),
-  limitBlock('velocity', 'Velocity limit', 'A count within a rolling window. Catches the pattern an amount limit does not.'),
-  limitBlock('wallet_balance', 'Wallet balance limit', 'The largest balance a wallet may hold. Refuses the credit that would breach it.'),
-  limitBlock('product', 'Product limit', 'A ceiling across every customer of one product. The one that protects the platform rather than the customer.'),
+  limitBlock(
+    'velocity',
+    'Velocity limit',
+    'A count within a rolling window. Catches the pattern an amount limit does not.',
+  ),
+  limitBlock(
+    'wallet_balance',
+    'Wallet balance limit',
+    'The largest balance a wallet may hold. Refuses the credit that would breach it.',
+  ),
+  limitBlock(
+    'product',
+    'Product limit',
+    'A ceiling across every customer of one product. The one that protects the platform rather than the customer.',
+  ),
 ];
 
 // --- settlement -------------------------------------------------------------
@@ -543,7 +710,8 @@ const SETTLEMENT: BlockDefinition[] = [
   block('settlement', {
     id: 'create',
     name: 'Create settlement',
-    description: 'Records an obligation to move money to a counterparty. Money leaves and lands in transit.',
+    description:
+      'Records an obligation to move money to a counterparty. Money leaves and lands in transit.',
     inputs: [['counterpartyRef', 'id', 'Who is owed.'], MONEY_IN, IDEMPOTENCY],
     outputs: [['settlementRef', 'id', 'The settlement.']],
     after: ['ledger'],
@@ -555,9 +723,16 @@ const SETTLEMENT: BlockDefinition[] = [
   block('settlement', {
     id: 'create_batch',
     name: 'Create settlement batch',
-    description: 'Groups settlements for one window. The batch is what a counterparty reconciles against.',
-    inputs: [['windowStart', 'timestamp', 'Window opening.'], ['windowEnd', 'timestamp', 'Window closing.']],
-    outputs: [['batchRef', 'id', 'The batch.'], ['total', 'money', 'The batch total.']],
+    description:
+      'Groups settlements for one window. The batch is what a counterparty reconciles against.',
+    inputs: [
+      ['windowStart', 'timestamp', 'Window opening.'],
+      ['windowEnd', 'timestamp', 'Window closing.'],
+    ],
+    outputs: [
+      ['batchRef', 'id', 'The batch.'],
+      ['total', 'money', 'The batch total.'],
+    ],
     next: ['settlement.execute', 'settlement.status'],
     audit: ['settlement.batch_created'],
   }),
@@ -578,7 +753,8 @@ const SETTLEMENT: BlockDefinition[] = [
   block('settlement', {
     id: 'status',
     name: 'Settlement status',
-    description: 'Reads where an instruction has reached. Safe to repeat, and the normal way a window is watched.',
+    description:
+      'Reads where an instruction has reached. Safe to repeat, and the normal way a window is watched.',
     inputs: [['instructionRef', 'id', 'The instruction.']],
     outputs: [['status', 'string', 'Where it has reached.']],
     provider: 'SettlementProvider',
@@ -587,7 +763,12 @@ const SETTLEMENT: BlockDefinition[] = [
     id: 'adjustment',
     name: 'Settlement adjustment',
     description: 'Corrects a settled amount by posting a new movement. Never by editing the batch.',
-    inputs: [['settlementRef', 'id', 'What is being adjusted.'], MONEY_IN, ['reasonCode', 'string', 'Why.'], IDEMPOTENCY],
+    inputs: [
+      ['settlementRef', 'id', 'What is being adjusted.'],
+      MONEY_IN,
+      ['reasonCode', 'string', 'Why.'],
+      IDEMPOTENCY,
+    ],
     outputs: [['adjustmentRef', 'id', 'The adjustment.']],
     after: ['settlement'],
     effect: 'moves',
@@ -602,7 +783,10 @@ const SETTLEMENT: BlockDefinition[] = [
     description:
       'Closes a window so nothing further posts into it. Refuses while reconciliation exceptions are open, when the policy says so.',
     inputs: [['batchRef', 'id', 'The batch to close.']],
-    outputs: [['closed', 'boolean', 'Whether the window closed.'], ['blockingExceptions', 'integer', 'What is holding it open.']],
+    outputs: [
+      ['closed', 'boolean', 'Whether the window closed.'],
+      ['blockingExceptions', 'integer', 'What is holding it open.'],
+    ],
     after: ['reconciliation'],
     audit: ['settlement.closed'],
   }),
@@ -617,15 +801,22 @@ const RECONCILIATION: BlockDefinition[] = [
     description:
       'Matches by reference first, then by amount and date within tolerance. Amount-only matching pairs two unrelated payments and reports a clean reconciliation.',
     inputs: [['statementRef', 'id', 'The external record.']],
-    outputs: [['matched', 'boolean', 'Whether a counterpart was found.'], ['transactionRef', 'id', 'What it matched.']],
+    outputs: [
+      ['matched', 'boolean', 'Whether a counterpart was found.'],
+      ['transactionRef', 'id', 'What it matched.'],
+    ],
     next: ['reconciliation.identify_exception', 'reconciliation.report', 'settlement.close'],
   }),
   block('reconciliation', {
     id: 'identify_exception',
     name: 'Identify exception',
-    description: 'Classifies a difference: missing here, missing there, amount differs, duplicated.',
+    description:
+      'Classifies a difference: missing here, missing there, amount differs, duplicated.',
     inputs: [['statementRef', 'id', 'The unmatched record.']],
-    outputs: [['exceptionType', 'string', 'The classification.'], ['difference', 'money', 'By how much.']],
+    outputs: [
+      ['exceptionType', 'string', 'The classification.'],
+      ['difference', 'money', 'By how much.'],
+    ],
     next: ['reconciliation.queue_exception'],
   }),
   block('reconciliation', {
@@ -640,8 +831,12 @@ const RECONCILIATION: BlockDefinition[] = [
   block('reconciliation', {
     id: 'resolve_exception',
     name: 'Resolve exception',
-    description: 'Records how a difference was settled, and by whom. Resolution is a decision, so it is audited as one.',
-    inputs: [['exceptionRef', 'id', 'The exception.'], ['resolutionCode', 'string', 'How it was resolved.']],
+    description:
+      'Records how a difference was settled, and by whom. Resolution is a decision, so it is audited as one.',
+    inputs: [
+      ['exceptionRef', 'id', 'The exception.'],
+      ['resolutionCode', 'string', 'How it was resolved.'],
+    ],
     outputs: [['resolved', 'boolean', 'Whether it closed.']],
     permissions: ['financial.product.execute'],
     audit: ['reconciliation.exception_resolved'],
@@ -651,7 +846,10 @@ const RECONCILIATION: BlockDefinition[] = [
     id: 'report',
     name: 'Generate reconciliation report',
     description: 'Summarises a window: matched, unmatched, exceptions open and their ages.',
-    inputs: [['windowStart', 'timestamp', 'Window opening.'], ['windowEnd', 'timestamp', 'Window closing.']],
+    inputs: [
+      ['windowStart', 'timestamp', 'Window opening.'],
+      ['windowEnd', 'timestamp', 'Window closing.'],
+    ],
     outputs: [['reportRef', 'id', 'The generated report.']],
   }),
 ];
@@ -662,9 +860,13 @@ const LENDING: BlockDefinition[] = [
   block('lending', {
     id: 'check_eligibility',
     name: 'Check eligibility',
-    description: 'Decides whether a borrower may be offered credit under this product’s declared criteria.',
+    description:
+      'Decides whether a borrower may be offered credit under this product’s declared criteria.',
     inputs: [CUSTOMER_REF, MONEY_IN],
-    outputs: [['eligible', 'boolean', 'Whether to proceed.'], ['reasonCode', 'string', 'Why not, when not.']],
+    outputs: [
+      ['eligible', 'boolean', 'Whether to proceed.'],
+      ['reasonCode', 'string', 'Why not, when not.'],
+    ],
     after: ['identity'],
     classification: 'sensitive',
   }),
@@ -674,16 +876,23 @@ const LENDING: BlockDefinition[] = [
     description:
       'The seam where a credit decision comes from outside. The framework ships no scoring model — one shipped here would be a wrong one everybody believed.',
     inputs: [CUSTOMER_REF],
-    outputs: [['score', 'integer', 'The returned score.'], ['band', 'string', 'The band the provider assigned.']],
+    outputs: [
+      ['score', 'integer', 'The returned score.'],
+      ['band', 'string', 'The band the provider assigned.'],
+    ],
     provider: 'CreditProvider',
     classification: 'restricted',
   }),
   block('lending', {
     id: 'loan_offer',
     name: 'Loan offer',
-    description: 'Produces a priced offer with an expiry. An offer with no expiry is a price guaranteed forever.',
+    description:
+      'Produces a priced offer with an expiry. An offer with no expiry is a price guaranteed forever.',
     inputs: [CUSTOMER_REF, MONEY_IN],
-    outputs: [['offerRef', 'id', 'The offer.'], ['expiresAt', 'timestamp', 'When the price lapses.']],
+    outputs: [
+      ['offerRef', 'id', 'The offer.'],
+      ['expiresAt', 'timestamp', 'When the price lapses.'],
+    ],
     next: ['lending.repayment_schedule', 'lending.disburse', 'risk.*'],
     audit: ['lending.offer_made'],
     classification: 'sensitive',
@@ -691,17 +900,28 @@ const LENDING: BlockDefinition[] = [
   block('lending', {
     id: 'calculate_interest',
     name: 'Calculate interest',
-    description: 'Computes interest for a period with an explicit day-count and rounding. Never floating point.',
-    inputs: [['principal', 'money', 'The outstanding principal.'], ['days', 'integer', 'The period.']],
-    outputs: [['interest', 'money', 'The computed interest.'], ['workings', 'string', 'The day-count and rate used.']],
+    description:
+      'Computes interest for a period with an explicit day-count and rounding. Never floating point.',
+    inputs: [
+      ['principal', 'money', 'The outstanding principal.'],
+      ['days', 'integer', 'The period.'],
+    ],
+    outputs: [
+      ['interest', 'money', 'The computed interest.'],
+      ['workings', 'string', 'The day-count and rate used.'],
+    ],
     configuration: [['rate', 'rate', 'The annual rate, in hundredths of a basis point.']],
   }),
   block('lending', {
     id: 'repayment_schedule',
     name: 'Generate repayment schedule',
-    description: 'Produces instalments that sum back to principal plus interest exactly. The remainder lands on a stated instalment.',
+    description:
+      'Produces instalments that sum back to principal plus interest exactly. The remainder lands on a stated instalment.',
     inputs: [['offerRef', 'id', 'The accepted offer.']],
-    outputs: [['scheduleRef', 'id', 'The schedule.'], ['instalmentCount', 'integer', 'How many.']],
+    outputs: [
+      ['scheduleRef', 'id', 'The schedule.'],
+      ['instalmentCount', 'integer', 'How many.'],
+    ],
     next: ['lending.disburse'],
   }),
   block('lending', {
@@ -709,7 +929,10 @@ const LENDING: BlockDefinition[] = [
     name: 'Disburse',
     description: 'Moves the principal to the borrower. The point at which the platform is exposed.',
     inputs: [['offerRef', 'id', 'The accepted offer.'], MONEY_IN, IDEMPOTENCY],
-    outputs: [['loanRef', 'id', 'The loan.'], ['transactionRef', 'id', 'The disbursement.']],
+    outputs: [
+      ['loanRef', 'id', 'The loan.'],
+      ['transactionRef', 'id', 'The disbursement.'],
+    ],
     after: ['limit', 'risk'],
     effect: 'moves',
     compensatedBy: 'ledger.reverse_journal',
@@ -720,9 +943,13 @@ const LENDING: BlockDefinition[] = [
   block('lending', {
     id: 'repay',
     name: 'Repay',
-    description: 'Applies a repayment against the schedule in a declared order — penalty, interest, principal, or as configured.',
+    description:
+      'Applies a repayment against the schedule in a declared order — penalty, interest, principal, or as configured.',
     inputs: [['loanRef', 'id', 'The loan.'], MONEY_IN, IDEMPOTENCY],
-    outputs: [['appliedTo', 'string', 'How the payment was allocated.'], ['outstanding', 'money', 'What remains.']],
+    outputs: [
+      ['appliedTo', 'string', 'How the payment was allocated.'],
+      ['outstanding', 'money', 'What remains.'],
+    ],
     after: ['limit'],
     effect: 'moves',
     compensatedBy: 'ledger.reverse_journal',
@@ -733,7 +960,10 @@ const LENDING: BlockDefinition[] = [
     id: 'apply_penalty',
     name: 'Apply penalty',
     description: 'Charges for a missed instalment, under a declared and capped policy.',
-    inputs: [['loanRef', 'id', 'The loan.'], ['daysLate', 'integer', 'How late.']],
+    inputs: [
+      ['loanRef', 'id', 'The loan.'],
+      ['daysLate', 'integer', 'How late.'],
+    ],
     outputs: [['penalty', 'money', 'The charge.']],
     after: ['lending'],
     effect: 'moves',
@@ -756,7 +986,12 @@ const LENDING: BlockDefinition[] = [
 
 // --- risk -------------------------------------------------------------------
 
-function riskCheck(id: string, name: string, description: string, classification: 'sensitive' | 'restricted'): BlockDefinition {
+function riskCheck(
+  id: string,
+  name: string,
+  description: string,
+  classification: 'sensitive' | 'restricted',
+): BlockDefinition {
   return block('risk', {
     id,
     name,
@@ -774,16 +1009,40 @@ function riskCheck(id: string, name: string, description: string, classification
 }
 
 const RISK: BlockDefinition[] = [
-  riskCheck('aml_check', 'AML check', 'Screens against the deployment’s anti-money-laundering rules through a provider interface. The framework ships no rule set and no list.', 'restricted'),
-  riskCheck('fraud_check', 'Fraud check', 'Scores the transaction for fraud through a provider interface. A score, never a verdict this layer invents.', 'sensitive'),
-  riskCheck('sanctions_check', 'Sanctions check', 'Screens against sanctions lists a deployment licenses. Shipping a list here would produce deployments that believed they were screened.', 'restricted'),
-  riskCheck('pep_check', 'PEP check', 'Screens for politically exposed persons through a provider interface.', 'restricted'),
+  riskCheck(
+    'aml_check',
+    'AML check',
+    'Screens against the deployment’s anti-money-laundering rules through a provider interface. The framework ships no rule set and no list.',
+    'restricted',
+  ),
+  riskCheck(
+    'fraud_check',
+    'Fraud check',
+    'Scores the transaction for fraud through a provider interface. A score, never a verdict this layer invents.',
+    'sensitive',
+  ),
+  riskCheck(
+    'sanctions_check',
+    'Sanctions check',
+    'Screens against sanctions lists a deployment licenses. Shipping a list here would produce deployments that believed they were screened.',
+    'restricted',
+  ),
+  riskCheck(
+    'pep_check',
+    'PEP check',
+    'Screens for politically exposed persons through a provider interface.',
+    'restricted',
+  ),
   block('risk', {
     id: 'score',
     name: 'Risk score',
-    description: 'Combines available signals into a single score. A heuristic, and named as one — it reduces a rate, it does not eliminate anything.',
+    description:
+      'Combines available signals into a single score. A heuristic, and named as one — it reduces a rate, it does not eliminate anything.',
     inputs: [CUSTOMER_REF, MONEY_IN],
-    outputs: [['score', 'integer', 'Zero to one hundred.'], ['level', 'reference', 'The banded level.', { referenceDomain: 'riskLevel' }]],
+    outputs: [
+      ['score', 'integer', 'Zero to one hundred.'],
+      ['level', 'reference', 'The banded level.', { referenceDomain: 'riskLevel' }],
+    ],
     provider: 'RiskProvider',
     next: ['risk.*', 'payment.*', 'transfer.*', 'limit.*', 'lending.*'],
     classification: 'sensitive',
@@ -794,7 +1053,14 @@ const RISK: BlockDefinition[] = [
     description:
       'Holds the execution until a reviewer decides. The execution pauses; it does not proceed optimistically and reverse later.',
     inputs: [['reasonCode', 'string', 'What triggered the review.']],
-    outputs: [['decision', 'enum', 'The reviewer’s decision.', { values: ['approved', 'rejected'] }] as never],
+    outputs: [
+      [
+        'decision',
+        'enum',
+        'The reviewer’s decision.',
+        { values: ['approved', 'rejected'] },
+      ] as never,
+    ],
     permissions: ['financial.product.approve'],
     next: ['payment.*', 'transfer.*', 'wallet.*', 'lending.*', 'notification.*'],
     audit: ['risk.enhanced_review_decided'],
@@ -804,9 +1070,17 @@ const RISK: BlockDefinition[] = [
   block('risk', {
     id: 'manual_review',
     name: 'Manual review',
-    description: 'A person looks at it. Distinct from enhanced review: a different queue, a different permission, a different SLA.',
+    description:
+      'A person looks at it. Distinct from enhanced review: a different queue, a different permission, a different SLA.',
     inputs: [['reasonCode', 'string', 'Why it was routed here.']],
-    outputs: [['decision', 'enum', 'The reviewer’s decision.', { values: ['approved', 'rejected'] }] as never],
+    outputs: [
+      [
+        'decision',
+        'enum',
+        'The reviewer’s decision.',
+        { values: ['approved', 'rejected'] },
+      ] as never,
+    ],
     permissions: ['financial.product.approve'],
     audit: ['risk.manual_review_decided'],
     events: ['financial.product.review.required'],
@@ -815,7 +1089,8 @@ const RISK: BlockDefinition[] = [
   block('risk', {
     id: 'compliance_approval',
     name: 'Compliance approval',
-    description: 'A compliance officer signs off. The approver is never the submitter — the runtime refuses it.',
+    description:
+      'A compliance officer signs off. The approver is never the submitter — the runtime refuses it.',
     inputs: [['reasonCode', 'string', 'What needs approving.']],
     outputs: [['decision', 'enum', 'The decision.', { values: ['approved', 'rejected'] }] as never],
     permissions: ['financial.product.approve'],
@@ -830,7 +1105,8 @@ const LOYALTY: BlockDefinition[] = [
   block('loyalty', {
     id: 'member_account',
     name: 'Member account',
-    description: 'Opens a points position. Points are a liability like any other customer balance, and are ledgered as one.',
+    description:
+      'Opens a points position. Points are a liability like any other customer balance, and are ledgered as one.',
     inputs: [CUSTOMER_REF],
     outputs: [['memberRef', 'id', 'The member position.']],
     next: ['loyalty.*', 'notification.*'],
@@ -839,7 +1115,8 @@ const LOYALTY: BlockDefinition[] = [
   block('loyalty', {
     id: 'earn',
     name: 'Earn points',
-    description: 'Credits points against a rule. Idempotent, because an earn replayed on a retry doubles somebody’s balance.',
+    description:
+      'Credits points against a rule. Idempotent, because an earn replayed on a retry doubles somebody’s balance.',
     inputs: [['memberRef', 'id', 'The member.'], ['points', 'integer', 'How many.'], IDEMPOTENCY],
     outputs: [['balance', 'integer', 'The balance after earning.']],
     after: ['limit'],
@@ -851,7 +1128,8 @@ const LOYALTY: BlockDefinition[] = [
   block('loyalty', {
     id: 'redeem',
     name: 'Redeem points',
-    description: 'Debits points for value. Checks the available balance, never the total — an expiring hold is not spendable.',
+    description:
+      'Debits points for value. Checks the available balance, never the total — an expiring hold is not spendable.',
     inputs: [['memberRef', 'id', 'The member.'], ['points', 'integer', 'How many.'], IDEMPOTENCY],
     outputs: [['balance', 'integer', 'The balance after redemption.']],
     after: ['limit'],
@@ -863,8 +1141,13 @@ const LOYALTY: BlockDefinition[] = [
   block('loyalty', {
     id: 'expire',
     name: 'Expire points',
-    description: 'Removes points that have aged out, oldest first, and records what expired rather than adjusting a total.',
-    inputs: [['memberRef', 'id', 'The member.'], ['asOf', 'timestamp', 'The expiry date being applied.'], IDEMPOTENCY],
+    description:
+      'Removes points that have aged out, oldest first, and records what expired rather than adjusting a total.',
+    inputs: [
+      ['memberRef', 'id', 'The member.'],
+      ['asOf', 'timestamp', 'The expiry date being applied.'],
+      IDEMPOTENCY,
+    ],
     outputs: [['expired', 'integer', 'How many expired.']],
     after: ['limit'],
     effect: 'moves',
@@ -876,7 +1159,12 @@ const LOYALTY: BlockDefinition[] = [
     id: 'transfer',
     name: 'Transfer points',
     description: 'Moves points between members. Both sides post, or neither does.',
-    inputs: [['fromRef', 'id', 'The sending member.'], ['toRef', 'id', 'The receiving member.'], ['points', 'integer', 'How many.'], IDEMPOTENCY],
+    inputs: [
+      ['fromRef', 'id', 'The sending member.'],
+      ['toRef', 'id', 'The receiving member.'],
+      ['points', 'integer', 'How many.'],
+      IDEMPOTENCY,
+    ],
     outputs: [['transactionRef', 'id', 'The transfer.']],
     after: ['limit'],
     effect: 'moves',
@@ -887,8 +1175,12 @@ const LOYALTY: BlockDefinition[] = [
   block('loyalty', {
     id: 'campaign_reward',
     name: 'Campaign reward',
-    description: 'Applies a time-boxed campaign multiplier. Campaigns expire by date; one without an end date never ends.',
-    inputs: [['memberRef', 'id', 'The member.'], ['campaignCode', 'string', 'Which campaign.']],
+    description:
+      'Applies a time-boxed campaign multiplier. Campaigns expire by date; one without an end date never ends.',
+    inputs: [
+      ['memberRef', 'id', 'The member.'],
+      ['campaignCode', 'string', 'Which campaign.'],
+    ],
     outputs: [['multiplier', 'rate', 'The applied multiplier.']],
     configuration: [['endsAt', 'timestamp', 'When the campaign stops applying.']],
   }),
@@ -902,7 +1194,10 @@ const NOTIFICATION: BlockDefinition[] = [
     name: 'Send notification',
     description:
       'Tells somebody what happened, through a provider interface. Carries a template code and references — never an amount, a balance or a personal detail, because a notification body reaches a third-party gateway.',
-    inputs: [['recipientRef', 'id', 'Who to tell.'], ['templateCode', 'string', 'Which message.']],
+    inputs: [
+      ['recipientRef', 'id', 'Who to tell.'],
+      ['templateCode', 'string', 'Which message.'],
+    ],
     outputs: [['dispatched', 'boolean', 'Whether it was handed off.']],
     provider: 'NotificationProvider',
     next: [],
@@ -911,7 +1206,8 @@ const NOTIFICATION: BlockDefinition[] = [
   block('notification', {
     id: 'acknowledge',
     name: 'Acknowledge',
-    description: 'Records that a notification was delivered or read. Never blocks an execution — delivery is best effort.',
+    description:
+      'Records that a notification was delivered or read. Never blocks an execution — delivery is best effort.',
     inputs: [['notificationRef', 'id', 'The notification.']],
     outputs: [['acknowledged', 'boolean', 'Whether it was acknowledged.']],
   }),

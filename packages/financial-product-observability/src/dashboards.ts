@@ -42,7 +42,8 @@ export const PRODUCT_DASHBOARDS: readonly Dashboard[] = Object.freeze([
   {
     id: 'product-health',
     title: 'Product health',
-    description: 'Volume, outcome and latency for one product. The first screen during an incident.',
+    description:
+      'Volume, outcome and latency for one product. The first screen during an incident.',
     panels: [
       {
         id: 'volume',
@@ -126,7 +127,8 @@ export const PRODUCT_DASHBOARDS: readonly Dashboard[] = Object.freeze([
       {
         id: 'reconciliation',
         title: 'Reconciliation exceptions',
-        interpretation: 'Differences somebody must resolve. The output of reconciliation is a queue.',
+        interpretation:
+          'Differences somebody must resolve. The output of reconciliation is a queue.',
         kind: 'timeseries',
         metric: PRODUCT_METRICS.RECONCILIATION_EXCEPTIONS,
         splitBy: ['type'],

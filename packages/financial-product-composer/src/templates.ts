@@ -109,7 +109,11 @@ export function consumerWalletTemplate(): ProductDefinition {
     .addBlock({ key: 'authenticate', blockId: 'identity.authenticate', blockVersion: '1.0.0' })
 
     // --- onboarding ---------------------------------------------------------
-    .addBlock({ key: 'check-eligibility', blockId: 'identity.customer_eligibility', blockVersion: '1.0.0' })
+    .addBlock({
+      key: 'check-eligibility',
+      blockId: 'identity.customer_eligibility',
+      blockVersion: '1.0.0',
+    })
     .addBlock({ key: 'check-kyc', blockId: 'identity.kyc_check', blockVersion: '1.0.0' })
     .addBlock({ key: 'create-wallet', blockId: 'wallet.create', blockVersion: '1.0.0' })
     .addBlock({ key: 'activate-wallet', blockId: 'wallet.activate', blockVersion: '1.0.0' })
@@ -175,7 +179,11 @@ export function consumerWalletTemplate(): ProductDefinition {
 
     // --- compensation -------------------------------------------------------
     .addBlock({ key: 'reverse-posting', blockId: 'ledger.reverse_journal', blockVersion: '1.0.0' })
-    .addBlock({ key: 'adjust-settlement', blockId: 'settlement.adjustment', blockVersion: '1.0.0' });
+    .addBlock({
+      key: 'adjust-settlement',
+      blockId: 'settlement.adjustment',
+      blockVersion: '1.0.0',
+    });
 
   composer
     .connect('start', 'authenticate', 'always')
@@ -262,7 +270,11 @@ export function merchantWalletTemplate(): ProductDefinition {
   composer
     .addBlock({ key: 'authenticate', blockId: 'identity.authenticate', blockVersion: '1.0.0' })
 
-    .addBlock({ key: 'verify-business', blockId: 'identity.customer_eligibility', blockVersion: '1.0.0' })
+    .addBlock({
+      key: 'verify-business',
+      blockId: 'identity.customer_eligibility',
+      blockVersion: '1.0.0',
+    })
     .addBlock({ key: 'screen-merchant', blockId: 'risk.sanctions_check', blockVersion: '1.0.0' })
     .addBlock({ key: 'create-wallet', blockId: 'wallet.create', blockVersion: '1.0.0' })
     .addBlock({ key: 'activate-wallet', blockId: 'wallet.activate', blockVersion: '1.0.0' })
@@ -311,7 +323,11 @@ export function merchantWalletTemplate(): ProductDefinition {
     .addBlock({ key: 'report', blockId: 'reconciliation.report', blockVersion: '1.0.0' })
 
     .addBlock({ key: 'reverse-posting', blockId: 'ledger.reverse_journal', blockVersion: '1.0.0' })
-    .addBlock({ key: 'adjust-settlement', blockId: 'settlement.adjustment', blockVersion: '1.0.0' });
+    .addBlock({
+      key: 'adjust-settlement',
+      blockId: 'settlement.adjustment',
+      blockVersion: '1.0.0',
+    });
 
   composer
     .connect('start', 'authenticate', 'always')
@@ -398,7 +414,11 @@ export function microloanTemplate(): ProductDefinition {
     .addBlock({ key: 'authenticate', blockId: 'identity.authenticate', blockVersion: '1.0.0' })
     .addBlock({ key: 'check-kyc', blockId: 'identity.kyc_check', blockVersion: '1.0.0' })
 
-    .addBlock({ key: 'check-eligibility', blockId: 'lending.check_eligibility', blockVersion: '1.0.0' })
+    .addBlock({
+      key: 'check-eligibility',
+      blockId: 'lending.check_eligibility',
+      blockVersion: '1.0.0',
+    })
     .addBlock({ key: 'assess-credit', blockId: 'lending.credit_assessment', blockVersion: '1.0.0' })
     .addBlock({ key: 'score-risk', blockId: 'risk.score', blockVersion: '1.0.0' })
     .addBlock({
@@ -408,7 +428,11 @@ export function microloanTemplate(): ProductDefinition {
       requiresApproval: true,
     })
     .addBlock({ key: 'make-offer', blockId: 'lending.loan_offer', blockVersion: '1.0.0' })
-    .addBlock({ key: 'build-schedule', blockId: 'lending.repayment_schedule', blockVersion: '1.0.0' })
+    .addBlock({
+      key: 'build-schedule',
+      blockId: 'lending.repayment_schedule',
+      blockVersion: '1.0.0',
+    })
     .addBlock({
       key: 'consume-exposure-limit',
       blockId: 'limit.product',
@@ -442,7 +466,11 @@ export function microloanTemplate(): ProductDefinition {
       onFailure: 'compensate',
       compensateWith: ['reverse-posting'],
     })
-    .addBlock({ key: 'trigger-collection', blockId: 'lending.trigger_collection', blockVersion: '1.0.0' })
+    .addBlock({
+      key: 'trigger-collection',
+      blockId: 'lending.trigger_collection',
+      blockVersion: '1.0.0',
+    })
     .addBlock({
       key: 'post-ledger',
       blockId: 'ledger.create_journal',
@@ -523,7 +551,11 @@ export function bnplTemplate(): ProductDefinition {
 
   composer
     .addBlock({ key: 'authenticate', blockId: 'identity.authenticate', blockVersion: '1.0.0' })
-    .addBlock({ key: 'check-eligibility', blockId: 'lending.check_eligibility', blockVersion: '1.0.0' })
+    .addBlock({
+      key: 'check-eligibility',
+      blockId: 'lending.check_eligibility',
+      blockVersion: '1.0.0',
+    })
     .addBlock({ key: 'screen-fraud', blockId: 'risk.fraud_check', blockVersion: '1.0.0' })
     .addBlock({
       key: 'consume-credit-limit',
@@ -574,11 +606,19 @@ export function bnplTemplate(): ProductDefinition {
       onFailure: 'compensate',
       compensateWith: ['reverse-posting'],
     })
-    .addBlock({ key: 'trigger-collection', blockId: 'lending.trigger_collection', blockVersion: '1.0.0' })
+    .addBlock({
+      key: 'trigger-collection',
+      blockId: 'lending.trigger_collection',
+      blockVersion: '1.0.0',
+    })
     .addBlock({ key: 'notify', blockId: 'notification.send', blockVersion: '1.0.0' })
 
     .addBlock({ key: 'reverse-posting', blockId: 'ledger.reverse_journal', blockVersion: '1.0.0' })
-    .addBlock({ key: 'adjust-settlement', blockId: 'settlement.adjustment', blockVersion: '1.0.0' });
+    .addBlock({
+      key: 'adjust-settlement',
+      blockId: 'settlement.adjustment',
+      blockVersion: '1.0.0',
+    });
 
   composer
     .connect('start', 'authenticate', 'always')
@@ -651,7 +691,11 @@ export function loyaltyWalletTemplate(): ProductDefinition {
 
   composer
     .addBlock({ key: 'authenticate', blockId: 'identity.authenticate', blockVersion: '1.0.0' })
-    .addBlock({ key: 'open-member-account', blockId: 'loyalty.member_account', blockVersion: '1.0.0' })
+    .addBlock({
+      key: 'open-member-account',
+      blockId: 'loyalty.member_account',
+      blockVersion: '1.0.0',
+    })
     .addBlock({ key: 'apply-campaign', blockId: 'loyalty.campaign_reward', blockVersion: '1.0.0' })
     .addBlock({
       key: 'consume-points-limit',
@@ -700,7 +744,11 @@ export function loyaltyWalletTemplate(): ProductDefinition {
   composer
     .connect('start', 'authenticate', 'always')
     .branch('authenticate', 'open-member-account', isType('ENROL'))
-    .branch('authenticate', 'consume-points-limit', isOneOf(['EARN', 'REDEEM', 'TRANSFER', 'EXPIRE']))
+    .branch(
+      'authenticate',
+      'consume-points-limit',
+      isOneOf(['EARN', 'REDEEM', 'TRANSFER', 'EXPIRE']),
+    )
 
     .connect('open-member-account', 'apply-campaign')
     .connect('apply-campaign', 'completed')
@@ -725,7 +773,8 @@ export function loyaltyWalletTemplate(): ProductDefinition {
     scope: 'customer',
     count: 50,
     windowSeconds: 86_400,
-    description: 'A placeholder ceiling on points operations per day. Configure before publication.',
+    description:
+      'A placeholder ceiling on points operations per day. Configure before publication.',
   });
 
   return composer.build();
@@ -828,7 +877,11 @@ export function merchantWalletBasicTemplate(): ProductDefinition {
       name: 'Reconcile',
     })
     .addBlock({ key: 'reverse-posting', blockId: 'ledger.reverse_journal', blockVersion: '1.0.0' })
-    .addBlock({ key: 'adjust-settlement', blockId: 'settlement.adjustment', blockVersion: '1.0.0' });
+    .addBlock({
+      key: 'adjust-settlement',
+      blockId: 'settlement.adjustment',
+      blockVersion: '1.0.0',
+    });
 
   composer
     .connect('start', 'verify-merchant', 'always')
@@ -882,12 +935,17 @@ export function merchantWalletBasicTemplate(): ProductDefinition {
     })
     .addRule({
       id: 'enhanced-review-above-threshold',
-      description: 'Anything above the configured threshold gets an enhanced review before it completes.',
+      description:
+        'Anything above the configured threshold gets an enhanced review before it completes.',
       priority: 10,
       enabled: true,
       when: { field: 'amountMinorUnits', operator: 'gt', value: 200_000 },
       then: [
-        { kind: 'require_review', level: 'COMPLIANCE', reason: 'Above the enhanced-review threshold.' },
+        {
+          kind: 'require_review',
+          level: 'COMPLIANCE',
+          reason: 'Above the enhanced-review threshold.',
+        },
       ],
     })
     .expose({
@@ -949,13 +1007,15 @@ export const PRODUCT_TEMPLATES: readonly ProductTemplate[] = Object.freeze([
   {
     id: 'merchant-wallet',
     name: 'Merchant Wallet',
-    description: 'Business verification, payment acceptance, refund, settlement and reconciliation.',
+    description:
+      'Business verification, payment acceptance, refund, settlement and reconciliation.',
     build: merchantWalletTemplate,
   },
   {
     id: 'microloan',
     name: 'Microloan',
-    description: 'Eligibility, an external credit assessment, disbursement, repayment and collection.',
+    description:
+      'Eligibility, an external credit assessment, disbursement, repayment and collection.',
     build: microloanTemplate,
   },
   {

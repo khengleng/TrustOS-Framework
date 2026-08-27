@@ -101,7 +101,10 @@ export class ProductRouteTable {
    * wildcard: a router that matched a prefix would send `/payments/../admin` somewhere, and
    * "somewhere" in a financial API is a sentence that ends badly.
    */
-  match(method: string, path: string): { route: ProductRoute; params: Record<string, string> } | null {
+  match(
+    method: string,
+    path: string,
+  ): { route: ProductRoute; params: Record<string, string> } | null {
     const requested = path.split('/').filter(Boolean);
 
     for (const route of this.routes.values()) {

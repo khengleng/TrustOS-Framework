@@ -6,7 +6,11 @@ import {
   type ProductBlock,
   type ReferenceDataRegistry,
 } from '@trustos/financial-product-core';
-import { APPROVED_BLOCKS, type BlockCategory, type BlockRegistry } from '@trustos/financial-block-registry';
+import {
+  APPROVED_BLOCKS,
+  type BlockCategory,
+  type BlockRegistry,
+} from '@trustos/financial-block-registry';
 import { ConnectorRegistry } from '@trustos/connector-registry';
 import { validateRules } from '@trustos/financial-product-rules';
 
@@ -119,7 +123,10 @@ export function validateProduct(
 
 // --- resolution ------------------------------------------------------------
 
-type ResolvedBlocks = Map<string, { node: ProductBlock; category: BlockCategory; catalog: ReturnType<BlockRegistry['all']>[number] }>;
+type ResolvedBlocks = Map<
+  string,
+  { node: ProductBlock; category: BlockCategory; catalog: ReturnType<BlockRegistry['all']>[number] }
+>;
 
 function resolveBlocks(
   definition: ProductDefinition,
@@ -455,7 +462,8 @@ function transitionFindings(
         message:
           `${from.node.blockId} does not permit ${to.node.blockId} to follow it. Allowed: ` +
           `${from.catalog.allowedNext.join(', ') || 'any'}.`,
-        remediation: 'Insert the block the catalog expects between them, or pick another successor.',
+        remediation:
+          'Insert the block the catalog expects between them, or pick another successor.',
       });
     }
   }

@@ -34,9 +34,11 @@ export const SANDBOX_SCENARIOS = [
 export type SandboxScenario = (typeof SANDBOX_SCENARIOS)[number];
 
 export const SCENARIO_DESCRIPTIONS: Record<SandboxScenario, string> = {
-  success: 'Everything answers. The path a product is designed around and the least informative to run.',
+  success:
+    'Everything answers. The path a product is designed around and the least informative to run.',
   provider_timeout: 'The provider does not answer within the block’s timeout. Retryable.',
-  provider_failure: 'The provider answers with a failure. Not retryable — retrying a refusal is noise.',
+  provider_failure:
+    'The provider answers with a failure. Not retryable — retrying a refusal is noise.',
   insufficient_balance: 'The available balance is below the amount. A refusal, not a failure.',
   limit_exceeded: 'A configured limit refuses the amount. The control working.',
   risk_rejection: 'A risk check refuses. The most common legitimate refusal in a live product.',
@@ -59,7 +61,11 @@ export const SCENARIO_DESCRIPTIONS: Record<SandboxScenario, string> = {
  */
 export const SCENARIO_OUTCOMES: Record<
   SandboxScenario,
-  { outcome: 'success' | 'refused' | 'failed' | 'review_required'; code: string; retryable: boolean }
+  {
+    outcome: 'success' | 'refused' | 'failed' | 'review_required';
+    code: string;
+    retryable: boolean;
+  }
 > = {
   success: { outcome: 'success', code: 'ok', retryable: false },
   provider_timeout: { outcome: 'failed', code: 'provider_timeout', retryable: true },
@@ -69,7 +75,11 @@ export const SCENARIO_OUTCOMES: Record<
   risk_rejection: { outcome: 'refused', code: 'risk_rejected', retryable: false },
   kyc_rejection: { outcome: 'refused', code: 'kyc_insufficient', retryable: false },
   settlement_failure: { outcome: 'failed', code: 'settlement_failed', retryable: false },
-  reconciliation_mismatch: { outcome: 'refused', code: 'reconciliation_mismatch', retryable: false },
+  reconciliation_mismatch: {
+    outcome: 'refused',
+    code: 'reconciliation_mismatch',
+    retryable: false,
+  },
   duplicate_request: { outcome: 'success', code: 'ok', retryable: false },
   compensation_failure: { outcome: 'failed', code: 'compensation_failed', retryable: false },
   review_required: { outcome: 'review_required', code: 'review_required', retryable: false },

@@ -41,7 +41,10 @@ export const variantOverridesSchema = z
   .object({
     fees: z.array(productFeeSchema).max(50).optional(),
     limits: z.array(productLimitSchema).max(50).optional(),
-    supportedCountries: z.array(z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/)).max(200).optional(),
+    supportedCountries: z
+      .array(z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/))
+      .max(200)
+      .optional(),
     supportedCurrencies: z.array(z.string().min(3).max(8)).max(50).optional(),
     settlementPolicy: settlementPolicySchema.optional(),
     compliancePolicy: compliancePolicySchema.optional(),

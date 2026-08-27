@@ -160,7 +160,11 @@ export class Sandbox {
     this.state = createSandboxState({
       openingBalance:
         options.openingBalance ??
-        fromMinorUnits(100_000_000n, definition.supportedCurrencies[0] ?? 'XTS', SANDBOX_CURRENCIES),
+        fromMinorUnits(
+          100_000_000n,
+          definition.supportedCurrencies[0] ?? 'XTS',
+          SANDBOX_CURRENCIES,
+        ),
       ceilings: options.ceilings ?? ceilingsFrom(definition),
     });
 

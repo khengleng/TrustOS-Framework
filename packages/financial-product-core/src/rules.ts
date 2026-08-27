@@ -110,7 +110,9 @@ export type RuleOutcomeKind = (typeof RULE_OUTCOME_KINDS)[number];
 const ruleMoneySchema = z
   .object({
     /** Minor units as a decimal string of digits — `"200000"` is $2,000.00 in a 2-exponent currency. */
-    minorUnits: z.string().regex(/^-?[0-9]{1,24}$/, 'An integer number of minor units, as a string.'),
+    minorUnits: z
+      .string()
+      .regex(/^-?[0-9]{1,24}$/, 'An integer number of minor units, as a string.'),
     currency: z.string().min(3).max(8),
   })
   .strict();
@@ -121,7 +123,10 @@ const ruleRateSchema = z
     /** Basis points times 100, as a string. `"5000"` is 0.50%. */
     hundredthsOfBasisPoint: z
       .string()
-      .regex(/^[0-9]{1,10}$/, 'A non-negative integer of hundredths of a basis point, as a string.'),
+      .regex(
+        /^[0-9]{1,10}$/,
+        'A non-negative integer of hundredths of a basis point, as a string.',
+      ),
   })
   .strict();
 
@@ -214,7 +219,11 @@ export const ruleOutcomeSchema = z
         message: 'A percentage fee needs a rate.',
       });
     }
-    if (outcome.cap && outcome.floor && BigInt(outcome.cap.minorUnits) < BigInt(outcome.floor.minorUnits)) {
+    if (
+      outcome.cap &&
+      outcome.floor &&
+      BigInt(outcome.cap.minorUnits) < BigInt(outcome.floor.minorUnits)
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['cap'],

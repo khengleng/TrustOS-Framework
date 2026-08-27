@@ -19,7 +19,11 @@ import {
   operationsOf,
 } from '@trustos/connector-registry';
 import type { ProductDefinition } from '@trustos/financial-product-core';
-import type { BlockExecutionInput, BlockHandler, BlockResult } from '@trustos/financial-product-runtime';
+import type {
+  BlockExecutionInput,
+  BlockHandler,
+  BlockResult,
+} from '@trustos/financial-product-runtime';
 import { SCENARIO_OUTCOMES, ScenarioPlan, type SandboxScenario } from './scenarios';
 
 /**
@@ -75,11 +79,13 @@ export interface SandboxState {
   sequence: number;
 }
 
-export function createSandboxState(options: {
-  currencies?: CurrencyRegistry;
-  openingBalance?: Money;
-  ceilings?: Record<string, Money>;
-} = {}): SandboxState {
+export function createSandboxState(
+  options: {
+    currencies?: CurrencyRegistry;
+    openingBalance?: Money;
+    ceilings?: Record<string, Money>;
+  } = {},
+): SandboxState {
   const state: SandboxState = {
     balances: new Map(),
     consumed: new Map(),
@@ -120,11 +126,19 @@ function scenarioResult(scenario: SandboxScenario): BlockResult | null {
   if (mapped.outcome === 'success') return null;
 
   if (mapped.outcome === 'review_required') {
-    return { outcome: 'review_required', level: 'COMPLIANCE', reason: 'Injected sandbox scenario.' };
+    return {
+      outcome: 'review_required',
+      level: 'COMPLIANCE',
+      reason: 'Injected sandbox scenario.',
+    };
   }
 
   if (mapped.outcome === 'refused') {
-    return { outcome: 'refused', code: mapped.code, reason: `Injected sandbox scenario: ${scenario}.` };
+    return {
+      outcome: 'refused',
+      code: mapped.code,
+      reason: `Injected sandbox scenario: ${scenario}.`,
+    };
   }
 
   return {
@@ -143,17 +157,16 @@ function scenarioResult(scenario: SandboxScenario): BlockResult | null {
  * variants of the same movement. `wallet.debit` and `transfer.p2p` both move money out; a sandbox
  * that modelled them differently would be modelling its own opinion.
  */
-function simulate(
-  category: string,
-  input: BlockExecutionInput,
-  state: SandboxState,
-): BlockResult {
+function simulate(category: string, input: BlockExecutionInput, state: SandboxState): BlockResult {
   const amount = amountOf(input, state);
   const configuration = input.block.configuration;
 
   switch (category) {
     case 'identity':
-      return { outcome: 'success', outputs: { verified: true, kycLevel: 'STANDARD', eligible: true } };
+      return {
+        outcome: 'success',
+        outputs: { verified: true, kycLevel: 'STANDARD', eligible: true },
+      };
 
     case 'limit': {
       const code = String(configuration.limitCode ?? 'DEFAULT');
@@ -182,7 +195,8 @@ function simulate(
 
     case 'wallet': {
       if (input.block.blockId === 'wallet.get_balance') {
-        const balance = state.balances.get('default') ?? zeroMoney(amount.currency, state.currencies);
+        const balance =
+          state.balances.get('default') ?? zeroMoney(amount.currency, state.currencies);
         return {
           outcome: 'success',
           outputs: { availableMinorUnits: String(toMinorUnits(balance)), heldMinorUnits: '0' },
@@ -190,7 +204,8 @@ function simulate(
       }
 
       if (input.block.blockId === 'wallet.debit') {
-        const balance = state.balances.get('default') ?? zeroMoney(amount.currency, state.currencies);
+        const balance =
+          state.balances.get('default') ?? zeroMoney(amount.currency, state.currencies);
 
         // The available balance, never the total. A system that checks the total authorizes the
         // same money twice.
@@ -207,12 +222,16 @@ function simulate(
       }
 
       if (input.block.blockId === 'wallet.credit') {
-        const balance = state.balances.get('default') ?? zeroMoney(amount.currency, state.currencies);
+        const balance =
+          state.balances.get('default') ?? zeroMoney(amount.currency, state.currencies);
         state.balances.set('default', addMoney(balance, amount));
         return { outcome: 'success', outputs: { journalRef: reference(state, 'jrn') } };
       }
 
-      return { outcome: 'success', outputs: { walletRef: reference(state, 'wlt'), status: 'active' } };
+      return {
+        outcome: 'success',
+        outputs: { walletRef: reference(state, 'wlt'), status: 'active' },
+      };
     }
 
     case 'fee': {
@@ -226,7 +245,10 @@ function simulate(
        * ledger, which is the thing a composition can get wrong.
        */
       const fee = multiplyMoney(amount, parseDecimal('0.005'), state.currencies);
-      state.fees.set(code, addMoney(state.fees.get(code) ?? zeroMoney(amount.currency, state.currencies), fee));
+      state.fees.set(
+        code,
+        addMoney(state.fees.get(code) ?? zeroMoney(amount.currency, state.currencies), fee),
+      );
 
       return {
         outcome: 'success',
@@ -272,7 +294,10 @@ function simulate(
       if (input.block.blockId === 'payment.refund') {
         return { outcome: 'success', outputs: { refundRef: reference(state, 'rfd') } };
       }
-      return { outcome: 'success', outputs: { transactionRef: reference(state, 'txn'), status: 'captured' } };
+      return {
+        outcome: 'success',
+        outputs: { transactionRef: reference(state, 'txn'), status: 'captured' },
+      };
     }
 
     default:

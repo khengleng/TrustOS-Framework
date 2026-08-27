@@ -72,14 +72,20 @@ describe('self-approval', () => {
 
   it('refuses the submitter deciding too', () => {
     const result = productSelfApprovalPolicy.evaluate(
-      request(APPROVE, { authoredById: 'usr_maker', submittedById: 'usr_submitter' }, 'usr_submitter'),
+      request(
+        APPROVE,
+        { authoredById: 'usr_maker', submittedById: 'usr_submitter' },
+        'usr_submitter',
+      ),
     );
     expect(result?.effect).toBe('deny');
   });
 
   it('permits somebody else', () => {
     expect(
-      productSelfApprovalPolicy.evaluate(request(APPROVE, { authoredById: 'usr_maker' }, 'usr_checker')),
+      productSelfApprovalPolicy.evaluate(
+        request(APPROVE, { authoredById: 'usr_maker' }, 'usr_checker'),
+      ),
     ).toBeNull();
   });
 
@@ -110,7 +116,10 @@ describe('self-publication', () => {
     const result = productSelfPublicationPolicy.evaluate(
       request(
         PUBLISH,
-        { authoredById: 'usr_maker', decisions: [{ actorId: 'usr_checker', level: 'RISK', decision: 'approved' }] },
+        {
+          authoredById: 'usr_maker',
+          decisions: [{ actorId: 'usr_checker', level: 'RISK', decision: 'approved' }],
+        },
         'usr_checker',
       ),
     );
@@ -148,7 +157,10 @@ describe('duplicate decisions', () => {
     const result = productDuplicateDecisionPolicy.evaluate(
       request(
         APPROVE,
-        { authoredById: 'usr_maker', decisions: [{ actorId: 'usr_checker', level: 'RISK', decision: 'approved' }] },
+        {
+          authoredById: 'usr_maker',
+          decisions: [{ actorId: 'usr_checker', level: 'RISK', decision: 'approved' }],
+        },
         'usr_checker',
       ),
     );
@@ -191,7 +203,9 @@ describe('immutability', () => {
   });
 
   it('permits an edit to a draft', () => {
-    expect(productImmutabilityPolicy.evaluate(request(UPDATE, { lifecycleStatus: 'draft' }))).toBeNull();
+    expect(
+      productImmutabilityPolicy.evaluate(request(UPDATE, { lifecycleStatus: 'draft' })),
+    ).toBeNull();
   });
 });
 
@@ -231,7 +245,10 @@ describe('provider substitution', () => {
   it('permits an approved connector', () => {
     expect(
       productProviderSubstitutionPolicy.evaluate(
-        request(UPDATE, { approvedConnectorIds: ['rail-alpha'], requestedConnectorId: 'rail-alpha' }),
+        request(UPDATE, {
+          approvedConnectorIds: ['rail-alpha'],
+          requestedConnectorId: 'rail-alpha',
+        }),
       ),
     ).toBeNull();
   });

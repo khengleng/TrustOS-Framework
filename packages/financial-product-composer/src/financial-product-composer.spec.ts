@@ -51,7 +51,13 @@ function minimalComposer(): ProductComposer {
       onFailure: 'compensate',
       compensateWith: ['reverse'],
     })
-    .addBlock({ key: 'post', blockId: 'ledger.create_journal', blockVersion: '1.0.0', onFailure: 'compensate', compensateWith: ['reverse'] })
+    .addBlock({
+      key: 'post',
+      blockId: 'ledger.create_journal',
+      blockVersion: '1.0.0',
+      onFailure: 'compensate',
+      compensateWith: ['reverse'],
+    })
     .addBlock({ key: 'reverse', blockId: 'ledger.reverse_journal', blockVersion: '1.0.0' })
     .connect('start', 'verify', 'always')
     .connect('verify', 'consume-limit')
@@ -89,7 +95,11 @@ describe('the composer', () => {
 
   it('refuses a duplicate block key', () => {
     expect(() =>
-      minimalComposer().addBlock({ key: 'verify', blockId: 'identity.kyc_check', blockVersion: '1.0.0' }),
+      minimalComposer().addBlock({
+        key: 'verify',
+        blockId: 'identity.kyc_check',
+        blockVersion: '1.0.0',
+      }),
     ).toThrow(/already in this product/);
   });
 
@@ -142,14 +152,20 @@ describe('resolution findings', () => {
       .build();
 
     const result = validateProduct(definition);
-    expect(result.findings.some((finding) => finding.code === 'retry_on_non_idempotent')).toBe(true);
+    expect(result.findings.some((finding) => finding.code === 'retry_on_non_idempotent')).toBe(
+      true,
+    );
   });
 
   it('treats an unbound provider as a note without a connector registry and a defect with one', () => {
     const definition = merchantWalletBasicTemplate();
 
     const abstract = validateProduct(definition);
-    expect(abstract.findings.filter((finding) => finding.code === 'provider_unbound').every((finding) => finding.severity === 'warning')).toBe(true);
+    expect(
+      abstract.findings
+        .filter((finding) => finding.code === 'provider_unbound')
+        .every((finding) => finding.severity === 'warning'),
+    ).toBe(true);
     expect(abstract.valid).toBe(true);
 
     const forPublication = validateProduct(definition, {
@@ -213,9 +229,7 @@ describe('graph findings', () => {
   });
 
   it('refuses two transitions leaving start', () => {
-    const definition = minimalComposer()
-      .connect('start', 'consume-limit', 'always')
-      .build();
+    const definition = minimalComposer().connect('start', 'consume-limit', 'always').build();
 
     const result = validateProduct(definition);
     expect(result.findings.some((finding) => finding.code === 'multiple_entries')).toBe(true);
@@ -258,8 +272,18 @@ describe('graph findings', () => {
     const definition = new ProductComposer(options())
       .addBlock({ key: 'verify', blockId: 'identity.customer_eligibility', blockVersion: '1.0.0' })
       .addBlock({ key: 'consume-limit', blockId: 'limit.daily', blockVersion: '1.0.0' })
-      .addBlock({ key: 'debit', blockId: 'wallet.debit', blockVersion: '1.0.0', onFailure: 'compensate', compensateWith: ['reverse'] })
-      .addBlock({ key: 'authenticate-again', blockId: 'identity.authenticate', blockVersion: '1.0.0' })
+      .addBlock({
+        key: 'debit',
+        blockId: 'wallet.debit',
+        blockVersion: '1.0.0',
+        onFailure: 'compensate',
+        compensateWith: ['reverse'],
+      })
+      .addBlock({
+        key: 'authenticate-again',
+        blockId: 'identity.authenticate',
+        blockVersion: '1.0.0',
+      })
       .addBlock({ key: 'reverse', blockId: 'ledger.reverse_journal', blockVersion: '1.0.0' })
       .connect('start', 'verify', 'always')
       .connect('verify', 'consume-limit')
@@ -278,7 +302,13 @@ describe('ordering — the group that catches a valid-looking product that is wr
   it('refuses a debit with no preceding limit consumption', () => {
     const definition = new ProductComposer(options())
       .addBlock({ key: 'verify', blockId: 'identity.customer_eligibility', blockVersion: '1.0.0' })
-      .addBlock({ key: 'debit', blockId: 'wallet.debit', blockVersion: '1.0.0', onFailure: 'compensate', compensateWith: ['reverse'] })
+      .addBlock({
+        key: 'debit',
+        blockId: 'wallet.debit',
+        blockVersion: '1.0.0',
+        onFailure: 'compensate',
+        compensateWith: ['reverse'],
+      })
       .addBlock({ key: 'reverse', blockId: 'ledger.reverse_journal', blockVersion: '1.0.0' })
       .connect('start', 'verify', 'always')
       .connect('verify', 'debit')
@@ -300,7 +330,13 @@ describe('ordering — the group that catches a valid-looking product that is wr
       .addBlock({ key: 'verify', blockId: 'identity.customer_eligibility', blockVersion: '1.0.0' })
       .addBlock({ key: 'consume-limit', blockId: 'limit.daily', blockVersion: '1.0.0' })
       .addBlock({ key: 'skip-limit', blockId: 'wallet.get_balance', blockVersion: '1.0.0' })
-      .addBlock({ key: 'debit', blockId: 'wallet.debit', blockVersion: '1.0.0', onFailure: 'compensate', compensateWith: ['reverse'] })
+      .addBlock({
+        key: 'debit',
+        blockId: 'wallet.debit',
+        blockVersion: '1.0.0',
+        onFailure: 'compensate',
+        compensateWith: ['reverse'],
+      })
       .addBlock({ key: 'reverse', blockId: 'ledger.reverse_journal', blockVersion: '1.0.0' })
       .connect('start', 'verify', 'always')
       .branch('verify', 'consume-limit', { field: 'amountMinorUnits', operator: 'gt', value: 1000 })
@@ -319,13 +355,33 @@ describe('ordering — the group that catches a valid-looking product that is wr
     const definition = new ProductComposer(options())
       .addBlock({ key: 'verify', blockId: 'identity.customer_eligibility', blockVersion: '1.0.0' })
       .addBlock({ key: 'consume-limit', blockId: 'limit.daily', blockVersion: '1.0.0' })
-      .addBlock({ key: 'debit', blockId: 'wallet.debit', blockVersion: '1.0.0', onFailure: 'compensate', compensateWith: ['reverse'] })
-      .addBlock({ key: 'credit', blockId: 'wallet.credit', blockVersion: '1.0.0', onFailure: 'compensate', compensateWith: ['reverse'] })
+      .addBlock({
+        key: 'debit',
+        blockId: 'wallet.debit',
+        blockVersion: '1.0.0',
+        onFailure: 'compensate',
+        compensateWith: ['reverse'],
+      })
+      .addBlock({
+        key: 'credit',
+        blockId: 'wallet.credit',
+        blockVersion: '1.0.0',
+        onFailure: 'compensate',
+        compensateWith: ['reverse'],
+      })
       .addBlock({ key: 'reverse', blockId: 'ledger.reverse_journal', blockVersion: '1.0.0' })
       .connect('start', 'verify', 'always')
       .connect('verify', 'consume-limit')
-      .branch('consume-limit', 'debit', { field: 'transactionType', operator: 'eq', value: 'DEBIT' })
-      .branch('consume-limit', 'credit', { field: 'transactionType', operator: 'eq', value: 'CREDIT' })
+      .branch('consume-limit', 'debit', {
+        field: 'transactionType',
+        operator: 'eq',
+        value: 'DEBIT',
+      })
+      .branch('consume-limit', 'credit', {
+        field: 'transactionType',
+        operator: 'eq',
+        value: 'CREDIT',
+      })
       .connect('debit', 'completed')
       .connect('credit', 'completed')
       .connect('reverse', 'failed', 'always')
@@ -340,7 +396,13 @@ describe('compensation findings', () => {
     const definition = new ProductComposer(options())
       .addBlock({ key: 'verify', blockId: 'identity.customer_eligibility', blockVersion: '1.0.0' })
       .addBlock({ key: 'consume-limit', blockId: 'limit.daily', blockVersion: '1.0.0' })
-      .addBlock({ key: 'debit', blockId: 'wallet.debit', blockVersion: '1.0.0', onFailure: 'compensate', compensateWith: ['notify'] })
+      .addBlock({
+        key: 'debit',
+        blockId: 'wallet.debit',
+        blockVersion: '1.0.0',
+        onFailure: 'compensate',
+        compensateWith: ['notify'],
+      })
       .addBlock({ key: 'notify', blockId: 'notification.send', blockVersion: '1.0.0' })
       .connect('start', 'verify', 'always')
       .connect('verify', 'consume-limit')
@@ -444,12 +506,24 @@ describe('the template library', () => {
   });
 
   it('names no provider in any template', () => {
-    const forbidden = ['bakong', 'khqr', 'aba', 'wing', 'acleda', 'visa', 'mastercard', 'paykh', 'dbank'];
+    const forbidden = [
+      'bakong',
+      'khqr',
+      'aba',
+      'wing',
+      'acleda',
+      'visa',
+      'mastercard',
+      'paykh',
+      'dbank',
+    ];
 
     for (const template of PRODUCT_TEMPLATES) {
       const serialized = JSON.stringify(template.build()).toLowerCase();
       for (const vendor of forbidden) {
-        expect(serialized, `${template.id} names ${vendor}`).not.toMatch(new RegExp(`\\b${vendor}\\b`));
+        expect(serialized, `${template.id} names ${vendor}`).not.toMatch(
+          new RegExp(`\\b${vendor}\\b`),
+        );
       }
     }
   });
@@ -458,7 +532,10 @@ describe('the template library', () => {
     for (const template of PRODUCT_TEMPLATES) {
       const definition = template.build();
       for (const provider of definition.providers) {
-        expect(provider.connectorId, `${template.id} binds ${provider.providerInterface}`).toBeUndefined();
+        expect(
+          provider.connectorId,
+          `${template.id} binds ${provider.providerInterface}`,
+        ).toBeUndefined();
       }
     }
   });
@@ -514,7 +591,17 @@ describe('the designer', () => {
       .flatMap((group) => group.entries.map((entry) => entry.blockId))
       .map((id) => id.split('.')[1]);
 
-    for (const forbidden of ['script', 'eval', 'run', 'code', 'http', 'sql', 'fetch', 'call', 'invoke']) {
+    for (const forbidden of [
+      'script',
+      'eval',
+      'run',
+      'code',
+      'http',
+      'sql',
+      'fetch',
+      'call',
+      'invoke',
+    ]) {
       expect(operations, `palette offers ${forbidden}`).not.toContain(forbidden);
     }
   });
@@ -528,7 +615,9 @@ describe('the designer', () => {
 
     const acceptance = canvas.nodes.find((node) => node.key === 'accept-payment');
     expect(acceptance?.movesMoney).toBe(true);
-    expect(acceptance?.findings.every((finding) => finding.subject === 'accept-payment')).toBe(true);
+    expect(acceptance?.findings.every((finding) => finding.subject === 'accept-payment')).toBe(
+      true,
+    );
   });
 
   it('marks compensating blocks so they are not drawn on the main flow', () => {
@@ -588,7 +677,11 @@ describe('AI-assisted composition', () => {
       riskOwner: 'usr_risk',
       complianceOwner: 'usr_compliance',
     },
-    compliancePolicy: { dataClassification: 'confidential' as const, retentionDays: 2555, screening: [] },
+    compliancePolicy: {
+      dataClassification: 'confidential' as const,
+      retentionDays: 2555,
+      screening: [],
+    },
     auditClassification: 'sensitive' as const,
     effectiveDate: '2026-01-01T00:00:00.000Z',
     reviewDate: '2026-12-31T00:00:00.000Z',
@@ -605,7 +698,12 @@ describe('AI-assisted composition', () => {
       blocks: [
         { key: 'verify', blockId: 'identity.customer_eligibility', blockVersion: '1.0.0' },
         { key: 'consume-limit', blockId: 'limit.daily', blockVersion: '1.0.0' },
-        { key: 'accept', blockId: 'payment.execute', blockVersion: '1.0.0', connectorId: 'rail-alpha' },
+        {
+          key: 'accept',
+          blockId: 'payment.execute',
+          blockVersion: '1.0.0',
+          connectorId: 'rail-alpha',
+        },
       ],
       transitions: [
         { from: 'start', to: 'verify', kind: 'always' },
@@ -652,13 +750,20 @@ describe('AI-assisted composition', () => {
         blocks: [
           { key: 'verify', blockId: 'identity.customer_eligibility', blockVersion: '1.0.0' },
           { key: 'consume-limit', blockId: 'limit.daily', blockVersion: '1.0.0' },
-          { key: 'accept', blockId: 'payment.execute', blockVersion: '1.0.0', connectorId: 'rail-omega' },
+          {
+            key: 'accept',
+            blockId: 'payment.execute',
+            blockVersion: '1.0.0',
+            connectorId: 'rail-omega',
+          },
         ],
       }),
     });
 
     expect(outcome.overrides.some((line) => line.includes('rail-omega'))).toBe(true);
-    expect(outcome.definition.blocks.find((block) => block.key === 'accept')?.connectorId).toBeUndefined();
+    expect(
+      outcome.definition.blocks.find((block) => block.key === 'accept')?.connectorId,
+    ).toBeUndefined();
   });
 
   it('drops a currency the deployment does not support', () => {
@@ -724,7 +829,9 @@ describe('AI-assisted composition', () => {
     });
 
     expect(outcome.validation.valid).toBe(false);
-    expect(outcome.validation.findings.some((finding) => finding.code === 'unreachable_block')).toBe(true);
+    expect(
+      outcome.validation.findings.some((finding) => finding.code === 'unreachable_block'),
+    ).toBe(true);
   });
 
   it('carries the model’s rationale through for the reviewer', () => {

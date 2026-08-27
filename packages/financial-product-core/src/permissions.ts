@@ -38,14 +38,29 @@ function define(key: string, description: string): FinancialProductPermissionDef
 
 export const FINANCIAL_PRODUCT_PERMISSIONS = {
   // --- composition ---------------------------------------------------------
-  PRODUCT_READ: define('financial.product.read', 'View product definitions, versions and catalog entries.'),
-  PRODUCT_CREATE: define('financial.product.create', 'Create a draft product or a new draft version.'),
+  PRODUCT_READ: define(
+    'financial.product.read',
+    'View product definitions, versions and catalog entries.',
+  ),
+  PRODUCT_CREATE: define(
+    'financial.product.create',
+    'Create a draft product or a new draft version.',
+  ),
   PRODUCT_UPDATE: define('financial.product.update', 'Edit a draft product definition.'),
-  PRODUCT_VALIDATE: define('financial.product.validate', 'Run the static validation suite over a draft.'),
+  PRODUCT_VALIDATE: define(
+    'financial.product.validate',
+    'Run the static validation suite over a draft.',
+  ),
 
   // --- the four changes that move money ------------------------------------
-  PRODUCT_FEE_UPDATE: define('financial.product.fee.update', 'Change a product’s fee configuration.'),
-  PRODUCT_LIMIT_UPDATE: define('financial.product.limit.update', 'Change a product’s limit configuration.'),
+  PRODUCT_FEE_UPDATE: define(
+    'financial.product.fee.update',
+    'Change a product’s fee configuration.',
+  ),
+  PRODUCT_LIMIT_UPDATE: define(
+    'financial.product.limit.update',
+    'Change a product’s limit configuration.',
+  ),
   PRODUCT_PROVIDER_UPDATE: define(
     'financial.product.provider.update',
     'Change which provider interface or connector a product binds to.',
@@ -63,7 +78,10 @@ export const FINANCIAL_PRODUCT_PERMISSIONS = {
     'financial.product.publish',
     'Stage or activate an approved product version, making it reachable.',
   ),
-  PRODUCT_PAUSE: define('financial.product.pause', 'Withdraw a live product from new transactions.'),
+  PRODUCT_PAUSE: define(
+    'financial.product.pause',
+    'Withdraw a live product from new transactions.',
+  ),
   PRODUCT_ROLLBACK: define(
     'financial.product.rollback',
     'Activate a previously approved version in place of the current one.',
@@ -72,7 +90,10 @@ export const FINANCIAL_PRODUCT_PERMISSIONS = {
   PRODUCT_RETIRE: define('financial.product.retire', 'Close a deprecated product version.'),
 
   // --- variants ------------------------------------------------------------
-  VARIANT_READ: define('financial.product.variant.read', 'View product variants and their overrides.'),
+  VARIANT_READ: define(
+    'financial.product.variant.read',
+    'View product variants and their overrides.',
+  ),
   VARIANT_MANAGE: define(
     'financial.product.variant.manage',
     'Create or change a variant’s override configuration.',
@@ -85,7 +106,10 @@ export const FINANCIAL_PRODUCT_PERMISSIONS = {
     'financial.product.execute',
     'Start a transaction on an active product through its exposed API.',
   ),
-  EXECUTION_READ: define('financial.product.execution.read', 'View product executions and their steps.'),
+  EXECUTION_READ: define(
+    'financial.product.execution.read',
+    'View product executions and their steps.',
+  ),
 
   // --- blocks and connectors ----------------------------------------------
   BLOCK_READ: define('financial.block.read', 'View the approved financial block catalog.'),
@@ -93,7 +117,10 @@ export const FINANCIAL_PRODUCT_PERMISSIONS = {
     'financial.block.manage',
     'Change a block’s lifecycle status in the approved catalog.',
   ),
-  CONNECTOR_READ: define('financial.connector.read', 'View approved connectors and their metadata.'),
+  CONNECTOR_READ: define(
+    'financial.connector.read',
+    'View approved connectors and their metadata.',
+  ),
   CONNECTOR_MANAGE: define(
     'financial.connector.manage',
     'Register or change a connector’s configuration, timeout or retry policy.',
@@ -116,10 +143,22 @@ export type FinancialProductPermissionKey =
  * one running over the seeded roles.
  */
 export const SEGREGATED_PERMISSION_PAIRS: ReadonlyArray<readonly [string, string]> = [
-  [FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_CREATE.key, FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_APPROVE.key],
-  [FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_UPDATE.key, FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_APPROVE.key],
-  [FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_SUBMIT.key, FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_APPROVE.key],
-  [FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_APPROVE.key, FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_PUBLISH.key],
+  [
+    FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_CREATE.key,
+    FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_APPROVE.key,
+  ],
+  [
+    FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_UPDATE.key,
+    FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_APPROVE.key,
+  ],
+  [
+    FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_SUBMIT.key,
+    FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_APPROVE.key,
+  ],
+  [
+    FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_APPROVE.key,
+    FINANCIAL_PRODUCT_PERMISSIONS.PRODUCT_PUBLISH.key,
+  ],
 ];
 
 /** The keys a role holding this permission set would violate segregation by combining. */

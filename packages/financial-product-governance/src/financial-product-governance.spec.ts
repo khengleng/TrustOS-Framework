@@ -39,13 +39,26 @@ function definition(overrides: Record<string, unknown> = {}): ProductDefinition 
     lifecycleStatus: 'draft',
     effectiveDate: '2026-01-01T00:00:00.000Z',
     reviewDate: '2026-12-01T00:00:00.000Z',
-    blocks: [{ key: 'accept-payment', blockId: 'payment.execute', blockVersion: '1.0.0', name: 'Accept payment' }],
+    blocks: [
+      {
+        key: 'accept-payment',
+        blockId: 'payment.execute',
+        blockVersion: '1.0.0',
+        name: 'Accept payment',
+      },
+    ],
     transitions: [
       { from: 'start', to: 'accept-payment', kind: 'always' },
       { from: 'accept-payment', to: 'completed', kind: 'on_success' },
     ],
     fees: [
-      { code: 'ACCEPTANCE', feeType: 'PERCENTAGE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '7500' }, bearer: 'payee' },
+      {
+        code: 'ACCEPTANCE',
+        feeType: 'PERCENTAGE',
+        basis: 'percentage',
+        rate: { hundredthsOfBasisPoint: '7500' },
+        bearer: 'payee',
+      },
     ],
     riskPolicy: {},
     compliancePolicy: { dataClassification: 'confidential', retentionDays: 2555 },
@@ -78,7 +91,13 @@ describe('change classification', () => {
   it('detects a fee change and demands finance', () => {
     const after = definition({
       fees: [
-        { code: 'ACCEPTANCE', feeType: 'PERCENTAGE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '5000' }, bearer: 'payee' },
+        {
+          code: 'ACCEPTANCE',
+          feeType: 'PERCENTAGE',
+          basis: 'percentage',
+          rate: { hundredthsOfBasisPoint: '5000' },
+          bearer: 'payee',
+        },
       ],
     });
 
@@ -89,13 +108,25 @@ describe('change classification', () => {
 
   it('unions the levels when a change touches two sensitive areas', () => {
     const after = definition({
-      fees: [{ code: 'ACCEPTANCE', feeType: 'FLAT', basis: 'flat', flat: { minorUnits: '100', currency: 'USD' }, bearer: 'payee' }],
+      fees: [
+        {
+          code: 'ACCEPTANCE',
+          feeType: 'FLAT',
+          basis: 'flat',
+          flat: { minorUnits: '100', currency: 'USD' },
+          bearer: 'payee',
+        },
+      ],
       compliancePolicy: { dataClassification: 'restricted', retentionDays: 2555 },
     });
 
     const classification = classifyChange(definition(), after);
     // A union rather than the strictest set: taking a maximum of two sets is not a thing.
-    expect(classification.requiredApprovalLevels).toEqual(['COMPLIANCE', 'FINANCE', 'PRODUCT_OWNER']);
+    expect(classification.requiredApprovalLevels).toEqual([
+      'COMPLIANCE',
+      'FINANCE',
+      'PRODUCT_OWNER',
+    ]);
   });
 
   it('detects a reordering of transitions, because order decides which branch runs first', () => {
@@ -156,7 +187,9 @@ describe('maker-checker', () => {
     const { decision } = recordDecision(decisionInput());
     // Without this, a two-of-three requirement is satisfiable by one person clicking twice.
     expect(() =>
-      recordDecision(decisionInput({ existing: [decision], level: classification.requiredApprovalLevels[1] })),
+      recordDecision(
+        decisionInput({ existing: [decision], level: classification.requiredApprovalLevels[1] }),
+      ),
     ).toThrow(/already recorded a decision/);
   });
 
@@ -164,7 +197,9 @@ describe('maker-checker', () => {
     // A new product touches every sensitive field, so it needs all six standard levels. The
     // refusal is for a level nothing in the change maps to.
     expect(classification.requiredApprovalLevels).not.toContain('MARKETING');
-    expect(() => recordDecision(decisionInput({ level: 'MARKETING' }))).toThrow(/does not require approval/);
+    expect(() => recordDecision(decisionInput({ level: 'MARKETING' }))).toThrow(
+      /does not require approval/,
+    );
   });
 
   it('refuses a rejection with no reason', () => {
@@ -223,7 +258,9 @@ describe('maker-checker', () => {
 
   it('refuses publication while a level is outstanding', () => {
     const state = deriveApprovalState(classification, []);
-    expect(() => assertApprovalComplete(state, 'merchant-wallet', '2.0.0')).toThrow(/missing approval/);
+    expect(() => assertApprovalComplete(state, 'merchant-wallet', '2.0.0')).toThrow(
+      /missing approval/,
+    );
   });
 });
 

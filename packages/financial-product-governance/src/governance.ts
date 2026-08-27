@@ -104,7 +104,8 @@ export function assessGovernance(
         `${owners.size} distinct people hold ${Object.keys(definition.ownership).length} owner ` +
         'roles on this product. The approval trail will show fewer independent parties than the ' +
         'governance model implies.',
-      remediation: 'Assign the risk and compliance owner roles to people independent of the product owner.',
+      remediation:
+        'Assign the risk and compliance owner roles to people independent of the product owner.',
     });
   }
 

@@ -45,7 +45,8 @@ export const PROVIDER_INTERFACES = {
     operations: ['send', 'status'],
   },
   CreditProvider: {
-    description: 'The seam where a credit decision comes from outside. No scoring model ships here.',
+    description:
+      'The seam where a credit decision comes from outside. No scoring model ships here.',
     operations: ['assess', 'status', 'report'],
   },
 } as const;
@@ -87,11 +88,9 @@ export const FRAMEWORK_FORBIDDEN_PROVIDER_NAMES: readonly string[] = [
   'dbank',
 ];
 
-export const providerInterfaceSchema = z
-  .string()
-  .refine(isProviderInterface, {
-    message:
-      `Unknown provider interface. One of: ${PROVIDER_INTERFACE_NAMES.join(', ')}. A product ` +
-      'never names a vendor; it names an interface, and a connector binds the interface to ' +
-      'something outside.',
-  });
+export const providerInterfaceSchema = z.string().refine(isProviderInterface, {
+  message:
+    `Unknown provider interface. One of: ${PROVIDER_INTERFACE_NAMES.join(', ')}. A product ` +
+    'never names a vendor; it names an interface, and a connector binds the interface to ' +
+    'something outside.',
+});

@@ -89,7 +89,11 @@ export const blockFieldSchema = z
   .strict()
   .superRefine((field, ctx) => {
     if (field.type === 'enum' && (!field.values || field.values.length === 0)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['values'], message: 'An enum needs values.' });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['values'],
+        message: 'An enum needs values.',
+      });
     }
     if (field.type === 'reference' && !field.referenceDomain) {
       ctx.addIssue({
@@ -159,7 +163,10 @@ export const blockDefinitionSchema = z
      * every product containing it an ABA product, which is the coupling this layer exists to
      * remove.
      */
-    providerInterface: z.string().regex(/^[A-Z][A-Za-z0-9]{2,39}$/).optional(),
+    providerInterface: z
+      .string()
+      .regex(/^[A-Z][A-Za-z0-9]{2,39}$/)
+      .optional(),
 
     allowedNext: z.array(nextPatternSchema).max(30).default([]),
     /** Categories that must appear earlier on every path reaching this block. */
@@ -240,8 +247,7 @@ export const blockDefinitionSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['securityClassification'],
-          message:
-            `Field "${field.name}" carries personal data, so this block is at least sensitive.`,
+          message: `Field "${field.name}" carries personal data, so this block is at least sensitive.`,
         });
       }
     }

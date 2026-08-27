@@ -145,9 +145,9 @@ describe('the registry', () => {
     expect(() => registry.requireBindable('org_a', 'draft-rail', 'SettlementProvider')).toThrow(
       /is draft/,
     );
-    expect(
-      registry.requireBindable('org_a', 'old-rail', 'SettlementProvider').connectorId,
-    ).toBe('old-rail');
+    expect(registry.requireBindable('org_a', 'old-rail', 'SettlementProvider').connectorId).toBe(
+      'old-rail',
+    );
   });
 
   it('refuses a duplicate registration', () => {
@@ -183,6 +183,8 @@ describe('the framework’s own catalog', () => {
   });
 
   it('permits a connector named for a capability', () => {
-    expect(() => assertNoFrameworkProvider(connectorDefinitionSchema.parse(connector()))).not.toThrow();
+    expect(() =>
+      assertNoFrameworkProvider(connectorDefinitionSchema.parse(connector())),
+    ).not.toThrow();
   });
 });

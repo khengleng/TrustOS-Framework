@@ -85,15 +85,18 @@ function bound(published: PublishedVersion) {
     ...published.definition,
     providers: published.definition.providers.map((provider) => ({
       ...provider,
-      connectorId: provider.providerInterface === 'PaymentProvider' ? 'payment-rail' : provider.connectorId,
+      connectorId:
+        provider.providerInterface === 'PaymentProvider' ? 'payment-rail' : provider.connectorId,
     })),
   };
 }
 
-function runtime(options: {
-  handlers?: BlockHandler[];
-  idempotency?: InMemoryIdempotencyStore;
-} = {}) {
+function runtime(
+  options: {
+    handlers?: BlockHandler[];
+    idempotency?: InMemoryIdempotencyStore;
+  } = {},
+) {
   const events = collectingEventPublisher();
   const audit = collectingAuditRecorder();
 
@@ -277,7 +280,11 @@ describe('refusals and failures are different things', () => {
   it('ends a refused execution in `refused`, not `failed`', async () => {
     const { engine } = runtime({
       handlers: alwaysSucceeds({
-        'configure-limits': { outcome: 'refused', code: 'limit_exceeded', reason: 'Over the daily ceiling.' },
+        'configure-limits': {
+          outcome: 'refused',
+          code: 'limit_exceeded',
+          reason: 'Over the daily ceiling.',
+        },
       }),
     });
 
@@ -298,7 +305,12 @@ describe('refusals and failures are different things', () => {
   it('compensates a failed money-moving block and ends in `failed`', async () => {
     const { engine } = runtime({
       handlers: alwaysSucceeds({
-        'post-ledger': { outcome: 'failed', code: 'store_unavailable', reason: 'The ledger was unreachable.', retryable: false },
+        'post-ledger': {
+          outcome: 'failed',
+          code: 'store_unavailable',
+          reason: 'The ledger was unreachable.',
+          retryable: false,
+        },
       }),
     });
 
@@ -319,8 +331,18 @@ describe('refusals and failures are different things', () => {
   it('distinguishes a failed compensation from a clean failure', async () => {
     const { engine } = runtime({
       handlers: alwaysSucceeds({
-        'post-ledger': { outcome: 'failed', code: 'store_unavailable', reason: 'The ledger was unreachable.', retryable: false },
-        'reverse-posting': { outcome: 'failed', code: 'store_unavailable', reason: 'And so was the reversal.', retryable: false },
+        'post-ledger': {
+          outcome: 'failed',
+          code: 'store_unavailable',
+          reason: 'The ledger was unreachable.',
+          retryable: false,
+        },
+        'reverse-posting': {
+          outcome: 'failed',
+          code: 'store_unavailable',
+          reason: 'And so was the reversal.',
+          retryable: false,
+        },
       }),
     });
 
@@ -341,7 +363,11 @@ describe('refusals and failures are different things', () => {
   it('holds an execution that needs a review, having run nothing after it', async () => {
     const { engine } = runtime({
       handlers: alwaysSucceeds({
-        'accept-payment': { outcome: 'review_required', level: 'COMPLIANCE', reason: 'Above the threshold.' },
+        'accept-payment': {
+          outcome: 'review_required',
+          level: 'COMPLIANCE',
+          reason: 'Above the threshold.',
+        },
       }),
     });
 
@@ -370,7 +396,9 @@ describe('refusals and failures are different things', () => {
           priority: 1,
           enabled: true,
           when: { field: 'amountMinorUnits', operator: 'exists' as const },
-          then: [{ kind: 'deny' as const, code: 'product_closed', reason: 'The product is closed.' }],
+          then: [
+            { kind: 'deny' as const, code: 'product_closed', reason: 'The product is closed.' },
+          ],
         },
       ],
     };
@@ -492,11 +520,16 @@ describe('idempotency', () => {
 
     expect(classifyClaim(null, 'sha256:aaa', NOW).kind).toBe('proceed');
     expect(classifyClaim({ ...base, status: 'completed' }, 'sha256:aaa', NOW).kind).toBe('replay');
-    expect(classifyClaim({ ...base, status: 'in_progress' }, 'sha256:aaa', NOW).kind).toBe('conflict');
-    expect(classifyClaim({ ...base, status: 'completed' }, 'sha256:bbb', NOW).kind).toBe('conflict');
+    expect(classifyClaim({ ...base, status: 'in_progress' }, 'sha256:aaa', NOW).kind).toBe(
+      'conflict',
+    );
+    expect(classifyClaim({ ...base, status: 'completed' }, 'sha256:bbb', NOW).kind).toBe(
+      'conflict',
+    );
     // An expired key is a key that may be reused.
     expect(
-      classifyClaim({ ...base, status: 'completed' }, 'sha256:aaa', new Date(NOW.getTime() + 5000)).kind,
+      classifyClaim({ ...base, status: 'completed' }, 'sha256:aaa', new Date(NOW.getTime() + 5000))
+        .kind,
     ).toBe('proceed');
   });
 });
@@ -511,14 +544,21 @@ describe('retry', () => {
         block.key === 'post-ledger'
           ? {
               ...block,
-              retry: { maxAttempts: 3, backoff: 'fixed' as const, initialDelayMs: 10, maxDelayMs: 10 },
+              retry: {
+                maxAttempts: 3,
+                backoff: 'fixed' as const,
+                initialDelayMs: 10,
+                maxDelayMs: 10,
+              },
             }
           : block,
       ),
     };
 
     const handlers = alwaysSucceeds();
-    const ledger = handlers.find((handler) => handler.blockId === 'ledger.create_journal') as BlockHandler;
+    const ledger = handlers.find(
+      (handler) => handler.blockId === 'ledger.create_journal',
+    ) as BlockHandler;
 
     const patched: BlockHandler = {
       blockId: ledger.blockId,
@@ -573,7 +613,12 @@ describe('retry', () => {
         block.key === 'verify-merchant'
           ? {
               ...block,
-              retry: { maxAttempts: 5, backoff: 'fixed' as const, initialDelayMs: 1, maxDelayMs: 1 },
+              retry: {
+                maxAttempts: 5,
+                backoff: 'fixed' as const,
+                initialDelayMs: 1,
+                maxDelayMs: 1,
+              },
             }
           : block,
       ),
@@ -604,7 +649,10 @@ describe('the handler registry', () => {
     ]);
 
     expect(() =>
-      registry.register({ blockId: 'wallet.debit', execute: async () => ({ outcome: 'success', outputs: {} }) }),
+      registry.register({
+        blockId: 'wallet.debit',
+        execute: async () => ({ outcome: 'success', outputs: {} }),
+      }),
     ).toThrow(/already registered/);
   });
 

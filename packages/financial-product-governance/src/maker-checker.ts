@@ -95,7 +95,9 @@ export function deriveApprovalState(
 
   const approvedLevels = [
     ...new Set(
-      ordered.filter((decision) => decision.decision === 'approved').map((decision) => decision.level),
+      ordered
+        .filter((decision) => decision.decision === 'approved')
+        .map((decision) => decision.level),
     ),
   ].sort();
 
@@ -191,7 +193,11 @@ export function recordDecision(input: RecordDecisionInput): {
 }
 
 /** Refuses a publication that the recorded decisions do not support. */
-export function assertApprovalComplete(state: ApprovalState, productId: string, version: string): void {
+export function assertApprovalComplete(
+  state: ApprovalState,
+  productId: string,
+  version: string,
+): void {
   if (state.rejected) {
     throw productError(
       'product_approval_required',

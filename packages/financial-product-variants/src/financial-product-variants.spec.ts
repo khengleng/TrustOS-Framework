@@ -30,16 +30,34 @@ function base(overrides: Record<string, unknown> = {}): ProductDefinition {
     lifecycleStatus: 'active',
     effectiveDate: '2026-01-01T00:00:00.000Z',
     reviewDate: '2027-01-01T00:00:00.000Z',
-    blocks: [{ key: 'accept-payment', blockId: 'payment.execute', blockVersion: '1.0.0', name: 'Accept payment' }],
+    blocks: [
+      {
+        key: 'accept-payment',
+        blockId: 'payment.execute',
+        blockVersion: '1.0.0',
+        name: 'Accept payment',
+      },
+    ],
     transitions: [
       { from: 'start', to: 'accept-payment', kind: 'always' },
       { from: 'accept-payment', to: 'completed', kind: 'on_success' },
     ],
     fees: [
-      { code: 'ACCEPTANCE', feeType: 'PERCENTAGE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '7500' }, bearer: 'payee' },
+      {
+        code: 'ACCEPTANCE',
+        feeType: 'PERCENTAGE',
+        basis: 'percentage',
+        rate: { hundredthsOfBasisPoint: '7500' },
+        bearer: 'payee',
+      },
     ],
     limits: [
-      { code: 'DAILY_IN', limitType: 'DAILY', scope: 'merchant', amount: { minorUnits: '500000', currency: 'USD' } },
+      {
+        code: 'DAILY_IN',
+        limitType: 'DAILY',
+        scope: 'merchant',
+        amount: { minorUnits: '500000', currency: 'USD' },
+      },
     ],
     rules: [
       {
@@ -121,7 +139,13 @@ describe('resolution', () => {
       variant({
         overrides: {
           fees: [
-            { code: 'ACCEPTANCE', feeType: 'PERCENTAGE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '5000' }, bearer: 'payee' },
+            {
+              code: 'ACCEPTANCE',
+              feeType: 'PERCENTAGE',
+              basis: 'percentage',
+              rate: { hundredthsOfBasisPoint: '5000' },
+              bearer: 'payee',
+            },
           ],
         },
       }),
@@ -137,12 +161,23 @@ describe('resolution', () => {
       base(),
       variant({
         overrides: {
-          fees: [{ code: 'PLATFORM', feeType: 'FLAT', basis: 'flat', flat: { minorUnits: '25', currency: 'USD' }, bearer: 'platform' }],
+          fees: [
+            {
+              code: 'PLATFORM',
+              feeType: 'FLAT',
+              basis: 'flat',
+              flat: { minorUnits: '25', currency: 'USD' },
+              bearer: 'platform',
+            },
+          ],
         },
       }),
     );
 
-    expect(resolved.definition.fees.map((fee) => fee.code).sort()).toEqual(['ACCEPTANCE', 'PLATFORM']);
+    expect(resolved.definition.fees.map((fee) => fee.code).sort()).toEqual([
+      'ACCEPTANCE',
+      'PLATFORM',
+    ]);
     expect(resolved.provenance.added).toEqual([{ path: 'fees', identity: 'PLATFORM' }]);
   });
 
@@ -155,7 +190,10 @@ describe('resolution', () => {
 
   it('refuses a variant that widens the country list', () => {
     try {
-      resolveVariant(base(), variant({ overrides: { supportedCountries: ['COUNTRY_A', 'COUNTRY_C'] } }));
+      resolveVariant(
+        base(),
+        variant({ overrides: { supportedCountries: ['COUNTRY_A', 'COUNTRY_C'] } }),
+      );
       expect.unreachable('should have refused');
     } catch (error) {
       expect(productErrorCode(error)).toBe('product_variant_override_refused');
@@ -170,7 +208,10 @@ describe('resolution', () => {
   });
 
   it('permits narrowing', () => {
-    const resolved = resolveVariant(base(), variant({ overrides: { supportedCurrencies: ['USD'] } }));
+    const resolved = resolveVariant(
+      base(),
+      variant({ overrides: { supportedCurrencies: ['USD'] } }),
+    );
     expect(resolved.definition.supportedCurrencies).toEqual(['USD']);
   });
 
@@ -249,14 +290,24 @@ describe('resolution', () => {
               description: 'SME rate.',
               priority: 5,
               when: { field: 'merchantTier', operator: 'eq', value: 'SME' },
-              then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '6000' } }],
+              then: [
+                {
+                  kind: 'set_fee',
+                  feeCode: 'ACCEPTANCE',
+                  basis: 'percentage',
+                  rate: { hundredthsOfBasisPoint: '6000' },
+                },
+              ],
             },
           ],
         },
       }),
     );
 
-    expect(resolved.definition.rules.map((rule) => rule.id).sort()).toEqual(['enhanced-review', 'sme-rate']);
+    expect(resolved.definition.rules.map((rule) => rule.id).sort()).toEqual([
+      'enhanced-review',
+      'sme-rate',
+    ]);
   });
 
   it('refuses to resolve against a different base version', () => {
@@ -273,7 +324,9 @@ describe('resolution', () => {
     expect(() =>
       resolveVariant(
         base(),
-        variant({ overrides: { settlementPolicy: { schedule: 'daily', calendar: 'BUSINESS_DAYS' } } }),
+        variant({
+          overrides: { settlementPolicy: { schedule: 'daily', calendar: 'BUSINESS_DAYS' } },
+        }),
       ),
     ).toThrow(/cut-off/);
   });
@@ -281,7 +334,12 @@ describe('resolution', () => {
   it('carries the variant’s additional approval levels through', () => {
     const resolved = resolveVariant(
       base(),
-      variant({ overrides: { supportedCountries: ['COUNTRY_A'], additionalApprovalLevels: ['RISK', 'COMPLIANCE'] } }),
+      variant({
+        overrides: {
+          supportedCountries: ['COUNTRY_A'],
+          additionalApprovalLevels: ['RISK', 'COMPLIANCE'],
+        },
+      }),
     );
     expect(resolved.additionalApprovalLevels).toEqual(['COMPLIANCE', 'RISK']);
   });

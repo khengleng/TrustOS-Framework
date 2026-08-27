@@ -233,12 +233,16 @@ export function explainDecision(decision: RuleDecision): string[] {
 
     for (const applied of entry.outcomes) {
       const verb = applied.applied ? 'applied' : 'superseded';
-      lines.push(`${entry.ruleId} (p${entry.priority}): ${verb} ${describeOutcome(applied.outcome)}.`);
+      lines.push(
+        `${entry.ruleId} (p${entry.priority}): ${verb} ${describeOutcome(applied.outcome)}.`,
+      );
     }
   }
 
   if (decision.denied) {
-    lines.push(`Refused by ${decision.denied.ruleId}: ${decision.denied.reason} [${decision.denied.code}].`);
+    lines.push(
+      `Refused by ${decision.denied.ruleId}: ${decision.denied.reason} [${decision.denied.code}].`,
+    );
   }
 
   return lines;

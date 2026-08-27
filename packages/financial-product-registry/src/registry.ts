@@ -9,7 +9,11 @@ import {
   type ProductDefinition,
   type ProductLifecycleStatus,
 } from '@trustos/financial-product-core';
-import { validateProduct, type ValidateProductOptions, type ValidationResult } from '@trustos/financial-product-composer';
+import {
+  validateProduct,
+  type ValidateProductOptions,
+  type ValidationResult,
+} from '@trustos/financial-product-composer';
 import {
   applyLifecycleTransition,
   checkLifecycleTransition,
@@ -149,7 +153,11 @@ export class ProductRegistry {
   }
 
   /** A specific published version. Used by an execution resuming under its binding. */
-  async version(actor: RegistryActor, productId: string, version: string): Promise<PublishedVersion> {
+  async version(
+    actor: RegistryActor,
+    productId: string,
+    version: string,
+  ): Promise<PublishedVersion> {
     const record = await this.get(actor, productId);
     const found = record.versions.find((candidate) => candidate.version === version);
 
@@ -173,7 +181,9 @@ export class ProductRegistry {
     const variant = await this.store.findVariant(actor.organizationId, variantId);
 
     if (!variant) {
-      throw productError('product_not_found', `No variant "${variantId}".`, { productId: variantId });
+      throw productError('product_not_found', `No variant "${variantId}".`, {
+        productId: variantId,
+      });
     }
 
     const base = await this.version(actor, variant.baseProductId, variant.baseVersion);
@@ -275,7 +285,9 @@ export class ProductRegistry {
   async validate(actor: RegistryActor, productId: string): Promise<ValidationResult> {
     const record = await this.get(actor, productId);
     if (!record.draft) {
-      throw productError('product_not_found', `Product "${productId}" has no draft.`, { productId });
+      throw productError('product_not_found', `Product "${productId}" has no draft.`, {
+        productId,
+      });
     }
 
     return validateProduct(record.draft, this.validationOptions);
@@ -290,11 +302,7 @@ export class ProductRegistry {
    * so a caller cannot learn whether they would be permitted to do something the lifecycle does
    * not allow.
    */
-  async transition(
-    actor: RegistryActor,
-    productId: string,
-    action: string,
-  ): Promise<ProductState> {
+  async transition(actor: RegistryActor, productId: string, action: string): Promise<ProductState> {
     const record = await this.get(actor, productId);
     const draft = record.draft;
 
@@ -373,7 +381,9 @@ export class ProductRegistry {
     const draft = record.draft;
 
     if (!draft) {
-      throw productError('product_not_found', `Product "${productId}" has no draft.`, { productId });
+      throw productError('product_not_found', `Product "${productId}" has no draft.`, {
+        productId,
+      });
     }
 
     const classification = classifyChange(this.previousDefinition(record), draft);
@@ -401,7 +411,9 @@ export class ProductRegistry {
     const draft = record.draft;
 
     if (!draft) {
-      throw productError('product_not_found', `Product "${productId}" has no draft.`, { productId });
+      throw productError('product_not_found', `Product "${productId}" has no draft.`, {
+        productId,
+      });
     }
 
     if (draft.lifecycleStatus !== 'under_review') {
@@ -469,7 +481,9 @@ export class ProductRegistry {
     const draft = record.draft;
 
     if (!draft) {
-      throw productError('product_not_found', `Product "${productId}" has no draft.`, { productId });
+      throw productError('product_not_found', `Product "${productId}" has no draft.`, {
+        productId,
+      });
     }
 
     if (draft.lifecycleStatus !== 'approved') {
@@ -506,7 +520,8 @@ export class ProductRegistry {
 
     assertApprovalComplete(approval, productId, draft.version);
 
-    if (previous) assertSufficientBump(previous.version, draft.version, classification.changedPaths);
+    if (previous)
+      assertSufficientBump(previous.version, draft.version, classification.changedPaths);
 
     const version = publishVersion({
       definition: { ...draft, lifecycleStatus: 'staged' },
@@ -541,7 +556,10 @@ export class ProductRegistry {
       organizationId: actor.organizationId,
       actorId: actor.actorId,
       outcome: 'allowed',
-      detail: { supersedes: previous?.version ?? null, changed: classification.changedPaths.join(',') },
+      detail: {
+        supersedes: previous?.version ?? null,
+        changed: classification.changedPaths.join(','),
+      },
       now: this.clock.now(),
     });
 
@@ -688,7 +706,11 @@ export class ProductRegistry {
       current,
       target,
       reason,
-      inFlightCount: await this.store.countInFlight(actor.organizationId, productId, current.version),
+      inFlightCount: await this.store.countInFlight(
+        actor.organizationId,
+        productId,
+        current.version,
+      ),
     });
   }
 
@@ -710,10 +732,16 @@ export class ProductRegistry {
         activeVersion: outcome.activatedVersion,
         versions: record.versions.map((candidate) => {
           if (candidate.version === outcome.pausedVersion) {
-            return { ...candidate, definition: { ...candidate.definition, lifecycleStatus: 'paused' } };
+            return {
+              ...candidate,
+              definition: { ...candidate.definition, lifecycleStatus: 'paused' },
+            };
           }
           if (candidate.version === outcome.activatedVersion) {
-            return { ...candidate, definition: { ...candidate.definition, lifecycleStatus: 'active' } };
+            return {
+              ...candidate,
+              definition: { ...candidate.definition, lifecycleStatus: 'active' },
+            };
           }
           return candidate;
         }),
@@ -781,7 +809,10 @@ export class ProductRegistry {
   }
 
   private stateOf(record: ProductRecord): ProductState {
-    const classification = classifyChange(this.previousDefinition(record), record.draft ?? this.previousDefinition(record) ?? EMPTY_FOR_CLASSIFICATION);
+    const classification = classifyChange(
+      this.previousDefinition(record),
+      record.draft ?? this.previousDefinition(record) ?? EMPTY_FOR_CLASSIFICATION,
+    );
 
     return {
       productId: record.productId,
@@ -802,11 +833,9 @@ export class ProductRegistry {
   private requirePermission(actor: RegistryActor, permission: string): void {
     if (actor.permissions.includes(permission)) return;
 
-    throw productError(
-      'product_approval_required',
-      `The actor does not hold "${permission}".`,
-      { expected: permission },
-    );
+    throw productError('product_approval_required', `The actor does not hold "${permission}".`, {
+      expected: permission,
+    });
   }
 }
 
@@ -839,7 +868,8 @@ const AUDIT_BY_ACTION: Record<string, ProductAuditAction | undefined> = {
 function auditActionForChange(classification: ChangeClassification): ProductAuditAction {
   if (classification.sensitivePaths.includes('fees')) return PRODUCT_AUDIT_ACTIONS.FEE_CHANGED;
   if (classification.sensitivePaths.includes('limits')) return PRODUCT_AUDIT_ACTIONS.LIMIT_CHANGED;
-  if (classification.sensitivePaths.includes('providers')) return PRODUCT_AUDIT_ACTIONS.PROVIDER_CHANGED;
+  if (classification.sensitivePaths.includes('providers'))
+    return PRODUCT_AUDIT_ACTIONS.PROVIDER_CHANGED;
   if (classification.sensitivePaths.includes('rules')) return PRODUCT_AUDIT_ACTIONS.RULE_CHANGED;
   return PRODUCT_AUDIT_ACTIONS.PRODUCT_EDITED;
 }

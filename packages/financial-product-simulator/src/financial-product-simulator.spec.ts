@@ -25,13 +25,20 @@ describe('a small simulation', () => {
 
     expect(report.requested).toBe(10);
     expect(report.executed).toBe(10);
-    expect(report.successCount + report.refusalCount + report.failureCount + report.openCount).toBe(10);
+    expect(report.successCount + report.refusalCount + report.failureCount + report.openCount).toBe(
+      10,
+    );
   });
 
   it('produces the same report from the same seed', async () => {
     // The first thing anybody does with a simulator is run it twice.
     const first = await simulate({ version: version(), count: 50, seed: 42, resetBalanceEvery: 1 });
-    const second = await simulate({ version: version(), count: 50, seed: 42, resetBalanceEvery: 1 });
+    const second = await simulate({
+      version: version(),
+      count: 50,
+      seed: 42,
+      resetBalanceEvery: 1,
+    });
 
     expect(second.successCount).toBe(first.successCount);
     expect(second.pathDistribution).toEqual(first.pathDistribution);
@@ -40,7 +47,12 @@ describe('a small simulation', () => {
 
   it('produces a different report from a different seed', async () => {
     const first = await simulate({ version: version(), count: 200, seed: 1, resetBalanceEvery: 1 });
-    const second = await simulate({ version: version(), count: 200, seed: 2, resetBalanceEvery: 1 });
+    const second = await simulate({
+      version: version(),
+      count: 200,
+      seed: 2,
+      resetBalanceEvery: 1,
+    });
 
     expect(second.feeTotals).not.toEqual(first.feeTotals);
   });
@@ -107,8 +119,12 @@ describe('a small simulation', () => {
   it('states its caveats rather than leaving them implied', async () => {
     const report = await simulate({ version: version(), count: 5, seed: 1, resetBalanceEvery: 1 });
 
-    expect(report.caveats.some((caveat) => caveat.includes('mock that returns immediately'))).toBe(true);
-    expect(report.caveats.some((caveat) => caveat.includes('not a reliability estimate'))).toBe(true);
+    expect(report.caveats.some((caveat) => caveat.includes('mock that returns immediately'))).toBe(
+      true,
+    );
+    expect(report.caveats.some((caveat) => caveat.includes('not a reliability estimate'))).toBe(
+      true,
+    );
   });
 
   it('formats a report a person can read', async () => {
@@ -123,7 +139,12 @@ describe('a small simulation', () => {
 
 describe('at volume', () => {
   it('runs a thousand transactions', async () => {
-    const report = await simulate({ version: version(), count: 1000, seed: 99, resetBalanceEvery: 1 });
+    const report = await simulate({
+      version: version(),
+      count: 1000,
+      seed: 99,
+      resetBalanceEvery: 1,
+    });
 
     expect(report.executed).toBe(1000);
     expect(report.journalsPosted).toBeGreaterThan(0);

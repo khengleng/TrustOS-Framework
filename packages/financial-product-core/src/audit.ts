@@ -56,8 +56,7 @@ export const PRODUCT_AUDIT_ACTIONS = {
   IDEMPOTENCY_CONFLICT: 'financial.product.idempotency.conflict',
 } as const;
 
-export type ProductAuditAction =
-  (typeof PRODUCT_AUDIT_ACTIONS)[keyof typeof PRODUCT_AUDIT_ACTIONS];
+export type ProductAuditAction = (typeof PRODUCT_AUDIT_ACTIONS)[keyof typeof PRODUCT_AUDIT_ACTIONS];
 
 /**
  * The event catalog.

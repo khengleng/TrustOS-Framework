@@ -1,4 +1,8 @@
-import { productError, type ProductBlock, type ProductExecutionContext } from '@trustos/financial-product-core';
+import {
+  productError,
+  type ProductBlock,
+  type ProductExecutionContext,
+} from '@trustos/financial-product-core';
 import type { ConnectorDefinition } from '@trustos/connector-registry';
 
 /**

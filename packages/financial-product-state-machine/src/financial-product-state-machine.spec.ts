@@ -47,7 +47,9 @@ describe('the generic machine', () => {
 
   it('offers the actions that would work instead', () => {
     expect(PRODUCT_LIFECYCLE_MACHINE.availableActions('draft')).toEqual(['design']);
-    expect(() => PRODUCT_LIFECYCLE_MACHINE.assert('draft', 'approve')).toThrow(/Available from "draft": design/);
+    expect(() => PRODUCT_LIFECYCLE_MACHINE.assert('draft', 'approve')).toThrow(
+      /Available from "draft": design/,
+    );
   });
 });
 
@@ -135,7 +137,10 @@ describe('lifecycle preconditions', () => {
     const check = checkLifecycleTransition(
       'staged',
       'activate',
-      precondition({ recordedApprovalLevels: ['PRODUCT_OWNER'], requiredApprovalLevels: ['PRODUCT_OWNER', 'RISK'] }),
+      precondition({
+        recordedApprovalLevels: ['PRODUCT_OWNER'],
+        requiredApprovalLevels: ['PRODUCT_OWNER', 'RISK'],
+      }),
     );
 
     expect(check.allowed).toBe(false);

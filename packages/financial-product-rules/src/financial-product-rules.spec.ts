@@ -87,12 +87,30 @@ describe('the fact map', () => {
 describe('evaluation', () => {
   it('is deterministic across repeated runs', () => {
     const rules = [
-      rule({ id: 'base-rate', priority: 20, then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '7500' } }] }),
+      rule({
+        id: 'base-rate',
+        priority: 20,
+        then: [
+          {
+            kind: 'set_fee',
+            feeCode: 'ACCEPTANCE',
+            basis: 'percentage',
+            rate: { hundredthsOfBasisPoint: '7500' },
+          },
+        ],
+      }),
       rule({
         id: 'gold-rate',
         priority: 10,
         when: { field: 'merchantTier', operator: 'eq', value: 'GOLD' },
-        then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '5000' } }],
+        then: [
+          {
+            kind: 'set_fee',
+            feeCode: 'ACCEPTANCE',
+            basis: 'percentage',
+            rate: { hundredthsOfBasisPoint: '5000' },
+          },
+        ],
       }),
     ];
 
@@ -107,8 +125,30 @@ describe('evaluation', () => {
   it('records the superseded rule rather than discarding it', () => {
     const decision = evaluateRules(
       [
-        rule({ id: 'gold-rate', priority: 10, then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '5000' } }] }),
-        rule({ id: 'base-rate', priority: 20, then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '7500' } }] }),
+        rule({
+          id: 'gold-rate',
+          priority: 10,
+          then: [
+            {
+              kind: 'set_fee',
+              feeCode: 'ACCEPTANCE',
+              basis: 'percentage',
+              rate: { hundredthsOfBasisPoint: '5000' },
+            },
+          ],
+        }),
+        rule({
+          id: 'base-rate',
+          priority: 20,
+          then: [
+            {
+              kind: 'set_fee',
+              feeCode: 'ACCEPTANCE',
+              basis: 'percentage',
+              rate: { hundredthsOfBasisPoint: '7500' },
+            },
+          ],
+        }),
       ],
       buildFacts(context()),
     );
@@ -121,8 +161,16 @@ describe('evaluation', () => {
   it('accumulates reviews rather than letting a higher priority hide one', () => {
     const decision = evaluateRules(
       [
-        rule({ id: 'risk-review', priority: 5, then: [{ kind: 'require_review', level: 'RISK', reason: 'High value.' }] }),
-        rule({ id: 'compliance-review', priority: 6, then: [{ kind: 'require_review', level: 'COMPLIANCE', reason: 'Screening.' }] }),
+        rule({
+          id: 'risk-review',
+          priority: 5,
+          then: [{ kind: 'require_review', level: 'RISK', reason: 'High value.' }],
+        }),
+        rule({
+          id: 'compliance-review',
+          priority: 6,
+          then: [{ kind: 'require_review', level: 'COMPLIANCE', reason: 'Screening.' }],
+        }),
       ],
       buildFacts(context()),
     );
@@ -133,8 +181,16 @@ describe('evaluation', () => {
   it('de-duplicates a review level demanded twice', () => {
     const decision = evaluateRules(
       [
-        rule({ id: 'a', priority: 5, then: [{ kind: 'require_review', level: 'RISK', reason: 'One.' }] }),
-        rule({ id: 'b', priority: 6, then: [{ kind: 'require_review', level: 'RISK', reason: 'Two.' }] }),
+        rule({
+          id: 'a',
+          priority: 5,
+          then: [{ kind: 'require_review', level: 'RISK', reason: 'One.' }],
+        }),
+        rule({
+          id: 'b',
+          priority: 6,
+          then: [{ kind: 'require_review', level: 'RISK', reason: 'Two.' }],
+        }),
       ],
       buildFacts(context()),
     );
@@ -145,8 +201,23 @@ describe('evaluation', () => {
   it('stops at a denial and marks everything after it as not evaluated', () => {
     const decision = evaluateRules(
       [
-        rule({ id: 'refuse', priority: 1, then: [{ kind: 'deny', code: 'prohibited_country', reason: 'Not supported.' }] }),
-        rule({ id: 'charge', priority: 2, then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'flat', flat: { minorUnits: '100', currency: 'USD' } }] }),
+        rule({
+          id: 'refuse',
+          priority: 1,
+          then: [{ kind: 'deny', code: 'prohibited_country', reason: 'Not supported.' }],
+        }),
+        rule({
+          id: 'charge',
+          priority: 2,
+          then: [
+            {
+              kind: 'set_fee',
+              feeCode: 'ACCEPTANCE',
+              basis: 'flat',
+              flat: { minorUnits: '100', currency: 'USD' },
+            },
+          ],
+        }),
       ],
       buildFacts(context()),
     );
@@ -154,20 +225,24 @@ describe('evaluation', () => {
     expect(decision.denied?.code).toBe('prohibited_country');
     // A decision listing a fee for a refused payment reads as "we charged them anyway".
     expect(decision.fees.ACCEPTANCE).toBeUndefined();
-    expect(decision.trace.find((entry) => entry.ruleId === 'charge')?.skippedReason).toBe('after_deny');
+    expect(decision.trace.find((entry) => entry.ruleId === 'charge')?.skippedReason).toBe(
+      'after_deny',
+    );
   });
 
   it('skips a disabled rule and says so, rather than dropping it from the trace', () => {
-    const decision = evaluateRules(
-      [rule({ id: 'off', enabled: false })],
-      buildFacts(context()),
-    );
+    const decision = evaluateRules([rule({ id: 'off', enabled: false })], buildFacts(context()));
     expect(decision.trace[0]?.skippedReason).toBe('disabled');
   });
 
   it('records a non-matching rule and the condition that did not hold', () => {
     const decision = evaluateRules(
-      [rule({ id: 'silver-only', when: { field: 'merchantTier', operator: 'eq', value: 'SILVER' } })],
+      [
+        rule({
+          id: 'silver-only',
+          when: { field: 'merchantTier', operator: 'eq', value: 'SILVER' },
+        }),
+      ],
       buildFacts(context()),
     );
 
@@ -177,7 +252,19 @@ describe('evaluation', () => {
 
   it('produces an explanation from the same structure the runtime acted on', () => {
     const decision = evaluateRules(
-      [rule({ id: 'gold-rate', then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '5000' } }] })],
+      [
+        rule({
+          id: 'gold-rate',
+          then: [
+            {
+              kind: 'set_fee',
+              feeCode: 'ACCEPTANCE',
+              basis: 'percentage',
+              rate: { hundredthsOfBasisPoint: '5000' },
+            },
+          ],
+        }),
+      ],
       buildFacts(context()),
     );
 
@@ -197,7 +284,9 @@ describe('rate formatting', () => {
 
 describe('validation', () => {
   it('refuses a rule reading a fact the runtime does not supply', () => {
-    const result = validateRules([rule({ id: 'typo', when: { field: 'merchantTeir', operator: 'eq', value: 'GOLD' } })]);
+    const result = validateRules([
+      rule({ id: 'typo', when: { field: 'merchantTeir', operator: 'eq', value: 'GOLD' } }),
+    ]);
     expect(result.valid).toBe(false);
     expect(result.findings[0]?.code).toBe('unknown_fact');
   });
@@ -213,7 +302,10 @@ describe('validation', () => {
 
   it('accepts the same comparison against the integer form', () => {
     const result = validateRules([
-      rule({ id: 'right-amount', when: { field: 'amountMinorUnits', operator: 'gt', value: 200_000 } }),
+      rule({
+        id: 'right-amount',
+        when: { field: 'amountMinorUnits', operator: 'gt', value: 200_000 },
+      }),
     ]);
     expect(result.valid).toBe(true);
   });
@@ -229,8 +321,32 @@ describe('validation', () => {
 
   it('warns about a rule shadowed by a catch-all at a lower priority', () => {
     const result = validateRules([
-      rule({ id: 'base-rate', priority: 5, when: { field: 'amountMinorUnits', operator: 'exists' }, then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'flat', flat: { minorUnits: '100', currency: 'USD' } }] }),
-      rule({ id: 'gold-rate', priority: 10, when: { field: 'merchantTier', operator: 'eq', value: 'GOLD' }, then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'flat', flat: { minorUnits: '50', currency: 'USD' } }] }),
+      rule({
+        id: 'base-rate',
+        priority: 5,
+        when: { field: 'amountMinorUnits', operator: 'exists' },
+        then: [
+          {
+            kind: 'set_fee',
+            feeCode: 'ACCEPTANCE',
+            basis: 'flat',
+            flat: { minorUnits: '100', currency: 'USD' },
+          },
+        ],
+      }),
+      rule({
+        id: 'gold-rate',
+        priority: 10,
+        when: { field: 'merchantTier', operator: 'eq', value: 'GOLD' },
+        then: [
+          {
+            kind: 'set_fee',
+            feeCode: 'ACCEPTANCE',
+            basis: 'flat',
+            flat: { minorUnits: '50', currency: 'USD' },
+          },
+        ],
+      }),
     ]);
 
     const shadowed = result.findings.find((finding) => finding.code === 'shadowed_rule');
@@ -241,8 +357,32 @@ describe('validation', () => {
 
   it('warns when two rules at the same priority write the same slot', () => {
     const result = validateRules([
-      rule({ id: 'a-rate', priority: 10, when: { field: 'merchantTier', operator: 'eq', value: 'GOLD' }, then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'flat', flat: { minorUnits: '100', currency: 'USD' } }] }),
-      rule({ id: 'b-rate', priority: 10, when: { field: 'merchantTier', operator: 'eq', value: 'GOLD' }, then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'flat', flat: { minorUnits: '50', currency: 'USD' } }] }),
+      rule({
+        id: 'a-rate',
+        priority: 10,
+        when: { field: 'merchantTier', operator: 'eq', value: 'GOLD' },
+        then: [
+          {
+            kind: 'set_fee',
+            feeCode: 'ACCEPTANCE',
+            basis: 'flat',
+            flat: { minorUnits: '100', currency: 'USD' },
+          },
+        ],
+      }),
+      rule({
+        id: 'b-rate',
+        priority: 10,
+        when: { field: 'merchantTier', operator: 'eq', value: 'GOLD' },
+        then: [
+          {
+            kind: 'set_fee',
+            feeCode: 'ACCEPTANCE',
+            basis: 'flat',
+            flat: { minorUnits: '50', currency: 'USD' },
+          },
+        ],
+      }),
     ]);
 
     expect(result.findings.some((finding) => finding.code === 'ambiguous_priority')).toBe(true);
@@ -250,7 +390,12 @@ describe('validation', () => {
 
   it('refuses a rule unreachable behind a catch-all denial', () => {
     const result = validateRules([
-      rule({ id: 'refuse-all', priority: 1, when: { field: 'amountMinorUnits', operator: 'exists' }, then: [{ kind: 'deny', code: 'closed', reason: 'Product closed.' }] }),
+      rule({
+        id: 'refuse-all',
+        priority: 1,
+        when: { field: 'amountMinorUnits', operator: 'exists' },
+        then: [{ kind: 'deny', code: 'closed', reason: 'Product closed.' }],
+      }),
       rule({ id: 'charge', priority: 2 }),
     ]);
 
@@ -278,8 +423,25 @@ describe('validation', () => {
   it('accepts a well-formed rule set with no findings', () => {
     const result = validateRules(
       [
-        rule({ id: 'gold-rate', priority: 10, when: { field: 'merchantTier', operator: 'eq', value: 'GOLD' }, then: [{ kind: 'set_fee', feeCode: 'ACCEPTANCE', basis: 'percentage', rate: { hundredthsOfBasisPoint: '5000' } }] }),
-        rule({ id: 'enhanced-review', priority: 20, when: { field: 'amountMinorUnits', operator: 'gt', value: 200_000 }, then: [{ kind: 'require_review', level: 'COMPLIANCE', reason: 'Above threshold.' }] }),
+        rule({
+          id: 'gold-rate',
+          priority: 10,
+          when: { field: 'merchantTier', operator: 'eq', value: 'GOLD' },
+          then: [
+            {
+              kind: 'set_fee',
+              feeCode: 'ACCEPTANCE',
+              basis: 'percentage',
+              rate: { hundredthsOfBasisPoint: '5000' },
+            },
+          ],
+        }),
+        rule({
+          id: 'enhanced-review',
+          priority: 20,
+          when: { field: 'amountMinorUnits', operator: 'gt', value: 200_000 },
+          then: [{ kind: 'require_review', level: 'COMPLIANCE', reason: 'Above threshold.' }],
+        }),
       ],
       { feeCodes: ['ACCEPTANCE'] },
     );

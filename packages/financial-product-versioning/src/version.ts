@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { compareVersions, isBreakingChange, isNewer, versionChange } from '@trustos/version-manager';
+import {
+  compareVersions,
+  isBreakingChange,
+  isNewer,
+  versionChange,
+} from '@trustos/version-manager';
 import {
   EDITABLE_STATUSES,
   definitionContentHash,
@@ -50,7 +55,10 @@ export const publishedVersionSchema = z
     approvedBy: z.array(z.object({ level: z.string(), actorId: z.string() }).strict()).max(20),
 
     /** The version this one supersedes, when it is not the first. */
-    supersedes: z.string().regex(/^\d+\.\d+\.\d+$/).nullable(),
+    supersedes: z
+      .string()
+      .regex(/^\d+\.\d+\.\d+$/)
+      .nullable(),
     /**
      * What changed, in the author's words.
      *
@@ -195,11 +203,10 @@ export function assertSufficientBump(
   const breaking = changedPaths.some((path) => BREAKING_PATHS.includes(path));
 
   if (compareVersions(from, to) >= 0) {
-    throw productError(
-      'product_definition_invalid',
-      `Version ${to} is not newer than ${from}.`,
-      { expected: `> ${from}`, actual: to },
-    );
+    throw productError('product_definition_invalid', `Version ${to} is not newer than ${from}.`, {
+      expected: `> ${from}`,
+      actual: to,
+    });
   }
 
   if (!breaking) return;
