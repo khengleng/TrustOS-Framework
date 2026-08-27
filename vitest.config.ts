@@ -197,6 +197,12 @@ export default defineConfig({
       '@trustos/policy-evaluator': pkg('policy-evaluator'),
       '@trustos/policy-decision-log': pkg('policy-decision-log'),
       '@trustos/policy-engine': pkg('policy-engine'),
+      '@trustos/sre-core': pkg('sre-core'),
+      '@trustos/sli': pkg('sli'),
+      '@trustos/slo': pkg('slo'),
+      '@trustos/dependency-health': pkg('dependency-health'),
+      '@trustos/incident-management': pkg('incident-management'),
+      '@trustos/resilience': pkg('resilience'),
 
       /*
        * Subpath aliases, listed before their package so the more specific key

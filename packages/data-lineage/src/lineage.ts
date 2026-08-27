@@ -209,9 +209,7 @@ export class LineageGraph {
   }
 
   /** Entries whose declared classification is below what flows into them. */
-  classificationDrift(
-    catalog: DataCatalog,
-  ): Array<{
+  classificationDrift(catalog: DataCatalog): Array<{
     entryId: string;
     declared: DataClassificationLevel;
     propagated: DataClassificationLevel;

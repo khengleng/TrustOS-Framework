@@ -119,6 +119,9 @@
       "path": "packages/dependency-analyzer"
     },
     {
+      "path": "packages/dependency-health"
+    },
+    {
       "path": "packages/developer-portal"
     },
     {
@@ -290,6 +293,9 @@
       "path": "packages/import"
     },
     {
+      "path": "packages/incident-management"
+    },
+    {
       "path": "packages/integration-health"
     },
     {
@@ -401,6 +407,9 @@
       "path": "packages/modules/reporting"
     },
     {
+      "path": "packages/resilience"
+    },
+    {
       "path": "packages/retry"
     },
     {
@@ -435,6 +444,15 @@
     },
     {
       "path": "packages/shared-types"
+    },
+    {
+      "path": "packages/sli"
+    },
+    {
+      "path": "packages/slo"
+    },
+    {
+      "path": "packages/sre-core"
     },
     {
       "path": "./packages/modules/sync"
