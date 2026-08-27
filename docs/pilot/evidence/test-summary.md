@@ -1,12 +1,12 @@
 # Test summary
 
-134 tests across five files, all passing. Produced by:
+153 tests across 6 files, all passing. Produced by:
 
 ```bash
 npx vitest run apps/merchant-wallet-basic
 ```
 
-Repository at `0465e46`. Node v20.19.1, Apple M4 Pro, 12 cores.
+Repository at `e899888`. Node v20.19.1, Apple M4 Pro, 12 cores.
 
 | File                             | Tests | Covers                                                                                   |
 | -------------------------------- | ----- | ---------------------------------------------------------------------------------------- |
@@ -14,6 +14,7 @@ Repository at `0465e46`. Node v20.19.1, Apple M4 Pro, 12 cores.
 | `security.spec.ts`               | 34    | The mandatory negative suite                                                             |
 | `governance.spec.ts`             | 35    | Classification, policy, API management, SRE, objectives, AI                              |
 | `sandbox-and-simulation.spec.ts` | 19    | The eight scenarios and three simulation volumes                                         |
+| `console-and-studio.spec.ts`     | 19    | The operations console and the Product Studio                                            |
 | `performance.spec.ts`            | 5     | Three concurrency levels, measured                                                       |
 
 Every test below asserts something the pilot specification asks for. A test that asserted the
@@ -246,6 +247,35 @@ were moved there or deleted for that reason.
 - ✓ approves with a second person
 - ✓ refuses to decide a request twice
 - ✓ does not reach another organization’s request
+
+### the Merchant Operations Console
+
+`console-and-studio.spec.ts` — 10 tests
+
+- ✓ validates as an internal application
+- ✓ shows the nine things the specification asks for
+- ✓ offers the five controlled actions
+- ✓ calls an API for every action, and mutates nothing directly
+- ✓ reads every authoritative source through the API rather than a replica
+- ✓ requires approval for the two irreversible actions
+- ✓ requires a reason for every action
+- ✓ declares only AI features that summarize or explain
+- ✓ is classified restricted and high risk
+- ✓ starts as a draft in dev, not live in production
+
+### the Financial Product Studio
+
+`console-and-studio.spec.ts` — 9 tests
+
+- ✓ shows the product definition with its eleven blocks
+- ✓ shows the blocks resolving against the approved catalog
+- ✓ validates, with the unbound providers reported as warnings
+- ✓ shows the fee and limit configuration on the definition
+- ✓ publishes a version with a content hash
+- ✓ refuses a publication the author approved alone
+- ✓ classifies a fee change and says which approvals it needs
+- ✓ treats a first version as a change to everything
+- ✓ reports the product’s governance health and its review date
 
 ### payment path performance
 

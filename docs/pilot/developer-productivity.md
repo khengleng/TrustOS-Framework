@@ -13,13 +13,13 @@ build.
 | Generate the product definition | **0.34s**         | `trustos financial-product create merchant-wallet-basic` |
 | Validate it                     | under a second    | Two warnings, both correct — no connector bound          |
 | First successful build          | —                 | `tsc` clean after the errors listed below                |
-| Full test suite, 134 tests      | **~2s**           | Excluding the 100,000-transaction simulation             |
+| Full test suite, 153 tests      | **~2s**           | Excluding the 100,000-transaction simulation             |
 | 100,000-transaction simulation  | **7.5s**          | Deterministic, seed 1                                    |
 | Deploy                          | **not attempted** | Deployment readiness is a separate phase                 |
 
 The generation step is not the interesting number. A template that produces a valid product
 definition in a third of a second is useful, and it is not what a pilot measures: what matters is
-how much was still left to write afterwards, which is the 1,585 lines in the reuse report.
+how much was still left to write afterwards, which is the 1,822 lines in the reuse report.
 
 ## Framework issues discovered
 
@@ -64,7 +64,24 @@ credit call would ship it.
 explains why. It does not say that it posts. One sentence — "this posts a journal; do not post one
 yourself" — would have prevented it.
 
-### 4. A sandbox scenario with no `atBlock` fires at the first block
+### 4. A console could not name an AI feature
+
+**Severity: medium — two packages that were meant to reference each other could not.**
+
+`internalApplicationSchema.aiFeatures` required `[a-z][a-z0-9-]{2,59}` — kebab-case. Every feature
+in `@trustos/governance-ai-bridge` is named `summarize_case`, `explain_policy` and so on —
+snake_case.
+
+So a console declaring the AI features it offers could not name one of them, and the mismatch was
+invisible until something tried. Both packages ship in phase 12 and neither test exercises the
+other's naming.
+
+**Fixed during the pilot.** The pattern now accepts underscores, with a comment saying why. The
+names are deliberately not validated against the bridge's list, because `governance-tool-core` must
+not depend on the AI platform — a console naming a feature that does not exist is caught by the
+runtime that resolves it.
+
+### 5. A sandbox scenario with no `atBlock` fires at the first block
 
 **Severity: low, and correct behaviour.** Injecting `settlement_failure` without naming a block
 fails the run at `verify-merchant`, because that is the first block that could produce a generic
@@ -73,7 +90,7 @@ failure. The test then asserts something about settlement that never ran.
 **What should change:** `runSandbox` could warn when an injection names a scenario whose usual
 block is not the one it fired at. The `unfiredScenarios` field already reports the opposite case.
 
-### 5. The simulator's default is per-transaction, and the difference is enormous
+### 6. The simulator's default is per-transaction, and the difference is enormous
 
 **Severity: low, and well documented.** With `resetBalanceEvery: 1` the pilot's product reports
 95.11% success at 100,000 transactions. Without it, 1.02% — because a hundred thousand payments in
@@ -107,7 +124,7 @@ commands behaved as documented on first use.
 
 ## Manual work required
 
-Beyond the 1,585 lines of application code:
+Beyond the 1,822 lines of application code:
 
 - **Opening the platform's own accounts.** The clearing account and the fee revenue account are
   opened in `pilot.ts`. This is correct — a framework that invented a chart of accounts would be

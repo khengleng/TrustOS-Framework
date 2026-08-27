@@ -28,7 +28,7 @@ layer.
    └──────────┘
 ```
 
-Sixty framework packages in the transitive closure. 1,585 application lines.
+Sixty-one framework packages in the transitive closure. 1,822 application lines.
 
 ## The payment flow
 

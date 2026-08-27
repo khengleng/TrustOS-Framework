@@ -29,7 +29,7 @@ where it is least comfortable.
 
 ### Architecture — PASS
 
-The pilot composes 60 framework packages and adds 1,585 lines. `architecture-check` enforces
+The pilot composes 61 framework packages and adds 1,822 lines. `architecture-check` enforces
 declared-dependencies-only, no deep imports and the layering rules, and passes. No framework
 capability was duplicated.
 
@@ -176,7 +176,7 @@ In order of what should be done first.
 ## The gate
 
 **GO for the next pilot.** The framework produced a complete, tested, governed payment product with
-85.6% reuse on the payment path and no duplicated capability, and the six issues found are
+86.7% reuse on the payment path and no duplicated capability, and the six issues found are
 discoverability problems rather than design ones.
 
 **NOT go for production banking use**, and the two FAIL scores are the reason rather than a caveat.

@@ -234,7 +234,22 @@ export const internalApplicationSchema = z
     pages: z.array(pageSchema).min(1).max(40),
 
     /** Whether the app uses AI assistance, and which features. Declared, so it is reviewable. */
-    aiFeatures: z.array(z.string().regex(idPattern)).max(20).default([]),
+    /**
+     * AI features this application offers, by their `@trustos/governance-ai-bridge` name.
+     *
+     * The pattern accepts underscores as well as hyphens, which it did not until the pilot tried
+     * to declare one. Every feature in the bridge is named `summarize_case`, `explain_policy` and
+     * so on — snake_case — and a console could not name one, so the two packages that were meant
+     * to reference each other could not.
+     *
+     * The names are not validated against the bridge's list here: this package must not depend on
+     * the AI platform, and a console naming a feature that does not exist is caught by the runtime
+     * that resolves it.
+     */
+    aiFeatures: z
+      .array(z.string().regex(/^[a-z][a-z0-9_-]{2,59}$/))
+      .max(20)
+      .default([]),
 
     lastSecurityReview: z.string().datetime().nullable(),
     nextSecurityReview: z.string().datetime(),
