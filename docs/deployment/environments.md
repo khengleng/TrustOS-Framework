@@ -50,6 +50,29 @@ openssl rand -base64 48 | tr -d '\n'
 Do not copy DEV's secrets into UAT to save time. The saving is one command and the cost is that UAT
 and DEV become one trust boundary.
 
+## Setting them up
+
+```bash
+./scripts/railway-environments.sh          # dry run — shows every command, changes nothing
+./scripts/railway-environments.sh --apply  # execute
+```
+
+It creates `dev` and `uat` by duplicating the existing environment, then does the step a manual
+setup skips: **it rotates the signing secrets in all three**. `railway environment new --duplicate`
+copies variables, so without rotation every environment shares a `JWT_SECRET` and a UAT token
+verifies in production — the exact thing the section above says must not happen.
+
+It sets `TRUSTOS_ENVIRONMENT` per environment, turns Swagger off everywhere, and leaves
+**production needing OIDC**: `SECURITY_ALLOW_LOCAL_IDENTITY_IN_PRODUCTION` is set in DEV and UAT and
+deliberately not in production, so production refuses to start until a real identity provider is
+configured. That refusal is the policy working.
+
+It does not deploy. Deploying is a separate decision, and a script that both provisions and ships
+is a script that does the second thing while you are still reading the first.
+
+**It provisions paid infrastructure** — one Postgres and one service instance per environment — so
+run it yourself rather than having automation run it for you.
+
 ## PROD is documented and not created
 
 Deliberately. A production project created "ready for later" is a production project somebody
