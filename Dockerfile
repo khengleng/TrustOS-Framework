@@ -33,7 +33,10 @@ COPY packages/database/package.json packages/database/
 COPY packages/database/prisma packages/database/prisma
 
 # `postinstall` runs `prisma generate`, which needs the schema — copied above.
-RUN --mount=type=cache,target=/root/.npm \
+# `id` is required by some builders — Railway's rejects a cache mount without one, which is how
+# this was found. BuildKit defaults the id to the target when it is omitted, so naming it
+# explicitly costs nothing and works everywhere.
+RUN --mount=type=cache,id=npm,target=/root/.npm \
     npm ci --ignore-scripts && npm run db:generate
 
 # --- build --------------------------------------------------------------------
@@ -52,7 +55,7 @@ RUN npm run db:generate \
 
 # Development dependencies removed *after* the build rather than installed separately, so the
 # build and the runtime resolve identical versions from one lockfile.
-RUN --mount=type=cache,target=/root/.npm npm prune --omit=dev
+RUN --mount=type=cache,id=npm,target=/root/.npm npm prune --omit=dev
 
 # --- runtime ------------------------------------------------------------------
 FROM node:20.19.1-bookworm-slim AS runtime
