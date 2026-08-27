@@ -5,8 +5,14 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "dist",
+    "node_modules"
+  ],
   "references": [
     {
       "path": "../agent-framework"
@@ -24,6 +30,9 @@
       "path": "../compatibility-engine"
     },
     {
+      "path": "../connector-registry"
+    },
+    {
       "path": "../dependency-analyzer"
     },
     {
@@ -36,7 +45,25 @@
       "path": "../evaluation"
     },
     {
+      "path": "../financial-block-registry"
+    },
+    {
       "path": "../financial-core"
+    },
+    {
+      "path": "../financial-product-composer"
+    },
+    {
+      "path": "../financial-product-core"
+    },
+    {
+      "path": "../financial-product-governance"
+    },
+    {
+      "path": "../financial-product-simulator"
+    },
+    {
+      "path": "../financial-product-versioning"
     },
     {
       "path": "../framework-health"

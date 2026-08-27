@@ -467,18 +467,31 @@ function transitionFindings(
  * Blocks in a legal execution order.
  *
  * Kahn's algorithm over the block nodes. Used by the simulator to walk a product without
- * executing it and by the designer to lay out a canvas left to right. Only meaningful on an
- * acyclic graph, which is why the caller checks first.
+ * executing it, by the designer to lay out a canvas left to right, and by the CLI to print what
+ * a transaction does.
+ *
+ * Compensating blocks sort **last** among the ready set, and that tiebreak is presentational
+ * rather than structural. A compensator has no graph predecessor — nothing transitions to it on
+ * success — so a plain Kahn's algorithm emits it first, and the printed order opens with three
+ * reversal blocks before the product has done anything. It is a legal topological order and it
+ * reads as nonsense, which is enough to make somebody distrust the rest of the output.
  */
 function topologicalOrder(definition: ProductDefinition, graph: Graph): string[] {
   const keys = new Set(definition.blocks.map((block) => block.key));
+  const compensators = compensatingBlocks(definition);
   const indegree = new Map<string, number>();
 
   for (const key of keys) {
     indegree.set(key, (graph.predecessors.get(key) ?? []).filter((from) => keys.has(from)).length);
   }
 
-  const ready = [...keys].filter((key) => indegree.get(key) === 0).sort();
+  const sortReady = (left: string, right: string): number => {
+    const leftCompensates = compensators.has(left) ? 1 : 0;
+    const rightCompensates = compensators.has(right) ? 1 : 0;
+    return leftCompensates - rightCompensates || left.localeCompare(right);
+  };
+
+  const ready = [...keys].filter((key) => indegree.get(key) === 0).sort(sortReady);
   const order: string[] = [];
 
   while (ready.length > 0) {
@@ -491,7 +504,7 @@ function topologicalOrder(definition: ProductDefinition, graph: Graph): string[]
       indegree.set(next, remaining);
       if (remaining === 0) ready.push(next);
     }
-    ready.sort();
+    ready.sort(sortReady);
   }
 
   return order;

@@ -36,6 +36,19 @@ import {
   runAiValidatePrompts,
 } from './commands/ai';
 import { runFinancialDoctor } from './commands/financial';
+import {
+  runBlockList,
+  runConnectorList,
+  runConnectorValidate,
+  runProductCreate,
+  runProductDoctor,
+  runProductList,
+  runProductPublishPlan,
+  runProductRollbackPlan,
+  runProductSimulate,
+  runProductValidate,
+  runProductVersions,
+} from './commands/financial-product';
 import { runAddModule } from './commands/add-module';
 import { runListModules } from './commands/list-modules';
 import { runUpgrade } from './commands/upgrade';
@@ -649,6 +662,131 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
     .option('--verbose', 'explain what this check cannot see')
     .action(async (opts: { path?: string; json?: boolean; verbose?: boolean }) => {
       setExit(await runFinancialDoctor(opts, output));
+    });
+
+  // --- financial-product ----------------------------------------------------
+  //
+  // Offline, like every other command in this group. `publish` and `rollback` produce *plans*
+  // rather than doing anything: publishing needs a registry, an actor and an approval trail,
+  // none of which exist on a laptop. They are what somebody runs before opening the request, and
+  // they answer "will this be refused" without asking anybody.
+  const financialProduct = program
+    .command('financial-product')
+    .description('compose, validate, simulate and inspect financial products');
+
+  financialProduct
+    .command('list')
+    .description('list the product templates')
+    .option('--json', 'machine-readable output')
+    .action((opts: { json?: boolean }) => {
+      setExit(runProductList(opts, output));
+    });
+
+  financialProduct
+    .command('create')
+    .argument('<template>', 'template id, e.g. merchant-wallet-basic')
+    .description('write a product definition from a template')
+    .option('--out <file>', 'where to write it (default: <productId>.json)')
+    .option('--product-id <id>', 'override the product id')
+    .option('--json', 'machine-readable output')
+    .action(async (template: string, opts: Record<string, never>) => {
+      setExit(await runProductCreate(template, opts, output));
+    });
+
+  financialProduct
+    .command('validate')
+    .argument('<file>', 'a product definition, as JSON')
+    .description('check the composition: blocks, graph, ordering, rules, references, governance')
+    .option('--json', 'machine-readable output')
+    .option('--verbose', 'print the execution order')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runProductValidate(file, opts, output));
+    });
+
+  financialProduct
+    .command('simulate')
+    .argument('<file>', 'a product definition, as JSON')
+    .description('run transactions against mock providers and report the path distribution')
+    .option('--count <n>', 'how many transactions (default 1000)')
+    .option('--seed <n>', 'the seed, so two runs can be compared (default 1)')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runProductSimulate(file, opts, output));
+    });
+
+  financialProduct
+    .command('publish')
+    .argument('<file>', 'a product definition, as JSON')
+    .description('show what publishing would need: approvals, blockers, what changed (writes nothing)')
+    .option('--previous <file>', 'the version this supersedes')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runProductPublishPlan(file, opts, output));
+    });
+
+  financialProduct
+    .command('versions')
+    .argument('<files...>', 'product definitions, one per version')
+    .description('compare versions: what changed and which approvals each needed')
+    .option('--json', 'machine-readable output')
+    .action(async (files: string[], opts: Record<string, never>) => {
+      setExit(await runProductVersions(files, opts, output));
+    });
+
+  financialProduct
+    .command('rollback')
+    .argument('<current>', 'the version that is live')
+    .argument('<target>', 'the version to restore')
+    .description('show what a rollback would change (writes nothing)')
+    .option('--json', 'machine-readable output')
+    .action(async (current: string, target: string, opts: Record<string, never>) => {
+      setExit(await runProductRollbackPlan(current, target, opts, output));
+    });
+
+  financialProduct
+    .command('doctor')
+    .argument('<file>', 'a product definition, as JSON')
+    .description('the checks worth running before asking anybody to review it')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runProductDoctor(file, opts, output));
+    });
+
+  // --- financial-block --------------------------------------------------------
+  const financialBlock = program
+    .command('financial-block')
+    .description('the approved financial block catalog');
+
+  financialBlock
+    .command('list')
+    .description('list approved blocks')
+    .option('--category <name>', 'one category, e.g. wallet')
+    .option('--verbose', 'show the full description')
+    .option('--json', 'machine-readable output')
+    .action((opts: Record<string, never>) => {
+      setExit(runBlockList(opts, output));
+    });
+
+  // --- connector --------------------------------------------------------------
+  const connector = program
+    .command('connector')
+    .description('provider interfaces and connector definitions');
+
+  connector
+    .command('list')
+    .description('list the provider interfaces and their operations')
+    .option('--json', 'machine-readable output')
+    .action((opts: { json?: boolean }) => {
+      setExit(runConnectorList(opts, output));
+    });
+
+  connector
+    .command('validate')
+    .argument('<file>', 'a connector definition, or an array of them, as JSON')
+    .description('check connector metadata: interface, operation, timeout, retry, classification')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runConnectorValidate(file, opts, output));
     });
 
   // --- list-modules ---------------------------------------------------------
