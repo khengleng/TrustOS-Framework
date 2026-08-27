@@ -588,6 +588,110 @@ Read [docs/platform-governance.md](docs/platform-governance.md) before changing 
 `version-manager`, `plugin-framework/signing.ts`, `quality-gates`, or the layer definitions in
 `architecture-validator/rules.ts`. The refusals in those files look excessive and are not.
 
+## Financial product rules (phase 11)
+
+The financial product composition layer. Sixteen packages, one designer application, and fifteen
+rules on top of everything above. Every one of them describes a change that **compiles, passes an
+unmodified test suite, and silently removes a control**.
+
+1. **Never let a product execute in a state that is not `active`.** `EXECUTABLE_STATUSES` has one
+   member and is asked rather than reimplemented — in `bindVersion`, and again in a policy.
+   Adding a second member is a security review, not a convenience. A draft that could execute
+   makes every control above it optional.
+
+2. **Never re-resolve the active version mid-execution.** A binding is made once, at the start,
+   and every subsequent decision reads it. A payment authorized at 0.5% and captured after the
+   rate moved settles at 0.5%, because the merchant was quoted a price — and a system that
+   re-resolved would charge the new rate, pass every test, and disagree with the statement.
+
+3. **Never modify a published version.** Not its fees, not its limits, not a typo. Three layers
+   refuse it, and the third — the content hash, re-checked on _every_ load rather than once — is
+   the one that survives somebody editing the row directly. Do not cache the verdict: that leaves
+   a window between two executions.
+
+4. **Never let the author approve, publish or activate their own version.** Checked against the
+   author the registry recorded from the actor, never against a field in a request. Enforced in
+   the policy _and_ in the registry, deliberately: the policy covers the route somebody adds next
+   year, and the registry covers the registry.
+
+5. **Never let one person decide twice.** A two-of-three requirement satisfiable by one person
+   clicking twice passes every count-based check, because the count is right.
+
+6. **Never let a fee, limit, provider or rule change travel as a generic edit.** Those four alter
+   money, exposure, counterparty and routing without altering the workflow, and they are the four
+   an attacker with product-editor access reaches for. Each has its own permission, and
+   `productSensitiveChangePolicy` is what makes the permission real rather than catalogued.
+
+7. **Never add a block that executes something.** No script block, no expression block, no HTTP
+   block, and no composer method that would add one. The moment one exists, "products are composed
+   from approved capabilities" becomes "…and also arbitrary code", and every review that followed
+   was reviewing the wrong thing.
+
+8. **Never name a provider in the framework.** Not in a block, a template, a connector or a test
+   fixture. One vendor-named block makes every product containing it a product for that vendor,
+   which is the coupling this layer exists to remove. A deployment's connectors should name their
+   providers; the framework's catalog is empty and stays empty.
+
+9. **Never widen the rule vocabulary casually.** The facts are a closed list of twenty-three, the
+   outcomes a closed union of eight, and the condition language is
+   `@trustos/workflow-definition`'s predicate tree imported whole. A rule that could read the
+   execution context could price by customer id; a rule that could call something would be the
+   runtime.
+
+10. **Never weaken a control through a variant.** A variant has no field for blocks or transitions,
+    may not widen a country or currency list, and may not disable or hollow out a rule that denies
+    or demands review. All three would arrive looking like a configuration change.
+
+11. **Always enforce idempotency, and never replay across a changed payload.** Same key and same
+    payload returns the stored result; same key and a _different_ payload is refused. Replaying
+    tells the caller an operation succeeded that never ran for their request, which is worse than
+    any error because they act on it. Refuse a missing key rather than generating one.
+
+12. **Always keep a refusal distinguishable from a failure.** A limit reached, a rule denied and a
+    risk decision end in `refused`; a provider timeout ends in `failed`. Collapsing them makes
+    every dashboard report a product enforcing its limits correctly as a product that is broken,
+    and the alert that matters gets muted within a week.
+
+13. **Always check what has run on _every_ path, not on some path.** The composer's ordering
+    analysis is an intersection over predecessors, and a union would pass the exact composition
+    where the limit check sits on the branch that is not taken. Eight approved blocks in that
+    order authorize the same money twice.
+
+14. **AI may propose and may never publish.** No model call in this layer — the brief goes through
+    `@trustos/ai-gateway`. The proposal schema has no field for ownership, approvals or lifecycle
+    status, `build()` always emits `draft`, and everything the framework overrode is reported to
+    the reviewer.
+
+15. **Stop after completing phase 11.** Do not add a payment provider, a scheme, a bank, a
+    jurisdiction's rules, a credit model, a currency table or a business product. Phase 11 is a
+    reusable composition layer, and every product-specific thing added to it is carried by every
+    deployment built on it.
+
+Read [docs/financial-product-security.md](docs/financial-product-security.md) before changing
+anything in `financial-product-runtime/engine.ts`, `financial-product-registry/registry.ts`,
+`financial-product-policy/policies.ts`, `financial-product-versioning/version.ts` or
+`financial-product-composer/validate.ts`. The checks in those files look redundant and are not —
+several of them are the second of two deliberate enforcement points.
+
+### Product-specific checks
+
+A change to a block, a template or the validator additionally needs:
+
+```bash
+# The composition: blocks, graph, ordering, rules, references, governance.
+npx trustos financial-product validate <file>
+
+# What a reviewer would face, and what would block it. Writes nothing.
+npx trustos financial-product publish <file> --previous <previous.json>
+
+# The path distribution. The measure a definition cannot be read for.
+npx trustos financial-product simulate <file> --count 100000 --seed 1
+```
+
+The second is the one worth running before every commit that touches a template. A product that
+validates and needs six approvals nobody has is a product that stops at the review board, and
+finding that out from a command is cheaper than finding it out from the board.
+
 ## Before claiming a change is done
 
 ```bash

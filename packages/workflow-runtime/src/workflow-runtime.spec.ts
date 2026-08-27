@@ -130,7 +130,8 @@ function build(): Rig {
       additional: WORKFLOW_POLICIES,
     }),
     sla: new SlaService({ store: slaStore, calendars: new CalendarRegistry(), now }),
-    idempotency: new InMemoryIdempotencyStore(),
+    // The engine's clock, not the wall clock. `expiresAt` is computed from the former.
+    idempotency: new InMemoryIdempotencyStore(now),
     assignment: {
       directory: new InMemoryMemberDirectory(
         {

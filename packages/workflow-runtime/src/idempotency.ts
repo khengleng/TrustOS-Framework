@@ -94,10 +94,24 @@ export interface IdempotencyStore {
   purgeExpired(asOf: Date, limit: number): Promise<number>;
 }
 
-/** In-memory store, for tests and for a single-process development run. */
+/**
+ * In-memory store, for tests and for a single-process development run.
+ *
+ * The clock is injectable, and it has to be. `expiresAt` is computed by `runIdempotent` from the
+ * *engine's* clock, and the expiry check here compares it against this store's — so a store that
+ * read the wall clock while the engine ran on an injected one would treat every record as
+ * expired the moment real time passed the fixed clock plus the TTL.
+ *
+ * That is not hypothetical: it is what happened. A suite pinned to a date in the near future
+ * passed for a month and then began failing on a Tuesday, with no change to any of the code it
+ * was testing, because the two clocks had drifted past each other. Injecting it means the two
+ * time sources are the same one by construction.
+ */
 export class InMemoryIdempotencyStore implements IdempotencyStore {
   private readonly records = new Map<string, IdempotencyRecord>();
   private counter = 0;
+
+  constructor(private readonly now: () => Date = () => new Date()) {}
 
   private key(organizationId: string, idempotencyKey: string): string {
     return `${organizationId}::${idempotencyKey}`;
@@ -110,7 +124,7 @@ export class InMemoryIdempotencyStore implements IdempotencyStore {
     const existing = this.records.get(mapKey);
 
     // Expired records are treated as absent, so a key is reusable after its window.
-    if (existing && existing.expiresAt.getTime() > Date.now()) {
+    if (existing && existing.expiresAt.getTime() > this.now().getTime()) {
       return { claimed: false, existing };
     }
 
@@ -119,7 +133,7 @@ export class InMemoryIdempotencyStore implements IdempotencyStore {
       ...input,
       id: `idem_${this.counter}`,
       status: 'in_progress',
-      createdAt: new Date(),
+      createdAt: this.now(),
       completedAt: null,
     };
     this.records.set(mapKey, record);
@@ -137,7 +151,7 @@ export class InMemoryIdempotencyStore implements IdempotencyStore {
       ...record,
       status: 'completed',
       responseReference: input.responseReference,
-      completedAt: new Date(),
+      completedAt: this.now(),
     });
   }
 
@@ -147,7 +161,7 @@ export class InMemoryIdempotencyStore implements IdempotencyStore {
     this.records.set(this.key(input.organizationId, input.idempotencyKey), {
       ...record,
       status: 'failed',
-      completedAt: new Date(),
+      completedAt: this.now(),
     });
   }
 

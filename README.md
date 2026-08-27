@@ -168,6 +168,11 @@ See [`docs/modules.md`](docs/modules.md).
 - **`apps/admin-example`** — Next.js console: login, organization selection,
   members list, role assignment, audit log, with explicit loading, empty and
   error states.
+- **`apps/financial-product-admin`** — the Financial Product Designer: the
+  product catalog, the composer and its designer data, the block and connector
+  catalogs, the sandbox, the simulator, approvals, deployments and monitoring.
+  No route writes a lifecycle state directly and no route executes a
+  transaction; the boot test asserts both.
 - **`templates/saas-starter`** — copy this folder to start a new product by
   hand. It wires every framework package and includes an example product module
   with its own permissions, tenant scoping, audit logging and isolation tests.
@@ -247,25 +252,33 @@ Details: [`docs/security-standards.md`](docs/security-standards.md).
 
 ## Documentation
 
-| Document                                                               | Contents                                                                                                                                                  |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`docs/architecture.md`](docs/architecture.md)                         | Principles, package responsibilities, dependency rules, request lifecycle, tenant isolation rules, deliberate trade-offs, how to create a new application |
-| [`docs/security-standards.md`](docs/security-standards.md)             | Authentication, authorization, tenancy, logging, audit, secrets, and this phase's known limitations                                                       |
-| [`docs/coding-standards.md`](docs/coding-standards.md)                 | TypeScript, naming, errors, validation, database access, tests, API compatibility                                                                         |
-| [`docs/modules.md`](docs/modules.md)                                   | The module system: what every module guarantees, installing, extension points, what is deliberately absent                                                |
-| [`docs/module-development.md`](docs/module-development.md)             | Writing a module, and the rules it must follow                                                                                                            |
-| [`docs/module-versioning.md`](docs/module-versioning.md)               | Versions, compatibility, and what counts as a breaking change                                                                                             |
-| [`docs/enterprise-identity.md`](docs/enterprise-identity.md)           | The identity abstraction, local and OIDC providers, Keycloak, MFA readiness, production checklist                                                         |
-| [`docs/authorization-model.md`](docs/authorization-model.md)           | The four layers, the default-deny policy engine, tenant isolation, scopes, decision records                                                               |
-| [`docs/api-key-security.md`](docs/api-key-security.md)                 | Key format, hashed storage, lifecycle, rotation, scopes, IP allowlists                                                                                    |
-| [`docs/service-account-security.md`](docs/service-account-security.md) | Machine identities, the two credential modes, why not a human account                                                                                     |
-| [`docs/session-security.md`](docs/session-security.md)                 | Token lifetimes, refresh rotation and reuse detection, device revocation, headers, CORS, CSRF, rate limiting                                              |
-| [`docs/security-testing.md`](docs/security-testing.md)                 | Negative testing, the toolkit, the two trails, redaction, CI gates, the exception process                                                                 |
-| [`docs/threat-model.md`](docs/threat-model.md)                         | Fifteen threats, with controls, residual risk and the future control for each                                                                             |
-| [`docs/incident-response.md`](docs/incident-response.md)               | Severity, the first five minutes, where the evidence is, five playbooks, containment commands                                                             |
-| [`AGENTS.md`](AGENTS.md)                                               | The thirteen mandatory rules for automated changes to the identity and access layer                                                                       |
-| [`docs/ai-agent-instructions.md`](docs/ai-agent-instructions.md)       | How AI coding agents must work in this repository                                                                                                         |
-| [`docs/railway-deployment.md`](docs/railway-deployment.md)             | Deploying to Railway, variables, migrations, troubleshooting                                                                                              |
+| Document                                                                           | Contents                                                                                                                                                  |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`docs/architecture.md`](docs/architecture.md)                                     | Principles, package responsibilities, dependency rules, request lifecycle, tenant isolation rules, deliberate trade-offs, how to create a new application |
+| [`docs/security-standards.md`](docs/security-standards.md)                         | Authentication, authorization, tenancy, logging, audit, secrets, and this phase's known limitations                                                       |
+| [`docs/coding-standards.md`](docs/coding-standards.md)                             | TypeScript, naming, errors, validation, database access, tests, API compatibility                                                                         |
+| [`docs/modules.md`](docs/modules.md)                                               | The module system: what every module guarantees, installing, extension points, what is deliberately absent                                                |
+| [`docs/module-development.md`](docs/module-development.md)                         | Writing a module, and the rules it must follow                                                                                                            |
+| [`docs/module-versioning.md`](docs/module-versioning.md)                           | Versions, compatibility, and what counts as a breaking change                                                                                             |
+| [`docs/enterprise-identity.md`](docs/enterprise-identity.md)                       | The identity abstraction, local and OIDC providers, Keycloak, MFA readiness, production checklist                                                         |
+| [`docs/authorization-model.md`](docs/authorization-model.md)                       | The four layers, the default-deny policy engine, tenant isolation, scopes, decision records                                                               |
+| [`docs/api-key-security.md`](docs/api-key-security.md)                             | Key format, hashed storage, lifecycle, rotation, scopes, IP allowlists                                                                                    |
+| [`docs/service-account-security.md`](docs/service-account-security.md)             | Machine identities, the two credential modes, why not a human account                                                                                     |
+| [`docs/session-security.md`](docs/session-security.md)                             | Token lifetimes, refresh rotation and reuse detection, device revocation, headers, CORS, CSRF, rate limiting                                              |
+| [`docs/security-testing.md`](docs/security-testing.md)                             | Negative testing, the toolkit, the two trails, redaction, CI gates, the exception process                                                                 |
+| [`docs/threat-model.md`](docs/threat-model.md)                                     | Fifteen threats, with controls, residual risk and the future control for each                                                                             |
+| [`docs/incident-response.md`](docs/incident-response.md)                           | Severity, the first five minutes, where the evidence is, five playbooks, containment commands                                                             |
+| [`docs/financial-product-architecture.md`](docs/financial-product-architecture.md) | The composition layer: the five rules, where it sits, the sixteen packages, a transaction end to end, and the six seams a deployment fills                |
+| [`docs/product-composition.md`](docs/product-composition.md)                       | The composer, the validator's three groups of finding, the ordering check, templates, variants, the designer's data, AI-assisted composition              |
+| [`docs/product-lifecycle.md`](docs/product-lifecycle.md)                           | Eleven states, what each transition checks, version binding, and rollback                                                                                 |
+| [`docs/financial-blocks.md`](docs/financial-blocks.md)                             | The 84-block catalog, what an entry declares, the three refusals, and how a deployment binds a handler                                                    |
+| [`docs/provider-abstraction.md`](docs/provider-abstraction.md)                     | Why a product never names a bank, the seven interfaces, and where a bank adapter goes                                                                     |
+| [`docs/product-governance.md`](docs/product-governance.md)                         | Ownership, change classification, which approvals a change needs, maker-checker, separation of duties                                                     |
+| [`docs/sandbox-and-simulation.md`](docs/sandbox-and-simulation.md)                 | The isolation guarantee, twelve failure scenarios, simulation at volume, and what the numbers do not mean                                                 |
+| [`docs/financial-product-security.md`](docs/financial-product-security.md)         | Fourteen threats and where each is refused, the two-enforcement-point pattern, and what this layer does not defend against                                |
+| [`AGENTS.md`](AGENTS.md)                                                           | The mandatory rules for automated changes, by phase                                                                                                       |
+| [`docs/ai-agent-instructions.md`](docs/ai-agent-instructions.md)                   | How AI coding agents must work in this repository                                                                                                         |
+| [`docs/railway-deployment.md`](docs/railway-deployment.md)                         | Deploying to Railway, variables, migrations, troubleshooting                                                                                              |
 
 ---
 
