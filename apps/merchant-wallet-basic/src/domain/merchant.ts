@@ -83,8 +83,17 @@ export const ROLE_CAPABILITIES: Record<
     seesOtherMerchants: false,
   },
   finance: {
-    describes: 'Platform finance. Reads settlement and the ledger across merchants.',
-    writes: false,
+    /*
+     * Writes, and the write is the one that matters: finance approves limit changes.
+     *
+     * The first version of this table said `writes: false`, because finance reads settlement and
+     * the ledger and does not touch a payment. Approving a limit change is a write — it raises a
+     * fraud control — and `capabilityMatchesGrant` caught the mismatch between what this row
+     * claimed and what the role actually holds.
+     */
+    describes:
+      'Platform finance. Reads settlement and the ledger across merchants, and approves limit changes.',
+    writes: true,
     seesOtherMerchants: true,
   },
   operations: {
