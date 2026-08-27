@@ -49,6 +49,23 @@ import {
   runProductValidate,
   runProductVersions,
 } from './commands/financial-product';
+import {
+  runApiCatalog,
+  runApiCompatibility,
+  runBackupStatus,
+  runBackupVerify,
+  runDataCatalog,
+  runDataClassify,
+  runDataLineage,
+  runDrStatus,
+  runDrValidate,
+  runEnterpriseDoctor,
+  runPolicyList,
+  runPolicySimulate,
+  runPolicyValidate,
+  runSreServices,
+  runSreSlo,
+} from './commands/enterprise';
 import { runAddModule } from './commands/add-module';
 import { runListModules } from './commands/list-modules';
 import { runUpgrade } from './commands/upgrade';
@@ -752,6 +769,185 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
     .option('--json', 'machine-readable output')
     .action(async (file: string, opts: Record<string, never>) => {
       setExit(await runProductDoctor(file, opts, output));
+    });
+
+  // --- enterprise governance --------------------------------------------------
+  //
+  // Read-only and offline, like every other command group here, and deliberately so: these cover
+  // the surfaces where a bypass would be most valuable. A CLI that could activate a policy would
+  // be a way to change what the platform permits without going through the console that requires
+  // a second person.
+  const data = program.command('data').description('the data catalog, classification and lineage');
+
+  data
+    .command('catalog')
+    .argument('<file>', 'catalog entries, as JSON')
+    .description('list the catalog and report entries classified below their contents')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runDataCatalog(file, opts, output));
+    });
+
+  data
+    .command('classify')
+    .argument('<level>', 'PUBLIC | INTERNAL | CONFIDENTIAL | RESTRICTED | HIGHLY_RESTRICTED')
+    .description('what a classification level obliges — masking, export, reveal, retention')
+    .option('--json', 'machine-readable output')
+    .action((level: string, opts: Record<string, never>) => {
+      setExit(runDataClassify(level, opts, output));
+    });
+
+  data
+    .command('lineage')
+    .argument('<catalog>', 'catalog entries, as JSON')
+    .argument('<lineage>', 'lineage edges, as JSON')
+    .description('find entries classified below what feeds them')
+    .option('--json', 'machine-readable output')
+    .option('--verbose', 'name the upstream entries')
+    .action(async (catalog: string, lineage: string, opts: Record<string, never>) => {
+      setExit(await runDataLineage(catalog, lineage, opts, output));
+    });
+
+  const policy = program
+    .command('policy')
+    .description('policy documents: list, validate, simulate');
+
+  policy
+    .command('list')
+    .argument('<file>', 'policy documents, as JSON')
+    .description('list the policies in a file')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runPolicyList(file, opts, output));
+    });
+
+  policy
+    .command('validate')
+    .argument('<file>', 'policy documents, as JSON')
+    .description("run each policy's own tests and static analysis")
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runPolicyValidate(file, opts, output));
+    });
+
+  policy
+    .command('simulate')
+    .argument('<file>', 'policy documents, as JSON')
+    .argument('<attributes>', 'attributes, as a JSON object')
+    .description('evaluate a policy — including a draft — and explain the decision')
+    .option('--policy-id <id>', 'which policy in the file (default: the first)')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, attributes: string, opts: Record<string, never>) => {
+      setExit(await runPolicySimulate(file, attributes, opts, output));
+    });
+
+  const sre = program.command('sre').description('services, objectives and the service graph');
+
+  sre
+    .command('services')
+    .argument('<file>', 'services and runbooks, as JSON')
+    .description('list the registry and report tier inversions and cycles')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runSreServices(file, opts, output));
+    });
+
+  sre
+    .command('slo')
+    .argument('<file>', 'objectives, as JSON')
+    .description('list the objectives and which of them are commitments')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runSreSlo(file, opts, output));
+    });
+
+  const api = program
+    .command('api')
+    .description('the API catalog and compatibility between versions');
+
+  api
+    .command('catalog')
+    .argument('<file>', 'API definitions, as JSON')
+    .description('list the catalog and report published APIs with no recorded approval')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runApiCatalog(file, opts, output));
+    });
+
+  api
+    .command('validate')
+    .argument('<file>', 'API definitions, as JSON')
+    .description('check the catalog: owners, classification, lifecycle, documentation')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runApiCatalog(file, opts, output));
+    });
+
+  api
+    .command('compatibility')
+    .argument('<from>', 'the current version, as JSON')
+    .argument('<to>', 'the proposed version, as JSON')
+    .description('what changed, and whether the version bump is sufficient')
+    .option('--json', 'machine-readable output')
+    .action(async (from: string, to: string, opts: Record<string, never>) => {
+      setExit(await runApiCompatibility(from, to, opts, output));
+    });
+
+  const backup = program
+    .command('backup')
+    .description('the backup inventory and what it establishes');
+
+  backup
+    .command('status')
+    .argument('<file>', 'backup records, as JSON')
+    .description('what each backup actually establishes, and what is outstanding')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runBackupStatus(file, opts, output));
+    });
+
+  backup
+    .command('verify')
+    .argument('<file>', 'backup records, as JSON')
+    .description('report what the recorded evidence supports (reads no backup, restores nothing)')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runBackupVerify(file, opts, output));
+    });
+
+  const dr = program.command('dr').description('disaster recovery plans and their exercises');
+
+  dr.command('status')
+    .argument('<file>', 'DR plans, as JSON')
+    .description('what each plan has actually demonstrated')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runDrStatus(file, opts, output));
+    });
+
+  dr.command('validate')
+    .argument('<file>', 'DR plans, as JSON')
+    .description('whether these plans can be claimed as tested')
+    .option('--json', 'machine-readable output')
+    .action(async (file: string, opts: Record<string, never>) => {
+      setExit(await runDrValidate(file, opts, output));
+    });
+
+  const enterprise = program.command('enterprise').description('enterprise governance checks');
+
+  enterprise
+    .command('doctor')
+    .description('everything a reviewer would check, over the documents you supply')
+    .option('--catalog <file>', 'data catalog entries')
+    .option('--lineage <file>', 'lineage edges')
+    .option('--policies <file>', 'policy documents')
+    .option('--services <file>', 'service registry')
+    .option('--apis <file>', 'API definitions')
+    .option('--backups <file>', 'backup records')
+    .option('--dr-plans <file>', 'DR plans')
+    .option('--json', 'machine-readable output')
+    .action(async (opts: Record<string, never>) => {
+      setExit(await runEnterpriseDoctor(opts, opts, output));
     });
 
   // --- financial-block --------------------------------------------------------

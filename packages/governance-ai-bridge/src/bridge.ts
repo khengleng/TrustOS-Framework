@@ -35,6 +35,27 @@ export const AI_ASSIST_FEATURES = [
   'draft_management_report',
   'recommend_next_step',
   'propose_product_configuration',
+
+  /*
+   * Enterprise governance assistance, added in phase 13.
+   *
+   * Every one of them is a *reading* feature — explain, summarize, draft, suggest. None of them
+   * appears in a code path that activates a policy, changes a classification, publishes an API or
+   * executes a recovery, and `AI_FORBIDDEN_ACTIONS` names all four.
+   *
+   * The distinction that keeps them safe is between **proposing** and **doing**, and it is
+   * structural: the output type carries text, and the console renders it into a form a person then
+   * submits under their own permissions. A suggested classification arrives as a sentence, not as
+   * a field somebody clicks Apply on.
+   */
+  'explain_policy',
+  'explain_policy_decision',
+  'suggest_data_classification',
+  'draft_api_documentation',
+  'summarize_slo_status',
+  'draft_postmortem',
+  'analyse_dr_plan',
+  'detect_governance_gaps',
 ] as const;
 
 export type AiAssistFeature = (typeof AI_ASSIST_FEATURES)[number];
@@ -53,6 +74,23 @@ export const REQUIRES_HUMAN_REVIEW: ReadonlySet<AiAssistFeature> = new Set([
   'recommend_next_step',
   'propose_product_configuration',
   'summarize_risk_case',
+
+  /*
+   * The governance features that need a person before their output is used.
+   *
+   * A suggested classification is the sharpest: acting on one without review would let a model
+   * lower the classification of a table, and every downstream control — masking, export, reveal,
+   * retention — reads that label.
+   *
+   * `explain_policy` and `summarize_slo_status` are deliberately *not* here. They restate
+   * something the reader could have read themselves, and requiring a reviewer for every
+   * explanation is how review becomes a formality that gets clicked through.
+   */
+  'suggest_data_classification',
+  'draft_api_documentation',
+  'draft_postmortem',
+  'analyse_dr_plan',
+  'detect_governance_gaps',
 ]);
 
 /**
@@ -75,6 +113,21 @@ export const PERMITTED_INPUTS: Readonly<Record<AiAssistFeature, readonly string[
   draft_management_report: ['reportPeriod', 'aggregateMetrics'],
   recommend_next_step: ['caseRef', 'caseStatus', 'workflowState'],
   propose_product_configuration: ['productIntent', 'availableBlocks', 'availableCurrencies'],
+
+  /*
+   * The governance features, and note what is absent from every one of them: no input names a
+   * table's *contents*, a decision log's *rows*, or a backup's *location*. A feature that explains
+   * a policy gets the policy document; a feature that suggests a classification gets the schema
+   * and the sample field names, never the sampled values.
+   */
+  explain_policy: ['policyId', 'policyVersion'],
+  explain_policy_decision: ['decisionId', 'policyId', 'policyVersion'],
+  suggest_data_classification: ['entryId', 'technicalName', 'fieldNames', 'businessDomain'],
+  draft_api_documentation: ['apiId', 'apiVersion', 'operationIds'],
+  summarize_slo_status: ['sloId', 'windowStart', 'windowEnd'],
+  draft_postmortem: ['incidentRef', 'incidentTimeline'],
+  analyse_dr_plan: ['planId', 'planVersion'],
+  detect_governance_gaps: ['scope', 'environment'],
 };
 
 export const assistRequestSchema = z
@@ -235,7 +288,55 @@ export const AI_FORBIDDEN_ACTIONS: readonly string[] = [
   'execute a disaster-recovery procedure',
   'delete data',
   'publish a financial product',
+  'register or amend a service',
+  'grant or revoke an API entitlement',
+  'mark a backup validated',
+  'record a restore test or a DR exercise',
+  'close an incident',
 ];
+
+/**
+ * Whether a feature is one that only ever produces a proposal.
+ *
+ * Every feature in this package is, and the function exists so a test can assert it over the whole
+ * list rather than over the ones somebody remembered. A feature added later that could act would
+ * have to be added here as an exception, in a diff a reviewer sees.
+ */
+export function isProposalOnly(feature: AiAssistFeature): boolean {
+  void feature;
+  return true;
+}
+
+/**
+ * The permission a person needs to act on a proposal, per feature.
+ *
+ * Returned to the console so it can render "this needs somebody with X" rather than an Apply
+ * button that fails. Null means the output is informational and there is nothing to act on.
+ *
+ * The point of the mapping is the second half of every entry: acting is a permission the *person*
+ * holds, checked by the surface that performs the action, and the assistant is not in that path.
+ */
+export const ACTION_PERMISSION_FOR: Readonly<Record<AiAssistFeature, string | null>> = {
+  summarize_case: null,
+  summarize_merchant: null,
+  explain_transaction_failure: null,
+  explain_reconciliation_exception: null,
+  summarize_incident: null,
+  summarize_risk_case: null,
+  draft_customer_response: 'case.respond',
+  draft_investigation_notes: 'case.update',
+  draft_management_report: null,
+  recommend_next_step: 'workflow.task.complete',
+  propose_product_configuration: 'financial.product.create',
+  explain_policy: null,
+  explain_policy_decision: null,
+  suggest_data_classification: 'enterprise.data.classify',
+  draft_api_documentation: 'enterprise.api.publish',
+  summarize_slo_status: null,
+  draft_postmortem: 'sre.incident.update',
+  analyse_dr_plan: 'enterprise.continuity.write',
+  detect_governance_gaps: null,
+};
 
 /** The audit record an assist produces. Provenance and counts, never the prompt or the output. */
 export function assistAuditDetail(

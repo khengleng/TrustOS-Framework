@@ -15,7 +15,16 @@
       "path": "../analytics"
     },
     {
+      "path": "../api-catalog"
+    },
+    {
+      "path": "../api-versioning"
+    },
+    {
       "path": "../architecture-validator"
+    },
+    {
+      "path": "../backup"
     },
     {
       "path": "../code-generator"
@@ -27,10 +36,22 @@
       "path": "../connector-registry"
     },
     {
+      "path": "../data-catalog"
+    },
+    {
+      "path": "../data-classification"
+    },
+    {
+      "path": "../data-lineage"
+    },
+    {
       "path": "../dependency-analyzer"
     },
     {
       "path": "../developer-portal"
+    },
+    {
+      "path": "../disaster-recovery"
     },
     {
       "path": "../documentation-center"
@@ -90,6 +111,12 @@
       "path": "../plugin-framework"
     },
     {
+      "path": "../policy-evaluator"
+    },
+    {
+      "path": "../policy-registry"
+    },
+    {
       "path": "../prompt-registry"
     },
     {
@@ -100,6 +127,12 @@
     },
     {
       "path": "../release-manager"
+    },
+    {
+      "path": "../slo"
+    },
+    {
+      "path": "../sre-core"
     },
     {
       "path": "../telemetry"
