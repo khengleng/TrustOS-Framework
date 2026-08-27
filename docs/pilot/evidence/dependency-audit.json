@@ -1,0 +1,87 @@
+{
+  "note": "npm audit --json, captured during the pilot run. Regenerate with: npm audit --json > docs/pilot/evidence/dependency-audit.json",
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 6,
+      "critical": 0,
+      "total": 6
+    },
+    "dependencies": {
+      "prod": 638,
+      "dev": 297,
+      "optional": 92,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 973
+    }
+  },
+  "advisories": [
+    {
+      "name": "@prisma/config",
+      "severity": "high",
+      "direct": false,
+      "range": ">=6.13.0-dev.1",
+      "titles": [],
+      "fixAvailable": {
+        "name": "prisma",
+        "version": "6.12.0",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "name": "brace-expansion",
+      "severity": "high",
+      "direct": false,
+      "range": "4.0.0 - 5.0.8",
+      "titles": [
+        "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation"
+      ],
+      "fixAvailable": true
+    },
+    {
+      "name": "deepmerge-ts",
+      "severity": "high",
+      "direct": false,
+      "range": "<8.0.0",
+      "titles": ["DeepmergeTS has stack exhaustion when merging recursive object graphs"],
+      "fixAvailable": {
+        "name": "prisma",
+        "version": "6.12.0",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "name": "js-yaml",
+      "severity": "high",
+      "direct": false,
+      "range": "4.0.0 - 4.3.0",
+      "titles": [
+        "JS-YAML: Quadratic CPU consumption in !!omap resolution (3.x and 4.x) \u2014 CVE-2026-59870 fix not backported"
+      ],
+      "fixAvailable": true
+    },
+    {
+      "name": "nanoid",
+      "severity": "high",
+      "direct": false,
+      "range": "<3.3.18",
+      "titles": ["nanoid: custom generators can loop indefinitely when size is zero"],
+      "fixAvailable": true
+    },
+    {
+      "name": "prisma",
+      "severity": "high",
+      "direct": true,
+      "range": ">=6.13.0-dev.1",
+      "titles": [],
+      "fixAvailable": {
+        "name": "prisma",
+        "version": "6.12.0",
+        "isSemVerMajor": true
+      }
+    }
+  ]
+}
