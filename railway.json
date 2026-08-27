@@ -2,15 +2,11 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile",
-    "buildArgs": {
-      "SERVICE": "api-example"
-    }
+    "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "sh -c 'npm run db:deploy && node apps/api-example/dist/main.js'",
     "healthcheckPath": "/health",
-    "healthcheckTimeout": 120,
+    "healthcheckTimeout": 180,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
     "numReplicas": 1
