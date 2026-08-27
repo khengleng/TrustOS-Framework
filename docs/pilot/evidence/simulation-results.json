@@ -25,7 +25,7 @@
       "journalsPosted": 91,
       "settlementsCreated": 91,
       "compensationsRun": 0,
-      "wallClockMs": 16,
+      "wallClockMs": 17,
       "refusalsByCode": [
         {
           "code": "risk_rejected",
@@ -66,7 +66,7 @@
       "journalsPosted": 933,
       "settlementsCreated": 933,
       "compensationsRun": 0,
-      "wallClockMs": 118,
+      "wallClockMs": 99,
       "refusalsByCode": [
         {
           "code": "limit_exceeded",
@@ -107,7 +107,7 @@
       "journalsPosted": 93207,
       "settlementsCreated": 93207,
       "compensationsRun": 0,
-      "wallClockMs": 10523,
+      "wallClockMs": 10449,
       "refusalsByCode": [
         {
           "code": "limit_exceeded",
@@ -148,7 +148,7 @@
       "journalsPosted": 10,
       "settlementsCreated": 10,
       "compensationsRun": 0,
-      "wallClockMs": 47,
+      "wallClockMs": 48,
       "refusalsByCode": [
         {
           "code": "limit_exceeded",

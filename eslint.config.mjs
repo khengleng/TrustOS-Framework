@@ -103,7 +103,14 @@ export default tseslint.config(
         URL: 'readonly',
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
         fetch: 'readonly',
+        // Node 20 web globals. `AbortController` is used by @trustos/retry's timeout handling and
+        // by the smoke script; `performance` by the pilot's measurements.
+        AbortController: 'readonly',
+        AbortSignal: 'readonly',
+        performance: 'readonly',
       },
     },
     rules: {
