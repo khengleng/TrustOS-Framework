@@ -14,7 +14,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
+    "@trustos/data-classification": "0.1.0",
     "@trustos/errors": "0.1.0",
+    "@trustos/sre-core": "0.1.0",
     "@trustos/version-manager": "0.1.0",
     "zod": "^3.24.1"
   }

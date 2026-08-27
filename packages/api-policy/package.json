@@ -18,6 +18,7 @@
     "@trustos/api-consumer": "0.1.0",
     "@trustos/errors": "0.1.0",
     "@trustos/policy-evaluator": "0.1.0",
+    "@trustos/policy-registry": "0.1.0",
     "zod": "^3.24.1"
   }
 }

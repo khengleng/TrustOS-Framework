@@ -12,6 +12,9 @@
       "path": "../api-catalog"
     },
     {
+      "path": "../api-keys"
+    },
+    {
       "path": "../errors"
     }
   ]

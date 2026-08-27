@@ -338,7 +338,7 @@ export class IncidentManager {
   ): Promise<Incident> {
     if (!TRANSITIONS[incident.state].includes(input.to)) {
       throw ApiError.conflict(`An incident does not move from ${incident.state} to ${input.to}.`, {
-        context: { permitted: TRANSITIONS[incident.state] },
+        permitted: TRANSITIONS[incident.state],
       });
     }
 

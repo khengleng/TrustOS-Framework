@@ -203,6 +203,14 @@ export default defineConfig({
       '@trustos/dependency-health': pkg('dependency-health'),
       '@trustos/incident-management': pkg('incident-management'),
       '@trustos/resilience': pkg('resilience'),
+      '@trustos/api-catalog': pkg('api-catalog'),
+      '@trustos/api-versioning': pkg('api-versioning'),
+      '@trustos/api-consumer': pkg('api-consumer'),
+      '@trustos/api-quota': pkg('api-quota'),
+      '@trustos/api-rate-limit': pkg('api-rate-limit'),
+      '@trustos/api-policy': pkg('api-policy'),
+      '@trustos/developer-access': pkg('developer-access'),
+      '@trustos/api-management': pkg('api-management'),
 
       /*
        * Subpath aliases, listed before their package so the more specific key

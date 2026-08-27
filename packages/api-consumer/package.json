@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@trustos/api-catalog": "0.1.0",
+    "@trustos/api-keys": "0.1.0",
     "@trustos/errors": "0.1.0",
     "zod": "^3.24.1"
   }

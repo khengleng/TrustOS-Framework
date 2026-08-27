@@ -379,11 +379,9 @@ export function assertPostureSound(input: { posture: ServicePosture; service?: S
   throw ApiError.conflict(
     `The resilience posture for ${input.posture.serviceId} has unresolved high-severity findings.`,
     {
-      context: {
-        findings: findings
-          .filter((finding) => finding.severity === 'high')
-          .map((finding) => `${finding.dependencyId}: ${finding.detail}`),
-      },
+      findings: findings
+        .filter((finding) => finding.severity === 'high')
+        .map((finding) => `${finding.dependencyId}: ${finding.detail}`),
     },
   );
 }

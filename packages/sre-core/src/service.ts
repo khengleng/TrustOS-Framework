@@ -490,6 +490,6 @@ export function assertGraphSound(registry: ServiceRegistry): void {
   if (high.length === 0) return;
 
   throw ApiError.conflict('The service graph has unresolved high-severity findings.', {
-    context: { findings: high.map((finding) => `${finding.serviceId}: ${finding.detail}`) },
+    findings: high.map((finding) => `${finding.serviceId}: ${finding.detail}`),
   });
 }

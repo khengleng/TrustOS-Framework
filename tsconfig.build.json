@@ -47,10 +47,31 @@
       "path": "packages/analytics"
     },
     {
+      "path": "packages/api-catalog"
+    },
+    {
       "path": "packages/api-client-generator"
     },
     {
+      "path": "packages/api-consumer"
+    },
+    {
       "path": "packages/api-keys"
+    },
+    {
+      "path": "packages/api-management"
+    },
+    {
+      "path": "packages/api-policy"
+    },
+    {
+      "path": "packages/api-quota"
+    },
+    {
+      "path": "packages/api-rate-limit"
+    },
+    {
+      "path": "packages/api-versioning"
     },
     {
       "path": "packages/architecture-validator"
@@ -120,6 +141,9 @@
     },
     {
       "path": "packages/dependency-health"
+    },
+    {
+      "path": "packages/developer-access"
     },
     {
       "path": "packages/developer-portal"

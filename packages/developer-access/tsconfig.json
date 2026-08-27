@@ -15,6 +15,12 @@
       "path": "../api-consumer"
     },
     {
+      "path": "../api-keys"
+    },
+    {
+      "path": "../data-classification"
+    },
+    {
       "path": "../errors"
     }
   ]

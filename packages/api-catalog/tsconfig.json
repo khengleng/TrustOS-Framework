@@ -9,7 +9,13 @@
   "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
   "references": [
     {
+      "path": "../data-classification"
+    },
+    {
       "path": "../errors"
+    },
+    {
+      "path": "../sre-core"
     },
     {
       "path": "../version-manager"

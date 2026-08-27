@@ -20,6 +20,7 @@
     "@trustos/api-quota": "0.1.0",
     "@trustos/api-rate-limit": "0.1.0",
     "@trustos/api-versioning": "0.1.0",
+    "@trustos/audit": "0.1.0",
     "@trustos/errors": "0.1.0",
     "zod": "^3.24.1"
   }
