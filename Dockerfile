@@ -35,6 +35,17 @@ FROM node:20.19.1-bookworm-slim AS build
 ARG SERVICE
 WORKDIR /app
 
+# Fail here, with a sentence, rather than four lines later inside npm.
+#
+# An unset SERVICE reaches `npm run build -w "@trustos/"`, which reports
+# `No workspaces found: --workspace=@trustos/` — true, unhelpful, and several minutes into a build.
+RUN test -n "$SERVICE" || { \
+      echo "SERVICE build argument is empty."; \
+      echo "Pass it: docker build --build-arg SERVICE=api-example ."; \
+      echo "On Railway, set SERVICE as a service variable — buildArgs in railway.json is not read."; \
+      exit 1; \
+    }
+
 COPY . .
 
 # `--ignore-scripts` so `postinstall` does not run `prisma generate` before the schema is in place;
