@@ -313,6 +313,27 @@ export const STANDARD_RESOURCE_CLASSES: Readonly<Record<string, AccessClass>> = 
   [STANDARD_RESOURCE_IDS.API_HEALTH]: 'api_only',
   [STANDARD_RESOURCE_IDS.API_AUDIT]: 'api_only',
   [STANDARD_RESOURCE_IDS.API_SECURITY_EVENTS]: 'api_only',
+
+  /*
+   * Phase 13. Every enterprise governance surface is `api_only`, with no read-only variant.
+   *
+   * There is a reporting replica of most operational data, and reading a transaction list from one
+   * is correct. There is no equivalent for a policy version, a service tier or a DR plan: those
+   * are the rules the platform enforces, and reading them from a replica means reading a rule
+   * without the check that the version found is the one in force.
+   */
+  [STANDARD_RESOURCE_IDS.API_DATA_CATALOG]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_DATA_LINEAGE]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_POLICY]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_POLICY_DECISIONS]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_SRE_SERVICE]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_SRE_SLO]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_SRE_INCIDENT]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_API_CATALOG]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_API_CONSUMER]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_BACKUP]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_DR_PLAN]: 'api_only',
+  [STANDARD_RESOURCE_IDS.API_CONTINUITY]: 'api_only',
 };
 
 export function classifyStandardResource(resourceId: string): AccessClass | null {

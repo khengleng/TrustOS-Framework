@@ -8,7 +8,7 @@ import { PrismaService } from '@trustos/database';
 import { createLogger } from '@trustos/logging';
 import { InMemorySecurityEventSink } from '@trustos/security-events';
 import { securityPolicySchema } from '@trustos/security-policy';
-import { consoleCatalogFor } from '@trustos/governance-tool-core';
+import { CONSOLE_TEMPLATES, consoleCatalogFor } from '@trustos/governance-tool-core';
 import { APP_CATALOG, GOVERNANCE_RUNTIME, GUARD_ORDER, RESOURCE_REGISTRY } from './tokens';
 import { InternalAppGatewayModule } from './internal-app-gateway.module';
 
@@ -153,7 +153,13 @@ describe('booting the internal app gateway', () => {
     app = await boot();
     const catalog = app.get<{ list(environment: 'dev' | 'uat' | 'prod'): unknown[] }>(APP_CATALOG);
 
-    expect(catalog.list('dev')).toHaveLength(10);
+    /*
+     * Counted against the template list rather than a literal. The point of the test is the second
+     * assertion — that another environment's catalog is empty — and a hard-coded count made it
+     * fail every time a template was added, which teaches people to update the number rather than
+     * to read what the test is for.
+     */
+    expect(catalog.list('dev')).toHaveLength(CONSOLE_TEMPLATES.length);
     // There is no request field that selects an environment, and the catalog for another one is
     // empty because this instance never loaded it.
     expect(catalog.list('prod')).toHaveLength(0);

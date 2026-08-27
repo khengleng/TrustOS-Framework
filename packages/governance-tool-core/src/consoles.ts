@@ -61,6 +61,27 @@ export const STANDARD_RESOURCE_IDS = {
   API_HEALTH: 'trustos.health',
   API_AUDIT: 'trustos.audit',
   API_SECURITY_EVENTS: 'trustos.security_events',
+
+  /*
+   * Phase 13 — the enterprise governance surfaces.
+   *
+   * Every one of them is Class B: authoritative, reached through the API, never read from a
+   * database. That is not a cautious default here but the only correct one — a console that read
+   * the policy registry directly would be reading the rules the platform enforces, from a surface
+   * where nothing checks whether the version it found is active.
+   */
+  API_DATA_CATALOG: 'trustos.data_catalog',
+  API_DATA_LINEAGE: 'trustos.data_lineage',
+  API_POLICY: 'trustos.policy',
+  API_POLICY_DECISIONS: 'trustos.policy_decisions',
+  API_SRE_SERVICE: 'trustos.sre_service',
+  API_SRE_SLO: 'trustos.sre_slo',
+  API_SRE_INCIDENT: 'trustos.sre_incident',
+  API_API_CATALOG: 'trustos.api_catalog',
+  API_API_CONSUMER: 'trustos.api_consumer',
+  API_BACKUP: 'trustos.backup',
+  API_DR_PLAN: 'trustos.dr_plan',
+  API_CONTINUITY: 'trustos.continuity',
 } as const;
 
 const R = STANDARD_RESOURCE_IDS;
@@ -1110,6 +1131,256 @@ export function genericDashboard(): InternalApplication {
   });
 }
 
+// --- 11. enterprise governance ----------------------------------------------
+
+/**
+ * The Enterprise Governance Console.
+ *
+ * The navigation the phase-13 specification asks for, as an internal application definition.
+ *
+ * Two things about it are worth reading before adapting it.
+ *
+ * **Every data source is Class B.** Not one of them reads a reporting replica. The other consoles
+ * mix Class A reporting reads with Class B authoritative calls, which is right for them — a
+ * transaction list is a report. A policy version is not: reading it from anywhere but the
+ * authoritative API means reading a rule from a surface where nothing checks whether the version
+ * found is the one in force.
+ *
+ * **Every action is a request.** `propose-classification`, `request-policy-activation`,
+ * `request-dr-activation` — the verbs are deliberate. Each one calls an API that applies the
+ * segregation the framework requires, so a console user who holds the proposing permission cannot
+ * complete the approval by clicking a second button. Naming them `approve-*` would be shorter and
+ * would misdescribe what the console can do.
+ */
+export function enterpriseGovernanceConsole(): InternalApplication {
+  return console_({
+    appId: 'enterprise-governance-console',
+    name: 'Enterprise Governance Console',
+    description:
+      'Data governance, policy, SRE, API management and continuity, over the authoritative TrustOS APIs.',
+    businessPurpose:
+      'Gives the people accountable for governance one place to see the estate and to raise the requests that change it.',
+    dataClassification: 'restricted',
+    riskClassification: 'high',
+    roles: ['platform_admin', 'compliance', 'operations'],
+    dataSources: [
+      source(
+        'catalog',
+        R.API_DATA_CATALOG,
+        ['entryId', 'kind', 'classification', 'owner', 'businessName'],
+        {
+          operation: 'read',
+        },
+      ),
+      source('lineage', R.API_DATA_LINEAGE, ['entryId', 'declared', 'propagated'], {
+        operation: 'read',
+      }),
+      source('policies', R.API_POLICY, ['policyId', 'version', 'status', 'category', 'owner'], {
+        operation: 'read',
+      }),
+      source(
+        'decisions',
+        R.API_POLICY_DECISIONS,
+        ['decisionId', 'policyId', 'policyVersion', 'decision'],
+        {
+          operation: 'read',
+        },
+      ),
+      source(
+        'services',
+        R.API_SRE_SERVICE,
+        ['serviceId', 'tier', 'ownerTeam', 'onCallRotation', 'health'],
+        {
+          operation: 'read',
+        },
+      ),
+      source('objectives', R.API_SRE_SLO, ['sloId', 'target', 'verdict', 'budgetState'], {
+        operation: 'read',
+      }),
+      source('incidents', R.API_SRE_INCIDENT, ['incidentId', 'severity', 'state', 'ownerId'], {
+        operation: 'read',
+      }),
+      source(
+        'apis',
+        R.API_API_CATALOG,
+        ['apiId', 'version', 'lifecycle', 'classification', 'consumers'],
+        {
+          operation: 'read',
+        },
+      ),
+      source('consumers', R.API_API_CONSUMER, ['consumerId', 'kind', 'status', 'environment'], {
+        operation: 'read',
+      }),
+      source('backups', R.API_BACKUP, ['backupId', 'source', 'completedAt', 'statement'], {
+        operation: 'read',
+      }),
+      source('dr-plans', R.API_DR_PLAN, ['planId', 'scenario', 'rtoMinutes', 'statement'], {
+        operation: 'read',
+      }),
+      source('continuity', R.API_CONTINUITY, ['processId', 'criticality', 'rtoMinutes', 'state'], {
+        operation: 'read',
+      }),
+    ],
+    actions: [
+      /*
+       * A proposal, not a reclassification.
+       *
+       * Lowering a classification makes previously-restricted data readable, and every downstream
+       * control reads the label. The API records the proposal; an approver with a different
+       * permission acts on it.
+       */
+      action(
+        'propose-classification',
+        'Propose classification',
+        R.API_DATA_CATALOG,
+        '/internal/v1/enterprise/data/catalog/:entryId/classification',
+        { requiresApproval: true, reversible: false },
+      ),
+      action(
+        'simulate-policy',
+        'Simulate policy',
+        R.API_POLICY,
+        '/internal/v1/enterprise/policies/simulate',
+        { requiresReason: false, reversible: true },
+      ),
+      /*
+       * Activation is requested here and refused by the API when the requester authored the
+       * policy. The console cannot know that — the author is on the document, not on the session —
+       * which is precisely why the check belongs in the API.
+       */
+      action(
+        'request-policy-activation',
+        'Request activation',
+        R.API_POLICY,
+        '/internal/v1/enterprise/policies/:policyId/versions/:version/activate',
+        { requiresApproval: true, reversible: false },
+      ),
+      action(
+        'declare-incident',
+        'Declare incident',
+        R.API_SRE_INCIDENT,
+        '/internal/v1/sre/incidents',
+        { reversible: false },
+      ),
+      action(
+        'record-restore-test',
+        'Record restore test',
+        R.API_BACKUP,
+        '/internal/v1/enterprise/continuity/restore-tests',
+        { reversible: false },
+      ),
+      /*
+       * Activating a DR plan moves production. It is a request with an approval, and the API
+       * refuses an unexercised plan unless somebody overrides it with a reason that will be read
+       * during the review.
+       */
+      action(
+        'request-dr-activation',
+        'Request DR activation',
+        R.API_DR_PLAN,
+        '/internal/v1/enterprise/continuity/dr-plans/:planId/activate',
+        { requiresApproval: true, reversible: false },
+      ),
+    ],
+    pages: [
+      page('data-governance', 'Data Governance', GOVERNANCE_PERMISSIONS.APP_READ.key, [
+        {
+          id: 'catalog',
+          kind: 'table',
+          dataSourceId: 'catalog',
+          actionIds: ['propose-classification'],
+          fields: ['entryId', 'kind', 'classification', 'owner', 'businessName'],
+        },
+        {
+          id: 'lineage',
+          kind: 'table',
+          dataSourceId: 'lineage',
+          actionIds: [],
+          fields: ['entryId', 'declared', 'propagated'],
+        },
+      ]),
+      page('policies', 'Policies', GOVERNANCE_PERMISSIONS.APP_READ.key, [
+        {
+          id: 'registry',
+          kind: 'table',
+          dataSourceId: 'policies',
+          actionIds: ['simulate-policy', 'request-policy-activation'],
+          fields: ['policyId', 'version', 'status', 'category', 'owner'],
+        },
+        {
+          id: 'decisions',
+          kind: 'table',
+          dataSourceId: 'decisions',
+          actionIds: [],
+          fields: ['decisionId', 'policyId', 'policyVersion', 'decision'],
+        },
+      ]),
+      page('sre', 'SRE', GOVERNANCE_PERMISSIONS.APP_READ.key, [
+        {
+          id: 'services',
+          kind: 'table',
+          dataSourceId: 'services',
+          actionIds: [],
+          fields: ['serviceId', 'tier', 'ownerTeam', 'onCallRotation', 'health'],
+        },
+        {
+          id: 'objectives',
+          kind: 'table',
+          dataSourceId: 'objectives',
+          actionIds: [],
+          fields: ['sloId', 'target', 'verdict', 'budgetState'],
+        },
+        {
+          id: 'incidents',
+          kind: 'table',
+          dataSourceId: 'incidents',
+          actionIds: ['declare-incident'],
+          fields: ['incidentId', 'severity', 'state', 'ownerId'],
+        },
+      ]),
+      page('apis', 'APIs', GOVERNANCE_PERMISSIONS.APP_READ.key, [
+        {
+          id: 'catalog',
+          kind: 'table',
+          dataSourceId: 'apis',
+          actionIds: [],
+          fields: ['apiId', 'version', 'lifecycle', 'classification', 'consumers'],
+        },
+        {
+          id: 'consumers',
+          kind: 'table',
+          dataSourceId: 'consumers',
+          actionIds: [],
+          fields: ['consumerId', 'kind', 'status', 'environment'],
+        },
+      ]),
+      page('continuity', 'Continuity', GOVERNANCE_PERMISSIONS.APP_READ.key, [
+        {
+          id: 'processes',
+          kind: 'table',
+          dataSourceId: 'continuity',
+          actionIds: [],
+          fields: ['processId', 'criticality', 'rtoMinutes', 'state'],
+        },
+        {
+          id: 'backups',
+          kind: 'table',
+          dataSourceId: 'backups',
+          actionIds: ['record-restore-test'],
+          fields: ['backupId', 'source', 'completedAt', 'statement'],
+        },
+        {
+          id: 'dr-plans',
+          kind: 'table',
+          dataSourceId: 'dr-plans',
+          actionIds: ['request-dr-activation'],
+          fields: ['planId', 'scenario', 'rtoMinutes', 'statement'],
+        },
+      ]),
+    ],
+  });
+}
+
 export interface ConsoleTemplate {
   id: string;
   name: string;
@@ -1177,6 +1448,12 @@ export const CONSOLE_TEMPLATES: readonly ConsoleTemplate[] = Object.freeze([
     name: 'Generic Dashboard',
     description: 'A read-only view over approved reporting sources.',
     build: genericDashboard,
+  },
+  {
+    id: 'enterprise-governance-console',
+    name: 'Enterprise Governance Console',
+    description: 'Data governance, policy, SRE, APIs and continuity, over authoritative APIs only.',
+    build: enterpriseGovernanceConsole,
   },
 ]);
 

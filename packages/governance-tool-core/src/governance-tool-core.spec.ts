@@ -9,6 +9,7 @@ import {
   accessRefused,
   actionSchema,
   decideAccess,
+  enterpriseGovernanceConsole,
   findConsoleTemplate,
   forbiddenFields,
   governanceSegregationViolations,
@@ -274,12 +275,13 @@ describe('the internal application schema', () => {
 });
 
 describe('the console templates', () => {
-  it('ships the ten section 31 asks for', () => {
+  it('ships the ten phase-12 templates and the phase-13 governance console', () => {
     expect(CONSOLE_TEMPLATES.map((template) => template.id).sort()).toEqual([
       'ai-operations-console',
       'approval-workbench',
       'case-management',
       'customer-support-console',
+      'enterprise-governance-console',
       'finance-console',
       'financial-product-studio',
       'generic-dashboard',
@@ -412,5 +414,67 @@ describe('reviewed field exceptions', () => {
   it('has no wildcard', () => {
     // A wildcard is used once during an incident and never removed.
     expect(forbiddenFields(['passwordHash', 'apiKey'], ['*'])).toEqual(['passwordHash', 'apiKey']);
+  });
+});
+
+describe('the enterprise governance console', () => {
+  const app = enterpriseGovernanceConsole();
+
+  it('reads nothing from a reporting replica', () => {
+    /*
+     * The other consoles mix Class A reporting reads with Class B authoritative calls, which is
+     * right for them — a transaction list is a report. A policy version is not: reading it from a
+     * replica means reading a rule from a surface where nothing checks whether the version found
+     * is the one in force.
+     */
+    for (const dataSource of app.dataSources) {
+      expect(dataSource.resourceId.startsWith('trustos.'), dataSource.id).toBe(true);
+      expect(dataSource.resourceId.startsWith('reporting.'), dataSource.id).toBe(false);
+    }
+  });
+
+  it('names every consequential action as a request', () => {
+    /*
+     * The verbs are deliberate. Each action calls an API that applies the segregation the
+     * framework requires, so a console user holding the proposing permission cannot complete the
+     * approval by clicking a second button — and naming them `approve-*` would misdescribe what
+     * the console can do.
+     */
+    const consequential = app.actions.filter((action) => action.requiresApproval);
+
+    expect(consequential.length).toBeGreaterThan(0);
+    for (const action of consequential) {
+      expect(action.id, action.id).toMatch(/^(propose|request)-/);
+    }
+  });
+
+  it('has no action that approves anything', () => {
+    for (const action of app.actions) {
+      expect(action.id).not.toMatch(/^(approve|activate|apply|publish)-/);
+    }
+  });
+
+  it('routes every action through a gateway path', () => {
+    // No console writes directly, anywhere. This one least of all: its writes change what the
+    // platform permits.
+    for (const action of app.actions) {
+      expect(action.apiPath.startsWith('/internal/v1/'), action.id).toBe(true);
+    }
+  });
+
+  it('covers the five sections the specification names', () => {
+    expect(app.pages.map((page) => page.id)).toEqual([
+      'data-governance',
+      'policies',
+      'sre',
+      'apis',
+      'continuity',
+    ]);
+  });
+
+  it('is restricted and high risk', () => {
+    // It shows the classification of every table in the estate and the health of every service.
+    expect(app.dataClassification).toBe('restricted');
+    expect(app.riskClassification).toBe('high');
   });
 });

@@ -80,7 +80,7 @@ function operation(input: {
 }
 
 /**
- * The operations the ten consoles need.
+ * The operations the console templates need.
  *
  * Every path a console template declares appears here, which is what makes the two checkable
  * against each other — a console naming a path this catalog does not carry is a console calling
@@ -359,6 +359,61 @@ export const GATEWAY_OPERATIONS: readonly GatewayOperation[] = Object.freeze([
     apiPermission: 'governance.ai.review',
     createsRecord: true,
     description: 'Records a human review decision on an AI output.',
+  }),
+  // --- enterprise governance (phase 13) -------------------------------------
+  //
+  // Every one of these reaches an authoritative API rather than a replica, and every one that
+  // changes something is a *request*: the API applies the segregation the framework requires, so
+  // holding the proposing permission in the console cannot complete an approval.
+  operation({
+    id: 'proposeClassification',
+    path: '/internal/v1/enterprise/data/catalog/:entryId/classification',
+    resourceId: R.API_DATA_CATALOG,
+    apiPermission: 'enterprise.data.classify',
+    createsRecord: true,
+    description:
+      'Proposes a classification change. An approver with a different permission acts on it.',
+  }),
+  operation({
+    id: 'simulatePolicy',
+    path: '/internal/v1/enterprise/policies/simulate',
+    resourceId: R.API_POLICY,
+    operation: 'read',
+    apiPermission: 'enterprise.policy.simulate',
+    description: 'Evaluates a policy — including a draft — without enforcing or recording it.',
+  }),
+  operation({
+    id: 'requestPolicyActivation',
+    path: '/internal/v1/enterprise/policies/:policyId/versions/:version/activate',
+    resourceId: R.API_POLICY,
+    apiPermission: 'enterprise.policy.activate',
+    createsRecord: true,
+    description: 'Requests activation of a policy version. Refused when the requester authored it.',
+  }),
+  operation({
+    id: 'declareIncident',
+    path: '/internal/v1/sre/incidents',
+    resourceId: R.API_SRE_INCIDENT,
+    apiPermission: 'sre.incident.declare',
+    createsRecord: true,
+    description: 'Declares an incident with a severity the caller states.',
+  }),
+  operation({
+    id: 'recordRestoreTest',
+    path: '/internal/v1/enterprise/continuity/restore-tests',
+    resourceId: R.API_BACKUP,
+    apiPermission: 'enterprise.continuity.write',
+    createsRecord: true,
+    description: 'Records a restore test, completing the backup it validates.',
+  }),
+  operation({
+    id: 'requestDrActivation',
+    path: '/internal/v1/enterprise/continuity/dr-plans/:planId/activate',
+    resourceId: R.API_DR_PLAN,
+    apiPermission: 'enterprise.continuity.dr.activate',
+    createsRecord: true,
+    description:
+      'Activates a DR plan. Refused for an unexercised plan without a recorded override.',
   }),
 ]);
 

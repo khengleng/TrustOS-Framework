@@ -193,3 +193,42 @@ describe('the standard classification', () => {
     expect(classifyStandardResource('somebody.invented')).toBeNull();
   });
 });
+
+describe('the enterprise governance resources', () => {
+  const ENTERPRISE_RESOURCES = [
+    STANDARD_RESOURCE_IDS.API_DATA_CATALOG,
+    STANDARD_RESOURCE_IDS.API_DATA_LINEAGE,
+    STANDARD_RESOURCE_IDS.API_POLICY,
+    STANDARD_RESOURCE_IDS.API_POLICY_DECISIONS,
+    STANDARD_RESOURCE_IDS.API_SRE_SERVICE,
+    STANDARD_RESOURCE_IDS.API_SRE_SLO,
+    STANDARD_RESOURCE_IDS.API_SRE_INCIDENT,
+    STANDARD_RESOURCE_IDS.API_API_CATALOG,
+    STANDARD_RESOURCE_IDS.API_API_CONSUMER,
+    STANDARD_RESOURCE_IDS.API_BACKUP,
+    STANDARD_RESOURCE_IDS.API_DR_PLAN,
+    STANDARD_RESOURCE_IDS.API_CONTINUITY,
+  ];
+
+  it('are all api_only, with no read-only variant', () => {
+    /*
+     * There is a reporting replica of most operational data, and reading a transaction list from
+     * one is correct. There is no equivalent for a policy version, a service tier or a DR plan:
+     * those are the rules the platform enforces, and reading them from a replica means reading a
+     * rule without the check that the version found is the one in force.
+     */
+    for (const resourceId of ENTERPRISE_RESOURCES) {
+      expect(classifyStandardResource(resourceId), resourceId).toBe('api_only');
+    }
+  });
+
+  it('has no enterprise resource classified read_only', () => {
+    const readOnly = Object.entries(STANDARD_RESOURCE_CLASSES)
+      .filter(([, accessClass]) => accessClass === 'read_only')
+      .map(([resourceId]) => resourceId);
+
+    for (const resourceId of ENTERPRISE_RESOURCES) {
+      expect(readOnly).not.toContain(resourceId);
+    }
+  });
+});
