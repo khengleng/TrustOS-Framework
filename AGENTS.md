@@ -752,7 +752,7 @@ fourteen rules on top of everything above.
     feature declares — widening them "for more context" is how a summarizer becomes a way to read
     a record the requester cannot open.
 
-14. **Stop after completing phase 12.** Do not build payKH or dbank business logic, a real bank
+14. **Governance Tool scope.** Do not build payKH or dbank business logic, a real bank
     integration, a second identity system, a second workflow engine or a second AI gateway. The
     Governance Tool must stay replaceable and provider-neutral.
 
@@ -760,6 +760,101 @@ Read [docs/governance-tool/security.md](docs/governance-tool/security.md) and
 [docs/governance-tool/database-access-policy.md](docs/governance-tool/database-access-policy.md)
 before changing anything in `internal-app-gateway`, `governance-data-access`,
 `governance-auth-context` or `governance-pii-policy`.
+
+## Enterprise governance rules (phase 13)
+
+Thirty packages across data governance, policy-as-code, SRE, API management and continuity. The
+rules below are not style preferences — each one names a specific failure that the layer is built
+to make impossible rather than discouraged.
+
+1. **Never bypass data classification.** A value's handling comes from
+   `obligationsFor(classification)`, not from what the calling code knows about it. Combining
+   classifications always takes the **highest**: a report joining a public table to a restricted
+   one is a restricted extract, whatever its own label says.
+
+2. **Never expose restricted information without a policy decision behind it.** A reveal is a
+   request and an approval by two people. Masking happens at the read boundary; a code path that
+   reads the unmasked value "because it needs it" is the path the whole layer exists to remove.
+
+3. **Never bypass tenant isolation.** `organizationId` is explicit and non-optional on every
+   governance record, including the ones that are platform-level and set it to `null`. An omitted
+   organization is the mistake that produces a cross-tenant read.
+
+4. **Never hardcode a rule into application code when a central policy exists.** If the answer
+   differs per deployment — a threshold, a window, an exception — it is a policy document. A
+   deployment cannot review a rule it has to read TypeScript to find.
+
+5. **Never modify an active policy version.** Versions are immutable. A logged decision names a
+   version, and if that version's contents could change, re-deriving the decision would produce a
+   different answer — which makes the whole decision log a record of something that never
+   happened. Publish a new version; `assertSufficientPolicyBump` checks it moved far enough.
+
+6. **A document policy refuses; only code permits.** `asAuthorizationPolicy` returns `null` on
+   allow. Configuration that could grant would let somebody widen access past a code refusal by
+   editing a file, and the default-deny structure would then depend on nobody writing an
+   over-broad document.
+
+7. **An obligation the caller does not understand is a denial.** Ignoring an unknown obligation
+   converts a conditional permission into an unconditional one, and obligations are added
+   precisely when a permission needs a condition attached.
+
+8. **Never silently introduce a breaking API change.** Run `trustos api compatibility` on every
+   contract change. A new required scope is **breaking** — it alters no response, reads as a
+   security improvement, and every existing credential lacks it. So is lowering a classification.
+
+9. **Always validate the API contract before publishing.** An API cannot be published without two
+   owners and an OpenAPI reference, and in production the catalog refuses an owner publishing
+   their own — that check lives in the catalog rather than a controller so it holds for the CLI
+   too.
+
+10. **Always propagate correlation ids.** Through the gate, the policy decision, the workflow, the
+    ledger posting and the event. A trace that stops at a service boundary is a trace that answers
+    nothing about the boundary, which is where the interesting failures are.
+
+11. **Never report absence of evidence as success.** An unobserved SLI window is `null`, not 100%.
+    An unprobed dependency is `UNKNOWN`, not healthy. A skipped doctor check is _skipped_, not
+    passed. Every one of these would be greener the other way, and every one would be lying.
+
+12. **Never claim a backup works without a restore.** `fullyValidated` requires a restore test that
+    names its report. A job exiting zero establishes that bytes were written and nothing else.
+
+13. **Never mark DR as tested without a successful exercise.** A tabletop is documented, not
+    demonstrated, and `readinessOf` phrases it that way because that sentence gets quoted.
+
+14. **Never expose a backup location or a DR credential.** Not in a dashboard, not in an audit
+    record, not in an AI input. A health dashboard is one of the least access-controlled surfaces
+    in most deployments.
+
+15. **Never let AI activate a governance change.** The assistant explains, summarizes, drafts and
+    suggests. `AI_FORBIDDEN_ACTIONS` names what it may never do, and the constraint is structural:
+    the output type carries text, and there is no path from an output to an action.
+
+16. **Never derive severity, and never automate a production halt.** Severity is a judgement about
+    impact; a rule that guessed it would be overridden until the field recorded nothing. An
+    exhausted error budget recommends reversible actions and leaves a person deciding — a rule
+    that halted production alone would be disabled after its first false positive.
+
+17. **Never run a destructive fault against production.** `data_deletion` and `data_corruption` are
+    refused there with no override. There is no correct value for "who may corrupt the production
+    ledger to see what happens", and offering the setting is how it gets set.
+
+18. **Always separate proposing from approving.** Classification, policy activation, reveals, API
+    publication, DR activation and production experiments each split into two permissions held by
+    two people. Declare the pair in `SEGREGATED_PAIRS` and test it — the collapse is invisible in a
+    role definition, because it looks like somebody being given what they need to do their job.
+
+19. **Always add negative security tests.** For every control above, a test that the bypass is
+    refused: the unauthorized reclassification, the draft policy that cannot decide, the expired
+    entitlement, the quota that cannot be bypassed through another endpoint, the cross-tenant read.
+
+20. **Stop after completing phase 13.** Do not begin another framework expansion. Do not build
+    business products, provider integrations, country-specific rules or a second engine for
+    anything the framework already has.
+
+Read [docs/enterprise-governance/architecture.md](docs/enterprise-governance/architecture.md) and
+[docs/enterprise-governance/operating-model.md](docs/enterprise-governance/operating-model.md)
+before changing anything in the data-governance, policy, SRE, API-management or continuity
+packages.
 
 ## Before claiming a change is done
 

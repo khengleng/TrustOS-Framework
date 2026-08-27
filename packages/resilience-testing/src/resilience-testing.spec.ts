@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runbookSchema, serviceSchema } from '@trustos/sre-core';
+import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustos/sre-core';
 import { servicePostureSchema } from '@trustos/resilience';
 import {
   assertRunnable,
@@ -222,6 +222,21 @@ describe('when an experiment may not start', () => {
   it('permits one against a declared, protected dependency', () => {
     expect(() =>
       assertRunnable({ experiment: experiment(), service: service(), posture: posture(), at: NOW }),
+    ).not.toThrow();
+  });
+
+  it('resolves the target through the service registry', () => {
+    // The same check against a registered service rather than a literal, so an experiment cannot
+    // name a service that exists only in the experiment document.
+    const registry = new ServiceRegistry({ runbooks: [runbook], services: [service()] });
+
+    expect(() =>
+      assertRunnable({
+        experiment: experiment(),
+        service: registry.require('payments.api'),
+        posture: posture(),
+        at: NOW,
+      }),
     ).not.toThrow();
   });
 });

@@ -2,7 +2,6 @@ import { readFile } from 'node:fs/promises';
 import { extname, resolve } from 'node:path';
 import {
   DATA_CLASSIFICATION_LEVELS,
-  classificationRank,
   obligationsFor,
   type DataClassificationLevel,
 } from '@trustos/data-classification';
