@@ -33,11 +33,16 @@ COPY packages/database/package.json packages/database/
 COPY packages/database/prisma packages/database/prisma
 
 # `postinstall` runs `prisma generate`, which needs the schema — copied above.
-# `id` is required by some builders — Railway's rejects a cache mount without one, which is how
-# this was found. BuildKit defaults the id to the target when it is omitted, so naming it
-# explicitly costs nothing and works everywhere.
-RUN --mount=type=cache,id=npm,target=/root/.npm \
-    npm ci --ignore-scripts && npm run db:generate
+# No BuildKit cache mount.
+#
+# A `--mount=type=cache` here would make the npm install faster on a warm builder, and Railway's
+# builder rejects the portable spelling: it wants an id carrying its own cacheKey prefix. Writing
+# that prefix into the Dockerfile would make the file build on exactly one platform, which is the
+# thing AGENTS.md's deployment rules say not to do.
+#
+# The cost of leaving it out is a slower cold build. The cost of putting it in is a Dockerfile that
+# only Railway can build.
+RUN npm ci --ignore-scripts && npm run db:generate
 
 # --- build --------------------------------------------------------------------
 FROM node:20.19.1-bookworm-slim AS build
@@ -55,7 +60,7 @@ RUN npm run db:generate \
 
 # Development dependencies removed *after* the build rather than installed separately, so the
 # build and the runtime resolve identical versions from one lockfile.
-RUN --mount=type=cache,id=npm,target=/root/.npm npm prune --omit=dev
+RUN npm prune --omit=dev
 
 # --- runtime ------------------------------------------------------------------
 FROM node:20.19.1-bookworm-slim AS runtime
