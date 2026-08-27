@@ -211,6 +211,11 @@ export default defineConfig({
       '@trustos/api-policy': pkg('api-policy'),
       '@trustos/developer-access': pkg('developer-access'),
       '@trustos/api-management': pkg('api-management'),
+      '@trustos/backup': pkg('backup'),
+      '@trustos/recovery': pkg('recovery'),
+      '@trustos/disaster-recovery': pkg('disaster-recovery'),
+      '@trustos/continuity': pkg('continuity'),
+      '@trustos/resilience-testing': pkg('resilience-testing'),
 
       /*
        * Subpath aliases, listed before their package so the more specific key

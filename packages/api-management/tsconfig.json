@@ -31,6 +31,9 @@
     },
     {
       "path": "../errors"
+    },
+    {
+      "path": "../policy-registry"
     }
   ]
 }
