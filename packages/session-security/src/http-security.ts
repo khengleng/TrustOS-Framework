@@ -60,7 +60,11 @@ export function contentSecurityPolicy(options: {
   };
 
   for (const [directive, sources] of Object.entries(options.extras ?? {})) {
-    directives[directive] = [...(directives[directive] ?? []), ...sources];
+    // Deduplicated: extras are additive, so a caller that names a source the default
+    // already has would otherwise emit it twice. A repeated token changes nothing about
+    // what the browser enforces, and everything about whether a reviewer trusts the
+    // header they are reading.
+    directives[directive] = [...new Set([...(directives[directive] ?? []), ...sources])];
   }
 
   return Object.entries(directives)

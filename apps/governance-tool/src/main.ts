@@ -53,6 +53,8 @@ async function bootstrap(): Promise<void> {
   const identityProvider = process.env.IDENTITY_PROVIDER === 'oidc' ? 'oidc' : 'local';
   const oidcIssuerUrl = process.env.OIDC_ISSUER_URL ?? '';
   const oidcClientId = process.env.OIDC_CLIENT_ID ?? '';
+  /** Scheme and host of the issuer, for the one CSP directive the portal needs. */
+  const oidcOrigin = originOf(oidcIssuerUrl);
 
   const policy = loadSecurityPolicy(
     {
@@ -62,7 +64,21 @@ async function bootstrap(): Promise<void> {
         issuer: process.env.SECURITY_TOKEN_ISSUER ?? 'trustos',
         audience: process.env.SECURITY_TOKEN_AUDIENCE ?? 'trustos-api',
       },
-      http: { corsOrigins: config.http.corsOrigins },
+      http: {
+        corsOrigins: config.http.corsOrigins,
+        /*
+         * The portal fetches two things from the identity provider: the discovery
+         * document, and the token endpoint during the code exchange. Both are
+         * cross-origin, and `connect-src 'self'` blocked them — the browser reported
+         * "Refused to connect because it violates the document's Content Security
+         * Policy" and the sign-in never started.
+         *
+         * The origin is derived from the issuer rather than configured separately, so
+         * it cannot drift from the provider actually in use, and only the origin is
+         * allowed — not a wildcard, and nothing else is added to the policy.
+         */
+        ...(oidcOrigin ? { contentSecurityPolicyExtras: { 'connect-src': [oidcOrigin] } } : {}),
+      },
     },
     {
       localJwtSecret: config.auth.jwtSecret,
@@ -318,6 +334,18 @@ function parseList(value: string | undefined): string[] {
     .split(',')
     .map((entry) => entry.trim())
     .filter(Boolean);
+}
+
+/** The origin of a URL, or null when there is no usable URL to take one from. */
+function originOf(url: string): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).origin;
+  } catch {
+    // A malformed issuer is caught properly by loadSecurityPolicy, which reports it
+    // with the other configuration problems rather than throwing from here.
+    return null;
+  }
 }
 
 function readEnvironment(): 'dev' | 'uat' | 'prod' {

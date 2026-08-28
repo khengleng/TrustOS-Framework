@@ -322,6 +322,32 @@ describe('security headers', () => {
       environment,
     });
 
+  it('adds an extra source to a directive that already exists', () => {
+    // A browser application has to reach its identity provider for the discovery
+    // document and the token exchange, and `connect-src 'self'` blocks both.
+    const csp =
+      headers('production', {
+        contentSecurityPolicyExtras: { 'connect-src': ['https://idp.example'] },
+      })['Content-Security-Policy'] ?? '';
+
+    expect(csp).toContain("connect-src 'self' https://idp.example");
+  });
+
+  it('does not repeat a source the directive already had', () => {
+    // Extras are additive, so a caller naming a source the default already carries
+    // would otherwise emit it twice. Harmless to the browser, and corrosive to a
+    // reviewer's trust in a header they are meant to read closely.
+    const csp =
+      headers('production', {
+        contentSecurityPolicyExtras: { 'connect-src': ["'self'", 'https://idp.example'] },
+      })['Content-Security-Policy'] ?? '';
+
+    const connect = csp.split(';').find((part) => part.trim().startsWith('connect-src')) ?? '';
+
+    expect(connect.match(/'self'/g)).toHaveLength(1);
+    expect(connect).toContain('https://idp.example');
+  });
+
   it('starts the content policy from nothing and adds only what is needed', () => {
     const csp = headers('production')['Content-Security-Policy'] ?? '';
 
