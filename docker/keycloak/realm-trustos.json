@@ -90,6 +90,15 @@
             "id.token.claim": "true",
             "userinfo.token.claim": "true"
           }
+        },
+        {
+          "name": "amr",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-amr-mapper",
+          "config": {
+            "access.token.claim": "true",
+            "id.token.claim": "true"
+          }
         }
       ]
     },
