@@ -104,7 +104,18 @@
       "serviceAccountsEnabled": true,
       "attributes": {
         "access.token.lifespan": "900"
-      }
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-trustos-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "trustos-api",
+            "access.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": []

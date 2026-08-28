@@ -3,12 +3,20 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustos/config';
 import { AllExceptionsFilter } from '@trustos/errors/nest';
+import { consoleCatalogFor } from '@trustos/governance-tool-core';
+import {
+  BearerTokenAuthenticator,
+  OidcIdentityProvider,
+  type CredentialAuthenticator,
+  type IdentityProvider,
+} from '@trustos/identity';
 import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
 import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
 import {
   SecurityPolicyError,
   loadSecurityPolicy,
   securityPolicySummary,
+  type SecurityPolicy,
 } from '@trustos/security-policy';
 import { securityHeadersMiddleware } from '@trustos/session-security';
 import { tenantScopeMiddleware } from '@trustos/tenancy';
@@ -78,7 +86,25 @@ async function bootstrap(): Promise<void> {
   const environment = readEnvironment();
 
   const app = await NestFactory.create(
-    GovernanceToolModule.forRoot({ config, policy, logger, environment }),
+    GovernanceToolModule.forRoot({
+      config,
+      policy,
+      logger,
+      environment,
+      overrides: {
+        ...buildIdentityOverrides({ identityProvider, oidcIssuerUrl, oidcClientId, policy }),
+        /*
+         * The ten console templates, so this gateway serves something on a fresh
+         * deployment rather than an empty catalog.
+         *
+         * These are descriptors — what a console contains, who owns it, how its data
+         * is classified — not credentials and not data. Registering them is safe in a
+         * way that registering *resources* is not, which is why the warning below
+         * about resources still stands.
+         */
+        apps: consoleCatalogFor(environment),
+      },
+    }),
     { logger: new NestPinoLogger(logger), bufferLogs: true },
   );
 
@@ -173,6 +199,96 @@ async function bootstrap(): Promise<void> {
  * Refused rather than defaulted. A gateway that defaulted to `dev` in a misconfigured production
  * deployment would be a gateway serving production traffic under development rules.
  */
+/**
+ * The identity wiring, or nothing.
+ *
+ * With `IDENTITY_PROVIDER=oidc` this builds the provider and the bearer authenticator
+ * the guards need. Without it the module keeps its default — `refusingIdentityProvider()`
+ * — and every request is refused. That default is deliberate and this function does not
+ * soften it: an application that fell back to something permissive when its identity
+ * configuration was missing would be at its most permissive exactly when somebody had
+ * misconfigured it.
+ *
+ * The role map is configuration rather than code because provider role names belong to
+ * whoever runs the provider. `OIDC_ROLE_MAP` is `provider-role=trustos-role`, comma
+ * separated; `OIDC_SUPER_ADMIN_ROLES` names the provider roles that mean platform staff.
+ */
+function buildIdentityOverrides(input: {
+  identityProvider: 'local' | 'oidc';
+  oidcIssuerUrl: string;
+  oidcClientId: string;
+  policy: SecurityPolicy;
+}): { identityProvider: IdentityProvider; authenticators: CredentialAuthenticator[] } | undefined {
+  if (input.identityProvider !== 'oidc') return undefined;
+
+  if (!input.oidcIssuerUrl || !input.oidcClientId) {
+    throw new ConfigurationError([
+      'IDENTITY_PROVIDER=oidc requires OIDC_ISSUER_URL and OIDC_CLIENT_ID. Refusing to start ' +
+        'with an identity provider that cannot verify a token.',
+    ]);
+  }
+
+  const provider = new OidcIdentityProvider(
+    {
+      issuerUrl: input.oidcIssuerUrl,
+      clientId: input.oidcClientId,
+      ...(process.env.OIDC_END_SESSION_ENDPOINT
+        ? { endSessionEndpoint: process.env.OIDC_END_SESSION_ENDPOINT }
+        : {}),
+      groupsClaim: 'groups',
+      organizationClaim: 'trustos_organization',
+      roleMap: parsePairs(process.env.OIDC_ROLE_MAP),
+      superAdminRoles: parseList(process.env.OIDC_SUPER_ADMIN_ROLES),
+    },
+    // The token and MFA rules are the security policy's, not this file's. Passing
+    // them keeps one source of truth for how long a token may live and what
+    // authentication strength a route can demand.
+    input.policy.tokens,
+    input.policy.mfa,
+  );
+
+  return {
+    identityProvider: provider,
+    authenticators: [
+      new BearerTokenAuthenticator({
+        provider,
+        /*
+         * No organization memberships are provisioned in this deployment, so this
+         * resolves nothing.
+         *
+         * That is not a hole. The authenticator only *requires* a resolution when the
+         * token carries an organization claim — a subject with one and no membership is
+         * refused, which is the check that matters. A platform-staff subject carries no
+         * organization, and its roles come from the provider's mapped roles, verified
+         * from the token signature rather than looked up here.
+         *
+         * The day this platform provisions tenants, this becomes a real lookup against
+         * OrganizationMember, and until then returning null is the honest answer rather
+         * than a stub that grants something.
+         */
+        access: { resolve: async () => null },
+      }),
+    ],
+  };
+}
+
+/** `a=b,c=d` into an object. Empty or malformed pairs are dropped rather than guessed at. */
+function parsePairs(value: string | undefined): Record<string, string> {
+  const pairs: Record<string, string> = {};
+  for (const entry of parseList(value)) {
+    const [from, to] = entry.split('=');
+    if (from && to) pairs[from.trim()] = to.trim();
+  }
+  return pairs;
+}
+
+function parseList(value: string | undefined): string[] {
+  return (value ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 function readEnvironment(): 'dev' | 'uat' | 'prod' {
   /* eslint-disable no-restricted-properties -- read once at start-up, before the container binds */
   const value = process.env.TRUSTOS_ENVIRONMENT;
