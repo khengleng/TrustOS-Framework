@@ -124,6 +124,40 @@ railway variables --set "TRUSTOS_GATEWAY_URL=http://internal-app-gateway.railway
 Use the internal name for every service-to-service call. A public URL for an internal call is a
 call that leaves the network and comes back, and it is reachable by anybody who finds it.
 
+## Custom domain
+
+The platform's public name is **https://trustos.cambobia.com**, attached to the
+`governance-tool` service in the `production` environment.
+
+|                          |                                                                    |
+| ------------------------ | ------------------------------------------------------------------ |
+| Railway project          | `TrustOS-Framework`                                                |
+| Environment              | `production`                                                       |
+| Service                  | `governance-tool`                                                  |
+| Custom domain            | `trustos.cambobia.com`                                             |
+| Target port              | 8080                                                               |
+| Railway-generated domain | `governance-tool-production.up.railway.app` — kept for diagnostics |
+
+Attached with:
+
+```bash
+railway domain trustos.cambobia.com --service governance-tool --port 8080
+```
+
+which returns the DNS record to add. The record, the provider it belongs in and how to verify
+it are in [dns.md](dns.md). The Railway-generated domain stays available, but it is not the
+platform's name — anything user-facing should say the custom domain.
+
+Two things to know before treating the domain as finished, both covered in
+[custom-domain-assessment.md](custom-domain-assessment.md):
+
+- **The root path returns a JSON 404.** Every deployed service is a JSON API; no web interface
+  exists in the repository yet. `https://trustos.cambobia.com/health` is the endpoint that
+  demonstrates the domain works.
+- **The environment is a pilot.** `TRUSTOS_ENVIRONMENT=dev` on every service, and the
+  production readiness gates have not passed. It is _TrustOS Platform v0.1 — Pilot_, whatever
+  the Railway environment is called.
+
 ## Migrations
 
 **One service runs them.** `trustos-api`'s `railway.json` carries:
