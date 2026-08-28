@@ -26,7 +26,7 @@ than PARTIAL.
 | 17  | Smoke tests        | **PASS**       | 10 passed, 0 failed, 1 skipped, against a live service                                                                   |
 | 18  | Documentation      | **PASS**       | This directory, plus the release and security documents                                                                  |
 
-**12 PASS · 5 PARTIAL · 1 FAIL**
+**13 PASS · 4 PARTIAL · 1 FAIL**
 
 ## The live deployment
 
