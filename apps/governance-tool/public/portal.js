@@ -188,11 +188,6 @@ async function api(path, session) {
     headers: { Authorization: `Bearer ${session.accessToken}` },
   });
 
-  if (response.status === 401) {
-    clearSession();
-    throw new Error('The session expired. Sign in again.');
-  }
-
   if (!response.ok) {
     let detail = '';
     try {
@@ -201,8 +196,25 @@ async function api(path, session) {
     } catch {
       /* a body that is not JSON tells us nothing extra */
     }
-    const error = new Error(detail || `The API returned ${response.status}.`);
+
+    /*
+     * A 401 is not necessarily an expired session, and saying so was actively
+     * misleading: the first real sign-in failed here because the API rejected the
+     * token's authorized party, and the portal reported "The session expired" — which
+     * sent the reader looking at token lifetimes instead of client configuration.
+     *
+     * The API deliberately does not say which check failed, so neither can this. It
+     * reports what the API said and offers signing in again as a possibility rather
+     * than a diagnosis.
+     */
+    const error = new Error(
+      detail ||
+        (response.status === 401
+          ? 'The platform did not accept the sign-in.'
+          : `The API returned ${response.status}.`),
+    );
     error.status = response.status;
+    if (response.status === 401) error.hint = 'Signing in again may help.';
     throw error;
   }
 

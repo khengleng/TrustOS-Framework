@@ -282,6 +282,20 @@ function buildIdentityOverrides(input: {
       ...(process.env.OIDC_END_SESSION_ENDPOINT
         ? { endSessionEndpoint: process.env.OIDC_END_SESSION_ENDPOINT }
         : {}),
+      /*
+       * Clients permitted to obtain a token for this API, beyond its own id.
+       *
+       * Keycloak puts the resource server in `aud` and the client that asked for the
+       * token in `azp`, and the provider checks both — a deployment checking only one
+       * accepts tokens minted for a different client. So the browser client has to be
+       * named here: its tokens carry `aud: trustos-api` and `azp: trustos-web`, and
+       * without this the portal's own token is refused with
+       * `oidc_authorized_party_rejected`.
+       *
+       * This is an allow-list, not a relaxation. Naming trustos-web says the portal may
+       * call this API; a token from any client not listed is still refused.
+       */
+      additionalAudiences: parseList(process.env.OIDC_ADDITIONAL_AUDIENCES),
       groupsClaim: 'groups',
       organizationClaim: 'trustos_organization',
       roleMap: parsePairs(process.env.OIDC_ROLE_MAP),
