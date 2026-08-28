@@ -82,6 +82,53 @@ afterEach(async () => {
 });
 
 describe('planModuleInstall', () => {
+  /*
+   * Prisma concatenates every file in prisma/schema/, so two files declaring the same
+   * model is not an override but a schema that will not compile. A template that
+   * implements a module's domain itself is the ordinary way to reach this.
+   */
+  it('refuses a module whose schema redefines a model the application already has', async () => {
+    await write(
+      'prisma/schema/05-workflow.prisma',
+      'model WorkflowDefinition {\n  id String @id\n}\n',
+    );
+
+    await expect(planModuleInstall(request(['workflow']))).rejects.toThrow(/WorkflowDefinition/);
+  });
+
+  it('names both files in the collision so the conflict can be resolved', async () => {
+    await write(
+      'prisma/schema/05-workflow.prisma',
+      'model WorkflowDefinition {\n  id String @id\n}\n',
+    );
+
+    await expect(planModuleInstall(request(['workflow']))).rejects.toThrow(
+      /prisma\/schema\/05-workflow\.prisma/,
+    );
+  });
+
+  it('writes nothing when a schema collision is refused', async () => {
+    await write(
+      'prisma/schema/05-workflow.prisma',
+      'model WorkflowDefinition {\n  id String @id\n}\n',
+    );
+
+    await expect(planModuleInstall(request(['workflow']))).rejects.toThrow();
+
+    // The refusal happens while planning, so the fragment never reaches disk.
+    await expect(read('prisma/schema/23-workflow.prisma')).rejects.toThrow();
+  });
+
+  it('allows a module whose models do not collide with the existing schema', async () => {
+    await write('prisma/schema/05-domain.prisma', 'model Invoice {\n  id String @id\n}\n');
+
+    const planned = await planModuleInstall(request(['workflow']));
+
+    expect(
+      planned.plan.files.some((file) => file.path === 'prisma/schema/23-workflow.prisma'),
+    ).toBe(true);
+  });
+
   it('pulls in a dependency and orders it first', async () => {
     const planned = await planModuleInstall(request(['document']));
 

@@ -18,7 +18,7 @@ hand anyone a working key.
 ## Format
 
 ```
-tos_live_7k2m9x4qp8n3vw6ytr5zh1jd0bscf2ge
+tos_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 └┬┘ └─┬┘ └──────────────┬──────────────┘
  │    │                 └── 32 characters, 160 bits of entropy
  │    └── environment: live | test

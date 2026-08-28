@@ -6,7 +6,7 @@ import { ApiError } from '@trustos/errors';
  *
  * The format is `tos_<environment>_<32 base32 characters>`:
  *
- *   tos_live_k7m2p9x4qw8v3n6b5c1z0hjfd2gs4tay
+ *   tos_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
  *
  * Four decisions, each with a reason:
  *

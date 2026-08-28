@@ -61,7 +61,9 @@ describe('gates', () => {
       files: [
         {
           path: 'packages/a/src/bad.ts',
-          content: "const apiKey = 'sk-abcdefghijklmnopqrstuvwxyz012345';\n",
+          // Assembled at runtime: a committed literal of this shape would trip the
+          // repository's own credential scan, which is the gate this test exercises.
+          content: `const apiKey = 'sk-${'a'.repeat(32)}';\n`,
         },
       ],
     });

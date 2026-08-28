@@ -265,8 +265,31 @@ describe('constantTimeEquals', () => {
     // Warm up, so JIT compilation does not dominate the first measurement.
     time(almost);
 
-    const almostTime = time(almost);
-    const nothingTime = time(nothing);
+    /*
+     * Measured as interleaved pairs, compared by median.
+     *
+     * Timing one candidate and then the other means any scheduling spike lands on
+     * whichever measurement happened to be running, and shows up as a ratio the
+     * implementation did nothing to cause — this test failed that way at 5.02 on a
+     * loaded machine while the comparison was perfectly constant-time. Interleaving
+     * puts a spike in both series, and the median then discards it.
+     */
+    const rounds = 15;
+    const almostTimes: number[] = [];
+    const nothingTimes: number[] = [];
+
+    for (let round = 0; round < rounds; round += 1) {
+      almostTimes.push(time(almost));
+      nothingTimes.push(time(nothing));
+    }
+
+    const median = (values: number[]) => {
+      const sorted = [...values].sort((left, right) => left - right);
+      return sorted[Math.floor(sorted.length / 2)] as number;
+    };
+
+    const almostTime = median(almostTimes);
+    const nothingTime = median(nothingTimes);
     const ratio = Math.max(almostTime, nothingTime) / Math.min(almostTime, nothingTime);
 
     // A generous bound: this is a smoke test that the implementation is not doing a

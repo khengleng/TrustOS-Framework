@@ -214,6 +214,21 @@ export function matchesCron(
 ): boolean {
   if (!cron.minute.values.includes(parts.minute)) return false;
   if (!cron.hour.values.includes(parts.hour)) return false;
+
+  return matchesCronDate(cron, parts);
+}
+
+/**
+ * Whether a cron expression can fire at all on a given local date.
+ *
+ * The date half of `matchesCron`, split out so the search can skip a day it knows
+ * cannot fire instead of testing every minute in it. The day-of-month/day-of-week
+ * rule is cron's: when both are restricted the day matches if *either* does.
+ */
+function matchesCronDate(
+  cron: ParsedCron,
+  parts: { dayOfMonth: number; month: number; dayOfWeek: number },
+): boolean {
   if (!cron.month.values.includes(parts.month)) return false;
 
   const dayOfMonthMatches = cron.dayOfMonth.values.includes(parts.dayOfMonth);
@@ -313,6 +328,15 @@ export function isValidTimezone(timezone: string): boolean {
 const SEARCH_LIMIT_MINUTES = 2 * 366 * 24 * 60;
 
 /**
+ * How far short of local midnight a day-skip stops.
+ *
+ * Wide enough to absorb any real daylight-saving transition — an hour in most
+ * zones, thirty minutes on Lord Howe — so a short day can never carry the search
+ * past a minute that should have matched.
+ */
+const DST_SAFETY_MARGIN_MINUTES = 120;
+
+/**
  * The next instant at or after `after` that matches.
  *
  * Minute-by-minute forward search over wall-clock time in the target zone. Not the fastest
@@ -331,11 +355,29 @@ export function nextCronOccurrence(cron: ParsedCron, after: Date, timezone: stri
   // would match the minute that is already partly over.
   const start = new Date(Math.floor(after.getTime() / 60_000) * 60_000 + 60_000);
 
-  for (let offset = 0; offset < SEARCH_LIMIT_MINUTES; offset += 1) {
+  for (let offset = 0; offset < SEARCH_LIMIT_MINUTES;) {
     const candidate = new Date(start.getTime() + offset * 60_000);
     const parts = wallClockIn(candidate, timezone);
 
     if (matchesCron(cron, parts)) return candidate;
+
+    /*
+     * A day that cannot fire is skipped whole rather than a minute at a time.
+     *
+     * Every step costs an `Intl` conversion, and cron's date fields are day-level:
+     * if today's date does not match, no minute of today can. `0 0 29 2 *` has to
+     * cross about six hundred such days to reach the next leap year, and walking
+     * them minute by minute is the difference between eight seconds and a tenth of
+     * one — slow enough that the two tests covering it timed out in CI.
+     *
+     * The jump deliberately stops short of local midnight. A spring-forward day is
+     * an hour shorter than the wall clock implies, so jumping the full remainder
+     * could land past midnight and step over a minute that would have matched.
+     * Landing early is free: it costs a few extra iterations and nothing else.
+     */
+    offset += matchesCronDate(cron, parts)
+      ? 1
+      : Math.max(1, (23 - parts.hour) * 60 + (60 - parts.minute) - DST_SAFETY_MARGIN_MINUTES);
   }
 
   return null;

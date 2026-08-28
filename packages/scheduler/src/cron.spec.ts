@@ -217,6 +217,60 @@ describe('the next occurrence', () => {
     ).toBeNull();
   });
 
+  /*
+   * The search skips a local day it knows cannot fire instead of testing all 1,440
+   * minutes in it. These cover the two ways that can go wrong: overshooting a day
+   * boundary when the day is not 24 hours long, and quietly becoming slow again.
+   */
+  it('does not step over a match when the skipped day is short', () => {
+    // 2026-03-08 springs forward in New York: that local day is 23 hours long, so a
+    // skip measured against a 24-hour day would land past midnight and miss the 9th.
+    const next = nextCronOccurrence(
+      parseCron('0 0 9 3 *'),
+      new Date('2026-03-07T12:00:00Z'),
+      'America/New_York',
+    );
+
+    expect(next?.toISOString()).toBe('2026-03-09T04:00:00.000Z');
+  });
+
+  it('does not step over a match when the skipped day is long', () => {
+    // 2026-11-01 falls back in New York: a 25-hour local day.
+    const next = nextCronOccurrence(
+      parseCron('0 0 2 11 *'),
+      new Date('2026-10-31T12:00:00Z'),
+      'America/New_York',
+    );
+
+    expect(next?.toISOString()).toBe('2026-11-02T05:00:00.000Z');
+  });
+
+  it('finds a match across a half-hour daylight-saving shift', () => {
+    // Lord Howe shifts by thirty minutes rather than an hour, and sits at +11
+    // while daylight saving is still in effect on the 5th.
+    const next = nextCronOccurrence(
+      parseCron('0 0 5 4 *'),
+      new Date('2026-04-03T00:00:00Z'),
+      'Australia/Lord_Howe',
+    );
+
+    expect(next?.toISOString()).toBe('2026-04-04T13:00:00.000Z');
+  });
+
+  it('searches years ahead without walking every minute', () => {
+    // Both of these once stepped minute by minute across the whole search window and
+    // took eight seconds each, which timed out in CI. The bound is deliberately loose
+    // — it is here to catch a return to minute-stepping, not to measure the machine.
+    const started = process.hrtime.bigint();
+
+    nextCronOccurrence(parseCron('0 0 29 2 *'), new Date('2026-07-01T00:00:00Z'), 'UTC');
+    nextCronOccurrence(parseCron('0 0 30 2 *'), new Date('2026-07-01T00:00:00Z'), 'UTC');
+
+    const elapsedMs = Number(process.hrtime.bigint() - started) / 1_000_000;
+
+    expect(elapsedMs).toBeLessThan(3_000);
+  });
+
   it('finds a weekday fire', () => {
     // 2026-07-01 is a Wednesday, so the next Monday is the 6th.
     const next = nextCronOccurrence(

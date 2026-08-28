@@ -226,14 +226,36 @@ jobs:
         run: |
           node packages/cli/bin/trustos.js list-modules --verbose
           node packages/cli/bin/trustos.js list-modules --json > /tmp/modules.json
-          node -e "
+          # Compare against what is on disk rather than a hardcoded number. A literal
+          # count goes stale the first time somebody adds a module, and a check that
+          # fails for being out of date teaches people to ignore the job.
+          expected=$(find packages/modules -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+          EXPECTED_MODULES="$expected" node -e "
             const modules = require('/tmp/modules.json');
-            if (modules.length !== 7) { console.error('expected 7 modules, got ' + modules.length); process.exit(1); }
-            for (const entry of modules) {
-              if (entry.routes.length === 0) { console.error(entry.metadata.id + ' has no routes'); process.exit(1); }
-              if (entry.auditEvents.length === 0) { console.error(entry.metadata.id + ' has no audit events'); process.exit(1); }
+            const expected = Number(process.env.EXPECTED_MODULES);
+            if (modules.length !== expected) {
+              const seen = new Set(modules.map((entry) => entry.metadata.id));
+              console.error('the CLI listed ' + modules.length + ' modules but packages/modules holds ' + expected);
+              console.error('listed: ' + [...seen].sort().join(', '));
+              process.exit(1);
             }
-            console.log(modules.length + ' modules, ' + modules.reduce((n, e) => n + e.routes.length, 0) + ' routes');
+            for (const entry of modules) {
+              // Routes are optional by contract (definition.ts: \`routes?: unknown[]\`) —
+              // ledger, wallet, scheduler and the other primitives are consumed in
+              // process and expose no HTTP surface. Audit events are not optional:
+              // a module that can change something must be able to say that it did.
+              if (entry.auditEvents.length === 0) { console.error(entry.metadata.id + ' declares no audit events'); process.exit(1); }
+
+              // Every route a module does declare has to name the permission that
+              // guards it. An unguarded route is the deny-by-default rule failing
+              // silently, which is the failure this job exists to catch.
+              for (const route of entry.routes) {
+                if (!route.method || !route.path) { console.error(entry.metadata.id + ' has a malformed route: ' + JSON.stringify(route)); process.exit(1); }
+                if (!route.permission) { console.error(entry.metadata.id + ' route ' + route.method + ' ' + route.path + ' declares no permission'); process.exit(1); }
+              }
+            }
+            const routes = modules.reduce((n, e) => n + e.routes.length, 0);
+            console.log(modules.length + ' modules, ' + routes + ' routes, every route permissioned');
           "
 
       # Every module must ship the five kinds of test the standard requires. A
@@ -403,12 +425,54 @@ jobs:
       # generated wiring meet each other.
       - name: Install every module
         run: |
-          node packages/cli/bin/trustos.js add-module \
-            notification document workflow reporting search feature-flags \
+          # `workflow-enabled-saas` builds its own, richer workflow schema on the
+          # workflow-* packages, so the workflow *module* would redefine three of its
+          # models. That install is refused by design, and the step below asserts it.
+          modules="notification document workflow reporting search feature-flags"
+          if [ "${{ matrix.template }}" = "workflow-enabled-saas" ]; then
+            modules="notification document reporting search feature-flags"
+          fi
+
+          node packages/cli/bin/trustos.js add-module $modules \
             --path "/tmp/generated/sample-${{ matrix.template }}" \
             --framework-path "$GITHUB_WORKSPACE" \
             --generated-at 2026-01-01T00:00:00.000Z \
             --yes --verbose
+
+      # Prisma merges every file in prisma/schema/, so a module fragment that
+      # redefines a model the template already owns produces a schema that does not
+      # compile. The installer has to refuse it while planning — after it has written
+      # the fragment, the application is broken and the error names a file nobody
+      # here wrote.
+      - name: A module that would redefine the template's own models is refused
+        if: matrix.template == 'workflow-enabled-saas'
+        run: |
+          set +e
+          node packages/cli/bin/trustos.js add-module workflow \
+            --path "/tmp/generated/sample-${{ matrix.template }}" \
+            --framework-path "$GITHUB_WORKSPACE" \
+            --generated-at 2026-01-01T00:00:00.000Z \
+            --yes > /tmp/workflow-clash.log 2>&1
+          status=$?
+          set -e
+
+          cat /tmp/workflow-clash.log
+
+          if [ "$status" -eq 0 ]; then
+            echo "::error::the workflow module installed into a template that already defines its models"
+            exit 1
+          fi
+
+          grep -q "WorkflowDefinition" /tmp/workflow-clash.log
+          grep -q "already defines" /tmp/workflow-clash.log
+
+          # Refused while planning means refused before writing.
+          if [ -f "/tmp/generated/sample-${{ matrix.template }}/prisma/schema/23-workflow.prisma" ]; then
+            echo "::error::the refused install still wrote its schema fragment"
+            exit 1
+          fi
+
+          echo "The clashing module was refused, and nothing was written."
 
       - name: Installing again is a no-op
         run: |

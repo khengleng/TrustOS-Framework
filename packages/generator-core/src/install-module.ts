@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import {
   MODULE_CATALOG,
@@ -257,6 +257,7 @@ export async function planModuleInstall(request: InstallModuleRequest): Promise<
   );
 
   assertNoUnownedOverwrites(files, applicationRoot, loaded);
+  await assertNoPrismaModelCollisions(files, applicationRoot, resolved.order);
 
   return {
     plan: {
@@ -462,6 +463,73 @@ async function mergedFile(
  * there. A file that exists, is not a merge target, and has no marker, is somebody's
  * code — and the run stops rather than replacing it.
  */
+/** `model Foo {` and `enum Foo {` at the start of a line. */
+const PRISMA_DECLARATION = /^\s*(?:model|enum)\s+(\w+)\s*\{/gm;
+
+function declaredPrismaTypes(contents: string): string[] {
+  return [...contents.matchAll(PRISMA_DECLARATION)].map((match) => match[1] as string);
+}
+
+/**
+ * Refuses an install whose Prisma fragment redefines a model the application already has.
+ *
+ * Prisma merges every file in `prisma/schema/` into one schema, so two files declaring
+ * `model WorkflowDefinition` is not an override — it is a schema that will not compile.
+ * Without this check the installer writes the fragment happily and the application only
+ * breaks later, at `prisma generate`, with an error naming a file the developer did not
+ * write. Templates that build their own richer version of a module's domain are the
+ * normal way to hit this, and the fix is a decision (use the template's, or the
+ * module's) rather than something the installer can make on someone's behalf.
+ */
+async function assertNoPrismaModelCollisions(
+  files: PlannedFile[],
+  applicationRoot: string,
+  installing: ModuleCatalogEntry[],
+): Promise<void> {
+  const planned = files.filter(
+    (file) => file.path.startsWith('prisma/schema/') && file.path.endsWith('.prisma'),
+  );
+  if (planned.length === 0) return;
+
+  const schemaDirectory = resolveWithin(applicationRoot, 'prisma/schema');
+  if (!existsSync(schemaDirectory)) return;
+
+  // A fragment the installer is itself writing is not competing with itself.
+  const plannedPaths = new Set(planned.map((file) => file.path));
+  const owners = new Map<string, string>();
+
+  for (const name of await readdir(schemaDirectory)) {
+    if (!name.endsWith('.prisma')) continue;
+
+    const relative = `prisma/schema/${name}`;
+    if (plannedPaths.has(relative)) continue;
+
+    const contents = await readFile(join(schemaDirectory, name), 'utf8');
+    for (const type of declaredPrismaTypes(contents)) owners.set(type, relative);
+  }
+
+  const collisions: { type: string; fragment: string; existing: string }[] = [];
+
+  for (const file of planned) {
+    for (const type of declaredPrismaTypes(file.contents)) {
+      const existing = owners.get(type);
+      if (existing) collisions.push({ type, fragment: file.path, existing });
+    }
+  }
+
+  if (collisions.length === 0) return;
+
+  const detail = collisions
+    .map((clash) => `  ${clash.type}: ${clash.fragment} would redefine ${clash.existing}`)
+    .join('\n');
+
+  throw new GeneratorError(
+    'invalid_input',
+    `Installing ${installing.map((entry) => entry.metadata.id).join(', ')} would define ${collisions.length === 1 ? 'a model that' : 'models that'} the application already defines:\n${detail}`,
+    'This application already implements that domain. Either keep its own schema and do not install the module, or remove the existing fragment first.',
+  );
+}
+
 function assertNoUnownedOverwrites(
   files: PlannedFile[],
   applicationRoot: string,
