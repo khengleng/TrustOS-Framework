@@ -1,0 +1,454 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { NGO_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  NgoService,
+  type ProgrammeRow,
+  type NgoProjectRow,
+  type DonorRow,
+  type DonationRow,
+  type BeneficiaryRow,
+  type FieldReportRow,
+} from './ngo.service';
+
+/**
+ * TrustOS NGO endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createProgrammeSchema = z.object({
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(255),
+  summary: z.string().trim().min(1).max(4000).optional(),
+  status: z.enum(['PLANNED', 'ACTIVE', 'CLOSED']).optional(),
+});
+
+const updateProgrammeSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    summary: z.string().trim().min(1).max(4000).optional(),
+    status: z.enum(['PLANNED', 'ACTIVE', 'CLOSED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createNgoProjectSchema = z.object({
+  programmeId: z.string().trim().min(1).max(64),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(255),
+  location: z.string().trim().min(1).max(255).optional(),
+  budget: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  startsOn: z.coerce.date().optional(),
+  endsOn: z.coerce.date().optional(),
+  status: z.enum(['PLANNED', 'ACTIVE', 'SUSPENDED', 'COMPLETED']).optional(),
+});
+
+const updateNgoProjectSchema = z
+  .object({
+    programmeId: z.string().trim().min(1).max(64).optional(),
+    name: z.string().trim().min(1).max(255).optional(),
+    location: z.string().trim().min(1).max(255).optional(),
+    budget: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    startsOn: z.coerce.date().optional(),
+    endsOn: z.coerce.date().optional(),
+    status: z.enum(['PLANNED', 'ACTIVE', 'SUSPENDED', 'COMPLETED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createDonorSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  kind: z.enum(['INDIVIDUAL', 'CORPORATE', 'FOUNDATION', 'GOVERNMENT', 'MULTILATERAL']).optional(),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+});
+
+const updateDonorSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    kind: z.enum(['INDIVIDUAL', 'CORPORATE', 'FOUNDATION', 'GOVERNMENT', 'MULTILATERAL']).optional(),
+    email: z.string().trim().toLowerCase().email().max(254).optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createDonationSchema = z.object({
+  donorId: z.string().trim().min(1).max(64),
+  projectId: z.string().trim().min(1).max(64).optional(),
+  reference: z.string().trim().min(1).max(255),
+  amount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  receivedOn: z.coerce.date(),
+  isRestricted: z.coerce.boolean().optional(),
+});
+
+const updateDonationSchema = z
+  .object({
+    donorId: z.string().trim().min(1).max(64).optional(),
+    projectId: z.string().trim().min(1).max(64).optional(),
+    amount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    receivedOn: z.coerce.date().optional(),
+    isRestricted: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createBeneficiarySchema = z.object({
+  projectId: z.string().trim().min(1).max(64),
+  reference: z.string().trim().min(1).max(255),
+  fullName: z.string().trim().min(1).max(255),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  village: z.string().trim().min(1).max(255).optional(),
+  householdSize: z.coerce.number().int().optional(),
+  enrolledOn: z.coerce.date(),
+});
+
+const updateBeneficiarySchema = z
+  .object({
+    projectId: z.string().trim().min(1).max(64).optional(),
+    fullName: z.string().trim().min(1).max(255).optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    village: z.string().trim().min(1).max(255).optional(),
+    householdSize: z.coerce.number().int().optional(),
+    enrolledOn: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createFieldReportSchema = z.object({
+  projectId: z.string().trim().min(1).max(64),
+  title: z.string().trim().min(1).max(255),
+  body: z.string().trim().min(1).max(4000),
+  reportedOn: z.coerce.date(),
+  authorUserId: z.string().trim().min(1).max(255).optional(),
+  peopleReached: z.coerce.number().int().optional(),
+});
+
+const updateFieldReportSchema = z
+  .object({
+    projectId: z.string().trim().min(1).max(64).optional(),
+    title: z.string().trim().min(1).max(255).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    reportedOn: z.coerce.date().optional(),
+    authorUserId: z.string().trim().min(1).max(255).optional(),
+    peopleReached: z.coerce.number().int().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('programmes')
+@ApiBearerAuth('access-token')
+@Controller('programmes')
+export class ProgrammeController {
+  constructor(private readonly product: NgoService) {}
+
+  @Get()
+  @RequirePermissions(P.PROGRAMME_READ.key)
+  @ApiOperation({ summary: 'List programmes' })
+  list(): Promise<ProgrammeRow[]> {
+    return this.product.listProgrammes();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PROGRAMME_READ.key)
+  @ApiOperation({ summary: 'Read one programme' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ProgrammeRow> {
+    return this.product.findProgramme(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PROGRAMME_CREATE.key)
+  @ApiOperation({ summary: 'Create a programme' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createProgrammeSchema))
+    body: z.infer<typeof createProgrammeSchema>,
+  ): Promise<ProgrammeRow> {
+    return this.product.createProgramme(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PROGRAMME_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a programme' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateProgrammeSchema))
+    body: z.infer<typeof updateProgrammeSchema>,
+  ): Promise<ProgrammeRow> {
+    return this.product.updateProgramme(id, body, organizationId);
+  }
+}
+
+@ApiTags('ngo-projects')
+@ApiBearerAuth('access-token')
+@Controller('ngo-projects')
+export class NgoProjectController {
+  constructor(private readonly product: NgoService) {}
+
+  @Get()
+  @RequirePermissions(P.NGO_PROJECT_READ.key)
+  @ApiOperation({ summary: 'List projects' })
+  list(): Promise<NgoProjectRow[]> {
+    return this.product.listNgoProjects();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.NGO_PROJECT_READ.key)
+  @ApiOperation({ summary: 'Read one project' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<NgoProjectRow> {
+    return this.product.findNgoProject(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.NGO_PROJECT_CREATE.key)
+  @ApiOperation({ summary: 'Create a project' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createNgoProjectSchema))
+    body: z.infer<typeof createNgoProjectSchema>,
+  ): Promise<NgoProjectRow> {
+    return this.product.createNgoProject(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.NGO_PROJECT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a project' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateNgoProjectSchema))
+    body: z.infer<typeof updateNgoProjectSchema>,
+  ): Promise<NgoProjectRow> {
+    return this.product.updateNgoProject(id, body, organizationId);
+  }
+}
+
+@ApiTags('donors')
+@ApiBearerAuth('access-token')
+@Controller('donors')
+export class DonorController {
+  constructor(private readonly product: NgoService) {}
+
+  @Get()
+  @RequirePermissions(P.DONOR_READ.key)
+  @ApiOperation({ summary: 'List donors' })
+  list(): Promise<DonorRow[]> {
+    return this.product.listDonors();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.DONOR_READ.key)
+  @ApiOperation({ summary: 'Read one donor' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<DonorRow> {
+    return this.product.findDonor(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.DONOR_CREATE.key)
+  @ApiOperation({ summary: 'Create a donor' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createDonorSchema))
+    body: z.infer<typeof createDonorSchema>,
+  ): Promise<DonorRow> {
+    return this.product.createDonor(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.DONOR_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a donor' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateDonorSchema))
+    body: z.infer<typeof updateDonorSchema>,
+  ): Promise<DonorRow> {
+    return this.product.updateDonor(id, body, organizationId);
+  }
+}
+
+@ApiTags('donations')
+@ApiBearerAuth('access-token')
+@Controller('donations')
+export class DonationController {
+  constructor(private readonly product: NgoService) {}
+
+  @Get()
+  @RequirePermissions(P.DONATION_READ.key)
+  @ApiOperation({ summary: 'List donations' })
+  list(): Promise<DonationRow[]> {
+    return this.product.listDonations();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.DONATION_READ.key)
+  @ApiOperation({ summary: 'Read one donation' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<DonationRow> {
+    return this.product.findDonation(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.DONATION_CREATE.key)
+  @ApiOperation({ summary: 'Create a donation' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createDonationSchema))
+    body: z.infer<typeof createDonationSchema>,
+  ): Promise<DonationRow> {
+    return this.product.createDonation(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.DONATION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a donation' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateDonationSchema))
+    body: z.infer<typeof updateDonationSchema>,
+  ): Promise<DonationRow> {
+    return this.product.updateDonation(id, body, organizationId);
+  }
+}
+
+@ApiTags('beneficiaries')
+@ApiBearerAuth('access-token')
+@Controller('beneficiaries')
+export class BeneficiaryController {
+  constructor(private readonly product: NgoService) {}
+
+  @Get()
+  @RequirePermissions(P.BENEFICIARY_READ.key)
+  @ApiOperation({ summary: 'List beneficiaries' })
+  list(): Promise<BeneficiaryRow[]> {
+    return this.product.listBeneficiaries();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.BENEFICIARY_READ.key)
+  @ApiOperation({ summary: 'Read one beneficiary' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<BeneficiaryRow> {
+    return this.product.findBeneficiary(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.BENEFICIARY_CREATE.key)
+  @ApiOperation({ summary: 'Create a beneficiary' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createBeneficiarySchema))
+    body: z.infer<typeof createBeneficiarySchema>,
+  ): Promise<BeneficiaryRow> {
+    return this.product.createBeneficiary(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.BENEFICIARY_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a beneficiary' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateBeneficiarySchema))
+    body: z.infer<typeof updateBeneficiarySchema>,
+  ): Promise<BeneficiaryRow> {
+    return this.product.updateBeneficiary(id, body, organizationId);
+  }
+}
+
+@ApiTags('field-reports')
+@ApiBearerAuth('access-token')
+@Controller('field-reports')
+export class FieldReportController {
+  constructor(private readonly product: NgoService) {}
+
+  @Get()
+  @RequirePermissions(P.FIELD_REPORT_READ.key)
+  @ApiOperation({ summary: 'List field reports' })
+  list(): Promise<FieldReportRow[]> {
+    return this.product.listFieldReports();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.FIELD_REPORT_READ.key)
+  @ApiOperation({ summary: 'Read one field report' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<FieldReportRow> {
+    return this.product.findFieldReport(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.FIELD_REPORT_CREATE.key)
+  @ApiOperation({ summary: 'Create a field report' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createFieldReportSchema))
+    body: z.infer<typeof createFieldReportSchema>,
+  ): Promise<FieldReportRow> {
+    return this.product.createFieldReport(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.FIELD_REPORT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a field report' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateFieldReportSchema))
+    body: z.infer<typeof updateFieldReportSchema>,
+  ): Promise<FieldReportRow> {
+    return this.product.updateFieldReport(id, body, organizationId);
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "name": "@trustos/module-transactions",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TrustOS Transactions module. The transaction lifecycle with idempotency, fees, limits, risk hooks and payment requests.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "nest",
+    "install",
+    "README.md",
+    "AGENTS.md"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/fees": "0.1.0",
+    "@trustos/financial-core": "0.1.0",
+    "@trustos/financial-risk": "0.1.0",
+    "@trustos/fx": "0.1.0",
+    "@trustos/limits": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "@trustos/module-ledger": "0.1.0",
+    "@trustos/module-registry": "0.1.0",
+    "@trustos/module-sdk": "0.1.0",
+    "@trustos/module-wallet": "0.1.0",
+    "@trustos/observability": "0.1.0",
+    "@trustos/payments": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "@trustos/transactions": "0.1.0"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
+    "@nestjs/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28"
+  }
+}

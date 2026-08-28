@@ -1,0 +1,33 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../audit"
+    },
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../financial-product-core"
+    },
+    {
+      "path": "../financial-product-policy"
+    },
+    {
+      "path": "../financial-product-state-machine"
+    },
+    {
+      "path": "../workflow-approvals"
+    },
+    {
+      "path": "../workflow-core"
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+// =============================================================================
+// TrustOS Developer Portal — product models
+//
+// A portal for API consumers: applications, API keys issued through the
+// framework, usage records, worked examples, SDK downloads and service
+// health.
+//
+// Out of scope, deliberately: API gateway implementation, billing and
+// metering providers, OAuth authorization server, package registry hosting,
+// external status page services.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum ApiEnvironment {
+  SANDBOX
+  PRODUCTION
+}
+
+enum ApiApplicationStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+  REVOKED
+}
+
+enum ExampleLanguage {
+  CURL
+  TYPESCRIPT
+  PYTHON
+  GO
+  PHP
+  JAVA
+}
+
+/// A consumer of the API. Keys belong to an application, not to a person.
+model ApiApplication {
+  id             String @id @default(cuid())
+  organizationId String
+  name String
+  slug String
+  ownerUserId String
+  description String?
+  environment ApiEnvironment @default(SANDBOX)
+  status ApiApplicationStatus @default(PENDING)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, environment])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// The record of a key issued by @trustos/api-keys. Holds the prefix so a
+/// developer can recognize it and never the secret — see the migration note.
+model ApiKeyRecord {
+  id             String @id @default(cuid())
+  organizationId String
+  applicationId String
+  apiKeyId String
+  label String
+  keyPrefix String
+  issuedAt DateTime
+  lastUsedAt DateTime?
+  revokedAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, apiKeyId])
+  @@index([organizationId, applicationId])
+  @@index([organizationId, issuedAt])
+  @@index([deletedAt])
+}
+
+/// Calls per application per day. A daily roll-up rather than a row per
+/// request: a portal that stored every call would need a retention policy and a
+/// bigger database than the product it documents.
+model ApiUsageRecord {
+  id             String @id @default(cuid())
+  organizationId String
+  applicationId String
+  usageOn DateTime @db.Date
+  endpoint String
+  callCount Int @default(0)
+  errorCount Int @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, applicationId])
+  @@index([organizationId, usageOn])
+  @@index([organizationId, endpoint])
+  @@index([deletedAt])
+}
+
+/// A worked example shown alongside the API documentation.
+model CodeExample {
+  id             String @id @default(cuid())
+  organizationId String
+  slug String
+  title String
+  language ExampleLanguage
+  body String
+  endpoint String?
+  position Int @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, language])
+  @@index([organizationId, endpoint])
+  @@index([deletedAt])
+}
+
+/// A published client library. `checksum` is what a developer verifies the
+/// download against, so a release without one is worse than no release.
+model SdkRelease {
+  id             String @id @default(cuid())
+  organizationId String
+  language ExampleLanguage
+  version String
+  downloadUrl String
+  checksum String
+  releasedAt DateTime
+  isCurrent Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, language])
+  @@index([organizationId, releasedAt])
+  @@index([organizationId, isCurrent])
+  @@index([deletedAt])
+}

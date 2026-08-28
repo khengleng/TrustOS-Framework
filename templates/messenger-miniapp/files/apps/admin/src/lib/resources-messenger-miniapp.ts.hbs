@@ -1,0 +1,43 @@
+/**
+ * TrustOS Messenger Mini App — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { MESSENGER_MINIAPP_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const MESSENGER_MINIAPP_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'messenger-profiles',
+    label: 'Messenger profiles',
+    singular: 'Messenger profile',
+    endpoint: '/messenger-profiles',
+    description: "The Messenger-specific facts about a mini app user.",
+    table: {
+      key: 'messenger-profiles',
+      label: 'Messenger profiles',
+      endpoint: '/messenger-profiles',
+      emptyHint: 'Create one with POST /api/messenger-profiles.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'miniAppUserId', label: 'User', format: 'reference', sortable: true },
+        { key: 'pageScopedId', label: 'Page-scoped id', sortable: true },
+        { key: 'pageRef', label: 'Page' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    permissions: {
+      list: P.MESSENGER_PROFILE_READ.key,
+      read: P.MESSENGER_PROFILE_READ.key,
+      create: P.MESSENGER_PROFILE_CREATE.key,
+      update: P.MESSENGER_PROFILE_UPDATE.key,
+    },
+  },
+];

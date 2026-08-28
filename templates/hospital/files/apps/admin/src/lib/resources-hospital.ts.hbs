@@ -1,0 +1,151 @@
+/**
+ * TrustOS Hospital — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { HOSPITAL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const HOSPITAL_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'hospital-departments',
+    label: 'Departments',
+    singular: 'Department',
+    endpoint: '/hospital-departments',
+    description: "A clinical department.",
+    table: {
+      key: 'hospital-departments',
+      label: 'Departments',
+      endpoint: '/hospital-departments',
+      emptyHint: 'Create one with POST /api/hospital-departments.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'name', label: 'Department' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'headPractitionerId', label: 'Head', format: 'reference' },
+        { key: 'isActive', label: 'Active', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Department' },
+      ],
+    },
+    permissions: {
+      list: P.HOSPITAL_DEPARTMENT_READ.key,
+      read: P.HOSPITAL_DEPARTMENT_READ.key,
+      create: P.HOSPITAL_DEPARTMENT_CREATE.key,
+      update: P.HOSPITAL_DEPARTMENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'wards',
+    label: 'Wards',
+    singular: 'Ward',
+    endpoint: '/wards',
+    description: "A group of beds within a department.",
+    table: {
+      key: 'wards',
+      label: 'Wards',
+      endpoint: '/wards',
+      emptyHint: 'Create one with POST /api/wards.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'departmentId', label: 'Department', format: 'reference' },
+        { key: 'name', label: 'Ward' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'bedCount', label: 'Beds', format: 'number' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    search: {
+      fields: [
+        { key: 'name', label: 'Ward' },
+      ],
+    },
+    permissions: {
+      list: P.WARD_READ.key,
+      read: P.WARD_READ.key,
+      create: P.WARD_CREATE.key,
+      update: P.WARD_UPDATE.key,
+    },
+  },
+  {
+    key: 'beds',
+    label: 'Beds',
+    singular: 'Bed',
+    endpoint: '/beds',
+    description: "One bed.",
+    table: {
+      key: 'beds',
+      label: 'Beds',
+      endpoint: '/beds',
+      emptyHint: 'Create one with POST /api/beds.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'wardId', label: 'Ward', format: 'reference' },
+        { key: 'label', label: 'Bed' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"AVAILABLE","label":"Available"},{"value":"OCCUPIED","label":"Occupied"},{"value":"CLEANING","label":"Cleaning"},{"value":"OUT_OF_SERVICE","label":"Out Of Service"}] },
+    ],
+    permissions: {
+      list: P.BED_READ.key,
+      read: P.BED_READ.key,
+      create: P.BED_CREATE.key,
+      update: P.BED_UPDATE.key,
+    },
+  },
+  {
+    key: 'admissions',
+    label: 'Admissions',
+    singular: 'Admission',
+    endpoint: '/admissions',
+    description: "A patient staying in.",
+    table: {
+      key: 'admissions',
+      label: 'Admissions',
+      endpoint: '/admissions',
+      emptyHint: 'Create one with POST /api/admissions.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'patientId', label: 'Patient', format: 'reference' },
+        { key: 'bedId', label: 'Bed', format: 'reference' },
+        { key: 'admittingPractitionerId', label: 'Admitted by', format: 'reference' },
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'admittedAt', label: 'Admitted', format: 'datetime', sortable: true },
+        { key: 'dischargedAt', label: 'Discharged', format: 'datetime' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'admittedAt', label: 'Admitted', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ADMITTED","label":"Admitted"},{"value":"TRANSFERRED","label":"Transferred"},{"value":"DISCHARGED","label":"Discharged"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.ADMISSION_READ.key,
+      read: P.ADMISSION_READ.key,
+      create: P.ADMISSION_CREATE.key,
+      update: P.ADMISSION_UPDATE.key,
+    },
+  },
+];

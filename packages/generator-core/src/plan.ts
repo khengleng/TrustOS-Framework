@@ -1,0 +1,238 @@
+import { readFile, readdir, stat } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { GeneratorError } from './errors';
+import { resolveWithin, toPosixPath } from './paths';
+import { renderTemplate, type TemplateValues } from './render';
+import { shouldInclude, type PathCondition } from './template-config';
+
+/**
+ * A generation plan is the complete list of files that *would* be written,
+ * computed before anything touches the disk.
+ *
+ * Separating plan from apply is what makes `--dry-run` honest: it runs the
+ * identical code path and stops before the write, so a dry run cannot succeed
+ * where a real run would fail.
+ */
+
+export interface PlannedFile {
+  /** POSIX path relative to the project root. */
+  path: string;
+  /** Absolute destination. Always inside the project root. */
+  absolutePath: string;
+  contents: string;
+  /** Whether the source was rendered or copied verbatim. */
+  rendered: boolean;
+  /** True when a file already exists at the destination. */
+  exists: boolean;
+  /** Template layer the file came from, for `--verbose` and conflict reports. */
+  source: string;
+  /**
+   * True for a file the generator owns outright.
+   *
+   * A managed file carries a marker and may be rewritten without `--force`;
+   * anything else that already exists is a conflict. That distinction is what lets
+   * `trustos add-module` regenerate its own wiring without ever overwriting code
+   * somebody wrote.
+   */
+  managed?: boolean;
+}
+
+export interface GenerationPlan {
+  projectRoot: string;
+  files: PlannedFile[];
+  /** Files present in more than one layer; the later layer wins. */
+  overrides: Array<{ path: string; winner: string; loser: string }>;
+}
+
+/** A directory of template files contributing to the output. */
+export interface TemplateLayer {
+  name: string;
+  /** Absolute path to the layer's `files/` directory. */
+  root: string;
+  conditions: PathCondition[];
+}
+
+const RENDER_SUFFIX = '.hbs';
+
+/**
+ * Filename prefix that becomes a leading dot.
+ *
+ * A literal `.gitignore` inside a template tree would be applied by git *to
+ * the template tree*, and npm strips `.gitignore` from published packages.
+ * Encoding the dot avoids both, and makes the intent greppable.
+ */
+const DOT_PREFIX = '_dot_';
+
+/**
+ * Filenames the generator refuses to produce, whatever a template says.
+ *
+ * `.env` holds real secrets. Generating one — even an empty one — creates a
+ * file that people fill in and then accidentally commit. Templates ship
+ * `.env.example` and nothing else.
+ */
+function assertNotSecretFile(path: string): void {
+  const base = path.split('/').pop() ?? '';
+  const isEnvFile = base === '.env' || (base.startsWith('.env.') && base !== '.env.example');
+
+  if (isEnvFile) {
+    throw new GeneratorError(
+      'template_invalid',
+      `Template would create "${path}", which may hold real secrets.`,
+      'Templates must ship .env.example only.',
+    );
+  }
+
+  if (/\.(pem|key|p12|pfx|jks)$/i.test(base)) {
+    throw new GeneratorError(
+      'template_invalid',
+      `Template would create key material at "${path}".`,
+      'Key material must never be generated or committed.',
+    );
+  }
+}
+
+/**
+ * Builds the plan.
+ *
+ * Layers are applied in order, so a template can override a base file by
+ * shipping the same path. Output is sorted by path, which — together with the
+ * absence of timestamps and randomness in rendering — is what makes two runs
+ * with the same inputs byte-identical.
+ */
+export async function buildPlan(options: {
+  projectRoot: string;
+  layers: TemplateLayer[];
+  values: TemplateValues;
+}): Promise<GenerationPlan> {
+  const { projectRoot, layers, values } = options;
+  const byPath = new Map<string, PlannedFile>();
+  const overrides: GenerationPlan['overrides'] = [];
+
+  // Conditions from every layer, applied to every file. "Omit the admin app"
+  // is a property of this generation, not of the layer a file happens to come
+  // from — and admin files arrive from both the base and the template.
+  const conditions = layers.flatMap((layer) => layer.conditions);
+
+  for (const layer of layers) {
+    if (!existsSync(layer.root)) {
+      throw new GeneratorError(
+        'template_not_found',
+        `Template layer "${layer.name}" has no files directory at ${layer.root}.`,
+      );
+    }
+
+    const sourceFiles = await listFilesRecursively(layer.root);
+
+    for (const relativeSource of sourceFiles) {
+      const targetPath = toTargetPath(relativeSource);
+
+      if (!shouldInclude(targetPath, conditions, values)) continue;
+      assertNotSecretFile(targetPath);
+
+      // Containment is checked here, on every single file, rather than once on
+      // the root — a template path is the one input that could escape.
+      const absolutePath = resolveWithin(projectRoot, targetPath);
+
+      const raw = await readFile(join(layer.root, relativeSource), 'utf8');
+      const rendered = relativeSource.endsWith(RENDER_SUFFIX);
+      const contents = rendered
+        ? renderTemplate(raw, values, `${layer.name}:${relativeSource}`)
+        : raw;
+
+      const previous = byPath.get(targetPath);
+      if (previous) {
+        overrides.push({ path: targetPath, winner: layer.name, loser: previous.source });
+      }
+
+      byPath.set(targetPath, {
+        path: targetPath,
+        absolutePath,
+        contents: normalizeLineEndings(contents),
+        rendered,
+        exists: existsSync(absolutePath),
+        source: layer.name,
+      });
+    }
+  }
+
+  return {
+    projectRoot,
+    files: [...byPath.values()].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0)),
+    overrides,
+  };
+}
+
+/**
+ * Normalizes to LF and guarantees a trailing newline.
+ *
+ * Without this, a template authored on Windows produces CRLF files that a
+ * Linux CI diff reports as entirely changed, and determinism tests fail for
+ * reasons that have nothing to do with the generator.
+ */
+export function normalizeLineEndings(contents: string): string {
+  const normalized = contents.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  if (normalized.length === 0) return normalized;
+  return normalized.endsWith('\n') ? normalized : `${normalized}\n`;
+}
+
+/** `_dot_gitignore.hbs` -> `.gitignore`. */
+export function toTargetPath(relativeSource: string): string {
+  const posix = toPosixPath(relativeSource);
+  const withoutSuffix = posix.endsWith(RENDER_SUFFIX)
+    ? posix.slice(0, -RENDER_SUFFIX.length)
+    : posix;
+
+  return withoutSuffix
+    .split('/')
+    .map((segment) =>
+      segment.startsWith(DOT_PREFIX) ? `.${segment.slice(DOT_PREFIX.length)}` : segment,
+    )
+    .join('/');
+}
+
+/** Recursively lists files under `root`, sorted, as POSIX-relative paths. */
+export async function listFilesRecursively(root: string, prefix = ''): Promise<string[]> {
+  const entries = await readdir(join(root, prefix), { withFileTypes: true });
+  const results: string[] = [];
+
+  // Sorting at every level keeps the traversal order identical across
+  // platforms and file systems, which determinism depends on.
+  for (const entry of [...entries].sort((a, b) => (a.name < b.name ? -1 : 1))) {
+    const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+
+    if (entry.isDirectory()) {
+      results.push(...(await listFilesRecursively(root, relative)));
+      continue;
+    }
+    if (entry.isFile()) {
+      results.push(relative);
+    }
+    // Symlinks are skipped: following one out of the template tree is exactly
+    // the escape the containment check exists to prevent, and no template
+    // legitimately needs one.
+  }
+
+  return results;
+}
+
+/** Files in the plan that already exist on disk. */
+export function conflictsIn(plan: GenerationPlan): PlannedFile[] {
+  return plan.files.filter((file) => file.exists);
+}
+
+/** Stable digest of a plan's output, used by the determinism test. */
+export function planFingerprint(plan: GenerationPlan): string {
+  // Separators written as escapes rather than literal bytes: a control character
+  // pasted through an editor that normalizes whitespace would silently change the
+  // fingerprint, and the determinism test would then compare the wrong thing.
+  return plan.files.map((file) => `${file.path}\u0000${file.contents}`).join('\u0001');
+}
+
+export async function isDirectoryEmpty(path: string): Promise<boolean> {
+  if (!existsSync(path)) return true;
+  const info = await stat(path);
+  if (!info.isDirectory()) return false;
+  const entries = await readdir(path);
+  return entries.length === 0;
+}

@@ -1,0 +1,106 @@
+// =============================================================================
+// TrustOS Hospital — product models
+//
+// Inpatient administration on top of the clinic template: departments,
+// wards, beds and admissions. Still no clinical logic.
+//
+// Out of scope, deliberately: clinical decision support, diagnosis and
+// treatment logic, theatre scheduling optimization, pharmacy stock
+// management, HL7 and FHIR, insurance claim submission.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum BedStatus {
+  AVAILABLE
+  OCCUPIED
+  CLEANING
+  OUT_OF_SERVICE
+}
+
+enum AdmissionStatus {
+  ADMITTED
+  TRANSFERRED
+  DISCHARGED
+}
+
+/// A clinical department.
+model HospitalDepartment {
+  id             String @id @default(cuid())
+  organizationId String
+  name String
+  code String
+  headPractitionerId String?
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, headPractitionerId])
+  @@index([organizationId, isActive])
+  @@index([deletedAt])
+}
+
+/// A group of beds within a department.
+model Ward {
+  id             String @id @default(cuid())
+  organizationId String
+  departmentId String
+  name String
+  code String
+  bedCount Int @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, departmentId])
+  @@index([deletedAt])
+}
+
+/// One bed. Occupied by at most one admission at a time.
+model Bed {
+  id             String @id @default(cuid())
+  organizationId String
+  wardId String
+  label String
+  status BedStatus @default(AVAILABLE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, wardId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A patient staying in.
+model Admission {
+  id             String @id @default(cuid())
+  organizationId String
+  patientId String
+  bedId String
+  admittingPractitionerId String
+  reference String
+  admittedAt DateTime
+  dischargedAt DateTime?
+  status AdmissionStatus @default(ADMITTED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, patientId])
+  @@index([organizationId, bedId])
+  @@index([organizationId, admittingPractitionerId])
+  @@index([organizationId, admittedAt])
+  @@index([deletedAt])
+}

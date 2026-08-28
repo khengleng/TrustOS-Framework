@@ -1,0 +1,165 @@
+/**
+ * TrustOS Gold Shop — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { GOLD_SHOP_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const GOLD_SHOP_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'gold-prices',
+    label: 'Price quotes',
+    singular: 'Price quote',
+    endpoint: '/gold-prices',
+    description: "A quote at a moment.",
+    table: {
+      key: 'gold-prices',
+      label: 'Price quotes',
+      endpoint: '/gold-prices',
+      emptyHint: 'Create one with POST /api/gold-prices.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'karat', label: 'Karat', format: 'badge', sortable: true },
+        { key: 'pricePerGram', label: 'Price / gram', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'source', label: 'Source' },
+        { key: 'quotedAt', label: 'Quoted at', format: 'datetime', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'karat', label: 'Karat', type: 'enum', operators: ['eq', 'in'], options: [{"value":"K10","label":"K10"},{"value":"K14","label":"K14"},{"value":"K18","label":"K18"},{"value":"K21","label":"K21"},{"value":"K22","label":"K22"},{"value":"K24","label":"K24"}] },
+      { key: 'quotedAt', label: 'Quoted at', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    permissions: {
+      list: P.GOLD_PRICE_READ.key,
+      read: P.GOLD_PRICE_READ.key,
+      create: P.GOLD_PRICE_CREATE.key,
+      update: P.GOLD_PRICE_UPDATE.key,
+    },
+  },
+  {
+    key: 'gold-items',
+    label: 'Inventory',
+    singular: 'Item',
+    endpoint: '/gold-items',
+    description: "A physical piece held in stock, identified by its tag.",
+    table: {
+      key: 'gold-items',
+      label: 'Inventory',
+      endpoint: '/gold-items',
+      emptyHint: 'Create one with POST /api/gold-items.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'tag', label: 'Tag', sortable: true },
+        { key: 'name', label: 'Item' },
+        { key: 'karat', label: 'Karat', format: 'badge', sortable: true },
+        { key: 'grossWeightGrams', label: 'Gross (g)', format: 'money', currencyKey: 'currency' },
+        { key: 'goldWeightGrams', label: 'Gold (g)', format: 'money', currencyKey: 'currency' },
+        { key: 'labourCost', label: 'Labour', format: 'money', currencyKey: 'currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'karat', label: 'Karat', type: 'enum', operators: ['eq', 'in'], options: [{"value":"K10","label":"K10"},{"value":"K14","label":"K14"},{"value":"K18","label":"K18"},{"value":"K21","label":"K21"},{"value":"K22","label":"K22"},{"value":"K24","label":"K24"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"IN_STOCK","label":"In Stock"},{"value":"RESERVED","label":"Reserved"},{"value":"SOLD","label":"Sold"},{"value":"MELTED","label":"Melted"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'tag', label: 'Tag', prefixOnly: true },
+        { key: 'name', label: 'Item' },
+      ],
+    },
+    permissions: {
+      list: P.GOLD_ITEM_READ.key,
+      read: P.GOLD_ITEM_READ.key,
+      create: P.GOLD_ITEM_CREATE.key,
+      update: P.GOLD_ITEM_UPDATE.key,
+    },
+  },
+  {
+    key: 'gold-orders',
+    label: 'Orders',
+    singular: 'Order',
+    endpoint: '/gold-orders',
+    description: "A customer buying or selling back a piece, priced against a recorded quote.",
+    table: {
+      key: 'gold-orders',
+      label: 'Orders',
+      endpoint: '/gold-orders',
+      emptyHint: 'Create one with POST /api/gold-orders.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'itemId', label: 'Item', format: 'reference' },
+        { key: 'priceId', label: 'Quote', format: 'reference' },
+        { key: 'direction', label: 'Direction', format: 'badge', sortable: true },
+        { key: 'customerName', label: 'Customer' },
+        { key: 'customerPhone', label: 'Phone' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'direction', label: 'Direction', type: 'enum', operators: ['eq', 'in'], options: [{"value":"SELL_TO_CUSTOMER","label":"Sell To Customer"},{"value":"BUY_FROM_CUSTOMER","label":"Buy From Customer"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DRAFT","label":"Draft"},{"value":"CONFIRMED","label":"Confirmed"},{"value":"SETTLED","label":"Settled"},{"value":"CANCELLED","label":"Cancelled"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+        { key: 'customerName', label: 'Customer' },
+      ],
+    },
+    permissions: {
+      list: P.GOLD_ORDER_READ.key,
+      read: P.GOLD_ORDER_READ.key,
+      create: P.GOLD_ORDER_CREATE.key,
+      update: P.GOLD_ORDER_UPDATE.key,
+    },
+  },
+  {
+    key: 'gold-invoices',
+    label: 'Invoices',
+    singular: 'Invoice',
+    endpoint: '/gold-invoices',
+    description: "The document issued for an order.",
+    table: {
+      key: 'gold-invoices',
+      label: 'Invoices',
+      endpoint: '/gold-invoices',
+      emptyHint: 'Create one with POST /api/gold-invoices.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'orderId', label: 'Order', format: 'reference' },
+        { key: 'number', label: 'Number', sortable: true },
+        { key: 'issuedAt', label: 'Issued', format: 'datetime', sortable: true },
+        { key: 'total', label: 'Total', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'issuedAt', label: 'Issued', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ISSUED","label":"Issued"},{"value":"PAID","label":"Paid"},{"value":"VOID","label":"Void"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'number', label: 'Number', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.GOLD_INVOICE_READ.key,
+      read: P.GOLD_INVOICE_READ.key,
+      create: P.GOLD_INVOICE_CREATE.key,
+      update: P.GOLD_INVOICE_UPDATE.key,
+    },
+  },
+];

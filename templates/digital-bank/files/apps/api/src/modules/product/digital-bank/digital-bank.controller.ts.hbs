@@ -1,0 +1,310 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { DIGITAL_BANK_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  DigitalBankService,
+  type BankCustomerRow,
+  type BankAccountRow,
+  type AccountStatementRow,
+  type CustomerNotificationPreferenceRow,
+} from './digital-bank.service';
+
+/**
+ * TrustOS Digital Bank endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createBankCustomerSchema = z.object({
+  customerNumber: z.string().trim().min(1).max(255),
+  fullName: z.string().trim().min(1).max(255),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  segment: z.enum(['RETAIL', 'SME', 'CORPORATE']).optional(),
+  status: z.enum(['PENDING', 'ACTIVE', 'DORMANT', 'CLOSED']).optional(),
+  onboardedAt: z.coerce.date(),
+});
+
+const updateBankCustomerSchema = z
+  .object({
+    fullName: z.string().trim().min(1).max(255).optional(),
+    email: z.string().trim().toLowerCase().email().max(254).optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    segment: z.enum(['RETAIL', 'SME', 'CORPORATE']).optional(),
+    status: z.enum(['PENDING', 'ACTIVE', 'DORMANT', 'CLOSED']).optional(),
+    onboardedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createBankAccountSchema = z.object({
+  customerId: z.string().trim().min(1).max(64),
+  profileId: z.string().trim().min(1).max(64),
+  accountNumber: z.string().trim().min(1).max(255),
+  productName: z.string().trim().min(1).max(255),
+  currency: z.string().trim().min(1).max(255),
+  status: z.enum(['ACTIVE', 'FROZEN', 'DORMANT', 'CLOSED']).optional(),
+  openedAt: z.coerce.date(),
+});
+
+const updateBankAccountSchema = z
+  .object({
+    customerId: z.string().trim().min(1).max(64).optional(),
+    profileId: z.string().trim().min(1).max(64).optional(),
+    productName: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['ACTIVE', 'FROZEN', 'DORMANT', 'CLOSED']).optional(),
+    openedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createAccountStatementSchema = z.object({
+  accountId: z.string().trim().min(1).max(64),
+  periodStart: z.coerce.date(),
+  periodEnd: z.coerce.date(),
+  openingBalance: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  closingBalance: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  generatedAt: z.coerce.date(),
+  status: z.enum(['GENERATED', 'DELIVERED', 'FAILED']).optional(),
+});
+
+const updateAccountStatementSchema = z
+  .object({
+    accountId: z.string().trim().min(1).max(64).optional(),
+    periodStart: z.coerce.date().optional(),
+    periodEnd: z.coerce.date().optional(),
+    openingBalance: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    closingBalance: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    generatedAt: z.coerce.date().optional(),
+    status: z.enum(['GENERATED', 'DELIVERED', 'FAILED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createCustomerNotificationPreferenceSchema = z.object({
+  customerId: z.string().trim().min(1).max(64),
+  channel: z.enum(['IN_APP', 'EMAIL', 'SMS', 'PUSH']),
+  muted: z.coerce.boolean().optional(),
+});
+
+const updateCustomerNotificationPreferenceSchema = z
+  .object({
+    customerId: z.string().trim().min(1).max(64).optional(),
+    channel: z.enum(['IN_APP', 'EMAIL', 'SMS', 'PUSH']).optional(),
+    muted: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('bank-customers')
+@ApiBearerAuth('access-token')
+@Controller('bank-customers')
+export class BankCustomerController {
+  constructor(private readonly product: DigitalBankService) {}
+
+  @Get()
+  @RequirePermissions(P.BANK_CUSTOMER_READ.key)
+  @ApiOperation({ summary: 'List customers' })
+  list(): Promise<BankCustomerRow[]> {
+    return this.product.listBankCustomers();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.BANK_CUSTOMER_READ.key)
+  @ApiOperation({ summary: 'Read one customer' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<BankCustomerRow> {
+    return this.product.findBankCustomer(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.BANK_CUSTOMER_CREATE.key)
+  @ApiOperation({ summary: 'Create a customer' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createBankCustomerSchema))
+    body: z.infer<typeof createBankCustomerSchema>,
+  ): Promise<BankCustomerRow> {
+    return this.product.createBankCustomer(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.BANK_CUSTOMER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a customer' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateBankCustomerSchema))
+    body: z.infer<typeof updateBankCustomerSchema>,
+  ): Promise<BankCustomerRow> {
+    return this.product.updateBankCustomer(id, body, organizationId);
+  }
+}
+
+@ApiTags('bank-accounts')
+@ApiBearerAuth('access-token')
+@Controller('bank-accounts')
+export class BankAccountController {
+  constructor(private readonly product: DigitalBankService) {}
+
+  @Get()
+  @RequirePermissions(P.BANK_ACCOUNT_READ.key)
+  @ApiOperation({ summary: 'List accounts' })
+  list(): Promise<BankAccountRow[]> {
+    return this.product.listBankAccounts();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.BANK_ACCOUNT_READ.key)
+  @ApiOperation({ summary: 'Read one account' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<BankAccountRow> {
+    return this.product.findBankAccount(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.BANK_ACCOUNT_CREATE.key)
+  @ApiOperation({ summary: 'Create a account' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createBankAccountSchema))
+    body: z.infer<typeof createBankAccountSchema>,
+  ): Promise<BankAccountRow> {
+    return this.product.createBankAccount(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.BANK_ACCOUNT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a account' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateBankAccountSchema))
+    body: z.infer<typeof updateBankAccountSchema>,
+  ): Promise<BankAccountRow> {
+    return this.product.updateBankAccount(id, body, organizationId);
+  }
+}
+
+@ApiTags('account-statements')
+@ApiBearerAuth('access-token')
+@Controller('account-statements')
+export class AccountStatementController {
+  constructor(private readonly product: DigitalBankService) {}
+
+  @Get()
+  @RequirePermissions(P.ACCOUNT_STATEMENT_READ.key)
+  @ApiOperation({ summary: 'List statements' })
+  list(): Promise<AccountStatementRow[]> {
+    return this.product.listAccountStatements();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.ACCOUNT_STATEMENT_READ.key)
+  @ApiOperation({ summary: 'Read one statement' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<AccountStatementRow> {
+    return this.product.findAccountStatement(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.ACCOUNT_STATEMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a statement' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createAccountStatementSchema))
+    body: z.infer<typeof createAccountStatementSchema>,
+  ): Promise<AccountStatementRow> {
+    return this.product.createAccountStatement(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.ACCOUNT_STATEMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a statement' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateAccountStatementSchema))
+    body: z.infer<typeof updateAccountStatementSchema>,
+  ): Promise<AccountStatementRow> {
+    return this.product.updateAccountStatement(id, body, organizationId);
+  }
+}
+
+@ApiTags('customer-notification-preferences')
+@ApiBearerAuth('access-token')
+@Controller('customer-notification-preferences')
+export class CustomerNotificationPreferenceController {
+  constructor(private readonly product: DigitalBankService) {}
+
+  @Get()
+  @RequirePermissions(P.CUSTOMER_NOTIFICATION_PREFERENCE_READ.key)
+  @ApiOperation({ summary: 'List notification preferences' })
+  list(): Promise<CustomerNotificationPreferenceRow[]> {
+    return this.product.listCustomerNotificationPreferences();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CUSTOMER_NOTIFICATION_PREFERENCE_READ.key)
+  @ApiOperation({ summary: 'Read one preference' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CustomerNotificationPreferenceRow> {
+    return this.product.findCustomerNotificationPreference(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CUSTOMER_NOTIFICATION_PREFERENCE_CREATE.key)
+  @ApiOperation({ summary: 'Create a preference' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCustomerNotificationPreferenceSchema))
+    body: z.infer<typeof createCustomerNotificationPreferenceSchema>,
+  ): Promise<CustomerNotificationPreferenceRow> {
+    return this.product.createCustomerNotificationPreference(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CUSTOMER_NOTIFICATION_PREFERENCE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a preference' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCustomerNotificationPreferenceSchema))
+    body: z.infer<typeof updateCustomerNotificationPreferenceSchema>,
+  ): Promise<CustomerNotificationPreferenceRow> {
+    return this.product.updateCustomerNotificationPreference(id, body, organizationId);
+  }
+}

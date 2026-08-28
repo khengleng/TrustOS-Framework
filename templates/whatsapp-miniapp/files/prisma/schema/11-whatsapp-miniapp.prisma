@@ -1,0 +1,36 @@
+// =============================================================================
+// TrustOS WhatsApp Mini App — product models
+//
+// The mini app shape with a WhatsApp verifier: the same users, sessions,
+// deep links, menu and settings, and a different platform handshake.
+//
+// Out of scope, deliberately: Meta Graph API calls, WhatsApp Business API
+// provisioning, payment providers, template message approval, chatbot
+// conversation design.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+/// The WhatsApp-specific facts about a mini app user. The phone number is the
+/// account identifier on this platform, which makes it both the key and
+/// personal data.
+model WhatsAppProfile {
+  id             String @id @default(cuid())
+  organizationId String
+  miniAppUserId String
+  waId String
+  phone String
+  businessAccountRef String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, miniAppUserId])
+  @@unique([organizationId, waId])
+  @@index([organizationId, miniAppUserId])
+  @@index([deletedAt])
+}

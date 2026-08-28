@@ -1,0 +1,52 @@
+{
+  "name": "@trustos/module-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TrustOS Agent Framework module. Agents that take actions: declarative agent definitions, the tool loop with per-actor permission checks, memory, conversation state, stop conditions and human review.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "nest",
+    "install",
+    "README.md",
+    "AGENTS.md"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/agent-framework": "0.1.0",
+    "@trustos/agent-memory": "0.1.0",
+    "@trustos/agent-runtime": "0.1.0",
+    "@trustos/conversation": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/function-calling": "0.1.0",
+    "@trustos/human-review": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "@trustos/module-ai": "0.1.0",
+    "@trustos/module-registry": "0.1.0",
+    "@trustos/module-sdk": "0.1.0",
+    "@trustos/observability": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "@trustos/tool-execution": "0.1.0"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
+    "@nestjs/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28"
+  }
+}

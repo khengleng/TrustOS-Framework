@@ -1,0 +1,120 @@
+/**
+ * TrustOS Wallet — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { WALLET_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const WALLET_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'wallet-profiles',
+    label: 'Wallets',
+    singular: 'Wallet',
+    endpoint: '/wallet-profiles',
+    description: "The product-side record of a wallet.",
+    table: {
+      key: 'wallet-profiles',
+      label: 'Wallets',
+      endpoint: '/wallet-profiles',
+      emptyHint: 'Create one with POST /api/wallet-profiles.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'walletId', label: 'Wallet id', sortable: true },
+        { key: 'ownerName', label: 'Owner' },
+        { key: 'ownerPhone', label: 'Phone' },
+        { key: 'currency', label: 'Currency', sortable: true },
+        { key: 'tier', label: 'Tier', format: 'badge', sortable: true },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'currency', label: 'Currency', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'tier', label: 'Tier', type: 'enum', operators: ['eq', 'in'], options: [{"value":"BASIC","label":"Basic"},{"value":"VERIFIED","label":"Verified"},{"value":"PREMIUM","label":"Premium"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ACTIVE","label":"Active"},{"value":"FROZEN","label":"Frozen"},{"value":"CLOSED","label":"Closed"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'ownerName', label: 'Owner' },
+        { key: 'ownerPhone', label: 'Phone' },
+      ],
+    },
+    permissions: {
+      list: P.WALLET_PROFILE_READ.key,
+      read: P.WALLET_PROFILE_READ.key,
+      create: P.WALLET_PROFILE_CREATE.key,
+      update: P.WALLET_PROFILE_UPDATE.key,
+    },
+  },
+  {
+    key: 'wallet-transfers',
+    label: 'Transfers',
+    singular: 'Transfer',
+    endpoint: '/wallet-transfers',
+    description: "A movement between two wallets.",
+    table: {
+      key: 'wallet-transfers',
+      label: 'Transfers',
+      endpoint: '/wallet-transfers',
+      emptyHint: 'Create one with POST /api/wallet-transfers.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'fromProfileId', label: 'From', format: 'reference' },
+        { key: 'toProfileId', label: 'To', format: 'reference' },
+        { key: 'amount', label: 'Amount', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'journalId', label: 'Journal' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PENDING","label":"Pending"},{"value":"POSTED","label":"Posted"},{"value":"FAILED","label":"Failed"},{"value":"REVERSED","label":"Reversed"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.WALLET_TRANSFER_READ.key,
+      read: P.WALLET_TRANSFER_READ.key,
+      create: P.WALLET_TRANSFER_CREATE.key,
+      update: P.WALLET_TRANSFER_UPDATE.key,
+    },
+  },
+  {
+    key: 'transfer-limit-profiles',
+    label: 'Limit profiles',
+    singular: 'Limit profile',
+    endpoint: '/transfer-limit-profiles',
+    description: "Which framework limit keys apply to a wallet tier.",
+    table: {
+      key: 'transfer-limit-profiles',
+      label: 'Limit profiles',
+      endpoint: '/transfer-limit-profiles',
+      emptyHint: 'Create one with POST /api/transfer-limit-profiles.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'tier', label: 'Tier', format: 'badge', sortable: true },
+        { key: 'limitKey', label: 'Limit key' },
+        { key: 'description', label: 'Description' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    permissions: {
+      list: P.TRANSFER_LIMIT_PROFILE_READ.key,
+      read: P.TRANSFER_LIMIT_PROFILE_READ.key,
+      create: P.TRANSFER_LIMIT_PROFILE_CREATE.key,
+      update: P.TRANSFER_LIMIT_PROFILE_UPDATE.key,
+    },
+  },
+];

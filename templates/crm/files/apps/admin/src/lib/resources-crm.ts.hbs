@@ -1,0 +1,269 @@
+/**
+ * TrustOS CRM — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { CRM_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const CRM_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'customers',
+    label: 'Customers',
+    singular: 'Customer',
+    endpoint: '/customers',
+    description: "An organization or person you do business with.",
+    table: {
+      key: 'customers',
+      label: 'Customers',
+      endpoint: '/customers',
+      emptyHint: 'Create one with POST /api/customers.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'name', label: 'Customer' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'industry', label: 'Industry', sortable: true },
+        { key: 'website', label: 'Website' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'industry', label: 'Industry', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PROSPECT","label":"Prospect"},{"value":"ACTIVE","label":"Active"},{"value":"DORMANT","label":"Dormant"},{"value":"LOST","label":"Lost"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Customer' },
+      ],
+    },
+    permissions: {
+      list: P.CUSTOMER_READ.key,
+      read: P.CUSTOMER_READ.key,
+      create: P.CUSTOMER_CREATE.key,
+      update: P.CUSTOMER_UPDATE.key,
+    },
+  },
+  {
+    key: 'contacts',
+    label: 'Contacts',
+    singular: 'Contact',
+    endpoint: '/contacts',
+    description: "A person at a customer.",
+    table: {
+      key: 'contacts',
+      label: 'Contacts',
+      endpoint: '/contacts',
+      emptyHint: 'Create one with POST /api/contacts.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'customerId', label: 'Customer', format: 'reference' },
+        { key: 'fullName', label: 'Name' },
+        { key: 'title', label: 'Title' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'isPrimary', label: 'Primary', format: 'badge' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    search: {
+      fields: [
+        { key: 'fullName', label: 'Name' },
+        { key: 'email', label: 'Email' },
+      ],
+    },
+    permissions: {
+      list: P.CONTACT_READ.key,
+      read: P.CONTACT_READ.key,
+      create: P.CONTACT_CREATE.key,
+      update: P.CONTACT_UPDATE.key,
+    },
+  },
+  {
+    key: 'leads',
+    label: 'Leads',
+    singular: 'Lead',
+    endpoint: '/leads',
+    description: "An unqualified opportunity.",
+    table: {
+      key: 'leads',
+      label: 'Leads',
+      endpoint: '/leads',
+      emptyHint: 'Create one with POST /api/leads.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'fullName', label: 'Name' },
+        { key: 'company', label: 'Company' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'source', label: 'Source', format: 'badge', sortable: true },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'source', label: 'Source', type: 'enum', operators: ['eq', 'in'], options: [{"value":"WEB","label":"Web"},{"value":"REFERRAL","label":"Referral"},{"value":"EVENT","label":"Event"},{"value":"OUTBOUND","label":"Outbound"},{"value":"PARTNER","label":"Partner"},{"value":"OTHER","label":"Other"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"NEW","label":"New"},{"value":"CONTACTED","label":"Contacted"},{"value":"QUALIFIED","label":"Qualified"},{"value":"CONVERTED","label":"Converted"},{"value":"DISQUALIFIED","label":"Disqualified"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'fullName', label: 'Name' },
+        { key: 'company', label: 'Company' },
+      ],
+    },
+    permissions: {
+      list: P.LEAD_READ.key,
+      read: P.LEAD_READ.key,
+      create: P.LEAD_CREATE.key,
+      update: P.LEAD_UPDATE.key,
+    },
+  },
+  {
+    key: 'pipeline-stages',
+    label: 'Pipeline stages',
+    singular: 'Stage',
+    endpoint: '/pipeline-stages',
+    description: "A column on the board.",
+    table: {
+      key: 'pipeline-stages',
+      label: 'Pipeline stages',
+      endpoint: '/pipeline-stages',
+      emptyHint: 'Create one with POST /api/pipeline-stages.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'name', label: 'Stage' },
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'position', label: 'Position', format: 'number' },
+        { key: 'isWon', label: 'Won', format: 'badge' },
+        { key: 'isClosed', label: 'Closed', format: 'badge' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    permissions: {
+      list: P.PIPELINE_STAGE_READ.key,
+      read: P.PIPELINE_STAGE_READ.key,
+      create: P.PIPELINE_STAGE_CREATE.key,
+      update: P.PIPELINE_STAGE_UPDATE.key,
+    },
+  },
+  {
+    key: 'opportunities',
+    label: 'Opportunities',
+    singular: 'Opportunity',
+    endpoint: '/opportunities',
+    description: "A deal in the pipeline.",
+    table: {
+      key: 'opportunities',
+      label: 'Opportunities',
+      endpoint: '/opportunities',
+      emptyHint: 'Create one with POST /api/opportunities.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'customerId', label: 'Customer', format: 'reference' },
+        { key: 'stageId', label: 'Stage', format: 'reference' },
+        { key: 'name', label: 'Opportunity' },
+        { key: 'amount', label: 'Amount', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'expectedCloseOn', label: 'Expected close', format: 'date', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'expectedCloseOn', label: 'Expected close', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Opportunity' },
+      ],
+    },
+    permissions: {
+      list: P.OPPORTUNITY_READ.key,
+      read: P.OPPORTUNITY_READ.key,
+      create: P.OPPORTUNITY_CREATE.key,
+      update: P.OPPORTUNITY_UPDATE.key,
+    },
+  },
+  {
+    key: 'activities',
+    label: 'Activities',
+    singular: 'Activity',
+    endpoint: '/activities',
+    description: "Something that happened: a call, a meeting, a note.",
+    table: {
+      key: 'activities',
+      label: 'Activities',
+      endpoint: '/activities',
+      emptyHint: 'Create one with POST /api/activities.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'customerId', label: 'Customer', format: 'reference' },
+        { key: 'leadId', label: 'Lead', format: 'reference' },
+        { key: 'kind', label: 'Kind', format: 'badge', sortable: true },
+        { key: 'subject', label: 'Subject' },
+        { key: 'body', label: 'Detail' },
+        { key: 'occurredAt', label: 'When', format: 'datetime', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'kind', label: 'Kind', type: 'enum', operators: ['eq', 'in'], options: [{"value":"CALL","label":"Call"},{"value":"MEETING","label":"Meeting"},{"value":"EMAIL","label":"Email"},{"value":"NOTE","label":"Note"},{"value":"VISIT","label":"Visit"}] },
+      { key: 'occurredAt', label: 'When', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'subject', label: 'Subject' },
+      ],
+    },
+    permissions: {
+      list: P.ACTIVITY_READ.key,
+      read: P.ACTIVITY_READ.key,
+      create: P.ACTIVITY_CREATE.key,
+      update: P.ACTIVITY_UPDATE.key,
+    },
+  },
+  {
+    key: 'crm-tasks',
+    label: 'Tasks',
+    singular: 'Task',
+    endpoint: '/crm-tasks',
+    description: "Something somebody has to do.",
+    table: {
+      key: 'crm-tasks',
+      label: 'Tasks',
+      endpoint: '/crm-tasks',
+      emptyHint: 'Create one with POST /api/crm-tasks.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'customerId', label: 'Customer', format: 'reference' },
+        { key: 'opportunityId', label: 'Opportunity', format: 'reference' },
+        { key: 'title', label: 'Task' },
+        { key: 'dueOn', label: 'Due', format: 'date', sortable: true },
+        { key: 'assigneeUserId', label: 'Assignee' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'dueOn', label: 'Due', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"OPEN","label":"Open"},{"value":"IN_PROGRESS","label":"In Progress"},{"value":"DONE","label":"Done"},{"value":"CANCELLED","label":"Cancelled"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'title', label: 'Task' },
+      ],
+    },
+    permissions: {
+      list: P.CRM_TASK_READ.key,
+      read: P.CRM_TASK_READ.key,
+      create: P.CRM_TASK_CREATE.key,
+      update: P.CRM_TASK_UPDATE.key,
+    },
+  },
+];

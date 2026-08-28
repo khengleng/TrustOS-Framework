@@ -1,0 +1,22 @@
+{
+  "name": "@trustos/financial-product-variants",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Product variants by controlled override: the allow-list of overridable paths and the resolution that records provenance.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/financial-core": "0.1.0",
+    "@trustos/financial-product-core": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

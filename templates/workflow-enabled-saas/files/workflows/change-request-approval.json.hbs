@@ -1,0 +1,158 @@
+{
+  "id": "change-request-approval",
+  "version": "1.0.0",
+  "name": "{{productDisplayName}} Change Request Approval",
+  "description": "A manager reviews every request; compliance reviews high-risk ones. Edit this file, validate it with `trustos workflow validate`, then publish it through the API.",
+  "businessObjectType": "ChangeRequest",
+
+  "initialState": "draft",
+  "states": ["draft", "submitted", "manager_review", "compliance_review", "approved", "rejected", "returned_for_rework", "cancelled"],
+  "finalStates": ["approved", "rejected", "cancelled"],
+
+  "steps": [
+    {
+      "state": "draft",
+      "kind": "task",
+      "name": "Prepare the request",
+      "description": "The maker fills in the request and attaches supporting evidence.",
+      "assignment": { "strategy": "named_user", "userId": "${initiator}" },
+      "sla": [],
+      "escalations": [],
+      "requiredFields": ["title", "amount", "riskRating"],
+      "requireAttachment": false,
+      "editableFields": ["title", "description", "amount", "riskRating", "justification"]
+    },
+    {
+      "state": "submitted",
+      "kind": "automatic",
+      "name": "Route the request",
+      "description": "Sends the request to manager review. No human acts in this state.",
+      "sla": [],
+      "escalations": [],
+      "requiredFields": [],
+      "requireAttachment": false,
+      "editableFields": []
+    },
+    {
+      "state": "manager_review",
+      "kind": "approval",
+      "name": "Manager review",
+      "description": "A manager reviews every request, whatever its risk.",
+      "assignment": { "strategy": "role", "role": "workflow_checker" },
+      "approval": {
+        "model": "sequential",
+        "approvers": [
+          {
+            "key": "manager",
+            "name": "Operations Manager",
+            "permission": "workflow.approval.decide",
+            "order": 1,
+            "slaMinutes": 480
+          }
+        ],
+        "allowSelfApproval": false,
+        "allowSameActorMultipleSlots": false,
+        "rejectionReasonCodes": ["insufficient_justification", "out_of_policy", "incorrect_amount"]
+      },
+      "sla": [
+        { "kind": "time_to_complete", "minutes": 480, "warningAtPercent": 75, "severity": "medium", "calendar": "elapsed" }
+      ],
+      "escalations": [
+        { "key": "warn-assignee", "trigger": "sla_warning", "action": "notify_assignee", "templateKey": "workflow.sla.warning" },
+        { "key": "breach-supervisor", "trigger": "sla_breach", "action": "notify_supervisor", "templateKey": "workflow.sla.breach" },
+        { "key": "breach-priority", "trigger": "sla_breach", "action": "increase_priority" }
+      ],
+      "requiredFields": [],
+      "requireAttachment": false,
+      "requireAttachmentWhen": { "field": "riskRating", "operator": "in", "value": ["high"] },
+      "editableFields": []
+    },
+    {
+      "state": "compliance_review",
+      "kind": "approval",
+      "name": "Compliance review",
+      "description": "A second, independent review. Reached only by high-risk requests.",
+      "assignment": { "strategy": "role", "role": "workflow_checker" },
+      "approval": {
+        "model": "sequential",
+        "approvers": [
+          {
+            "key": "compliance",
+            "name": "Compliance Officer",
+            "permission": "workflow.approval.decide",
+            "order": 1,
+            "slaMinutes": 960
+          }
+        ],
+        "allowSelfApproval": false,
+        "allowSameActorMultipleSlots": false,
+        "rejectionReasonCodes": ["policy_breach", "documentation_inadequate"]
+      },
+      "sla": [
+        { "kind": "time_to_complete", "minutes": 960, "warningAtPercent": 80, "severity": "high", "calendar": "elapsed" }
+      ],
+      "escalations": [
+        { "key": "warn-assignee", "trigger": "sla_warning", "action": "notify_assignee", "templateKey": "workflow.sla.warning" },
+        { "key": "breach-supervisor", "trigger": "sla_breach", "action": "notify_supervisor", "templateKey": "workflow.sla.breach" }
+      ],
+      "requiredFields": [],
+      "requireAttachment": false,
+      "editableFields": []
+    },
+    {
+      "state": "returned_for_rework",
+      "kind": "task",
+      "name": "Rework",
+      "description": "The maker addresses the reviewer's comments and resubmits.",
+      "assignment": { "strategy": "named_user", "userId": "${initiator}" },
+      "sla": [
+        { "kind": "time_to_complete", "minutes": 2880, "warningAtPercent": 80, "severity": "low", "calendar": "elapsed" }
+      ],
+      "escalations": [
+        { "key": "warn-maker", "trigger": "sla_warning", "action": "notify_assignee", "templateKey": "workflow.rework.reminder" }
+      ],
+      "requiredFields": ["title", "amount", "riskRating"],
+      "requireAttachment": false,
+      "editableFields": ["title", "description", "amount", "riskRating", "justification"]
+    },
+    { "state": "approved", "kind": "terminal", "name": "Approved", "description": "Every required approval was granted.", "sla": [], "escalations": [], "requiredFields": [], "requireAttachment": false, "editableFields": [] },
+    { "state": "rejected", "kind": "terminal", "name": "Rejected", "description": "A reviewer refused the request. The decision and its reason are retained.", "sla": [], "escalations": [], "requiredFields": [], "requireAttachment": false, "editableFields": [] },
+    { "state": "cancelled", "kind": "terminal", "name": "Cancelled", "description": "Withdrawn before a decision. Distinct from rejected.", "sla": [], "escalations": [], "requiredFields": [], "requireAttachment": false, "editableFields": [] }
+  ],
+
+  "transitions": [
+    { "action": "submit", "from": "draft", "to": "submitted", "name": "Submit for approval", "permission": "workflow.instance.transition", "automatic": false, "requiresReason": false, "isRework": false, "isRejection": false, "isCancellation": false },
+    { "action": "route_to_manager", "from": "submitted", "to": "manager_review", "name": "Route to manager review", "automatic": true, "requiresReason": false, "isRework": false, "isRejection": false, "isCancellation": false },
+    { "action": "escalate_to_compliance", "from": "manager_review", "to": "compliance_review", "name": "Manager approved; high risk needs compliance", "permission": "workflow.approval.decide", "condition": { "field": "riskRating", "operator": "eq", "value": "high" }, "automatic": false, "requiresReason": false, "isRework": false, "isRejection": false, "isCancellation": false },
+    { "action": "approve", "from": "manager_review", "to": "approved", "name": "Manager approved", "permission": "workflow.approval.decide", "condition": { "field": "riskRating", "operator": "neq", "value": "high" }, "automatic": false, "requiresReason": false, "isRework": false, "isRejection": false, "isCancellation": false },
+    { "action": "approve", "from": "compliance_review", "to": "approved", "name": "Compliance approved", "permission": "workflow.approval.decide", "automatic": false, "requiresReason": false, "isRework": false, "isRejection": false, "isCancellation": false },
+    { "action": "reject", "from": "manager_review", "to": "rejected", "name": "Reject", "permission": "workflow.approval.decide", "automatic": false, "requiresReason": true, "isRework": false, "isRejection": true, "isCancellation": false },
+    { "action": "reject", "from": "compliance_review", "to": "rejected", "name": "Reject", "permission": "workflow.approval.decide", "automatic": false, "requiresReason": true, "isRework": false, "isRejection": true, "isCancellation": false },
+    { "action": "return_for_rework", "from": "manager_review", "to": "returned_for_rework", "name": "Return to the maker", "permission": "workflow.approval.decide", "automatic": false, "requiresReason": true, "isRework": true, "isRejection": false, "isCancellation": false },
+    { "action": "return_for_rework", "from": "compliance_review", "to": "returned_for_rework", "name": "Return to the maker", "permission": "workflow.approval.decide", "automatic": false, "requiresReason": true, "isRework": true, "isRejection": false, "isCancellation": false },
+    { "action": "resubmit", "from": "returned_for_rework", "to": "submitted", "name": "Resubmit after rework", "permission": "workflow.instance.transition", "automatic": false, "requiresReason": false, "isRework": false, "isRejection": false, "isCancellation": false },
+    { "action": "cancel", "from": "draft", "to": "cancelled", "name": "Cancel", "permission": "workflow.instance.cancel", "automatic": false, "requiresReason": true, "isRework": false, "isRejection": false, "isCancellation": true },
+    { "action": "cancel", "from": "submitted", "to": "cancelled", "name": "Cancel", "permission": "workflow.instance.cancel", "automatic": false, "requiresReason": true, "isRework": false, "isRejection": false, "isCancellation": true },
+    { "action": "cancel", "from": "manager_review", "to": "cancelled", "name": "Cancel", "permission": "workflow.instance.cancel", "automatic": false, "requiresReason": true, "isRework": false, "isRejection": false, "isCancellation": true },
+    { "action": "cancel", "from": "returned_for_rework", "to": "cancelled", "name": "Cancel", "permission": "workflow.instance.cancel", "automatic": false, "requiresReason": true, "isRework": false, "isRejection": false, "isCancellation": true }
+  ],
+
+  "rejection": {
+    "behaviour": "final",
+    "reasonCodes": ["insufficient_justification", "out_of_policy", "incorrect_amount", "policy_breach", "documentation_inadequate"]
+  },
+  "cancellation": {
+    "allowedFromStates": ["draft", "submitted", "manager_review", "returned_for_rework"],
+    "permission": "workflow.instance.cancel",
+    "requiresReason": true,
+    "requiresApproval": false
+  },
+  "rework": { "maxCycles": 3, "onLimitReached": "escalate" },
+
+  "startPermission": "workflow.instance.start",
+  "defaultPriority": "normal",
+  "sla": [
+    { "kind": "total_duration", "minutes": 4320, "warningAtPercent": 80, "severity": "medium", "calendar": "elapsed" }
+  ],
+  "labels": { "owner": "{{organizationName}}", "review": "quarterly" }
+}

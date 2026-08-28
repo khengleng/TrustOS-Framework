@@ -1,0 +1,175 @@
+/**
+ * TrustOS Telegram Mini App — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { TELEGRAM_MINIAPP_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const TELEGRAM_MINIAPP_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'mini-app-users',
+    label: 'Users',
+    singular: 'User',
+    endpoint: '/mini-app-users',
+    description: "Somebody who opened the mini app.",
+    table: {
+      key: 'mini-app-users',
+      label: 'Users',
+      endpoint: '/mini-app-users',
+      emptyHint: 'Create one with POST /api/mini-app-users.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'platform', label: 'Platform', format: 'badge', sortable: true },
+        { key: 'platformUserId', label: 'Platform id', sortable: true },
+        { key: 'userId', label: 'Framework user' },
+        { key: 'displayName', label: 'Name' },
+        { key: 'languageCode', label: 'Language' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'platform', label: 'Platform', type: 'enum', operators: ['eq', 'in'], options: [{"value":"TELEGRAM","label":"Telegram"},{"value":"WHATSAPP","label":"Whatsapp"},{"value":"MESSENGER","label":"Messenger"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ACTIVE","label":"Active"},{"value":"BLOCKED","label":"Blocked"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'displayName', label: 'Name' },
+      ],
+    },
+    permissions: {
+      list: P.MINI_APP_USER_READ.key,
+      read: P.MINI_APP_USER_READ.key,
+      create: P.MINI_APP_USER_CREATE.key,
+      update: P.MINI_APP_USER_UPDATE.key,
+    },
+  },
+  {
+    key: 'mini-app-sessions',
+    label: 'Sessions',
+    singular: 'Session',
+    endpoint: '/mini-app-sessions',
+    description: "A verified sign-in.",
+    table: {
+      key: 'mini-app-sessions',
+      label: 'Sessions',
+      endpoint: '/mini-app-sessions',
+      emptyHint: 'Create one with POST /api/mini-app-sessions.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'miniAppUserId', label: 'User', format: 'reference' },
+        { key: 'startedAt', label: 'Started', format: 'datetime', sortable: true },
+        { key: 'expiresAt', label: 'Expires', format: 'datetime' },
+        { key: 'endedAt', label: 'Ended', format: 'datetime' },
+        { key: 'launchParam', label: 'Launch parameter' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'startedAt', label: 'Started', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    permissions: {
+      list: P.MINI_APP_SESSION_READ.key,
+      read: P.MINI_APP_SESSION_READ.key,
+      create: P.MINI_APP_SESSION_CREATE.key,
+      update: P.MINI_APP_SESSION_UPDATE.key,
+    },
+  },
+  {
+    key: 'deep-links',
+    label: 'Deep links',
+    singular: 'Deep link',
+    endpoint: '/deep-links',
+    description: "A named entry point.",
+    table: {
+      key: 'deep-links',
+      label: 'Deep links',
+      endpoint: '/deep-links',
+      emptyHint: 'Create one with POST /api/deep-links.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'label', label: 'Label' },
+        { key: 'target', label: 'Target path' },
+        { key: 'isActive', label: 'Active', format: 'badge', sortable: true },
+        { key: 'openCount', label: 'Opens', format: 'number' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    permissions: {
+      list: P.DEEP_LINK_READ.key,
+      read: P.DEEP_LINK_READ.key,
+      create: P.DEEP_LINK_CREATE.key,
+      update: P.DEEP_LINK_UPDATE.key,
+    },
+  },
+  {
+    key: 'menu-entries',
+    label: 'Menu',
+    singular: 'Menu entry',
+    endpoint: '/menu-entries',
+    description: "One item in the mini app menu.",
+    table: {
+      key: 'menu-entries',
+      label: 'Menu',
+      endpoint: '/menu-entries',
+      emptyHint: 'Create one with POST /api/menu-entries.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'label', label: 'Label' },
+        { key: 'href', label: 'Path' },
+        { key: 'icon', label: 'Icon' },
+        { key: 'position', label: 'Position', format: 'number' },
+        { key: 'requiredPermission', label: 'Permission' },
+        { key: 'isActive', label: 'Active', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    permissions: {
+      list: P.MENU_ENTRY_READ.key,
+      read: P.MENU_ENTRY_READ.key,
+      create: P.MENU_ENTRY_CREATE.key,
+      update: P.MENU_ENTRY_UPDATE.key,
+    },
+  },
+  {
+    key: 'mini-app-notification-settings',
+    label: 'Notification settings',
+    singular: 'Notification setting',
+    endpoint: '/mini-app-notification-settings',
+    description: "What a user has muted.",
+    table: {
+      key: 'mini-app-notification-settings',
+      label: 'Notification settings',
+      endpoint: '/mini-app-notification-settings',
+      emptyHint: 'Create one with POST /api/mini-app-notification-settings.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'miniAppUserId', label: 'User', format: 'reference' },
+        { key: 'notificationKey', label: 'Notification' },
+        { key: 'muted', label: 'Muted', format: 'badge' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    permissions: {
+      list: P.MINI_APP_NOTIFICATION_SETTING_READ.key,
+      read: P.MINI_APP_NOTIFICATION_SETTING_READ.key,
+      create: P.MINI_APP_NOTIFICATION_SETTING_CREATE.key,
+      update: P.MINI_APP_NOTIFICATION_SETTING_UPDATE.key,
+    },
+  },
+];

@@ -1,0 +1,187 @@
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { MERCHANT_PERMISSIONS } from '{{packageName}}-product-domain';
+import {
+  MerchantService,
+  type BranchRow,
+  type MerchantMemberRow,
+  type MerchantRow,
+  type StoreRow,
+} from './merchant.service';
+
+/**
+ * Merchant endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that
+ * declares none. The organization always comes from `@OrganizationId()`, which
+ * reads what the tenant guard derived from the access token; it is never read
+ * from a path, body or header.
+ */
+
+const codeSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(32)
+  .regex(/^[A-Z0-9][A-Z0-9_-]*$/, 'Use uppercase letters, digits, hyphens and underscores.');
+
+const nameSchema = z.string().trim().min(1).max(160);
+
+const createMerchantSchema = z.object({
+  name: nameSchema,
+  code: codeSchema,
+  legalName: z.string().trim().max(200).optional(),
+  contactEmail: z.string().trim().email().max(254).optional(),
+});
+
+const merchantStatusSchema = z.object({
+  status: z.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
+});
+
+const createStoreSchema = z.object({
+  merchantId: z.string().trim().min(1).max(64),
+  name: nameSchema,
+  code: codeSchema,
+  timezone: z.string().trim().max(64).optional(),
+});
+
+const createBranchSchema = z.object({
+  storeId: z.string().trim().min(1).max(64),
+  name: nameSchema,
+  code: codeSchema,
+  addressLine: z.string().trim().max(300).optional(),
+  city: z.string().trim().max(120).optional(),
+});
+
+const addMemberSchema = z.object({
+  merchantId: z.string().trim().min(1).max(64),
+  userId: z.string().trim().min(1).max(64),
+  position: z.string().trim().max(120).optional(),
+  isPrimary: z.boolean().optional(),
+});
+
+@ApiTags('merchants')
+@ApiBearerAuth('access-token')
+@Controller('merchants')
+export class MerchantsController {
+  constructor(private readonly product: MerchantService) {}
+
+  @Get()
+  @RequirePermissions(MERCHANT_PERMISSIONS.MERCHANT_READ.key)
+  @ApiOperation({ summary: 'List merchants in the current organization' })
+  list(): Promise<MerchantRow[]> {
+    return this.product.listMerchants();
+  }
+
+  @Get(':id')
+  @RequirePermissions(MERCHANT_PERMISSIONS.MERCHANT_READ.key)
+  @ApiOperation({ summary: 'Read one merchant' })
+  find(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<MerchantRow> {
+    return this.product.findMerchant(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(MERCHANT_PERMISSIONS.MERCHANT_CREATE.key)
+  @ApiOperation({ summary: 'Register a merchant' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createMerchantSchema)) body: z.infer<typeof createMerchantSchema>,
+  ): Promise<MerchantRow> {
+    return this.product.createMerchant(body, organizationId);
+  }
+
+  @Put(':id/status')
+  @RequirePermissions(MERCHANT_PERMISSIONS.MERCHANT_UPDATE.key)
+  @ApiOperation({ summary: 'Change a merchant status' })
+  updateStatus(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(merchantStatusSchema)) body: z.infer<typeof merchantStatusSchema>,
+  ): Promise<MerchantRow> {
+    return this.product.updateMerchantStatus(id, body.status, organizationId);
+  }
+}
+
+@ApiTags('stores')
+@ApiBearerAuth('access-token')
+@Controller('stores')
+export class StoresController {
+  constructor(private readonly product: MerchantService) {}
+
+  @Get()
+  @RequirePermissions(MERCHANT_PERMISSIONS.STORE_READ.key)
+  @ApiOperation({ summary: 'List stores' })
+  list(): Promise<StoreRow[]> {
+    return this.product.listStores();
+  }
+
+  @Post()
+  @RequirePermissions(MERCHANT_PERMISSIONS.STORE_CREATE.key)
+  @ApiOperation({ summary: 'Create a store under a merchant' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createStoreSchema)) body: z.infer<typeof createStoreSchema>,
+  ): Promise<StoreRow> {
+    return this.product.createStore(body, organizationId);
+  }
+}
+
+@ApiTags('branches')
+@ApiBearerAuth('access-token')
+@Controller('branches')
+export class BranchesController {
+  constructor(private readonly product: MerchantService) {}
+
+  @Get()
+  @RequirePermissions(MERCHANT_PERMISSIONS.BRANCH_READ.key)
+  @ApiOperation({ summary: 'List branches' })
+  list(): Promise<BranchRow[]> {
+    return this.product.listBranches();
+  }
+
+  @Post()
+  @RequirePermissions(MERCHANT_PERMISSIONS.BRANCH_CREATE.key)
+  @ApiOperation({ summary: 'Create a branch under a store' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createBranchSchema)) body: z.infer<typeof createBranchSchema>,
+  ): Promise<BranchRow> {
+    return this.product.createBranch(body, organizationId);
+  }
+}
+
+@ApiTags('merchant-members')
+@ApiBearerAuth('access-token')
+@Controller('merchant-members')
+export class MerchantMembersController {
+  constructor(private readonly product: MerchantService) {}
+
+  @Get()
+  @RequirePermissions(MERCHANT_PERMISSIONS.MEMBER_READ.key)
+  @ApiOperation({ summary: 'List merchant members' })
+  list(): Promise<MerchantMemberRow[]> {
+    return this.product.listMembers();
+  }
+
+  @Post()
+  @RequirePermissions(MERCHANT_PERMISSIONS.MEMBER_MANAGE.key)
+  @ApiOperation({ summary: 'Add a member to a merchant' })
+  add(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(addMemberSchema)) body: z.infer<typeof addMemberSchema>,
+  ): Promise<MerchantMemberRow> {
+    return this.product.addMember(body, organizationId);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @RequirePermissions(MERCHANT_PERMISSIONS.MEMBER_MANAGE.key)
+  @ApiOperation({ summary: 'Remove a merchant member (soft delete)' })
+  remove(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<void> {
+    return this.product.removeMember(id, organizationId);
+  }
+}

@@ -1,0 +1,320 @@
+import { DynamicModule, Global, Module } from '@nestjs/common';
+import { APP_GUARD, Reflector } from '@nestjs/core';
+import { AuditService, PrismaAuditSink } from '@trustos/audit';
+import { JwtAuthGuard, TokenService } from '@trustos/auth';
+import type { AppConfig } from '@trustos/config';
+import { PrismaService, checkDatabaseConnection } from '@trustos/database';
+import { setRequestActor, type Logger } from '@trustos/logging';
+import {
+  ObservabilityModule,
+  databaseHealthIndicator,
+  type MetricsRecorder,
+} from '@trustos/observability';
+import { PermissionsGuard } from '@trustos/rbac';
+import { TenantGuard } from '@trustos/tenancy';
+{{#if authEnabled}}
+import { AuthModule } from './modules/auth/auth.module';
+{{/if}}
+import { AppPrismaService } from './core/prisma.service';
+import { AuditModule } from './modules/audit/audit.module';
+import { ProductModule } from './modules/product/product.module';
+import { createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
+import { canGrantRole } from '@trustos/rbac';
+import { ALL_PERMISSION_KEYS } from '@trustos/rbac';
+import { securityPolicySchema } from '@trustos/security-policy';
+import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustos/security-events';
+import { ALL_WORKFLOW_PERMISSION_KEYS } from '@trustos/workflow-core';
+import { HistoryRecorder, PrismaHistoryStore } from '@trustos/workflow-history';
+import { WORKFLOW_POLICIES } from '@trustos/workflow-policy';
+import { CalendarRegistry, SlaService } from '@trustos/workflow-sla';
+import { PrismaTaskStore, TaskService } from '@trustos/workflow-tasks';
+import {
+  CompiledWorkflowCache,
+  PrismaDecisionStore,
+  PrismaDefinitionStore,
+  PrismaIdempotencyStore,
+  PrismaInstanceStore,
+  PrismaRoundRobinCursor,
+  PrismaSlaStore,
+  PrismaVersionStore,
+  WorkflowDefinitionService,
+  WorkflowEngine,
+} from '@trustos/workflow-runtime';
+import { changeRequestValidator } from './modules/product/change-request.service';
+import { ProductMemberDirectory } from './core/product-member-directory';
+import { TRUSTOS_MODULE_IMPORTS } from './modules/trustos-modules';
+import {
+  APP_CONFIG_TOKEN,
+  APP_LOGGER,
+  APP_METRICS,
+  AUDIT_SERVICE,
+  WORKFLOW_AUTHORIZER,
+  WORKFLOW_DEFINITION_SERVICE,
+  WORKFLOW_ENGINE,
+  WORKFLOW_HISTORY,
+  WORKFLOW_SLA_SERVICE,
+  WORKFLOW_TASK_SERVICE,
+} from './tokens';
+
+export interface AppModuleOptions {
+  config: AppConfig;
+  logger: Logger;
+  metrics: MetricsRecorder;
+}
+
+/**
+ * Composition root for {{productDisplayName}}.
+ *
+ * The three global guards below, and their order, are the security model:
+ *
+ *   JwtAuthGuard      — who is calling?          (sets request.actor)
+ *   TenantGuard       — whose data may they see? (sets request.organizationId)
+ *   PermissionsGuard  — may they do this?        (deny by default)
+ *
+ * Nest applies APP_GUARD providers in registration order, so this array *is*
+ * the order. Changing it is a security review, not a refactor.
+ *
+ * Add product modules to `imports`. Change nothing else here.
+ *
+ * `TRUSTOS_MODULE_IMPORTS` is the list of framework modules installed by
+ * `trustos add-module`. That file is generated; this one is not, which is why the
+ * installer spreads a list here instead of editing the guard array above.
+ */
+@Global()
+@Module({})
+export class AppModule {
+  static forRoot(options: AppModuleOptions): DynamicModule {
+    const { config, logger, metrics } = options;
+
+    return {
+      module: AppModule,
+      imports: [
+        ObservabilityModule.forRootAsync({
+          config,
+          inject: [PrismaService],
+          useFactory: ((prisma: PrismaService) => ({
+            indicators: [databaseHealthIndicator(() => checkDatabaseConnection(prisma))],
+            metrics,
+          })) as never,
+        }),
+{{#if authEnabled}}
+        AuthModule.forRoot(config),
+{{/if}}
+
+        AuditModule,
+
+        // --- product modules ------------------------------------------------
+        ProductModule,
+
+        // --- installed framework modules -------------------------------------
+        // Managed by `trustos add-module`. Empty until a module is installed.
+        ...TRUSTOS_MODULE_IMPORTS,
+      ],
+      providers: [
+        /**
+         * The application's own Prisma client, registered under the framework's
+         * PrismaService token.
+         *
+         * The framework's client knows only the framework models; this one is
+         * generated from prisma/schema/, which holds the framework models *and*
+         * this product's. Registering it here means framework code (audit sink,
+         * auth stores, health indicator) and product code share one client and
+         * one connection pool.
+         */
+        { provide: PrismaService, useFactory: () => new AppPrismaService(config, logger) },
+        { provide: APP_CONFIG_TOKEN, useValue: config },
+        { provide: APP_LOGGER, useValue: logger },
+        { provide: APP_METRICS, useValue: metrics },
+        { provide: TokenService, useValue: new TokenService(config) },
+        {
+          provide: AUDIT_SERVICE,
+          inject: [PrismaService],
+          useFactory: (prisma: PrismaService) =>
+            new AuditService({ sink: new PrismaAuditSink(prisma), logger }),
+        },
+        /*
+         * --- workflow ------------------------------------------------------
+         *
+         * The engine and its collaborators, wired once per process.
+         *
+         * `authorizer` carries the framework's standard policies plus
+         * `WORKFLOW_POLICIES`, which is where separation of duty lives: the submitter
+         * cannot approve, one actor cannot approve twice, and the author of a definition
+         * cannot publish it. Every one of those policies can only *refuse*, so adding them
+         * can only make the application stricter.
+         */
+        {
+          provide: WORKFLOW_AUTHORIZER,
+          useFactory: () =>
+            createAuthorizer({
+              mfa: securityPolicySchema.parse({ environment: config.env }).mfa,
+              events: new SecurityEventEmitter({
+                // A real deployment adds a persistent sink. This keeps the last few in
+                // memory so a development run can see them.
+                sinks: [new InMemorySecurityEventSink()],
+                application: config.serviceName,
+                logger,
+              }),
+              application: config.serviceName,
+              additional: [...WORKFLOW_POLICIES, roleGrantPolicy(canGrantRole)],
+            }),
+        },
+        {
+          provide: WORKFLOW_HISTORY,
+          inject: [PrismaService, AUDIT_SERVICE],
+          /*
+           * `AppPrismaService`, not `PrismaService`.
+           *
+           * They are the same *object* — the provider above registers the app's client under
+           * the framework's token — but not the same *type*. The framework's client knows only
+           * the framework models; the app's is generated from `prisma/schema/`, which holds
+           * the framework models, the workflow models and this product's own. The workflow
+           * stores need the second.
+           */
+          useFactory: (prisma: AppPrismaService, audit: AuditService) =>
+            new HistoryRecorder({
+              store: new PrismaHistoryStore(prisma.workflowEvent),
+              // Both trails, written by one call, so a caller cannot write history and
+              // forget the audit record.
+              audit,
+            }),
+        },
+        {
+          provide: WORKFLOW_TASK_SERVICE,
+          inject: [PrismaService, WORKFLOW_HISTORY],
+          useFactory: (prisma: AppPrismaService, history: HistoryRecorder) =>
+            new TaskService({
+              store: new PrismaTaskStore(prisma.workflowTask),
+              recorder: {
+                record: async (input) =>
+                  void (await history.record({
+                    type: input.type,
+                    organizationId: input.task.organizationId,
+                    workflowInstanceId: input.task.workflowInstanceId,
+                    workflowTaskId: input.task.id,
+                    actorId: input.actorId,
+                    metadata: { stepKey: input.task.stepKey, ...input.metadata },
+                  })),
+              },
+            }),
+        },
+        {
+          provide: WORKFLOW_SLA_SERVICE,
+          inject: [PrismaService],
+          useFactory: (prisma: AppPrismaService) =>
+            new SlaService({
+              store: new PrismaSlaStore(prisma.workflowSla),
+              // Elapsed time only. A working-hours calendar registers here; a definition
+              // naming an unregistered one fails validation rather than silently falling
+              // back, because a fallback is an SLA that looks correct and is not.
+              calendars: new CalendarRegistry(),
+            }),
+        },
+        {
+          provide: WORKFLOW_ENGINE,
+          inject: [PrismaService, WORKFLOW_AUTHORIZER, WORKFLOW_HISTORY, WORKFLOW_TASK_SERVICE, WORKFLOW_SLA_SERVICE],
+          useFactory: (
+            prisma: AppPrismaService,
+            authorizer: ReturnType<typeof createAuthorizer>,
+            history: HistoryRecorder,
+            tasks: TaskService,
+            sla: SlaService,
+          ) =>
+            new WorkflowEngine({
+              instances: new PrismaInstanceStore(prisma.workflowInstance),
+              versions: new PrismaVersionStore(
+                prisma.workflowVersion,
+                prisma.workflowInstance,
+                prisma.workflowDefinition,
+              ),
+              decisions: new PrismaDecisionStore(prisma.workflowDecision),
+              tasks,
+              taskStore: new PrismaTaskStore(prisma.workflowTask),
+              history,
+              authorizer,
+              sla,
+              idempotency: new PrismaIdempotencyStore(prisma.workflowIdempotencyRecord),
+              assignment: {
+                directory: new ProductMemberDirectory(prisma),
+                // Persisted, because a counter that resets on every deploy sends every task
+                // after a restart to the same person.
+                cursor: new PrismaRoundRobinCursor(prisma.workflowAssignmentCursor),
+              },
+              metrics,
+              /*
+               * The business-object validator.
+               *
+               * Without it the engine refuses to start an instance in production, because
+               * `objectType` and `objectId` would be strings nobody has checked — and an
+               * instance started against another organization's record puts that record's
+               * id into this organization's history.
+               */
+              objectValidators: [changeRequestValidator(prisma)],
+              // Safe because a published version is immutable: there is no invalidation to
+              // get wrong.
+              cache: new CompiledWorkflowCache(),
+            }),
+        },
+        {
+          provide: WORKFLOW_DEFINITION_SERVICE,
+          inject: [PrismaService, WORKFLOW_AUTHORIZER, WORKFLOW_HISTORY],
+          useFactory: (
+            prisma: AppPrismaService,
+            authorizer: ReturnType<typeof createAuthorizer>,
+            history: HistoryRecorder,
+          ) =>
+            new WorkflowDefinitionService({
+              definitions: new PrismaDefinitionStore(prisma.workflowDefinition),
+              versions: new PrismaVersionStore(
+                prisma.workflowVersion,
+                prisma.workflowInstance,
+                prisma.workflowDefinition,
+              ),
+              history,
+              authorizer,
+              // The catalog, so a definition referencing a misspelled permission is refused
+              // at publication rather than becoming a step nobody can ever act on.
+              knownPermissions: [...ALL_PERMISSION_KEYS, ...ALL_WORKFLOW_PERMISSION_KEYS],
+              registeredCalendars: ['elapsed'],
+            }),
+        },
+
+        {
+          provide: APP_GUARD,
+          inject: [Reflector, TokenService],
+          useFactory: (reflector: Reflector, tokens: TokenService) =>
+            new JwtAuthGuard(reflector, {
+              tokens,
+              // Enriches every later log line and audit record with the actor.
+              onActorResolved: (actor) => setRequestActor(actor),
+            }),
+        },
+        { provide: APP_GUARD, useClass: TenantGuard },
+        { provide: APP_GUARD, useClass: PermissionsGuard },
+      ],
+      /*
+       * Exported because AppModule is @Global(): these are what product modules
+       * and installed framework modules inject.
+       *
+       * PrismaService is on the list deliberately. A provider that is declared
+       * here but not exported is invisible to every imported module, so a module
+       * injecting it would fail to resolve at start-up — which is a boot failure,
+       * not a runtime one, but only if somebody boots the application.
+       */
+      exports: [
+        APP_CONFIG_TOKEN,
+        APP_LOGGER,
+        APP_METRICS,
+        AUDIT_SERVICE,
+  WORKFLOW_AUTHORIZER,
+  WORKFLOW_DEFINITION_SERVICE,
+  WORKFLOW_ENGINE,
+  WORKFLOW_HISTORY,
+  WORKFLOW_SLA_SERVICE,
+  WORKFLOW_TASK_SERVICE,
+        PrismaService,
+        TokenService,
+      ],
+    };
+  }
+}

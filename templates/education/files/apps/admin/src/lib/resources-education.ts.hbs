@@ -1,0 +1,402 @@
+/**
+ * TrustOS Education — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { EDUCATION_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const EDUCATION_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'teachers',
+    label: 'Teachers',
+    singular: 'Teacher',
+    endpoint: '/teachers',
+    description: "Somebody who teaches.",
+    table: {
+      key: 'teachers',
+      label: 'Teachers',
+      endpoint: '/teachers',
+      emptyHint: 'Create one with POST /api/teachers.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'userId', label: 'User', sortable: true },
+        { key: 'displayName', label: 'Teacher' },
+        { key: 'email', label: 'Email' },
+        { key: 'bio', label: 'Bio' },
+        { key: 'isActive', label: 'Active', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'displayName', label: 'Teacher' },
+      ],
+    },
+    permissions: {
+      list: P.TEACHER_READ.key,
+      read: P.TEACHER_READ.key,
+      create: P.TEACHER_CREATE.key,
+      update: P.TEACHER_UPDATE.key,
+    },
+  },
+  {
+    key: 'students',
+    label: 'Students',
+    singular: 'Student',
+    endpoint: '/students',
+    description: "Somebody who learns.",
+    table: {
+      key: 'students',
+      label: 'Students',
+      endpoint: '/students',
+      emptyHint: 'Create one with POST /api/students.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'userId', label: 'User', sortable: true },
+        { key: 'displayName', label: 'Student' },
+        { key: 'email', label: 'Email' },
+        { key: 'enrolledOn', label: 'Joined', format: 'date' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ACTIVE","label":"Active"},{"value":"PAUSED","label":"Paused"},{"value":"GRADUATED","label":"Graduated"},{"value":"WITHDRAWN","label":"Withdrawn"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'displayName', label: 'Student' },
+        { key: 'email', label: 'Email' },
+      ],
+    },
+    permissions: {
+      list: P.STUDENT_READ.key,
+      read: P.STUDENT_READ.key,
+      create: P.STUDENT_CREATE.key,
+      update: P.STUDENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'courses',
+    label: 'Courses',
+    singular: 'Course',
+    endpoint: '/courses',
+    description: "A body of material a student can enrol in.",
+    table: {
+      key: 'courses',
+      label: 'Courses',
+      endpoint: '/courses',
+      emptyHint: 'Create one with POST /api/courses.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'title', label: 'Course' },
+        { key: 'summary', label: 'Summary' },
+        { key: 'teacherId', label: 'Teacher', format: 'reference' },
+        { key: 'level', label: 'Level', format: 'badge', sortable: true },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'level', label: 'Level', type: 'enum', operators: ['eq', 'in'], options: [{"value":"BEGINNER","label":"Beginner"},{"value":"INTERMEDIATE","label":"Intermediate"},{"value":"ADVANCED","label":"Advanced"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DRAFT","label":"Draft"},{"value":"PUBLISHED","label":"Published"},{"value":"ARCHIVED","label":"Archived"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'title', label: 'Course' },
+      ],
+    },
+    permissions: {
+      list: P.COURSE_READ.key,
+      read: P.COURSE_READ.key,
+      create: P.COURSE_CREATE.key,
+      update: P.COURSE_UPDATE.key,
+    },
+  },
+  {
+    key: 'lessons',
+    label: 'Lessons',
+    singular: 'Lesson',
+    endpoint: '/lessons',
+    description: "One unit of a course.",
+    table: {
+      key: 'lessons',
+      label: 'Lessons',
+      endpoint: '/lessons',
+      emptyHint: 'Create one with POST /api/lessons.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'courseId', label: 'Course', format: 'reference' },
+        { key: 'title', label: 'Lesson' },
+        { key: 'position', label: 'Position', format: 'number' },
+        { key: 'body', label: 'Content' },
+        { key: 'durationMinutes', label: 'Duration', format: 'number' },
+        { key: 'isPublished', label: 'Published', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isPublished', label: 'Published', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'title', label: 'Lesson' },
+      ],
+    },
+    permissions: {
+      list: P.LESSON_READ.key,
+      read: P.LESSON_READ.key,
+      create: P.LESSON_CREATE.key,
+      update: P.LESSON_UPDATE.key,
+    },
+  },
+  {
+    key: 'quizes',
+    label: 'Quizzes',
+    singular: 'Quiz',
+    endpoint: '/quizes',
+    description: "A set of questions attached to a lesson or a course.",
+    table: {
+      key: 'quizes',
+      label: 'Quizzes',
+      endpoint: '/quizes',
+      emptyHint: 'Create one with POST /api/quizes.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'courseId', label: 'Course', format: 'reference' },
+        { key: 'lessonId', label: 'Lesson', format: 'reference' },
+        { key: 'title', label: 'Quiz' },
+        { key: 'passMarkPercent', label: 'Pass mark %', format: 'number' },
+        { key: 'timeLimitMinutes', label: 'Time limit', format: 'number' },
+        { key: 'isPublished', label: 'Published', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isPublished', label: 'Published', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'title', label: 'Quiz' },
+      ],
+    },
+    permissions: {
+      list: P.QUIZ_READ.key,
+      read: P.QUIZ_READ.key,
+      create: P.QUIZ_CREATE.key,
+      update: P.QUIZ_UPDATE.key,
+    },
+  },
+  {
+    key: 'quiz-questions',
+    label: 'Questions',
+    singular: 'Question',
+    endpoint: '/quiz-questions',
+    description: "One question.",
+    table: {
+      key: 'quiz-questions',
+      label: 'Questions',
+      endpoint: '/quiz-questions',
+      emptyHint: 'Create one with POST /api/quiz-questions.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'quizId', label: 'Quiz', format: 'reference' },
+        { key: 'position', label: 'Position', format: 'number' },
+        { key: 'prompt', label: 'Question' },
+        { key: 'options', label: 'Options' },
+        { key: 'correctOption', label: 'Correct option', format: 'number' },
+        { key: 'marks', label: 'Marks', format: 'number' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    permissions: {
+      list: P.QUIZ_QUESTION_READ.key,
+      read: P.QUIZ_QUESTION_READ.key,
+      create: P.QUIZ_QUESTION_CREATE.key,
+      update: P.QUIZ_QUESTION_UPDATE.key,
+    },
+  },
+  {
+    key: 'enrollments',
+    label: 'Enrolments',
+    singular: 'Enrolment',
+    endpoint: '/enrollments',
+    description: "A student on a course.",
+    table: {
+      key: 'enrollments',
+      label: 'Enrolments',
+      endpoint: '/enrollments',
+      emptyHint: 'Create one with POST /api/enrollments.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'courseId', label: 'Course', format: 'reference' },
+        { key: 'studentId', label: 'Student', format: 'reference' },
+        { key: 'enrolledAt', label: 'Enrolled', format: 'datetime', sortable: true },
+        { key: 'completedAt', label: 'Completed', format: 'datetime' },
+        { key: 'progressPercent', label: 'Progress %', format: 'number' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'enrolledAt', label: 'Enrolled', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ACTIVE","label":"Active"},{"value":"COMPLETED","label":"Completed"},{"value":"DROPPED","label":"Dropped"}] },
+    ],
+    permissions: {
+      list: P.ENROLLMENT_READ.key,
+      read: P.ENROLLMENT_READ.key,
+      create: P.ENROLLMENT_CREATE.key,
+      update: P.ENROLLMENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'assignments',
+    label: 'Assignments',
+    singular: 'Assignment',
+    endpoint: '/assignments',
+    description: "Work a student submits and a teacher marks.",
+    table: {
+      key: 'assignments',
+      label: 'Assignments',
+      endpoint: '/assignments',
+      emptyHint: 'Create one with POST /api/assignments.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'courseId', label: 'Course', format: 'reference' },
+        { key: 'title', label: 'Assignment' },
+        { key: 'instructions', label: 'Instructions' },
+        { key: 'dueAt', label: 'Due', format: 'datetime', sortable: true },
+        { key: 'maxMarks', label: 'Max marks', format: 'number' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'dueAt', label: 'Due', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'title', label: 'Assignment' },
+      ],
+    },
+    permissions: {
+      list: P.ASSIGNMENT_READ.key,
+      read: P.ASSIGNMENT_READ.key,
+      create: P.ASSIGNMENT_CREATE.key,
+      update: P.ASSIGNMENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'assignment-submissions',
+    label: 'Submissions',
+    singular: 'Submission',
+    endpoint: '/assignment-submissions',
+    description: "A student handing work in.",
+    table: {
+      key: 'assignment-submissions',
+      label: 'Submissions',
+      endpoint: '/assignment-submissions',
+      emptyHint: 'Create one with POST /api/assignment-submissions.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'assignmentId', label: 'Assignment', format: 'reference' },
+        { key: 'studentId', label: 'Student', format: 'reference' },
+        { key: 'submittedAt', label: 'Submitted', format: 'datetime', sortable: true },
+        { key: 'body', label: 'Answer' },
+        { key: 'marksAwarded', label: 'Marks', format: 'number' },
+        { key: 'feedback', label: 'Feedback' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'submittedAt', label: 'Submitted', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DRAFT","label":"Draft"},{"value":"SUBMITTED","label":"Submitted"},{"value":"MARKED","label":"Marked"},{"value":"RETURNED","label":"Returned"},{"value":"LATE","label":"Late"}] },
+    ],
+    permissions: {
+      list: P.ASSIGNMENT_SUBMISSION_READ.key,
+      read: P.ASSIGNMENT_SUBMISSION_READ.key,
+      create: P.ASSIGNMENT_SUBMISSION_CREATE.key,
+      update: P.ASSIGNMENT_SUBMISSION_UPDATE.key,
+    },
+  },
+  {
+    key: 'certificates',
+    label: 'Certificates',
+    singular: 'Certificate',
+    endpoint: '/certificates',
+    description: "Proof a student finished a course.",
+    table: {
+      key: 'certificates',
+      label: 'Certificates',
+      endpoint: '/certificates',
+      emptyHint: 'Create one with POST /api/certificates.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'enrollmentId', label: 'Enrolment', format: 'reference' },
+        { key: 'serial', label: 'Serial', sortable: true },
+        { key: 'issuedAt', label: 'Issued', format: 'datetime', sortable: true },
+        { key: 'revokedAt', label: 'Revoked', format: 'datetime' },
+        { key: 'revocationReason', label: 'Reason' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'issuedAt', label: 'Issued', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'serial', label: 'Serial', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.CERTIFICATE_READ.key,
+      read: P.CERTIFICATE_READ.key,
+      create: P.CERTIFICATE_CREATE.key,
+      update: P.CERTIFICATE_UPDATE.key,
+    },
+  },
+  {
+    key: 'tutor-sessions',
+    label: 'Tutor sessions',
+    singular: 'Tutor session',
+    endpoint: '/tutor-sessions',
+    description: "The AI tutor hook.",
+    table: {
+      key: 'tutor-sessions',
+      label: 'Tutor sessions',
+      endpoint: '/tutor-sessions',
+      emptyHint: 'Create one with POST /api/tutor-sessions.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'studentId', label: 'Student', format: 'reference' },
+        { key: 'courseId', label: 'Course', format: 'reference' },
+        { key: 'prompt', label: 'Question' },
+        { key: 'response', label: 'Answer' },
+        { key: 'modelId', label: 'Model' },
+        { key: 'askedAt', label: 'Asked', format: 'datetime', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'askedAt', label: 'Asked', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PENDING","label":"Pending"},{"value":"ANSWERED","label":"Answered"},{"value":"FAILED","label":"Failed"},{"value":"BLOCKED","label":"Blocked"}] },
+    ],
+    permissions: {
+      list: P.TUTOR_SESSION_READ.key,
+      read: P.TUTOR_SESSION_READ.key,
+      create: P.TUTOR_SESSION_CREATE.key,
+      update: P.TUTOR_SESSION_UPDATE.key,
+    },
+  },
+];

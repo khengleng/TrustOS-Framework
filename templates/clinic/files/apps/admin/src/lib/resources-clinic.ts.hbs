@@ -1,0 +1,202 @@
+/**
+ * TrustOS Clinic — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { CLINIC_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const CLINIC_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'patients',
+    label: 'Patients',
+    singular: 'Patient',
+    endpoint: '/patients',
+    description: "A person receiving care.",
+    table: {
+      key: 'patients',
+      label: 'Patients',
+      endpoint: '/patients',
+      emptyHint: 'Create one with POST /api/patients.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'patientNumber', label: 'Patient no.', sortable: true },
+        { key: 'fullName', label: 'Name' },
+        { key: 'dateOfBirth', label: 'Date of birth', format: 'date', permission: 'clinic.pii.read' },
+        { key: 'sex', label: 'Sex', format: 'badge', sortable: true },
+        { key: 'phone', label: 'Phone', permission: 'clinic.pii.read' },
+        { key: 'addressLine', label: 'Address', permission: 'clinic.pii.read' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'sex', label: 'Sex', type: 'enum', operators: ['eq', 'in'], options: [{"value":"FEMALE","label":"Female"},{"value":"MALE","label":"Male"},{"value":"OTHER","label":"Other"},{"value":"UNDISCLOSED","label":"Undisclosed"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ACTIVE","label":"Active"},{"value":"INACTIVE","label":"Inactive"},{"value":"DECEASED","label":"Deceased"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'patientNumber', label: 'Patient no.', prefixOnly: true },
+        { key: 'fullName', label: 'Name' },
+      ],
+    },
+    permissions: {
+      list: P.PATIENT_READ.key,
+      read: P.PATIENT_READ.key,
+      create: P.PATIENT_CREATE.key,
+      update: P.PATIENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'practitioners',
+    label: 'Doctors',
+    singular: 'Doctor',
+    endpoint: '/practitioners',
+    description: "A clinician.",
+    table: {
+      key: 'practitioners',
+      label: 'Doctors',
+      endpoint: '/practitioners',
+      emptyHint: 'Create one with POST /api/practitioners.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'userId', label: 'User', sortable: true },
+        { key: 'displayName', label: 'Doctor' },
+        { key: 'speciality', label: 'Speciality', sortable: true },
+        { key: 'licenceNumber', label: 'Licence no.' },
+        { key: 'isAcceptingPatients', label: 'Accepting', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'speciality', label: 'Speciality', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'isAcceptingPatients', label: 'Accepting', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'displayName', label: 'Doctor' },
+      ],
+    },
+    permissions: {
+      list: P.PRACTITIONER_READ.key,
+      read: P.PRACTITIONER_READ.key,
+      create: P.PRACTITIONER_CREATE.key,
+      update: P.PRACTITIONER_UPDATE.key,
+    },
+  },
+  {
+    key: 'appointments',
+    label: 'Appointments',
+    singular: 'Appointment',
+    endpoint: '/appointments',
+    description: "A booked slot.",
+    table: {
+      key: 'appointments',
+      label: 'Appointments',
+      endpoint: '/appointments',
+      emptyHint: 'Create one with POST /api/appointments.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'patientId', label: 'Patient', format: 'reference' },
+        { key: 'practitionerId', label: 'Doctor', format: 'reference' },
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'scheduledFor', label: 'Scheduled', format: 'datetime', sortable: true },
+        { key: 'durationMinutes', label: 'Duration', format: 'number' },
+        { key: 'reason', label: 'Reason' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'scheduledFor', label: 'Scheduled', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"BOOKED","label":"Booked"},{"value":"ARRIVED","label":"Arrived"},{"value":"IN_PROGRESS","label":"In Progress"},{"value":"COMPLETED","label":"Completed"},{"value":"CANCELLED","label":"Cancelled"},{"value":"NO_SHOW","label":"No Show"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.APPOINTMENT_READ.key,
+      read: P.APPOINTMENT_READ.key,
+      create: P.APPOINTMENT_CREATE.key,
+      update: P.APPOINTMENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'medical-record-entries',
+    label: 'Medical records',
+    singular: 'Record entry',
+    endpoint: '/medical-record-entries',
+    description: "A note against a patient.",
+    table: {
+      key: 'medical-record-entries',
+      label: 'Medical records',
+      endpoint: '/medical-record-entries',
+      emptyHint: 'Create one with POST /api/medical-record-entries.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'patientId', label: 'Patient', format: 'reference' },
+        { key: 'appointmentId', label: 'Appointment', format: 'reference' },
+        { key: 'authorPractitionerId', label: 'Author', format: 'reference' },
+        { key: 'kind', label: 'Kind', format: 'badge', sortable: true },
+        { key: 'body', label: 'Entry', permission: 'clinic.pii.read' },
+        { key: 'recordedAt', label: 'Recorded', format: 'datetime', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'kind', label: 'Kind', type: 'enum', operators: ['eq', 'in'], options: [{"value":"CONSULTATION","label":"Consultation"},{"value":"OBSERVATION","label":"Observation"},{"value":"PRESCRIPTION","label":"Prescription"},{"value":"REFERRAL","label":"Referral"},{"value":"ATTACHMENT","label":"Attachment"}] },
+      { key: 'recordedAt', label: 'Recorded', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    permissions: {
+      list: P.MEDICAL_RECORD_ENTRY_READ.key,
+      read: P.MEDICAL_RECORD_ENTRY_READ.key,
+      create: P.MEDICAL_RECORD_ENTRY_CREATE.key,
+      update: P.MEDICAL_RECORD_ENTRY_UPDATE.key,
+    },
+  },
+  {
+    key: 'clinic-invoices',
+    label: 'Invoices',
+    singular: 'Invoice',
+    endpoint: '/clinic-invoices',
+    description: "What the visit cost.",
+    table: {
+      key: 'clinic-invoices',
+      label: 'Invoices',
+      endpoint: '/clinic-invoices',
+      emptyHint: 'Create one with POST /api/clinic-invoices.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'patientId', label: 'Patient', format: 'reference' },
+        { key: 'appointmentId', label: 'Appointment', format: 'reference' },
+        { key: 'number', label: 'Number', sortable: true },
+        { key: 'issuedAt', label: 'Issued', format: 'datetime', sortable: true },
+        { key: 'total', label: 'Total', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'issuedAt', label: 'Issued', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DRAFT","label":"Draft"},{"value":"ISSUED","label":"Issued"},{"value":"PAID","label":"Paid"},{"value":"VOID","label":"Void"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'number', label: 'Number', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.CLINIC_INVOICE_READ.key,
+      read: P.CLINIC_INVOICE_READ.key,
+      create: P.CLINIC_INVOICE_CREATE.key,
+      update: P.CLINIC_INVOICE_UPDATE.key,
+    },
+  },
+];

@@ -1,0 +1,923 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Postgres is not needed for the checks below, but Prisma refuses to load a
+  # schema whose datasource variable is unset. A syntactically valid URL that
+  # points nowhere is enough for `prisma validate` and `prisma generate`.
+  DATABASE_URL: postgresql://schema:validation@localhost:5432/validate
+
+jobs:
+  verify:
+    name: install · lint · typecheck · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # A real Postgres, because two of the checks below are about migrations, and a
+    # migration that is only diffed has not been shown to run.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trustos_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # `npm ci` runs the root postinstall, which generates the Prisma client.
+      # Every later step depends on those types existing.
+      - name: Install
+        run: npm ci
+
+      - name: Create the shadow database
+        run: PGPASSWORD=postgres psql -h localhost -U postgres -c 'CREATE DATABASE shadow'
+
+      - name: Validate Prisma schema
+        run: npm run db:validate
+
+      # Compares the *whole* migration history to the schema, which is the check
+      # that matters: an incremental migration is a legitimate way to change the
+      # schema, and comparing only the first one would fail on every one of them.
+      # Needs a shadow database, because replaying the history is how Prisma
+      # computes the difference.
+      - name: Check migrations match the schema
+        env:
+          SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shadow
+        run: |
+          if ! npm run migrate:drift -w @trustos/database --silent; then
+            echo "::error::prisma/migrations is out of date with schema.prisma."
+            echo "Add a migration with 'npm run db:migrate', or correct the schema."
+            exit 1
+          fi
+          echo "Migration history matches the schema."
+
+      # Proves the history applies to an empty database, which a diff cannot: a
+      # migration can be consistent with the schema and still fail to run.
+      - name: Migration history applies cleanly
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/trustos_ci
+        run: npm run db:deploy
+
+      - name: No build output in a source tree
+        run: |
+          # `tsc -b` on a project whose rootDir cannot contain a referenced package emits
+          # next to the sources rather than into dist. That produced 28 stray files during
+          # phase 5 and the only symptom was a lint failure about `exports` being undefined,
+          # in a file nobody wrote.
+          #
+          # .gitignore stops them being committed. This makes them visible, because an
+          # ignored file that breaks the build is worse than a tracked one.
+          stray="$(find packages apps -path '*/src/*' \
+            \( -name '*.js' -o -name '*.js.map' -o -name '*.d.ts' -o -name '*.d.ts.map' \) \
+            -not -path '*/node_modules/*' -print)"
+
+          if [ -n "$stray" ]; then
+            echo "::error::Compiled output was emitted into a source tree:"
+            echo "$stray"
+            echo
+            echo "A tsconfig references a package its rootDir cannot contain. Check the"
+            echo "'references' and 'paths' of the project that emitted these."
+            exit 1
+          fi
+          echo "No build output in any source tree."
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Build packages
+        run: npm run build:packages
+
+      - name: Type check applications
+        run: |
+          npm run typecheck -w @trustos/api-example
+          npm run typecheck -w @trustos/saas-starter
+          npm run typecheck -w @trustos/admin-example
+
+      - name: Unit tests
+        run: npm test
+
+      # The rules the framework holds itself to. Layering, dependency direction and the security
+      # patterns are all invisible in a diff and only caught by running this.
+      - name: Architecture rules
+        run: node packages/cli/bin/trustos.js architecture-check
+
+      # A package with no spec file is a package whose coverage is invisible: the v8 provider
+      # reports over the files a test loaded, so one that nothing imports is absent from the table
+      # *and* from the total. The number then measures the code we test, which trends to 100% by
+      # construction. This is the check that actually catches the gap.
+      - name: Every package has tests
+        run: |
+          missing=""
+          for dir in packages/*/; do
+            [ -d "$dir/src" ] || continue
+            name=$(basename "$dir")
+            case "$name" in
+              # Types only, and a Prisma wrapper exercised by test:tenancy against a real database.
+              shared-types|database) continue ;;
+              # The module packages are thin contracts covered generically by
+              # packages/modules/modules.spec.ts — sixteen near-identical spec files would be the
+              # duplication the framework forbids everywhere else.
+              modules) continue ;;
+            esac
+            specs=$(find "$dir" -name '*.spec.ts' -not -path '*/node_modules/*' | wc -l)
+            sources=$(find "$dir/src" -name '*.ts' ! -name '*.spec.ts' ! -name 'index.ts' | wc -l)
+            if [ "$specs" -eq 0 ] && [ "$sources" -ne 0 ]; then
+              missing="$missing $name"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "Packages with source and no tests:$missing"
+            exit 1
+          fi
+          if [ ! -f packages/modules/modules.spec.ts ]; then
+            echo "packages/modules/modules.spec.ts is missing — nothing would exercise the module contracts."
+            exit 1
+          fi
+          echo "Every package with source has tests."
+
+      - name: Build applications
+        run: npm run build:apps
+
+  templates:
+    name: validate templates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the CLI and its dependencies
+        run: npm run build:packages
+
+      - name: CLI smoke test
+        run: |
+          node packages/cli/bin/trustos.js --version
+          node packages/cli/bin/trustos.js --help
+          node packages/cli/bin/trustos.js list-templates --verbose
+
+      - name: Environment check
+        run: node packages/cli/bin/trustos.js doctor
+
+      # Ten checks per template, including that each one ships tenant-isolation
+      # tests and contains nothing secret-shaped.
+      - name: Validate every template
+        run: node packages/cli/bin/trustos.js validate-template --all
+
+  modules:
+    name: validate modules
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the framework packages
+        run: npm run build:packages
+
+      # The catalog validates on import: duplicate permissions, routes, schema
+      # fragments or environment variables across modules, an unresolvable
+      # dependency, or a cycle, all make it refuse to load.
+      - name: Validate module registration
+        run: npm run modules:validate
+
+      - name: CLI can list modules without importing one
+        run: |
+          node packages/cli/bin/trustos.js list-modules --verbose
+          node packages/cli/bin/trustos.js list-modules --json > /tmp/modules.json
+          # Compare against what is on disk rather than a hardcoded number. A literal
+          # count goes stale the first time somebody adds a module, and a check that
+          # fails for being out of date teaches people to ignore the job.
+          expected=$(find packages/modules -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+          EXPECTED_MODULES="$expected" node -e "
+            const modules = require('/tmp/modules.json');
+            const expected = Number(process.env.EXPECTED_MODULES);
+            if (modules.length !== expected) {
+              const seen = new Set(modules.map((entry) => entry.metadata.id));
+              console.error('the CLI listed ' + modules.length + ' modules but packages/modules holds ' + expected);
+              console.error('listed: ' + [...seen].sort().join(', '));
+              process.exit(1);
+            }
+            for (const entry of modules) {
+              // Routes are optional by contract (definition.ts: \`routes?: unknown[]\`) —
+              // ledger, wallet, scheduler and the other primitives are consumed in
+              // process and expose no HTTP surface. Audit events are not optional:
+              // a module that can change something must be able to say that it did.
+              if (entry.auditEvents.length === 0) { console.error(entry.metadata.id + ' declares no audit events'); process.exit(1); }
+
+              // Every route a module does declare has to name the permission that
+              // guards it. An unguarded route is the deny-by-default rule failing
+              // silently, which is the failure this job exists to catch.
+              for (const route of entry.routes) {
+                if (!route.method || !route.path) { console.error(entry.metadata.id + ' has a malformed route: ' + JSON.stringify(route)); process.exit(1); }
+                if (!route.permission) { console.error(entry.metadata.id + ' route ' + route.method + ' ' + route.path + ' declares no permission'); process.exit(1); }
+              }
+            }
+            const routes = modules.reduce((n, e) => n + e.routes.length, 0);
+            console.log(modules.length + ' modules, ' + routes + ' routes, every route permissioned');
+          "
+
+      # Every module must ship the five kinds of test the standard requires. A
+      # module whose isolation suite was never written would otherwise pass CI by
+      # having no failing tests.
+      - name: Every module ships the required tests
+        run: |
+          for module in packages/modules/*/; do
+            id=$(basename "$module")
+            for required in "tenant isolation" "configuration validation" "lifecycle"; do
+              if ! grep -rqi "$required" "$module/src"; then
+                echo "::error::$id has no \"$required\" tests"
+                exit 1
+              fi
+            done
+            test -f "$module/README.md" || { echo "::error::$id has no README.md"; exit 1; }
+            test -f "$module/AGENTS.md" || { echo "::error::$id has no AGENTS.md"; exit 1; }
+            echo "$id ok"
+          done
+
+      # Boots a real Nest application with all seven modules and asserts that
+      # injection resolves, every advertised route is mapped, each initialize hook
+      # ran, and the health indicators reach the readiness probe.
+      - name: NestJS wiring boots
+        run: npx vitest run packages/modules/nest-wiring.spec.ts packages/modules/all-modules.spec.ts
+
+  generated:
+    name: generated app (${{ matrix.template }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [templates]
+
+    strategy:
+      # One failing template should not hide the state of the others.
+      fail-fast: false
+      matrix:
+        template:
+          - generic-saas
+          - workflow-enabled-saas
+          - merchant
+          - learning
+          - payment-gateway
+          - telegram-mini-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install the framework
+        run: npm ci
+
+      # Generated applications resolve @trustos/* through file: links to this
+      # checkout, so the packages must be compiled before one is generated.
+      - name: Build the framework packages
+        run: npm run build:packages
+
+      - name: Generate
+        run: |
+          mkdir -p /tmp/generated
+          node packages/cli/bin/trustos.js new "${{ matrix.template }}" \
+            --yes \
+            --name "sample-${{ matrix.template }}" \
+            --package-name "sample-${{ matrix.template }}" \
+            --target-dir /tmp/generated \
+            --framework-path "$GITHUB_WORKSPACE" \
+            --generated-at 2026-01-01T00:00:00.000Z \
+            --no-git
+
+      # A dry run must produce the same plan and write nothing. Run against an
+      # already-generated directory so the conflict path is exercised too.
+      - name: Dry run is inert
+        run: |
+          BEFORE=$(find /tmp/generated -type f | wc -l)
+          node packages/cli/bin/trustos.js new "${{ matrix.template }}" \
+            --yes --name "sample-${{ matrix.template }}" \
+            --target-dir /tmp/generated --framework-path "$GITHUB_WORKSPACE" \
+            --dry-run --verbose --no-git > /tmp/dry-run.log
+          AFTER=$(find /tmp/generated -type f | wc -l)
+          if [ "$BEFORE" != "$AFTER" ]; then
+            echo "::error::--dry-run changed the filesystem ($BEFORE -> $AFTER files)"
+            exit 1
+          fi
+          grep -q "Nothing was written." /tmp/dry-run.log
+
+      - name: No secrets were generated
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: |
+          test ! -e .env || { echo "::error::a .env file was generated"; exit 1; }
+          test -f .env.example || { echo "::error::.env.example is missing"; exit 1; }
+          if find . -name '*.pem' -o -name '*.key' -o -name '*.p12' | grep -q .; then
+            echo "::error::key material was generated"
+            exit 1
+          fi
+          echo "No secrets generated."
+
+      - name: Required files are present
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: |
+          for required in AGENTS.md README.md trustos.json railway.toml \
+                          docs/architecture.md docs/deployment.md docs/security.md; do
+            test -f "$required" || { echo "::error::$required is missing"; exit 1; }
+          done
+          # The generated deployment guide must actually cover Railway.
+          grep -qi railway docs/deployment.md || { echo "::error::no Railway documentation"; exit 1; }
+          # Provenance must record what produced this project.
+          node -e "
+            const m = require('./trustos.json');
+            for (const key of ['frameworkVersion','template','templateVersion','cliVersion','generatedAt']) {
+              if (!m[key]) { console.error('missing ' + key + ' in trustos.json'); process.exit(1); }
+            }
+            console.log('trustos.json records', m.template, 'v' + m.templateVersion);
+          "
+
+      # Runs before install and build: those steps rewrite generated files
+      # (`next build` rewrites next-env.d.ts, tsc writes tsbuildinfo), so
+      # comparing a built tree would fail on artifacts that say nothing about
+      # the generator.
+      - name: Generation is deterministic
+        run: |
+          mkdir -p /tmp/repeat
+          node packages/cli/bin/trustos.js new "${{ matrix.template }}" \
+            --yes \
+            --name "sample-${{ matrix.template }}" \
+            --package-name "sample-${{ matrix.template }}" \
+            --target-dir /tmp/repeat \
+            --framework-path "$GITHUB_WORKSPACE" \
+            --generated-at 2026-01-01T00:00:00.000Z \
+            --no-git
+
+          # Two fresh trees, compared in full. Same inputs — including the
+          # timestamp — must give byte-identical output.
+          if ! diff -r \
+              "/tmp/generated/sample-${{ matrix.template }}" \
+              "/tmp/repeat/sample-${{ matrix.template }}"; then
+            echo "::error::generation is not deterministic for ${{ matrix.template }}"
+            exit 1
+          fi
+          echo "Byte-identical across two runs."
+
+      - name: Install the generated application
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: npm install
+
+      - name: Validate the generated Prisma schema
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: npm run db:validate
+
+      - name: Type check the generated application
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: npm run typecheck
+
+      # Includes the tenant-isolation suite every template is required to ship.
+      - name: Test the generated application
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: npm test
+
+      - name: Build the generated application
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: npm run build
+
+      # Installing every module into a real generated application, which is the
+      # only place the merge behaviour, the Prisma fragment numbering and the
+      # generated wiring meet each other.
+      - name: Install every module
+        run: |
+          # `workflow-enabled-saas` builds its own, richer workflow schema on the
+          # workflow-* packages, so the workflow *module* would redefine three of its
+          # models. That install is refused by design, and the step below asserts it.
+          modules="notification document workflow reporting search feature-flags"
+          if [ "${{ matrix.template }}" = "workflow-enabled-saas" ]; then
+            modules="notification document reporting search feature-flags"
+          fi
+
+          node packages/cli/bin/trustos.js add-module $modules \
+            --path "/tmp/generated/sample-${{ matrix.template }}" \
+            --framework-path "$GITHUB_WORKSPACE" \
+            --generated-at 2026-01-01T00:00:00.000Z \
+            --yes --verbose
+
+      # Prisma merges every file in prisma/schema/, so a module fragment that
+      # redefines a model the template already owns produces a schema that does not
+      # compile. The installer has to refuse it while planning — after it has written
+      # the fragment, the application is broken and the error names a file nobody
+      # here wrote.
+      - name: A module that would redefine the template's own models is refused
+        if: matrix.template == 'workflow-enabled-saas'
+        run: |
+          set +e
+          node packages/cli/bin/trustos.js add-module workflow \
+            --path "/tmp/generated/sample-${{ matrix.template }}" \
+            --framework-path "$GITHUB_WORKSPACE" \
+            --generated-at 2026-01-01T00:00:00.000Z \
+            --yes > /tmp/workflow-clash.log 2>&1
+          status=$?
+          set -e
+
+          cat /tmp/workflow-clash.log
+
+          if [ "$status" -eq 0 ]; then
+            echo "::error::the workflow module installed into a template that already defines its models"
+            exit 1
+          fi
+
+          grep -q "WorkflowDefinition" /tmp/workflow-clash.log
+          grep -q "already defines" /tmp/workflow-clash.log
+
+          # Refused while planning means refused before writing.
+          if [ -f "/tmp/generated/sample-${{ matrix.template }}/prisma/schema/23-workflow.prisma" ]; then
+            echo "::error::the refused install still wrote its schema fragment"
+            exit 1
+          fi
+
+          echo "The clashing module was refused, and nothing was written."
+
+      - name: Installing again is a no-op
+        run: |
+          node packages/cli/bin/trustos.js add-module notification document \
+            --path "/tmp/generated/sample-${{ matrix.template }}" \
+            --framework-path "$GITHUB_WORKSPACE" \
+            --yes > /tmp/reinstall.log
+          grep -q "already installed" /tmp/reinstall.log
+          echo "add-module is idempotent."
+
+      - name: A hand-edited managed file is refused, not overwritten
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: |
+          # Strip the marker: the installer must then treat the file as somebody's
+          # code rather than as its own.
+          cp apps/api/src/modules/trustos-modules.ts /tmp/managed.bak
+          grep -v 'trustos:managed-file' /tmp/managed.bak > apps/api/src/modules/trustos-modules.ts
+
+          if node "$GITHUB_WORKSPACE/packages/cli/bin/trustos.js" add-module search \
+               --path . --framework-path "$GITHUB_WORKSPACE" --yes 2>/tmp/refuse.log; then
+            echo "::error::the installer overwrote a file it does not own"
+            exit 1
+          fi
+          grep -q "Refusing to overwrite" /tmp/refuse.log
+          cp /tmp/managed.bak apps/api/src/modules/trustos-modules.ts
+          echo "Unowned files are refused."
+
+      - name: No secrets after installing modules
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: |
+          test ! -e .env || { echo "::error::a .env file appeared"; exit 1; }
+          # A module contributes variable *names* to .env.example, never values —
+          # so it cannot contribute a secret-shaped default. Scoped to the module
+          # blocks: the template's own NODE_ENV=development legitimately has a value.
+          if awk '/^# >>> trustos module:/{i=1} /^# <<< trustos module:/{i=0} i' .env.example \
+               | grep -E '^[A-Z_]+=.+'; then
+            echo "::error::a module contributed a value to .env.example"
+            exit 1
+          fi
+          echo "No secrets."
+
+      - name: The generated application still works with modules installed
+        working-directory: /tmp/generated/sample-${{ matrix.template }}
+        run: |
+          npm install
+          npm run db:validate
+          npm run typecheck
+          npm test
+          npm run build
+
+  security:
+    name: security gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The secret scan reads the working tree, not history. Scanning history
+          # properly needs a dedicated tool with a baseline — see the note below.
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # --- lockfile ---------------------------------------------------------
+      #
+      # `npm ci` installs strictly from the lockfile and fails if package.json and
+      # the lockfile disagree. A lockfile that drifts is a build that resolves
+      # different versions than the ones anybody reviewed, which makes every
+      # audit result below meaningless.
+      - name: Lockfile installs cleanly
+        run: npm ci
+
+      - name: Lockfile is in sync with every package.json
+        run: |
+          # `npm ci` above would already have failed on a mismatch, so this is the
+          # narrower check: an install must not modify the lockfile.
+          if ! git diff --exit-code --quiet package-lock.json; then
+            echo "::error::npm ci modified package-lock.json. Commit the updated lockfile."
+            git diff --stat package-lock.json
+            exit 1
+          fi
+          echo "Lockfile is in sync."
+
+      # --- dependency audit -------------------------------------------------
+      #
+      # Critical advisories in production dependencies fail. High advisories are
+      # reported and do not fail: a high advisory in a transitive development
+      # dependency should not stop a security fix from shipping. Accepted findings
+      # are recorded in .security-exceptions.yml with an owner and an expiry —
+      # see docs/security-testing.md#the-exception-process.
+      - name: Audit production dependencies (critical fails)
+        run: npm audit --omit=dev --audit-level=critical
+
+      - name: Audit everything (report only)
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+      # --- secret scanning --------------------------------------------------
+      - name: No secret-bearing files are tracked
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$|\.env\.(local|production|development)$|\.pem$|\.p12$|(^|/)id_rsa$'; then
+            echo "::error::A secret-bearing file is tracked by git."
+            exit 1
+          fi
+          echo "No secret-bearing files are tracked."
+
+      - name: Scan for credential-shaped strings
+        run: |
+          # Deliberately narrow patterns rather than an entropy heuristic. A generic
+          # high-entropy check on a repository full of hashes, test fixtures and
+          # base64 fragments produces enough false positives that people start
+          # ignoring it — and a scanner nobody trusts is worse than none.
+          #
+          # Excluded: the lockfile (integrity hashes), the Keycloak realm export
+          # (reviewed, and contains no credential by construction), and this file.
+          patterns=(
+            'tos_live_[a-z0-9]{32}'
+            'tos_test_[a-z0-9]{32}'
+            'tos_sa_[a-z0-9]{40}'
+            'AKIA[0-9A-Z]{16}'
+            'ghp_[A-Za-z0-9]{36}'
+            'sk-[A-Za-z0-9]{32,}'
+            '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+            'eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}'
+          )
+
+          found=0
+          for pattern in "${patterns[@]}"; do
+            # `git grep` respects .gitignore, so untracked build output is not scanned.
+            # `-e` is required: a pattern beginning with `-` is otherwise parsed as
+            # an option, which is how the private-key pattern silently did nothing.
+            if git grep -nIE -e "$pattern" -- \
+                 ':!package-lock.json' \
+                 ':!.github/workflows/ci.yml' \
+                 ':!examples/keycloak/realm-trustos-dev.json'; then
+              echo "::error::A credential-shaped string matching /$pattern/ is committed."
+              found=1
+            fi
+          done
+
+          if [ "$found" -ne 0 ]; then
+            echo
+            echo "If this is a test fixture, make it obviously fake and short enough"
+            echo "not to match, or add a scoped exclusion with a comment saying why."
+            exit 1
+          fi
+          echo "No credential-shaped strings found."
+
+      - name: .env.example files contain placeholders only
+        run: |
+          # A committed example file must never ship a usable secret.
+          #
+          # Length alone is the wrong signal: `development-only-jwt-secret-change-me`
+          # is long and is exactly what the file should contain. So the rule is that a
+          # long value in a secret-named variable has to *say* it is a placeholder —
+          # which is the same property the config loader enforces at startup, where it
+          # rejects these values in production.
+          node -e "
+            const { readFileSync } = require('node:fs');
+            const { execSync } = require('node:child_process');
+
+            const files = execSync(\"git ls-files '*.env.example' '.env.example'\", {
+              encoding: 'utf8',
+            })
+              .split('\n')
+              .filter(Boolean);
+
+            const secretish = /(SECRET|TOKEN|PASSWORD|KEY|CREDENTIAL|DSN|PRIVATE)/;
+            const placeholder =
+              /(change-?me|change_me|placeholder|example|replace|development-only|dev-only|test-only|localhost|your-|xxx|TODO)/i;
+
+            let bad = 0;
+            for (const file of files) {
+              const lines = readFileSync(file, 'utf8').split('\n');
+              lines.forEach((line, index) => {
+                const match = /^([A-Z][A-Z0-9_]*)=(.+)$/.exec(line.trim());
+                if (!match) return;
+                const [, name, value] = match;
+                if (!secretish.test(name)) return;
+                if (value.length < 16) return;                 // too short to be a secret
+                if (placeholder.test(value)) return;           // says what it is
+                console.error(
+                  '::error file=' + file + ',line=' + (index + 1) + '::' + name +
+                    ' has a value that is long enough to be real and does not identify ' +
+                    'itself as a placeholder.',
+                );
+                bad += 1;
+              });
+            }
+
+            if (bad > 0) process.exit(1);
+            console.log(files.length + ' example file(s) contain placeholders only.');
+          "
+
+      # --- static analysis --------------------------------------------------
+      #
+      # The security-relevant lint rules are errors, not warnings, so this fails on
+      # them. It is a separate step from the verify job's lint so that a security
+      # regression is attributed to the security job in the checks list.
+      - name: Static analysis
+        run: npm run lint
+
+      - name: Build packages
+        run: npm run build:packages
+
+      # --- security test gates ----------------------------------------------
+      #
+      # Each of these is a separate step on purpose. "the security job failed" is
+      # much less useful at 3am than "tenant isolation failed".
+      - name: Identity tests
+        run: npx vitest run packages/identity
+
+      - name: Authorization and tenant-isolation tests
+        run: npx vitest run packages/authorization packages/tenancy packages/rbac
+
+      - name: Credential tests
+        run: npx vitest run packages/api-keys packages/service-accounts packages/session-security
+
+      - name: Security policy and event tests
+        run: npx vitest run packages/security-policy packages/security-events
+
+      - name: Security administration boots with the documented guard order
+        run: npx vitest run apps/security-admin-example
+
+      # --- licence report ---------------------------------------------------
+      #
+      # An artefact, not a gate. A new copyleft dependency is a legal question and
+      # a build failure is the wrong way to ask it — but a licence change nobody
+      # can see is worse. This makes it reviewable.
+      - name: Licence report
+        continue-on-error: true
+        run: |
+          npx --yes license-checker-rseidelsohn \
+            --production \
+            --json \
+            --out /tmp/licences.json || echo "licence report unavailable"
+
+          if [ -f /tmp/licences.json ]; then
+            node -e "
+              const licences = require('/tmp/licences.json');
+              const counts = new Map();
+              for (const entry of Object.values(licences)) {
+                const licence = String(entry.licenses ?? 'UNKNOWN');
+                counts.set(licence, (counts.get(licence) ?? 0) + 1);
+              }
+              const flagged = ['GPL', 'AGPL', 'SSPL', 'UNKNOWN'];
+              console.log('Production dependency licences:');
+              for (const [licence, count] of [...counts].sort((a, b) => b[1] - a[1])) {
+                const mark = flagged.some((f) => licence.includes(f)) ? '  <-- review' : '';
+                console.log('  ' + String(count).padStart(4) + '  ' + licence + mark);
+              }
+            "
+          fi
+
+      - name: Upload the licence report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: licence-report
+          path: /tmp/licences.json
+          if-no-files-found: ignore
+
+      # --- documented exceptions --------------------------------------------
+      - name: No expired security exceptions
+        run: |
+          if [ ! -f .security-exceptions.yml ]; then
+            echo "No exceptions file. Nothing to check."
+            exit 0
+          fi
+
+          # An exception with no expiry is a decision nobody revisits, which is the
+          # exact failure this file exists to prevent. Both fields are required and
+          # the expiry must be in the future.
+          node -e "
+            const { readFileSync } = require('node:fs');
+            const text = readFileSync('.security-exceptions.yml', 'utf8');
+            const today = new Date().toISOString().slice(0, 10);
+            const expiries = [...text.matchAll(/^\s*expires:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})/gm)];
+            const advisories = [...text.matchAll(/^\s*-\s*advisory:/gm)];
+
+            if (advisories.length !== expiries.length) {
+              console.error('::error::Every exception needs an expires: date. Found ' +
+                advisories.length + ' exceptions and ' + expiries.length + ' expiry dates.');
+              process.exit(1);
+            }
+
+            const expired = expiries.map((m) => m[1]).filter((date) => date < today);
+            if (expired.length > 0) {
+              console.error('::error::Expired security exceptions: ' + expired.join(', ') +
+                '. Renew with a fresh justification, or fix the finding.');
+              process.exit(1);
+            }
+            console.log(advisories.length + ' exception(s), none expired.');
+          "
+
+  # ---------------------------------------------------------------------------
+  # Deployment readiness.
+  #
+  # Three gates that only matter when something is going to be deployed, kept in
+  # their own job so a failure names the reason rather than being one of forty
+  # steps in `verify`.
+  # ---------------------------------------------------------------------------
+  deployment:
+    name: deployment readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # --- migration safety --------------------------------------------------
+      #
+      # Prisma applies migrations with `migrate deploy` and no review step of its
+      # own, so the review has to happen before the file is merged. This is that
+      # review. A destructive change needs an approval marker in the migration
+      # file naming a reason and an approver.
+      - name: No unapproved destructive migration
+        run: npm run migrations:check
+
+      # --- the image builds --------------------------------------------------
+      #
+      # One service is enough to prove the Dockerfile. Building all seven would
+      # take four times as long to find the same class of failure, because every
+      # service is built from the same file with one argument changed.
+      #
+      # `api-example` is the one built because it is the smoke target: if its
+      # image is broken, the smoke tests below could not run anyway.
+      - name: The runtime image builds
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: SERVICE=api-example
+          push: false
+          load: true
+          tags: trustos/api-example:ci
+
+      # --- the image runs, and the smoke tests pass against it ---------------
+      #
+      # A build that succeeds and an image that starts are different claims. This
+      # makes the second one, against a real PostgreSQL, with migrations applied.
+      - name: Start PostgreSQL
+        run: |
+          docker run -d --name trustos-ci-db \
+            -e POSTGRES_USER=trustos \
+            -e POSTGRES_PASSWORD=trustos \
+            -e POSTGRES_DB=trustos_ci \
+            -p 5432:5432 \
+            postgres:17-alpine
+
+          for attempt in $(seq 1 30); do
+            if docker exec trustos-ci-db pg_isready -U trustos >/dev/null 2>&1; then
+              echo "PostgreSQL is accepting connections."
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "::error::PostgreSQL did not become ready."
+          docker logs trustos-ci-db
+          exit 1
+
+      - name: Apply migrations
+        env:
+          DATABASE_URL: postgresql://trustos:trustos@localhost:5432/trustos_ci?schema=public
+        run: npm run db:deploy
+
+      - name: Seed the demo data
+        env:
+          DATABASE_URL: postgresql://trustos:trustos@localhost:5432/trustos_ci?schema=public
+          NODE_ENV: development
+        run: npm run db:seed
+
+      - name: Start the image
+        run: |
+          docker run -d --name trustos-ci-api \
+            --network host \
+            -e NODE_ENV=production \
+            -e TRUSTOS_ENVIRONMENT=dev \
+            -e PORT=3000 \
+            -e DATABASE_URL='postgresql://trustos:trustos@localhost:5432/trustos_ci?schema=public' \
+            -e JWT_SECRET='ci-only-jwt-secret-long-enough-for-the-policy-to-accept' \
+            -e JWT_REFRESH_SECRET='ci-only-refresh-secret-also-long-enough-to-accept-ok' \
+            -e CORS_ORIGINS='https://ci.example.com' \
+            -e OPENAPI_ENABLED=false \
+            -e IDENTITY_PROVIDER=local \
+            -e SECURITY_ALLOW_LOCAL_IDENTITY_IN_PRODUCTION=true \
+            -e LOG_LEVEL=info \
+            trustos/api-example:ci
+
+          for attempt in $(seq 1 40); do
+            if curl -sf http://localhost:3000/health >/dev/null 2>&1; then
+              echo "The service is answering."
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "::error::The service did not become healthy."
+          docker logs trustos-ci-api
+          exit 1
+
+      - name: Smoke tests
+        env:
+          TRUSTOS_BASE_URL: http://localhost:3000
+          TRUSTOS_SMOKE_EMAIL: owner@acme.test
+          TRUSTOS_SMOKE_PASSWORD: TrustOSDemo2026!
+        run: npm run smoke
+
+      - name: The container stops on SIGTERM
+        run: |
+          # Without dumb-init as PID 1, Node ignores SIGTERM and the platform waits
+          # for its timeout before killing the process mid-request. This measures
+          # how long a stop actually takes.
+          started=$(date +%s)
+          docker stop --timeout 20 trustos-ci-api >/dev/null
+          elapsed=$(( $(date +%s) - started ))
+
+          echo "The container stopped in ${elapsed}s."
+
+          if [ "$elapsed" -ge 15 ]; then
+            echo "::error::The container took ${elapsed}s to stop. SIGTERM is not reaching Node."
+            exit 1
+          fi
+
+      - name: Upload the smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report
+          path: smoke-report.json
+          if-no-files-found: warn
+
+      - name: Container logs on failure
+        if: failure()
+        run: |
+          docker logs trustos-ci-api 2>&1 | tail -100 || true
+          docker logs trustos-ci-db 2>&1 | tail -30 || true

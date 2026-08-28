@@ -1,0 +1,196 @@
+/**
+ * TrustOS Developer Portal — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { DEVELOPER_PORTAL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const DEVELOPER_PORTAL_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'api-applications',
+    label: 'Applications',
+    singular: 'Application',
+    endpoint: '/api-applications',
+    description: "A consumer of the API.",
+    table: {
+      key: 'api-applications',
+      label: 'Applications',
+      endpoint: '/api-applications',
+      emptyHint: 'Create one with POST /api/api-applications.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'name', label: 'Application' },
+        { key: 'slug', label: 'Slug', sortable: true },
+        { key: 'ownerUserId', label: 'Owner' },
+        { key: 'description', label: 'Description' },
+        { key: 'environment', label: 'Environment', format: 'badge', sortable: true },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'environment', label: 'Environment', type: 'enum', operators: ['eq', 'in'], options: [{"value":"SANDBOX","label":"Sandbox"},{"value":"PRODUCTION","label":"Production"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PENDING","label":"Pending"},{"value":"APPROVED","label":"Approved"},{"value":"SUSPENDED","label":"Suspended"},{"value":"REVOKED","label":"Revoked"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Application' },
+      ],
+    },
+    permissions: {
+      list: P.API_APPLICATION_READ.key,
+      read: P.API_APPLICATION_READ.key,
+      create: P.API_APPLICATION_CREATE.key,
+      update: P.API_APPLICATION_UPDATE.key,
+    },
+  },
+  {
+    key: 'api-key-records',
+    label: 'API keys',
+    singular: 'API key',
+    endpoint: '/api-key-records',
+    description: "The record of a key issued by @trustos/api-keys.",
+    table: {
+      key: 'api-key-records',
+      label: 'API keys',
+      endpoint: '/api-key-records',
+      emptyHint: 'Create one with POST /api/api-key-records.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'applicationId', label: 'Application', format: 'reference' },
+        { key: 'apiKeyId', label: 'Key id', sortable: true },
+        { key: 'label', label: 'Label' },
+        { key: 'keyPrefix', label: 'Prefix' },
+        { key: 'issuedAt', label: 'Issued', format: 'datetime', sortable: true },
+        { key: 'lastUsedAt', label: 'Last used', format: 'datetime' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'issuedAt', label: 'Issued', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'keyPrefix', label: 'Prefix', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.API_KEY_RECORD_READ.key,
+      read: P.API_KEY_RECORD_READ.key,
+      create: P.API_KEY_RECORD_CREATE.key,
+      update: P.API_KEY_RECORD_UPDATE.key,
+    },
+  },
+  {
+    key: 'api-usage-records',
+    label: 'Usage',
+    singular: 'Usage record',
+    endpoint: '/api-usage-records',
+    description: "Calls per application per day.",
+    table: {
+      key: 'api-usage-records',
+      label: 'Usage',
+      endpoint: '/api-usage-records',
+      emptyHint: 'Create one with POST /api/api-usage-records.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'applicationId', label: 'Application', format: 'reference' },
+        { key: 'usageOn', label: 'Date', format: 'date', sortable: true },
+        { key: 'endpoint', label: 'Endpoint', sortable: true },
+        { key: 'callCount', label: 'Calls', format: 'number' },
+        { key: 'errorCount', label: 'Errors', format: 'number' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'usageOn', label: 'Date', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'endpoint', label: 'Endpoint', type: 'string', operators: ['eq', 'contains'] },
+    ],
+    permissions: {
+      list: P.API_USAGE_RECORD_READ.key,
+      read: P.API_USAGE_RECORD_READ.key,
+      create: P.API_USAGE_RECORD_CREATE.key,
+      update: P.API_USAGE_RECORD_UPDATE.key,
+    },
+  },
+  {
+    key: 'code-examples',
+    label: 'Examples',
+    singular: 'Example',
+    endpoint: '/code-examples',
+    description: "A worked example shown alongside the API documentation.",
+    table: {
+      key: 'code-examples',
+      label: 'Examples',
+      endpoint: '/code-examples',
+      emptyHint: 'Create one with POST /api/code-examples.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'slug', label: 'Slug', sortable: true },
+        { key: 'title', label: 'Example' },
+        { key: 'language', label: 'Language', format: 'badge', sortable: true },
+        { key: 'body', label: 'Code' },
+        { key: 'endpoint', label: 'Endpoint', sortable: true },
+        { key: 'position', label: 'Position', format: 'number' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'language', label: 'Language', type: 'enum', operators: ['eq', 'in'], options: [{"value":"CURL","label":"Curl"},{"value":"TYPESCRIPT","label":"Typescript"},{"value":"PYTHON","label":"Python"},{"value":"GO","label":"Go"},{"value":"PHP","label":"Php"},{"value":"JAVA","label":"Java"}] },
+      { key: 'endpoint', label: 'Endpoint', type: 'string', operators: ['eq', 'contains'] },
+    ],
+    search: {
+      fields: [
+        { key: 'title', label: 'Example' },
+      ],
+    },
+    permissions: {
+      list: P.CODE_EXAMPLE_READ.key,
+      read: P.CODE_EXAMPLE_READ.key,
+      create: P.CODE_EXAMPLE_CREATE.key,
+      update: P.CODE_EXAMPLE_UPDATE.key,
+    },
+  },
+  {
+    key: 'sdk-releases',
+    label: 'SDK downloads',
+    singular: 'SDK release',
+    endpoint: '/sdk-releases',
+    description: "A published client library.",
+    table: {
+      key: 'sdk-releases',
+      label: 'SDK downloads',
+      endpoint: '/sdk-releases',
+      emptyHint: 'Create one with POST /api/sdk-releases.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'language', label: 'Language', format: 'badge', sortable: true },
+        { key: 'version', label: 'Version' },
+        { key: 'downloadUrl', label: 'Download' },
+        { key: 'checksum', label: 'SHA-256' },
+        { key: 'releasedAt', label: 'Released', format: 'datetime', sortable: true },
+        { key: 'isCurrent', label: 'Current', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'language', label: 'Language', type: 'enum', operators: ['eq', 'in'], options: [{"value":"CURL","label":"Curl"},{"value":"TYPESCRIPT","label":"Typescript"},{"value":"PYTHON","label":"Python"},{"value":"GO","label":"Go"},{"value":"PHP","label":"Php"},{"value":"JAVA","label":"Java"}] },
+      { key: 'releasedAt', label: 'Released', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'isCurrent', label: 'Current', type: 'boolean', operators: ['eq'] },
+    ],
+    permissions: {
+      list: P.SDK_RELEASE_READ.key,
+      read: P.SDK_RELEASE_READ.key,
+      create: P.SDK_RELEASE_CREATE.key,
+      update: P.SDK_RELEASE_UPDATE.key,
+    },
+  },
+];

@@ -1,0 +1,88 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { MESSENGER_MINIAPP_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  MessengerMiniappService,
+  type MessengerProfileRow,
+} from './messenger-miniapp.service';
+
+/**
+ * TrustOS Messenger Mini App endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createMessengerProfileSchema = z.object({
+  miniAppUserId: z.string().trim().min(1).max(64),
+  pageScopedId: z.string().trim().min(1).max(255),
+  pageRef: z.string().trim().min(1).max(255),
+});
+
+const updateMessengerProfileSchema = z
+  .object({
+    miniAppUserId: z.string().trim().min(1).max(64).optional(),
+    pageRef: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('messenger-profiles')
+@ApiBearerAuth('access-token')
+@Controller('messenger-profiles')
+export class MessengerProfileController {
+  constructor(private readonly product: MessengerMiniappService) {}
+
+  @Get()
+  @RequirePermissions(P.MESSENGER_PROFILE_READ.key)
+  @ApiOperation({ summary: 'List messenger profiles' })
+  list(): Promise<MessengerProfileRow[]> {
+    return this.product.listMessengerProfiles();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.MESSENGER_PROFILE_READ.key)
+  @ApiOperation({ summary: 'Read one messenger profile' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<MessengerProfileRow> {
+    return this.product.findMessengerProfile(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.MESSENGER_PROFILE_CREATE.key)
+  @ApiOperation({ summary: 'Create a messenger profile' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createMessengerProfileSchema))
+    body: z.infer<typeof createMessengerProfileSchema>,
+  ): Promise<MessengerProfileRow> {
+    return this.product.createMessengerProfile(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.MESSENGER_PROFILE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a messenger profile' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateMessengerProfileSchema))
+    body: z.infer<typeof updateMessengerProfileSchema>,
+  ): Promise<MessengerProfileRow> {
+    return this.product.updateMessengerProfile(id, body, organizationId);
+  }
+}

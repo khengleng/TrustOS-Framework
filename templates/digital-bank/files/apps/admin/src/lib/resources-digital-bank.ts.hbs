@@ -1,0 +1,153 @@
+/**
+ * TrustOS Digital Bank — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { DIGITAL_BANK_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const DIGITAL_BANK_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'bank-customers',
+    label: 'Customers',
+    singular: 'Customer',
+    endpoint: '/bank-customers',
+    description: "A person or business the bank holds a relationship with.",
+    table: {
+      key: 'bank-customers',
+      label: 'Customers',
+      endpoint: '/bank-customers',
+      emptyHint: 'Create one with POST /api/bank-customers.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'customerNumber', label: 'Customer no.', sortable: true },
+        { key: 'fullName', label: 'Name' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'segment', label: 'Segment', format: 'badge', sortable: true },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'segment', label: 'Segment', type: 'enum', operators: ['eq', 'in'], options: [{"value":"RETAIL","label":"Retail"},{"value":"SME","label":"Sme"},{"value":"CORPORATE","label":"Corporate"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"PENDING","label":"Pending"},{"value":"ACTIVE","label":"Active"},{"value":"DORMANT","label":"Dormant"},{"value":"CLOSED","label":"Closed"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'customerNumber', label: 'Customer no.', prefixOnly: true },
+        { key: 'fullName', label: 'Name' },
+        { key: 'phone', label: 'Phone' },
+      ],
+    },
+    permissions: {
+      list: P.BANK_CUSTOMER_READ.key,
+      read: P.BANK_CUSTOMER_READ.key,
+      create: P.BANK_CUSTOMER_CREATE.key,
+      update: P.BANK_CUSTOMER_UPDATE.key,
+    },
+  },
+  {
+    key: 'bank-accounts',
+    label: 'Accounts',
+    singular: 'Account',
+    endpoint: '/bank-accounts',
+    description: "A customer-facing account.",
+    table: {
+      key: 'bank-accounts',
+      label: 'Accounts',
+      endpoint: '/bank-accounts',
+      emptyHint: 'Create one with POST /api/bank-accounts.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'customerId', label: 'Customer', format: 'reference' },
+        { key: 'profileId', label: 'Wallet', format: 'reference' },
+        { key: 'accountNumber', label: 'Account no.', sortable: true },
+        { key: 'productName', label: 'Product' },
+        { key: 'currency', label: 'Currency', sortable: true },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'currency', label: 'Currency', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ACTIVE","label":"Active"},{"value":"FROZEN","label":"Frozen"},{"value":"DORMANT","label":"Dormant"},{"value":"CLOSED","label":"Closed"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'accountNumber', label: 'Account no.', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.BANK_ACCOUNT_READ.key,
+      read: P.BANK_ACCOUNT_READ.key,
+      create: P.BANK_ACCOUNT_CREATE.key,
+      update: P.BANK_ACCOUNT_UPDATE.key,
+    },
+  },
+  {
+    key: 'account-statements',
+    label: 'Statements',
+    singular: 'Statement',
+    endpoint: '/account-statements',
+    description: "A generated statement for a window.",
+    table: {
+      key: 'account-statements',
+      label: 'Statements',
+      endpoint: '/account-statements',
+      emptyHint: 'Create one with POST /api/account-statements.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'accountId', label: 'Account', format: 'reference' },
+        { key: 'periodStart', label: 'From', format: 'datetime' },
+        { key: 'periodEnd', label: 'To', format: 'datetime' },
+        { key: 'openingBalance', label: 'Opening', format: 'money', currencyKey: 'currency' },
+        { key: 'closingBalance', label: 'Closing', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"GENERATED","label":"Generated"},{"value":"DELIVERED","label":"Delivered"},{"value":"FAILED","label":"Failed"}] },
+    ],
+    permissions: {
+      list: P.ACCOUNT_STATEMENT_READ.key,
+      read: P.ACCOUNT_STATEMENT_READ.key,
+      create: P.ACCOUNT_STATEMENT_CREATE.key,
+      update: P.ACCOUNT_STATEMENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'customer-notification-preferences',
+    label: 'Notification preferences',
+    singular: 'Preference',
+    endpoint: '/customer-notification-preferences',
+    description: "Which channels a customer has muted.",
+    table: {
+      key: 'customer-notification-preferences',
+      label: 'Notification preferences',
+      endpoint: '/customer-notification-preferences',
+      emptyHint: 'Create one with POST /api/customer-notification-preferences.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'customerId', label: 'Customer', format: 'reference' },
+        { key: 'channel', label: 'Channel', format: 'badge' },
+        { key: 'muted', label: 'Muted', format: 'badge' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    permissions: {
+      list: P.CUSTOMER_NOTIFICATION_PREFERENCE_READ.key,
+      read: P.CUSTOMER_NOTIFICATION_PREFERENCE_READ.key,
+      create: P.CUSTOMER_NOTIFICATION_PREFERENCE_CREATE.key,
+      update: P.CUSTOMER_NOTIFICATION_PREFERENCE_UPDATE.key,
+    },
+  },
+];

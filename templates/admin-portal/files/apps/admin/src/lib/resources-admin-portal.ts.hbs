@@ -1,0 +1,90 @@
+/**
+ * TrustOS Admin Portal — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { ADMIN_PORTAL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const ADMIN_PORTAL_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'system-settings',
+    label: 'Configuration',
+    singular: 'Setting',
+    endpoint: '/system-settings',
+    description: "A runtime-editable setting.",
+    table: {
+      key: 'system-settings',
+      label: 'Configuration',
+      endpoint: '/system-settings',
+      emptyHint: 'Create one with POST /api/system-settings.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'key', label: 'Key', sortable: true },
+        { key: 'value', label: 'Value' },
+        { key: 'description', label: 'Description' },
+        { key: 'category', label: 'Category', sortable: true },
+        { key: 'isSecret', label: 'Secret', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'category', label: 'Category', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'isSecret', label: 'Secret', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'key', label: 'Key', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.SYSTEM_SETTING_READ.key,
+      read: P.SYSTEM_SETTING_READ.key,
+      create: P.SYSTEM_SETTING_CREATE.key,
+      update: P.SYSTEM_SETTING_UPDATE.key,
+    },
+  },
+  {
+    key: 'operator-notes',
+    label: 'Operator notes',
+    singular: 'Note',
+    endpoint: '/operator-notes',
+    description: "What an operator did and why, attached to whatever they did it to.",
+    table: {
+      key: 'operator-notes',
+      label: 'Operator notes',
+      endpoint: '/operator-notes',
+      emptyHint: 'Create one with POST /api/operator-notes.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'subjectType', label: 'Subject type', sortable: true },
+        { key: 'subjectId', label: 'Subject' },
+        { key: 'body', label: 'Note' },
+        { key: 'authorUserId', label: 'Author' },
+        { key: 'pinnedUntil', label: 'Pinned until', format: 'datetime' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'subjectType', label: 'Subject type', type: 'string', operators: ['eq', 'contains'] },
+    ],
+    search: {
+      fields: [
+        { key: 'subjectId', label: 'Subject' },
+      ],
+    },
+    permissions: {
+      list: P.OPERATOR_NOTE_READ.key,
+      read: P.OPERATOR_NOTE_READ.key,
+      create: P.OPERATOR_NOTE_CREATE.key,
+      update: P.OPERATOR_NOTE_UPDATE.key,
+    },
+  },
+];

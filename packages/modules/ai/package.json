@@ -1,0 +1,57 @@
+{
+  "name": "@trustos/module-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TrustOS AI Platform module. The AI gateway and everything a model call has to pass through: model registry, prompt registry, guardrails, tenant policy, routing, cost accounting and caching.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "nest",
+    "install",
+    "README.md",
+    "AGENTS.md"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/ai-cache": "0.1.0",
+    "@trustos/ai-gateway": "0.1.0",
+    "@trustos/ai-observability": "0.1.0",
+    "@trustos/ai-policy": "0.1.0",
+    "@trustos/ai-sdk": "0.1.0",
+    "@trustos/content-filter": "0.1.0",
+    "@trustos/cost-monitor": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/guardrails": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "@trustos/model-registry": "0.1.0",
+    "@trustos/model-router": "0.1.0",
+    "@trustos/module-registry": "0.1.0",
+    "@trustos/module-sdk": "0.1.0",
+    "@trustos/observability": "0.1.0",
+    "@trustos/prompt-registry": "0.1.0",
+    "@trustos/prompt-security": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "@trustos/token-meter": "0.1.0"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
+    "@nestjs/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28"
+  }
+}

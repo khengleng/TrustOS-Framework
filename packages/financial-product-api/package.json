@@ -1,0 +1,23 @@
+{
+  "name": "@trustos/financial-product-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stable API exposure for a composed product: route descriptors, OpenAPI, idempotency, rate limiting and the headless dispatcher.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/financial-product-core": "0.1.0",
+    "@trustos/financial-product-registry": "0.1.0",
+    "@trustos/financial-product-runtime": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

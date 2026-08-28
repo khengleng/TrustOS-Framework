@@ -1,0 +1,21 @@
+{
+  "name": "@trustos/quality-gates",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The gates a change must clear: architecture, security, performance, docs, tests, coverage, lint, format, OpenAPI, configuration, accessibility.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/architecture-validator": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

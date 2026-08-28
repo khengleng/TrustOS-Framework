@@ -1,0 +1,47 @@
+{
+  "name": "@trustos/module-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TrustOS Provider Adapters module. The five-method provider contract with a registry, circuit-breaker-guarded calls and lifecycle management.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "nest",
+    "install",
+    "README.md",
+    "AGENTS.md"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/adapter-framework": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "@trustos/module-registry": "0.1.0",
+    "@trustos/module-sdk": "0.1.0",
+    "@trustos/observability": "0.1.0",
+    "@trustos/provider-sdk": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "zod": "^3.24.1"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
+    "@nestjs/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28"
+  }
+}

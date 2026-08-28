@@ -1,0 +1,127 @@
+// =============================================================================
+// TrustOS Telegram Mini App — product models
+//
+// A messaging mini app: platform sign-in, deep links, a menu, a profile and
+// notification settings. The platform handshake is behind a verifier port,
+// so the same shape serves WhatsApp and Messenger.
+//
+// Out of scope, deliberately: Telegram Bot API calls, Meta Graph API calls,
+// payment providers, push notification services, chatbot conversation
+// design.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum MiniAppPlatform {
+  TELEGRAM
+  WHATSAPP
+  MESSENGER
+}
+
+enum MiniAppUserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+/// Somebody who opened the mini app. `platformUserId` is the id the platform
+/// gave them and it is opaque — it is not an email, it is not stable across
+/// platforms, and it must not be used as a display name.
+model MiniAppUser {
+  id             String @id @default(cuid())
+  organizationId String
+  platform MiniAppPlatform
+  platformUserId String
+  userId String?
+  displayName String
+  languageCode String @default("en")
+  status MiniAppUserStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, platformUserId])
+  @@index([organizationId, platform])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A verified sign-in. Short-lived by design: a mini app session that outlives
+/// the chat it was opened from is a session nobody can revoke from the app.
+model MiniAppSession {
+  id             String @id @default(cuid())
+  organizationId String
+  miniAppUserId String
+  startedAt DateTime
+  expiresAt DateTime
+  endedAt DateTime?
+  launchParam String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, miniAppUserId])
+  @@index([organizationId, startedAt])
+  @@index([deletedAt])
+}
+
+/// A named entry point. The `target` is resolved against a whitelist rather
+/// than redirected to — an open redirect inside a messaging client is a
+/// phishing primitive with the platform’s branding on it.
+model DeepLink {
+  id             String @id @default(cuid())
+  organizationId String
+  code String
+  label String
+  target String
+  isActive Boolean @default(true)
+  openCount Int @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@index([deletedAt])
+}
+
+/// One item in the mini app menu. Filtered by permission before it is sent.
+model MenuEntry {
+  id             String @id @default(cuid())
+  organizationId String
+  label String
+  href String
+  icon String?
+  position Int @default(0)
+  requiredPermission String?
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, isActive])
+  @@index([deletedAt])
+}
+
+/// What a user has muted. Security notifications ignore this — see
+/// @trustos/template-sdk.
+model MiniAppNotificationSetting {
+  id             String @id @default(cuid())
+  organizationId String
+  miniAppUserId String
+  notificationKey String
+  muted Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, miniAppUserId])
+  @@index([deletedAt])
+}

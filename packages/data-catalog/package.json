@@ -1,0 +1,21 @@
+{
+  "name": "@trustos/data-catalog",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A searchable catalog of governed data: databases, tables, columns, API fields, events, reports, AI sources.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/data-classification": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

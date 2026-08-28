@@ -1,0 +1,24 @@
+{
+  "name": "@trustos/api-policy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The API policies the policy engine evaluates: scope, environment, quota, rate and classification.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/api-catalog": "0.1.0",
+    "@trustos/api-consumer": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/policy-evaluator": "0.1.0",
+    "@trustos/policy-registry": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

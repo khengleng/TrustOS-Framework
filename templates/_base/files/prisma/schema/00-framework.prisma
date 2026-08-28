@@ -1,0 +1,2390 @@
+// =============================================================================
+// Framework schema — TrustOS foundation models.
+//
+// GENERATED FROM @trustos/database by scripts/sync-schema-fragments.mjs.
+// Do not edit by hand: schema-fragments.spec.ts fails the build when this file
+// differs from what that script produces.
+//
+// Prisma has no cross-package schema import, so a generated application carries
+// its own copy of the framework models. Regenerate after upgrading the
+// framework:
+//
+//   node scripts/sync-schema-fragments.mjs
+//
+// Product models live beside this file in 10-product.prisma. Prisma loads every
+// .prisma file in this directory, so the two compose without either one editing
+// the other.
+//
+// Do not edit the models below to fit a product. Add product models instead.
+// =============================================================================
+
+// =============================================================================
+// TrustOS Framework — foundation schema
+//
+// Conventions enforced across every model:
+//   * `id`        cuid primary key
+//   * `createdAt` / `updatedAt` on every mutable model
+//   * `deletedAt` on every model that can be retired (soft-delete readiness);
+//                 rows are never hard-deleted by application code
+//   * tenant-owned rows carry `organizationId` and index it first, because
+//     every legitimate query filters on it
+//
+// AuditLog is deliberately different: append-only, no `updatedAt`, no
+// `deletedAt`, and no foreign keys. See the comment on the model.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  // Generated into a directory this repository owns, rather than into
+  // node_modules/@prisma/client.
+  //
+  // The framework packages are linked from a checkout that has its own
+  // @prisma/client, generated from the framework schema alone. Sharing the
+  // default location makes which one wins a function of npm hoisting, and the
+  // loser is a client that has never heard of this product's models. An
+  // explicit output path removes the ambiguity entirely.
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Identity
+// -----------------------------------------------------------------------------
+
+model User {
+  id           String    @id @default(cuid())
+  /// Stored lowercase; normalization happens in @trustos/validation.
+  email        String    @unique
+  /// bcrypt hash. Never selected into a DTO, never logged.
+  passwordHash String
+  displayName  String?
+  isActive     Boolean   @default(true)
+  /// Platform staff. Bypasses tenant scoping — grant sparingly.
+  isSuperAdmin Boolean   @default(false)
+  /// Bumped to invalidate every outstanding token for this user at once.
+  tokenVersion Int       @default(0)
+  lastLoginAt  DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  memberships   OrganizationMember[]
+  refreshTokens RefreshToken[]
+  invitesSent   OrganizationMember[]     @relation("InvitedBy")
+  rolesAssigned OrganizationMemberRole[] @relation("AssignedBy")
+
+  @@index([deletedAt])
+  @@index([isActive])
+}
+
+// -----------------------------------------------------------------------------
+// Tenancy
+// -----------------------------------------------------------------------------
+
+model Organization {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String  @unique
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  members OrganizationMember[]
+  roles   Role[]
+
+  @@index([deletedAt])
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+model OrganizationMember {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  status         MembershipStatus @default(INVITED)
+  invitedById    String?
+  invitedAt      DateTime?
+  joinedAt       DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  organization Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy    User?                    @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  roles        OrganizationMemberRole[]
+
+  /// One membership row per (organization, user).
+  @@unique([organizationId, userId])
+  @@index([organizationId, status])
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+// -----------------------------------------------------------------------------
+// Authorization
+// -----------------------------------------------------------------------------
+
+model Role {
+  id             String  @id @default(cuid())
+  name           String
+  description    String?
+  /// System roles ship with the framework, are shared by every organization
+  /// (organizationId = null), and are seeded with fixed ids so the seed is
+  /// idempotent. Product code must not mutate them.
+  isSystem       Boolean @default(false)
+  /// Null for system roles; set for organization-defined custom roles.
+  organizationId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  organization Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions  RolePermission[]
+  members      OrganizationMemberRole[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([isSystem])
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  /// Stable machine key, e.g. "organization.member.invite". Part of the public
+  /// contract: add new keys, never rename existing ones.
+  key         String  @unique
+  resource    String
+  action      String
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roles RolePermission[]
+
+  @@index([resource])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model OrganizationMemberRole {
+  memberId     String
+  roleId       String
+  assignedById String?
+  assignedAt   DateTime @default(now())
+
+  member     OrganizationMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  role       Role               @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assignedBy User?              @relation("AssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  @@id([memberId, roleId])
+  @@index([roleId])
+}
+
+// -----------------------------------------------------------------------------
+// Sessions
+// -----------------------------------------------------------------------------
+
+model RefreshToken {
+  id             String    @id @default(cuid())
+  /// SHA-256 of the token. The token itself is never stored, so a database
+  /// leak does not hand the attacker live sessions.
+  tokenHash      String    @unique
+  userId         String
+  /// Rotation family. Presenting an already-rotated token revokes the whole
+  /// family — the standard reuse-detection response.
+  familyId       String
+  expiresAt      DateTime
+  /// When this token was exchanged for its successor.
+  ///
+  /// Distinct from `revokedAt`, and the distinction is the whole of reuse
+  /// detection: a token that was *used* and is presented again means somebody
+  /// holds a copy, so the entire family is killed; a token that was *revoked*
+  /// was already dealt with. Collapsing the two would turn a stolen refresh
+  /// token into an ordinary rejection and leave the thief's session alive.
+  usedAt         DateTime?
+  revokedAt      DateTime?
+  /// Why it was revoked: "rotated", "logout", "reuse_detected", "admin".
+  revokedReason  String?
+  /// The token that superseded this one, for auditing a rotation chain.
+  replacedByHash String?
+  ipAddress      String?
+  userAgent      String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([familyId])
+  @@index([expiresAt])
+}
+
+// -----------------------------------------------------------------------------
+// Audit
+// -----------------------------------------------------------------------------
+
+/// Append-only. Deliberately has:
+///   * no `updatedAt` and no `deletedAt` — records are never modified
+///   * no foreign keys — an audit record must survive deletion of the actor,
+///     the organization, or the entity it describes, and must never be removed
+///     by a cascade
+/// Grant the application role INSERT and SELECT only; see
+/// docs/security-standards.md.
+model AuditLog {
+  id String @id @default(cuid())
+
+  /// Machine action key, e.g. "auth.login" or "rbac.role.assigned".
+  action     String
+  entityType String
+  entityId   String?
+
+  /// Null for unauthenticated events such as a failed login.
+  actorId        String?
+  /// What kind of caller acted: user, service_account, api_key or system.
+  ///
+  /// A trail that says "user X deleted this" when it was a machine is evidence
+  /// pointing at the wrong party. Nullable because records written before phase 4
+  /// predate the column, and a backfill would be a guess.
+  actorType      String?
+  /// Null for platform-level events that belong to no organization.
+  organizationId String?
+
+  /// Redacted snapshots. Never contains credentials — see @trustos/audit.
+  before Json?
+  after  Json?
+
+  /// Provenance a writer knows and the trail could not infer.
+  ///
+  /// Added in phase 11/12 for the Governance Tool, whose value is precisely this: a record
+  /// saying "usr_7 froze wallet wlt_3" becomes "…from the customer support console, in
+  /// production, because of case cas_9, correlated to req_abc". Bounded scalars, redacted like
+  /// `before` and `after` — it is provenance, not a second place to put state.
+  metadata Json?
+
+  requestId String?
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+  @@index([requestId])
+}
+
+// ===========================================================================
+// Phase 4 — identity, credentials, sessions and security events
+//
+// These live in the framework schema rather than in an installable fragment
+// because they are the security foundation: an application that has API keys but
+// no table to hash them into has an API-key feature nobody can use safely.
+// ===========================================================================
+
+/// A security event: what happened to the perimeter.
+///
+/// Distinct from AuditLog, which answers "who changed what". Most rows here have
+/// no organization and no actor, because the point is that authentication did not
+/// succeed — and a failed login is the single most useful security record there
+/// is. Reading this table requires `platform.admin`.
+model SecurityEvent {
+  id String @id
+
+  type     String
+  severity String
+  result   String
+  reason   String?
+
+  actorId        String?
+  actorType      String?
+  organizationId String?
+
+  ipAddress String?
+  userAgent String?
+  requestId String?
+
+  application String?
+  provider    String?
+
+  /// Risk signals, when something upstream produced them.
+  risk    Json?
+  /// Non-sensitive detail. Redacted by @trustos/security-events before it lands.
+  context Json?
+
+  occurredAt DateTime @default(now())
+
+  @@index([type, occurredAt])
+  @@index([severity, occurredAt])
+  @@index([organizationId, occurredAt])
+  @@index([actorId, occurredAt])
+  @@index([requestId])
+}
+
+/// An API key. Only a prefix, a hash and metadata — never the key.
+model ApiKey {
+  id             String @id @default(cuid())
+  organizationId String
+
+  /// First characters of the key, e.g. `tos_live_ab`. Identifies without granting.
+  keyPrefix String
+  /// SHA-256 of the whole key. The key itself is shown once, at creation, and
+  /// never stored or recoverable.
+  keyHash   String @unique
+
+  name        String
+  description String?
+  /// Scopes this credential may exercise, e.g. ["payments:read"].
+  scopes      String[]
+  /// Optional CIDR allowlist. Empty means any address.
+  ipAllowlist String[]
+
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  /// Address the key was last used from, for a leak investigation.
+  lastUsedIp String?
+  usageCount Int       @default(0)
+
+  revokedAt     DateTime?
+  revokedReason String?
+  /// Set when this key replaced another during a rotation.
+  rotatedFromId String?
+
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([organizationId, name])
+  @@index([organizationId, revokedAt])
+  @@index([keyPrefix])
+  @@index([expiresAt])
+  @@index([deletedAt])
+}
+
+/// A machine identity. Never a human user account reused for an integration.
+model ServiceAccount {
+  id             String  @id @default(cuid())
+  /// Null for a platform-level account that belongs to no organization.
+  organizationId String?
+
+  name        String
+  description String?
+  status      String  @default("active")
+
+  /// Roles granted inside the owning organization.
+  roles  String[]
+  /// Scopes this account may exercise.
+  scopes String[]
+
+  /// OIDC client id, when the account authenticates by client credentials.
+  oidcClientId        String?
+  /// SHA-256 of the local credential, when it authenticates with one.
+  credentialHash      String?
+  credentialPrefix    String?
+  credentialExpiresAt DateTime?
+  credentialRotatedAt DateTime?
+
+  lastUsedAt DateTime?
+  lastUsedIp String?
+  expiresAt  DateTime?
+
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([organizationId, name])
+  @@index([organizationId, status])
+  @@index([credentialPrefix])
+  @@index([oidcClientId])
+  @@index([deletedAt])
+}
+
+/// A session. One row per sign-in, so it can be listed and revoked individually.
+///
+/// Holds no token. The refresh token's hash lives in RefreshToken; this row is the
+/// thing a person recognises in a "your devices" list and the thing an
+/// administrator revokes.
+model UserSession {
+  id     String @id @default(cuid())
+  userId String
+
+  /// Rotation family, linking this session to its refresh tokens.
+  familyId String  @unique
+  /// Which client the session belongs to — a web app, a mobile app, a CLI.
+  clientId String?
+
+  /// Human-readable device label, derived from the user agent. Not a fingerprint.
+  deviceLabel String?
+  userAgent   String?
+  /// Correlation hash of the address, not the address. See @trustos/security-policy.
+  ipHash      String?
+
+  organizationId String?
+
+  createdAt      DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+  /// Absolute end of the session, whatever the activity.
+  expiresAt      DateTime
+
+  revokedAt     DateTime?
+  revokedReason String?
+
+  /// Authentication strength recorded at sign-in, for step-up policies.
+  authenticationLevel String  @default("low")
+  mfaCompleted        Boolean @default(false)
+  provider            String  @default("local")
+
+  @@index([userId, revokedAt])
+  @@index([userId, lastActivityAt])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+// ===========================================================================
+// Phase 6 — events, webhooks, jobs, schedules, providers, import/export, sync
+//
+// Every table here carries `organizationId` and is indexed on it, because every query in the
+// integration layer is scoped to a tenant and an unscoped one returns everybody's rows.
+//
+// Two constraints in this section are load-bearing rather than tidy, and both are commented
+// where they appear: the unique index on `(webhookEndpointId, eventId)` is what makes "never
+// send duplicate webhook deliveries" true under concurrency, and the partial unique index on
+// `Job.idempotencyKey` is what makes a double-click produce one job.
+// ---------------------------------------------------------------------------
+
+/// A permanently failed event delivery.
+///
+/// Never deleted, including after a replay: the failure happened, and the record of it is what
+/// makes an incident explicable afterwards. `replayedAt` marks it handled.
+model EventDeadLetter {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Which subscriber failed. Stable across restarts — see `SubscriptionOptions.id`.
+  subscriptionId String
+  eventId        String
+  eventName      String
+  eventVersion   String
+
+  /// The whole envelope, redacted. A replay needs no other source.
+  envelope Json
+  attempts Int
+  error    String @db.Text
+
+  failedAt     DateTime  @default(now())
+  replayedAt   DateTime?
+  replayedById String?
+
+  @@index([organizationId, replayedAt])
+  @@index([subscriptionId, failedAt])
+  @@index([eventName])
+  @@map("event_dead_letter")
+}
+
+/// Which events a subscriber has already handled.
+///
+/// The unique constraint is the whole mechanism: `markHandled` inserts and lets the database
+/// decide the winner, so two simultaneous deliveries cannot both conclude they are first.
+model EventDeliveryLedger {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// `<subscriberId>:<idempotencyKey>`.
+  deduplicationKey String
+  eventId          String
+  eventName        String
+  handledAt        DateTime @default(now())
+
+  @@unique([deduplicationKey])
+  /// The retention sweep. A ledger that grows forever is a table nobody can query.
+  @@index([handledAt])
+  @@map("event_delivery_ledger")
+}
+
+/// A URL somebody has registered to receive events.
+model WebhookEndpoint {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  url         String
+  description String?
+  status      String  @default("active")
+
+  /// Reset by any success. Drives automatic disabling at 20.
+  consecutiveFailures Int       @default(0)
+  lastSuccessAt       DateTime?
+  lastFailureAt       DateTime?
+  lastFailureReason   String?
+
+  disabledAt     DateTime?
+  disabledReason String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+
+  secrets       WebhookSecret[]
+  subscriptions WebhookSubscription[]
+  deliveries    WebhookDelivery[]
+
+  @@index([organizationId, status])
+  @@map("webhook_endpoint")
+}
+
+/// A signing secret. A row rather than a column, because rotation needs two live at once.
+model WebhookSecret {
+  id                String  @id @default(cuid())
+  organizationId    String?
+  webhookEndpointId String
+
+  /// Encrypted at rest with AES-256-GCM. Never returned by any read path.
+  secret String
+  /// Last four characters, so an integrator can identify which secret they hold.
+  hint   String
+
+  createdAt DateTime  @default(now())
+  /// Set at the start of a rotation. Both secrets sign until it passes.
+  expiresAt DateTime?
+  revokedAt DateTime?
+
+  endpoint WebhookEndpoint @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+
+  @@index([webhookEndpointId, revokedAt, expiresAt])
+  @@map("webhook_secret")
+}
+
+/// Which events an endpoint wants. Separate from the endpoint, so changing one does not touch
+/// the other's secrets.
+model WebhookSubscription {
+  id                String  @id @default(cuid())
+  organizationId    String?
+  webhookEndpointId String
+
+  /// An event name pattern: `workflow.*`, `identity.user.created`.
+  eventPattern String
+
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  endpoint WebhookEndpoint @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+
+  /// One subscription per pattern per endpoint — a duplicate would send the event twice.
+  @@unique([webhookEndpointId, eventPattern])
+  @@index([organizationId])
+  @@map("webhook_subscription")
+}
+
+/// One event, queued for one endpoint.
+model WebhookDelivery {
+  id                String  @id @default(cuid())
+  organizationId    String?
+  webhookEndpointId String
+
+  eventId      String
+  eventName    String
+  eventVersion String
+
+  status   String @default("pending")
+  attempts Int    @default(0)
+
+  /// What the worker polls. Indexed with status; a scan per tick is the first thing to fall over.
+  nextAttemptAt DateTime?
+
+  responseStatus Int?
+  responseBody   String? @db.Text
+  responseTimeMs Int?
+  error          String? @db.Text
+
+  /// The signed body, kept so a retry is byte-identical and its signature still verifies.
+  payload  String   @db.Text
+  signedAt DateTime
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  endpoint   WebhookEndpoint  @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+  attemptLog WebhookAttempt[]
+
+  /// **The duplicate-suppression guarantee.**
+  ///
+  /// Two application instances handling one event both call `enqueue`; this constraint decides
+  /// which wins. A check-then-insert would let both through, and would do so precisely under the
+  /// load where it matters.
+  @@unique([webhookEndpointId, eventId])
+  @@index([status, nextAttemptAt])
+  @@index([organizationId, createdAt])
+  @@index([eventName])
+  @@map("webhook_delivery")
+}
+
+/// One attempt within a delivery. Separate, so the history shows each try rather than the last.
+model WebhookAttempt {
+  id                String  @id @default(cuid())
+  organizationId    String?
+  webhookDeliveryId String
+
+  attempt        Int
+  startedAt      DateTime
+  durationMs     Int
+  responseStatus Int?
+  error          String?  @db.Text
+  outcome        String
+
+  delivery WebhookDelivery @relation(fields: [webhookDeliveryId], references: [id], onDelete: Cascade)
+
+  @@index([webhookDeliveryId, attempt])
+  @@map("webhook_attempt")
+}
+
+/// A background job. The queue is this table.
+model Job {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  type    String
+  payload Json
+
+  status   String @default("queued")
+  priority Int    @default(50)
+
+  attempts    Int @default(0)
+  maxAttempts Int @default(3)
+
+  /// When it becomes eligible. Also how a delay is expressed — there is no separate timer.
+  runAt       DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  /// The lease. A running job whose lease has expired is reclaimed by another worker.
+  claimedBy      String?
+  leaseExpiresAt DateTime?
+
+  progress        Int     @default(0)
+  progressMessage String?
+
+  result Json?
+  error  String? @db.Text
+
+  /// Unique among non-terminal jobs — see the partial index in the migration.
+  idempotencyKey String?
+
+  metadata Json @default("{}")
+
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  runs JobRun[]
+
+  /// What `claim` orders by.
+  @@index([status, runAt, priority])
+  /// Reclaiming a crashed worker's jobs.
+  @@index([status, leaseExpiresAt])
+  @@index([organizationId, status, createdAt])
+  @@index([type, status])
+  @@map("job")
+}
+
+/// One attempt at a job.
+model JobRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+  jobId          String
+
+  attempt    Int
+  workerId   String
+  startedAt  DateTime
+  finishedAt DateTime?
+  durationMs Int?
+  outcome    String
+  error      String?   @db.Text
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, attempt])
+  @@map("job_run")
+}
+
+/// A recurring, delayed or one-time trigger. Enqueues a job; never runs work itself.
+model Schedule {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Unique per organization. Stable, because a schedule is reconciled by key at start-up.
+  key         String
+  description String?
+
+  kind   String
+  status String @default("active")
+
+  expression String?
+  /// An IANA name. "Run at 2am" means nothing without one.
+  timezone   String    @default("UTC")
+  intervalMs Int?
+  runAt      DateTime?
+
+  jobType    String
+  jobPayload Json   @default("{}")
+
+  misfirePolicy String @default("run_once")
+
+  /// Stored rather than derived, so the tick is an indexed query rather than parsing every
+  /// schedule's expression on every tick.
+  nextRunAt DateTime?
+  lastRunAt DateTime?
+  lastJobId String?
+
+  consecutiveFailures Int     @default(0)
+  lastError           String? @db.Text
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+
+  runs ScheduleRun[]
+
+  @@unique([organizationId, key])
+  /// What `claimDue` scans.
+  @@index([status, nextRunAt])
+  @@map("schedule")
+}
+
+/// One firing of a schedule.
+model ScheduleRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+  scheduleId     String
+
+  /// When it was meant to fire. Differs from `firedAt` when the scheduler was behind.
+  scheduledFor DateTime
+  firedAt      DateTime
+  jobId        String?
+  outcome      String
+  /// Lateness. The number that says whether the scheduler is keeping up.
+  latencyMs    Int
+  error        String?  @db.Text
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@index([scheduleId, firedAt])
+  @@map("schedule_run")
+}
+
+/// A bulk import.
+model ImportRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  type          String
+  format        String
+  fileName      String
+  fileSizeBytes Int
+  /// SHA-256 of the uploaded bytes, so a re-upload of the same file is recognisable.
+  checksum      String
+
+  status String  @default("pending")
+  dryRun Boolean @default(false)
+
+  rowsRead     Int @default(0)
+  rowsAccepted Int @default(0)
+  rowsRejected Int @default(0)
+
+  /// Capped at 500 entries; `rowsRejected` is always the exact count.
+  errors         Json  @default("[]")
+  /// What the handler applied. Enough to drive a rollback.
+  appliedSummary Json?
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdById String?
+
+  @@index([organizationId, type, startedAt])
+  @@index([status])
+  @@map("import_run")
+}
+
+/// A bulk export.
+model ExportRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  type     String
+  format   String
+  fileName String
+  status   String @default("running")
+
+  rowCount  Int @default(0)
+  byteCount Int @default(0)
+
+  /// Where the artefact went, when the sink stored one.
+  documentId String?
+  /// The filters it ran with — the answer to "what exactly did this file contain".
+  parameters Json?
+  error      String? @db.Text
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdById String?
+
+  @@index([organizationId, type, startedAt])
+  @@map("export_run")
+}
+
+/// A synchronization connection between this system and an external one.
+model SyncConnection {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  connectorKey   String
+  name           String
+  direction      String
+  conflictPolicy String @default("remote_wins")
+  status         String @default("idle")
+
+  /// Where to resume. The remote's own value — a watermark from local time skips records.
+  watermark String?
+
+  lastSyncAt          DateTime?
+  lastSuccessAt       DateTime?
+  consecutiveFailures Int       @default(0)
+  lastError           String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  runs      SyncRun[]
+  conflicts SyncConflict[]
+
+  @@unique([organizationId, connectorKey, name])
+  @@index([status])
+  @@map("sync_connection")
+}
+
+/// One synchronization run.
+model SyncRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+  connectionId   String
+
+  direction  String
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  status     String    @default("running")
+
+  recordsRead    Int @default(0)
+  recordsCreated Int @default(0)
+  recordsUpdated Int @default(0)
+  recordsDeleted Int @default(0)
+  recordsSkipped Int @default(0)
+  recordsFailed  Int @default(0)
+  conflicts      Int @default(0)
+
+  /// Both ends, which is what makes a run reproducible.
+  fromWatermark String?
+  toWatermark   String?
+  error         String? @db.Text
+
+  connection SyncConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId, startedAt])
+  @@map("sync_run")
+}
+
+/// A record two systems disagree about.
+model SyncConflict {
+  id             String  @id @default(cuid())
+  organizationId String?
+  connectionId   String
+
+  runId      String
+  externalId String
+  policy     String
+  resolution String
+
+  remoteUpdatedAt DateTime
+  localUpdatedAt  DateTime
+  /// Both sides, so whoever resolves it can see what they are choosing between.
+  remoteData      Json
+  localData       Json
+
+  detectedAt   DateTime  @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+
+  connection SyncConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId, resolvedAt])
+  @@index([organizationId, resolvedAt])
+  @@map("sync_conflict")
+}
+
+// ===========================================================================
+// Phase 7 — the AI platform
+//
+// Seventeen tables behind the store ports the phase 7 packages define. Every package takes a
+// store interface rather than a Prisma client, so an application can put any of this somewhere
+// else — memory in Redis, vectors in a real vector database, telemetry in a time-series store —
+// without the framework knowing. These are the default implementations' tables.
+//
+// Three things in this section are deliberate and are commented where they appear:
+//
+//   * `ai_request_log` is one table read by two packages. Cost accounting and observability need
+//     almost the same row, and writing it twice would let the two disagree about what a request
+//     cost — which is the one thing a cost report must never do.
+//
+//   * Vectors are stored as `Json`, not as a native vector type. A `vector` column needs the
+//     pgvector extension, and requiring an extension to run the framework would make "provider
+//     neutral" false at the database as well. This is a correct, slow default; an application
+//     with real retrieval volume points `VectorStore` at something built for it.
+//
+//   * Nothing here stores an API key, a prompt's rendered output alongside a customer's data, or
+//     a completion in the telemetry table. Where content lives is a deliberate choice per table.
+// ---------------------------------------------------------------------------
+
+/// A model the platform may use.
+///
+/// Applications ask for models by id or by requirement; this is what the registry reads.
+/// Pricing is in cents per million tokens, as integers — floating-point money multiplied by a
+/// million-token count accumulates error that shows up as a cost report nobody can reconcile.
+model AiModel {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// The registry id applications use: `openai.gpt-4o`, `anthropic.sonnet`.
+  modelId         String
+  provider        String
+  /// What the provider calls it. Changes without the registry id changing.
+  providerModelId String
+
+  displayName  String
+  family       String?
+  status       String  @default("available")
+  /// Why it is unavailable or deprecated. Shown to whoever asks for it.
+  statusReason String?
+
+  contextTokens   Int
+  maxOutputTokens Int
+  capabilities    String[]
+
+  /// Cents per million tokens.
+  inputCostPerMillion       Int
+  outputCostPerMillion      Int
+  cachedInputCostPerMillion Int?
+  /// When the pricing was last checked. Stale pricing is a silently wrong cost report.
+  pricingUpdatedAt          DateTime
+
+  /// Null means unknown, not fast.
+  p50LatencyMs Int?
+
+  /// Empty means every tenant. Otherwise an allow-list.
+  allowedOrganizationIds String[]
+
+  /// Set by `markUnavailable`, and time-limited so it heals itself.
+  unavailableUntil  DateTime?
+  unavailableReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, status])
+  @@index([provider, status])
+  @@map("ai_model")
+}
+
+/// A prompt, identified by its key.
+model AiPrompt {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// `support.system`, `translation.user`. Stable across versions.
+  key         String
+  name        String
+  description String?
+  owner       String?
+  tags        String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions AiPromptVersion[]
+
+  @@index([organizationId, key])
+  @@map("ai_prompt")
+}
+
+/// One version of a prompt.
+///
+/// **A published version is immutable.** The application enforces it and the database records
+/// what would have been broken: `contentHash` covers the content fields only, so retiring a
+/// version does not read as tampering, and a mismatch on render means somebody edited a row.
+model AiPromptVersion {
+  id             String  @id @default(cuid())
+  promptId       String
+  organizationId String?
+
+  version Int
+  /// draft, in_review, approved, published, retired.
+  status  String @default("draft")
+
+  /// The template. Rendered by the restricted renderer in `@trustos/prompt-registry`.
+  template      String  @db.Text
+  /// Declared variables, with types and whether each is trusted.
+  variables     Json    @default("[]")
+  /// Which model this was written and tested against.
+  modelId       String?
+  /// The guardrail profile this prompt expects.
+  safetyProfile String?
+
+  /// Over the content fields only. See the model comment.
+  contentHash String
+
+  /// Three people: author, approver, publisher. Self-approval is refused by the registry.
+  createdById   String?
+  approvedById  String?
+  approvedAt    DateTime?
+  publishedById String?
+  publishedAt   DateTime?
+  retiredAt     DateTime?
+  /// Why it was retired or rejected.
+  note          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  prompt AiPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([promptId, version])
+  @@index([organizationId, status])
+  @@map("ai_prompt_version")
+}
+
+/// What a tenant is allowed to do with AI.
+///
+/// Never merged — see `@trustos/ai-policy`. The most specific policy applies whole, so "why was
+/// this allowed" always has one answer.
+model AiPolicy {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  name        String
+  /// platform, organization, agent, application.
+  scopeKind   String
+  /// The agent or application this applies to, when the scope names one.
+  scopeTarget String?
+
+  allowedModels         String[]
+  deniedModels          String[]
+  allowedProviders      String[]
+  /// Denied by default: an empty list means no tools.
+  allowedTools          String[]
+  allowedKnowledgeBases String[]
+
+  maxOutputTokens Int?
+  maxRuntimeMs    Int?
+  maxAgentSteps   Int?
+
+  /// Cents.
+  maxCostCentsPerRequest Int?
+  maxCostCentsPerDay     Int?
+  maxCostCentsPerMonth   Int?
+
+  guardrailProfile String?
+  reviewAllOutput  Boolean @default(false)
+  /// Off by default. A cache keyed carelessly returns one tenant's answer to another.
+  allowCaching     Boolean @default(false)
+
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, scopeKind])
+  @@map("ai_policy")
+}
+
+/// One AI request: what it cost and what happened.
+///
+/// **One table, two readers.** `@trustos/cost-monitor` aggregates the money columns and
+/// `@trustos/ai-observability` aggregates the rest. Two tables would let them disagree about
+/// what a request cost, and reconciling a cost report against an invoice is hard enough with one
+/// source of truth.
+///
+/// No prompt text and no completion text, ever. This table is queried by more people, exported
+/// to more dashboards and retained longer than any other in the platform.
+model AiRequestLog {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Which application spent it.
+  application String  @default("unknown")
+  actorId     String?
+
+  modelId      String
+  provider     String
+  /// Set when the router fell back from another model.
+  fallbackFrom String?
+
+  agentId       String?
+  promptKey     String?
+  promptVersion String?
+
+  /// success, provider_error, guardrail_blocked, policy_denied, budget_exceeded,
+  /// schema_mismatch, cancelled.
+  outcome      String
+  /// A short reason code. Never a message with content in it.
+  reason       String?
+  /// stop, length, tool_calls, content_filter — separates wasted spend from useful spend.
+  finishReason String?
+
+  promptTokens       Int @default(0)
+  completionTokens   Int @default(0)
+  reasoningTokens    Int @default(0)
+  cachedPromptTokens Int @default(0)
+  totalTokens        Int @default(0)
+
+  /// Sub-cent precision preserved; rounded only when reported.
+  costCents Decimal @db.Decimal(14, 6)
+  /// Whether the token counts came from the provider or from an estimate.
+  estimated Boolean @default(false)
+  /// True when no provider call happened at all.
+  cached    Boolean @default(false)
+
+  latencyMs Int
+  attempts  Int @default(1)
+
+  at DateTime @default(now())
+
+  @@index([organizationId, at])
+  @@index([organizationId, modelId, at])
+  @@index([organizationId, agentId, at])
+  @@map("ai_request_log")
+}
+
+/// A conversation between a user and an agent.
+model AiConversation {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  userId  String?
+  agentId String?
+  title   String?
+
+  /// The summary of everything compacted away, and how many turns it stands for.
+  summary                String? @db.Text
+  summarisedMessageCount Int     @default(0)
+
+  status String @default("active")
+
+  totalTokens    Int     @default(0)
+  totalCostCents Decimal @default(0) @db.Decimal(14, 6)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  turns AiConversationTurn[]
+
+  @@index([organizationId, userId, updatedAt])
+  @@index([organizationId, agentId, updatedAt])
+  @@map("ai_conversation")
+}
+
+/// One turn.
+///
+/// `sequence` continues past compacted turns, so a number identifies the same turn for the whole
+/// life of the conversation rather than shifting when history is folded into the summary.
+model AiConversationTurn {
+  id             String  @id @default(cuid())
+  conversationId String
+  organizationId String?
+
+  sequence Int
+  role     String
+  content  String? @db.Text
+
+  /// The assistant's tool calls, and the id a tool message answers.
+  toolCalls  Json?
+  toolCallId String?
+
+  modelId   String?
+  tokens    Int     @default(0)
+  costCents Decimal @default(0) @db.Decimal(14, 6)
+
+  createdAt DateTime @default(now())
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, sequence])
+  @@index([conversationId, createdAt])
+  @@map("ai_conversation_turn")
+}
+
+/// What an agent remembers.
+///
+/// The scope is the access-control boundary, and the subject columns are what make it one: a
+/// `user` memory with no `userId` would be recalled for everybody in the tenant. The application
+/// refuses to write one; the unique index below refuses to store two.
+model AiAgentMemory {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// conversation, session, user, organization, long_term.
+  scope String
+
+  userId         String?
+  conversationId String?
+  sessionId      String?
+  agentId        String?
+
+  key        String
+  value      String @db.Text
+  /// stated or inferred. A recall that cannot tell them apart presents a guess as a fact.
+  confidence String @default("inferred")
+
+  /// Not nullable. Nothing lives forever by accident.
+  expiresAt DateTime
+
+  createdAt      DateTime @default(now())
+  lastAccessedAt DateTime @default(now())
+  accessCount    Int      @default(0)
+
+  @@index([organizationId, scope, lastAccessedAt])
+  @@index([organizationId, conversationId])
+  @@index([organizationId, userId])
+  @@index([expiresAt])
+  @@map("ai_agent_memory")
+}
+
+/// One agent run.
+///
+/// `stopReason` and `limitHit` are both recorded because they answer different questions: a run
+/// that stopped at `limit_reached` is not a run that finished, and a report that cannot tell them
+/// apart counts half-finished work as delivered.
+model AiAgentRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  agentId        String
+  conversationId String?
+  actorId        String?
+  application    String?
+
+  /// final_answer, tool_success, schema_satisfied, limit_reached, error.
+  stopReason String
+  /// steps, tokens, runtime — set only when a limit ended the run.
+  limitHit   String?
+
+  steps          Int     @default(0)
+  totalTokens    Int     @default(0)
+  totalCostCents Decimal @default(0) @db.Decimal(14, 6)
+  durationMs     Int     @default(0)
+
+  needsReview Boolean @default(false)
+  reviewId    String?
+
+  /// Never a stack trace, never the conversation.
+  error String? @db.Text
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  runSteps AiAgentRunStep[]
+
+  @@index([organizationId, agentId, startedAt])
+  @@index([organizationId, stopReason, startedAt])
+  @@map("ai_agent_run")
+}
+
+/// One step of a run: what the model said, and what ran because of it.
+///
+/// Tool names and outcomes, not tool arguments. Arguments routinely contain the identifiers the
+/// rest of the platform is careful about, and the audit log already records the call.
+model AiAgentRunStep {
+  id             String  @id @default(cuid())
+  runId          String
+  organizationId String?
+
+  step    Int
+  modelId String
+
+  /// Names and outcomes only.
+  toolCalls Json @default("[]")
+
+  tokens    Int     @default(0)
+  costCents Decimal @default(0) @db.Decimal(14, 6)
+  latencyMs Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  run AiAgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, step])
+  @@map("ai_agent_run_step")
+}
+
+/// Output waiting for a person.
+///
+/// `status` is the gate: `@trustos/human-review` refuses to return the content of anything that
+/// is not `approved`, so a pending item cannot be read and rendered by accident.
+model AiReviewRequest {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  subjectType String
+  subjectId   String
+
+  content String  @db.Text
+  prompt  String? @db.Text
+
+  agentId String?
+  modelId String?
+
+  /// Why this needs review. Shown to the reviewer, so it is never empty.
+  reason  String
+  /// What the automated checks were unsure about.
+  signals String[]
+
+  priority String @default("normal")
+  status   String @default("pending")
+
+  /// Cannot be the person who decides it.
+  requestedBy        String?
+  assignedTo         String?
+  requiredPermission String?
+
+  decidedBy        String?
+  decidedAt        DateTime?
+  decisionNote     String?   @db.Text
+  /// The reviewer's fix. Returned in place of the original.
+  correctedContent String?   @db.Text
+
+  dueAt   DateTime
+  /// Every state change, with who and why.
+  history Json     @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, status, priority, createdAt])
+  @@index([organizationId, assignedTo, status])
+  @@map("ai_review_request")
+}
+
+/// A searchable collection of documents.
+///
+/// `restricted` by default. A knowledge base that defaults to readable is a knowledge base that
+/// answers questions for people who should not have asked.
+model AiKnowledgeCollection {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  key         String
+  name        String
+  description String?
+
+  /// public, restricted, confidential.
+  visibility       String   @default("restricted")
+  /// Permissions a reader must hold.
+  readPermissions  String[]
+  writePermissions String[]
+
+  /// The embedding model, and the two numbers that make a vector comparable to another.
+  embeddingModelId String
+  dimensions       Int
+  embeddingVersion String @default("1")
+
+  documentCount Int @default(0)
+  chunkCount    Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents AiKnowledgeDocument[]
+
+  @@index([organizationId, visibility])
+  @@map("ai_knowledge_collection")
+}
+
+/// A document in a collection.
+///
+/// `contentHash` is what makes re-ingestion cheap: an unchanged document is not re-embedded, and
+/// embedding is the expensive half of putting a document into a knowledge base.
+model AiKnowledgeDocument {
+  id             String  @id @default(cuid())
+  collectionId   String
+  organizationId String?
+
+  externalId  String?
+  title       String
+  uri         String?
+  content     String  @db.Text
+  contentHash String
+
+  metadata Json @default("{}")
+
+  chunkCount Int       @default(0)
+  /// Null until the document has been embedded.
+  embeddedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  collection AiKnowledgeCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, collectionId, updatedAt])
+  @@map("ai_knowledge_document")
+}
+
+/// One embedded chunk.
+///
+/// The vector is `Json`. See the section header: a native vector column needs pgvector, and
+/// requiring a database extension to run the framework would make "no vendor lock-in" false one
+/// layer down. An application with real retrieval volume points `VectorStore` elsewhere.
+model AiVectorRecord {
+  id             String  @id
+  organizationId String?
+  collectionId   String
+
+  /// The three fields that decide whether this vector may be compared with a query.
+  modelId    String
+  dimensions Int
+  version    String @default("1")
+
+  vector  Json
+  content String @db.Text
+
+  /// Flat scalars only. A nested filter works on one vector database and not the next.
+  metadata Json @default("{}")
+
+  documentId String?
+  title      String?
+  uri        String?
+  section    String?
+  chunkIndex Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, collectionId])
+  @@index([collectionId, documentId])
+  @@map("ai_vector_record")
+}
+
+/// A cached AI response.
+///
+/// `cacheKey` is built by `@trustos/ai-cache` from a context that includes the organization
+/// structurally — a key that omits the tenant cannot be constructed. The unique constraint is on
+/// the key alone because the key already carries the tenant.
+model AiCacheEntry {
+  id       String @id @default(cuid())
+  cacheKey String @unique
+
+  organizationId String?
+
+  modelId  String
+  provider String
+
+  content   String? @db.Text
+  toolCalls Json?
+  usage     Json
+  costCents Decimal @db.Decimal(14, 6)
+
+  hits      Int       @default(0)
+  lastHitAt DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([organizationId, expiresAt])
+  /// The purge job scans every tenant, so it needs an index that does not lead with the tenant.
+  @@index([expiresAt])
+  @@map("ai_cache_entry")
+}
+
+/// One run of an evaluation suite.
+///
+/// `variant` is what makes the history useful: two runs of the same suite are only comparable
+/// when you know what changed between them — a prompt version, a model, a commit.
+model AiEvaluationRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  suiteId String
+  subject String
+  variant String
+
+  passed  Int @default(0)
+  failed  Int @default(0)
+  errored Int @default(0)
+
+  /// Mean per metric, over the cases that produced one.
+  scores         Json    @default("{}")
+  totalCostCents Decimal @default(0) @db.Decimal(14, 6)
+
+  startedAt  DateTime
+  finishedAt DateTime
+
+  results AiEvaluationCaseResult[]
+
+  @@index([organizationId, suiteId, startedAt])
+  @@map("ai_evaluation_run")
+}
+
+/// One case in one run.
+///
+/// The output is kept, because a regression report that cannot show what changed sends somebody
+/// to re-run the case by hand.
+model AiEvaluationCaseResult {
+  id             String  @id @default(cuid())
+  runId          String
+  organizationId String?
+
+  caseId String
+  output String @db.Text
+
+  metrics  Json     @default("[]")
+  passed   Boolean  @default(false)
+  failures String[]
+
+  latencyMs Int     @default(0)
+  costCents Decimal @default(0) @db.Decimal(14, 6)
+  /// Set when the case could not be run at all. Distinct from scoring badly.
+  error     String? @db.Text
+
+  run AiEvaluationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, caseId])
+  @@map("ai_evaluation_case_result")
+}
+
+// ===========================================================================
+// Phase 8 — the financial platform
+//
+// Nineteen tables: the ledger, accounts, wallets, transactions, payments, fees, limits, rates,
+// settlement, reconciliation, policy and compliance records.
+//
+// Four decisions run through all of them, and each is enforced rather than documented:
+//
+//   * **Money is `Decimal`, never `Float`.** PostgreSQL's `numeric` is exact; a double is not,
+//     and a fee computed in one agrees with every test and disagrees with the provider once in
+//     ten thousand transactions. Every amount column is `@db.Decimal(28, 8)` with the currency
+//     beside it — 28 digits holds any national-currency total in minor units, and 8 decimal
+//     places is more than any currency needs and enough for an exchange rate.
+//
+//   * **Entry amounts are positive.** The direction carries the sign. A check constraint in the
+//     migration enforces it, because a negative debit and a credit are the same movement written
+//     two ways and a ledger that stores both has two representations of every posting.
+//
+//   * **Posted journals are append-only, at the database.** A trigger refuses UPDATE and DELETE
+//     on a posted journal and on its entries. The service already refuses; the trigger is what
+//     holds when somebody connects with psql.
+//
+//   * **A journal must balance, at the database.** A deferred constraint trigger checks that
+//     debits equal credits per currency at commit. That is a guarantee the application cannot
+//     accidentally lose, and it is the one property everything else in the phase rests on.
+// ---------------------------------------------------------------------------
+
+/// One balanced journal. Immutable once posted — see the section header.
+model LedgerJournal {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Which ledger. A tenant may keep several: operational, regulatory, management.
+  ledgerId String @default("default")
+
+  /// A human reference: an invoice number, a settlement batch, a transaction id.
+  reference   String?
+  description String
+
+  /// draft, posted, reversed.
+  status String @default("posted")
+
+  /// When this journal is *effective*, which is not when it was written.
+  ///
+  /// A settlement received on Monday for Friday's trading is effective Friday. Reports run on
+  /// effective date; the audit trail uses `postedAt`. Conflating them makes a month-end report
+  /// change after the month has ended.
+  effectiveAt DateTime
+  postedAt    DateTime?
+  postedById  String?
+
+  /// Set on the original when a reversal posts, and on the reversal pointing back.
+  reversedByJournalId String?
+  reversesJournalId   String?
+
+  /// SHA-256 over the entries, the effective date and the description — not the status, because
+  /// marking a journal reversed is a legitimate change.
+  contentHash String?
+
+  /// What makes a retried posting one posting. Unique per tenant; see the migration.
+  idempotencyKey String?
+
+  metadata Json @default("{}")
+
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  entries LedgerEntry[]
+
+  @@index([organizationId, ledgerId, effectiveAt])
+  @@index([organizationId, reference])
+  @@map("ledger_journal")
+}
+
+/// One line of a journal. Always a positive amount; `direction` carries the sign.
+model LedgerEntry {
+  id             String  @id @default(cuid())
+  journalId      String
+  organizationId String?
+
+  accountId String
+  /// debit or credit.
+  direction String
+
+  /// Exact. See the section header for why this is not a float.
+  amount   Decimal @db.Decimal(28, 8)
+  currency String
+
+  description String  @default("")
+  /// A cost centre, a product, a merchant. Reporting groups on it; nothing here interprets it.
+  dimension   String?
+
+  metadata Json @default("{}")
+
+  journal LedgerJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+
+  /// The balance query's index. Account and currency together, because a balance is per currency.
+  @@index([organizationId, accountId, currency])
+  @@index([journalId])
+  @@map("ledger_entry")
+}
+
+/// Where a balance lives. The type is what makes the balance mean something.
+model FinancialAccount {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Stable and human-readable: `customer.usr_1.usd`, `system.bank.usd`.
+  code String
+  name String
+
+  /// customer, merchant, system, settlement, suspense, fee, reserve, general.
+  type  String
+  /// asset, liability, equity, revenue, expense. Derived from the type; never contradicts it.
+  class String
+
+  /// One currency per account, and it never changes. A multi-currency account is two balances
+  /// pretending to be one.
+  currency String
+
+  status String @default("active")
+
+  ownerId   String?
+  ownerType String?
+
+  ledgerId        String  @default("default")
+  parentAccountId String?
+
+  /// False for almost everything. A customer balance that can go negative is an unsecured loan
+  /// nobody decided to make.
+  allowNegative  Boolean  @default(false)
+  overdraftLimit Decimal? @db.Decimal(28, 8)
+
+  metadata Json @default("{}")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  closedAt  DateTime?
+
+  wallets Wallet[]
+
+  @@index([organizationId, type, status])
+  @@index([organizationId, ownerId])
+  @@map("financial_account")
+}
+
+/// A view over a ledger account. No balance column — see `@trustos/wallet`.
+model Wallet {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  ownerId   String
+  ownerType String @default("user")
+  name      String @default("")
+
+  currency String
+
+  /// The account this wallet is a view over. One account, and it is the whole balance.
+  accountId String
+
+  status       String    @default("active")
+  frozenAt     DateTime?
+  frozenReason String?
+
+  /// Limit keys checked before every debit.
+  limitKeys String[]
+
+  metadata Json @default("{}")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  closedAt  DateTime?
+
+  account FinancialAccount @relation(fields: [accountId], references: [id])
+  holds   WalletHold[]
+
+  @@index([organizationId, ownerId])
+  @@map("wallet")
+}
+
+/// Money placed against a pending operation. What makes an authorization mean something.
+model WalletHold {
+  id             String  @id @default(cuid())
+  organizationId String?
+  walletId       String
+
+  amount   Decimal @db.Decimal(28, 8)
+  currency String
+
+  /// hold or reserve.
+  ///
+  /// The only field the sweeper reads before deciding whether to touch a row. A `hold` is against
+  /// a specific pending operation and expires; a `reserve` is a standing floor and never does.
+  /// Merging them means either the sweeper dissolves somebody's chargeback cover, or nothing
+  /// sweeps and a dead authorization freezes money forever.
+  kind String @default("hold")
+
+  status String @default("active")
+
+  reason    String
+  reference String?
+
+  /// Required for a hold, null for a reserve. A hold against a failed process is money the
+  /// customer cannot spend and nobody is coming back for; a reserve that expired on a timer is
+  /// cover that silently stopped covering anything. A check constraint enforces both halves.
+  expiresAt DateTime?
+
+  /// A partial capture leaves the rest held.
+  capturedAmount Decimal? @db.Decimal(28, 8)
+
+  createdAt      DateTime  @default(now())
+  createdById    String?
+  resolvedAt     DateTime?
+  resolvedReason String?
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, status])
+  @@map("wallet_hold")
+}
+
+/// The business record of a movement. The journal is the accounting record.
+model FinancialTransaction {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// deposit, withdrawal, transfer, payment, refund, fee, adjustment.
+  type   String
+  status String @default("pending")
+
+  amount   Decimal @db.Decimal(28, 8)
+  currency String
+
+  /// Separate from the amount, so net and gross are both visible.
+  feeAmount    Decimal? @db.Decimal(28, 8)
+  /// The fee calculation, stored whole. It shows its working — see `@trustos/fees`.
+  feeBreakdown Json?
+
+  sourceWalletId       String?
+  sourceAccountId      String?
+  destinationWalletId  String?
+  destinationAccountId String?
+
+  holdId String?
+
+  /// Every journal this transaction produced, in order.
+  journalIds String[]
+
+  /// Unique per tenant. This is what makes a retried payment one payment.
+  idempotencyKey String?
+
+  reference   String?
+  description String  @default("")
+
+  parentTransactionId String?
+  /// Across every refund, so a second cannot take it past the amount.
+  refundedAmount      Decimal? @db.Decimal(28, 8)
+
+  failureReason String?
+  failureCode   String?
+
+  /// Set by a risk hook. The platform records it and does not compute it.
+  riskScore    Int?
+  riskDecision String?
+
+  expiresAt DateTime?
+
+  metadata Json @default("{}")
+
+  createdAt   DateTime  @default(now())
+  createdById String?
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  events FinancialTransactionEvent[]
+
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, sourceWalletId, createdAt])
+  @@index([organizationId, reference])
+  @@map("financial_transaction")
+}
+
+/// One step in a transaction's life. The trail a support agent reads.
+model FinancialTransactionEvent {
+  id             String  @id @default(cuid())
+  transactionId  String
+  organizationId String?
+
+  at        DateTime @default(now())
+  fromState String
+  toState   String
+  actorId   String?
+  reason    String?
+  journalId String?
+
+  transaction FinancialTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId, at])
+  @@map("financial_transaction_event")
+}
+
+/// "Somebody owes this, here is how to pay it." Every one expires.
+model PaymentRequest {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// The public reference: what appears on an invoice and is read aloud.
+  reference String
+
+  amount     Decimal  @db.Decimal(28, 8)
+  currency   String
+  paidAmount Decimal? @db.Decimal(28, 8)
+
+  status String @default("pending")
+
+  payeeAccountId String?
+  payeeWalletId  String?
+  payerId        String?
+
+  invoiceReference String?
+  description      String  @default("")
+
+  /// Required. A request with no expiry is a claim payable a year later at a price nobody honours.
+  expiresAt DateTime
+
+  allowPartial Boolean @default(false)
+
+  /// A URL the application calls. Delivery, retry and signing are `@trustos/webhooks`.
+  callbackUrl String?
+
+  /// The provider's own id. Recorded, never interpreted.
+  providerReference String?
+  provider          String?
+
+  transactionIds String[]
+
+  metadata Json @default("{}")
+
+  createdAt       DateTime  @default(now())
+  createdById     String?
+  updatedAt       DateTime  @updatedAt
+  paidAt          DateTime?
+  cancelledAt     DateTime?
+  cancelledReason String?
+
+  @@index([organizationId, status, expiresAt])
+  @@index([organizationId, invoiceReference])
+  @@map("payment_request")
+}
+
+/// A version of a fee schedule. Published versions are immutable.
+model FeeSchedule {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// Stable across versions. What a caller asks for.
+  key         String
+  version     Int
+  name        String
+  description String @default("")
+
+  currency   String
+  /// Flat, percentage, tiered, discount and tax components, with their revenue accounts.
+  components Json
+
+  minimumFee Decimal? @db.Decimal(28, 8)
+  maximumFee Decimal? @db.Decimal(28, 8)
+
+  rounding String @default("half_even")
+  status   String @default("draft")
+
+  /// When this version starts pricing, and when it stops. Both, so a transaction priced last week
+  /// re-prices to the same number.
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+
+  /// Separates promotional pricing from standard on a report.
+  promotional Boolean @default(false)
+
+  createdAt     DateTime  @default(now())
+  createdById   String?
+  publishedAt   DateTime?
+  publishedById String?
+
+  @@unique([organizationId, key, version])
+  @@index([organizationId, key, status, effectiveFrom])
+  @@map("fee_schedule")
+}
+
+/// A ceiling on value or count, over a window.
+model FinancialLimit {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  key  String
+  name String
+
+  /// wallet, account, user, organization, global.
+  scope     String
+  /// transaction, day, month, rolling.
+  window    String
+  rollingMs Int?
+
+  /// IANA. "A day" is a local idea, and a platform that assumes UTC refuses a customer in Phnom
+  /// Penh at 07:00 local for yesterday's spending.
+  timezone String @default("UTC")
+
+  currency  String?
+  maxAmount Decimal? @db.Decimal(28, 8)
+  maxCount  Int?
+
+  /// block or warn. A warn-only limit is a metric with a threshold.
+  enforcement String  @default("block")
+  enabled     Boolean @default(true)
+
+  metadata Json @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usage FinancialLimitUsage[]
+
+  @@index([organizationId, scope, enabled])
+  @@map("financial_limit")
+}
+
+/// What has been used against a limit, in one window.
+model FinancialLimitUsage {
+  id             String  @id @default(cuid())
+  limitId        String
+  organizationId String?
+
+  subjectId   String
+  windowStart DateTime
+  windowEnd   DateTime
+
+  amount   Decimal? @db.Decimal(28, 8)
+  currency String?
+  count    Int      @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  limit FinancialLimit @relation(fields: [limitId], references: [id], onDelete: Cascade)
+
+  @@unique([limitId, subjectId, windowStart])
+  @@map("financial_limit_usage")
+}
+
+/// A rate between two currencies, from a named source, at a moment.
+model ExchangeRate {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  fromCurrency String
+  toCurrency   String
+
+  /// More precision than money: a USD/KHR rate at two decimal places is useless.
+  rate Decimal @db.Decimal(28, 12)
+
+  /// Where it came from. Recorded on every conversion.
+  source String
+
+  /// When the rate was struck — not when the row was written.
+  quotedAt  DateTime
+  expiresAt DateTime?
+
+  metadata Json @default("{}")
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, fromCurrency, toCurrency, quotedAt])
+  @@map("exchange_rate")
+}
+
+/// A batch of settlement instructions covering a window.
+model SettlementBatch {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  reference String
+  currency  String
+  status    String @default("open")
+
+  /// Both ends, which is what makes a batch reproducible: "everything completed between these two
+  /// instants". A batch defined only by when it ran cannot be rebuilt.
+  windowStart DateTime
+  windowEnd   DateTime
+
+  /// Money passes through here between sending and confirmation.
+  settlementAccountId String
+
+  instructionCount Int     @default(0)
+  totalAmount      Decimal @db.Decimal(28, 8)
+
+  journalIds        String[]
+  externalReference String?
+  failureReason     String?
+
+  metadata Json @default("{}")
+
+  createdAt   DateTime  @default(now())
+  createdById String?
+  updatedAt   DateTime  @updatedAt
+  sentAt      DateTime?
+  settledAt   DateTime?
+
+  instructions SettlementInstruction[]
+  adjustments  SettlementAdjustment[]
+
+  @@index([organizationId, status, windowEnd])
+  @@map("settlement_batch")
+}
+
+/// One counterparty's share of a batch.
+model SettlementInstruction {
+  id             String  @id @default(cuid())
+  organizationId String?
+  batchId        String
+
+  counterpartyId   String
+  counterpartyName String @default("")
+
+  sourceAccountId String
+
+  amount   Decimal @db.Decimal(28, 8)
+  currency String
+
+  status String @default("pending")
+
+  /// What this instruction settles. What makes a batch explicable afterwards.
+  transactionIds String[]
+
+  externalReference String?
+  failureReason     String?
+
+  metadata Json @default("{}")
+
+  createdAt DateTime  @default(now())
+  settledAt DateTime?
+
+  batch SettlementBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, status])
+  @@index([organizationId, counterpartyId])
+  @@map("settlement_instruction")
+}
+
+/// One comparison of the platform against somebody else.
+model ReconciliationRun {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  /// What is being reconciled: `bank.usd`, `provider-x.settlement`.
+  key  String
+  /// internal or external.
+  kind String
+
+  currency    String
+  windowStart DateTime
+  windowEnd   DateTime
+
+  status String @default("running")
+
+  internalCount  Int @default(0)
+  externalCount  Int @default(0)
+  matchedCount   Int @default(0)
+  exceptionCount Int @default(0)
+
+  internalTotal Decimal @db.Decimal(28, 8)
+  externalTotal Decimal @db.Decimal(28, 8)
+  /// external − internal. Zero when the two sides agree in total.
+  difference    Decimal @db.Decimal(28, 8)
+
+  /// The tolerance, with the reason it exists — the only question anybody asks about one.
+  tolerance Json
+
+  failureReason String?
+
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+  startedById String?
+
+  exceptions ReconciliationException[]
+
+  @@index([organizationId, key, startedAt])
+  @@map("reconciliation_run")
+}
+
+/// One difference somebody has to work through.
+model ReconciliationException {
+  id             String  @id @default(cuid())
+  organizationId String?
+  runId          String
+
+  /// missing_internal, missing_external, amount_mismatch, date_mismatch, duplicate_*.
+  kind   String
+  status String @default("open")
+
+  reference String
+
+  internalAmount Decimal? @db.Decimal(28, 8)
+  externalAmount Decimal? @db.Decimal(28, 8)
+  difference     Decimal? @db.Decimal(28, 8)
+  currency       String
+
+  internalId String?
+  externalId String?
+  internalAt DateTime?
+  externalAt DateTime?
+
+  /// What to look at, in words. Written once, read by whoever picks it up.
+  detail String
+
+  assignedTo          String?
+  /// Required to close. Without it the same difference appears next month with nobody knowing it
+  /// was already looked at.
+  resolution          String?
+  correctionJournalId String?
+
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+
+  run ReconciliationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status, createdAt])
+  @@index([runId, kind])
+  @@map("reconciliation_exception")
+}
+
+/// What a tenant may do with money. Never merged — the most specific applies whole.
+model FinancialPolicy {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  name        String
+  /// platform, organization, account_type.
+  scopeKind   String
+  scopeTarget String?
+
+  /// Empty means none, not all. An unconfigured platform that accepted every currency would
+  /// produce balances nobody can settle.
+  allowedCurrencies String[]
+
+  allowNegativeBalance Boolean @default(false)
+  /// Per currency, keyed by code.
+  overdraftLimits      Json    @default("{}")
+
+  approvalThresholds  Json @default("{}")
+  highValueThresholds Json @default("{}")
+
+  allowRiskReviewToProceed Boolean @default(false)
+
+  settlementWindowMs     Int?
+  settlementAccountCodes Json @default("{}")
+  feeScheduleKeys        Json @default("{}")
+
+  /// True by default. A reversal moves money back on one person's decision.
+  requireApprovalForReversal Boolean @default(true)
+
+  enabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, scopeKind])
+  @@map("financial_policy")
+}
+
+/// A window nothing may post into once it is closed.
+///
+/// Closing is about the *effective* date. A journal posted today with a March effective date is
+/// exactly what closing prevents; checking the posting date would be useless, because it is always
+/// now.
+model AccountingPeriod {
+  id             String  @id @default(cuid())
+  organizationId String?
+  ledgerId       String  @default("default")
+
+  /// Readable and sortable: `2026-03`, `2026-Q1`, `FY2026`.
+  code String
+
+  /// Half-open: `[startsAt, endsAt)`. Consecutive periods tile without a gap or an overlap; an
+  /// inclusive end makes midnight on the last day belong to two periods.
+  startsAt DateTime
+  endsAt   DateTime
+
+  status String @default("open")
+
+  /// The trial balance at the moment of closing, per currency.
+  ///
+  /// Stored rather than recomputed. Recomputing gives a different answer the moment anything is
+  /// posted into a reopened period, and the number people need is the one the report they acted on
+  /// was based on.
+  closingTotals Json @default("[]")
+
+  closedAt    DateTime?
+  closedById  String?
+  closingNote String?
+
+  /// Every reopen, so "who unlocked March" has an answer.
+  reopenings Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// The index the posting path uses. Read on every posting, so it leads with the tenant and the
+  /// ledger and covers the window.
+  @@index([organizationId, ledgerId, startsAt, endsAt])
+  @@map("accounting_period")
+}
+
+/// A correction against a batch that has already settled.
+///
+/// Never by editing the batch: a settled batch is what the counterparty was told and what the
+/// reconciliation ran against, and editing it to match a later statement makes the two agree by
+/// destroying the evidence of the disagreement.
+model SettlementAdjustment {
+  id             String  @id @default(cuid())
+  organizationId String?
+  batchId        String
+  /// When the difference is attributable to one instruction.
+  instructionId  String?
+
+  /// counterparty_fee, amount_difference, fx_difference, chargeback, other.
+  kind String
+
+  /// **Signed**, and the only signed amount in the phase. Positive means the counterparty paid
+  /// more than the batch said. A direction field would need every reader to know whose point of
+  /// view it is from, and an adjustment is read by whoever is holding a bank statement.
+  amount   Decimal @db.Decimal(28, 8)
+  currency String
+
+  /// Required. A difference with no explanation is one nobody can close, and it appears again on
+  /// next month's reconciliation.
+  reason String
+
+  /// Where the difference is booked: a fee expense, an FX loss, a suspense account.
+  counterAccountId String
+
+  journalId         String?
+  externalReference String?
+
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  batch SettlementBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, createdAt])
+  @@map("settlement_adjustment")
+}
+
+/// A subject's verification state. The record, not the verification.
+model KycStatus {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  subjectId   String
+  subjectType String @default("user")
+
+  /// none, basic, verified, enhanced.
+  level String
+
+  verifiedBy String?
+  verifiedAt DateTime?
+
+  /// Verification ages. A platform whose KYC never expires has customer records as accurate as
+  /// the day they joined.
+  expiresAt DateTime?
+
+  notes String?
+
+  /// Recorded, never inferred here.
+  pep        Boolean @default(false)
+  sanctioned Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, subjectId])
+  @@map("kyc_status")
+}
+
+/// A suspicious activity review: what was flagged, who looked, what they decided.
+model SuspiciousActivity {
+  id             String  @id @default(cuid())
+  organizationId String?
+
+  subjectId      String
+  transactionIds String[]
+
+  /// A rule name, a provider, or a person.
+  trigger String
+  summary String
+
+  status String @default("open")
+
+  assignedTo String?
+  /// Required to leave `investigating`.
+  conclusion String?
+
+  reportedTo String?
+  reportedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, status, createdAt])
+  @@map("suspicious_activity")
+}

@@ -1,0 +1,192 @@
+/**
+ * TrustOS Collections — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { COLLECTION_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const COLLECTION_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'collectors',
+    label: 'Collectors',
+    singular: 'Collector',
+    endpoint: '/collectors',
+    description: "A person working cases.",
+    table: {
+      key: 'collectors',
+      label: 'Collectors',
+      endpoint: '/collectors',
+      emptyHint: 'Create one with POST /api/collectors.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'userId', label: 'User', sortable: true },
+        { key: 'displayName', label: 'Collector' },
+        { key: 'team', label: 'Team', sortable: true },
+        { key: 'isActive', label: 'Active', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'team', label: 'Team', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'displayName', label: 'Collector' },
+      ],
+    },
+    permissions: {
+      list: P.COLLECTOR_READ.key,
+      read: P.COLLECTOR_READ.key,
+      create: P.COLLECTOR_CREATE.key,
+      update: P.COLLECTOR_UPDATE.key,
+    },
+  },
+  {
+    key: 'collection-cases',
+    label: 'Cases',
+    singular: 'Case',
+    endpoint: '/collection-cases',
+    description: "An overdue obligation being worked.",
+    table: {
+      key: 'collection-cases',
+      label: 'Cases',
+      endpoint: '/collection-cases',
+      emptyHint: 'Create one with POST /api/collection-cases.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'debtorName', label: 'Debtor' },
+        { key: 'debtorPhone', label: 'Phone' },
+        { key: 'externalAccountRef', label: 'Account' },
+        { key: 'outstandingAmount', label: 'Outstanding', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'daysPastDue', label: 'DPD', type: 'number', operators: ['eq', 'gte', 'lte', 'between'] },
+      { key: 'bucket', label: 'Bucket', type: 'enum', operators: ['eq', 'in'], options: [{"value":"B0","label":"B0"},{"value":"B1","label":"B1"},{"value":"B2","label":"B2"},{"value":"B3","label":"B3"},{"value":"B4_PLUS","label":"B4 Plus"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"OPEN","label":"Open"},{"value":"IN_PROGRESS","label":"In Progress"},{"value":"PROMISED","label":"Promised"},{"value":"SETTLED","label":"Settled"},{"value":"ESCALATED","label":"Escalated"},{"value":"CLOSED","label":"Closed"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+        { key: 'debtorName', label: 'Debtor' },
+        { key: 'debtorPhone', label: 'Phone' },
+        { key: 'externalAccountRef', label: 'Account' },
+      ],
+    },
+    permissions: {
+      list: P.COLLECTION_CASE_READ.key,
+      read: P.COLLECTION_CASE_READ.key,
+      create: P.COLLECTION_CASE_CREATE.key,
+      update: P.COLLECTION_CASE_UPDATE.key,
+    },
+  },
+  {
+    key: 'case-assignments',
+    label: 'Assignments',
+    singular: 'Assignment',
+    endpoint: '/case-assignments',
+    description: "Who is working a case, from when.",
+    table: {
+      key: 'case-assignments',
+      label: 'Assignments',
+      endpoint: '/case-assignments',
+      emptyHint: 'Create one with POST /api/case-assignments.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'caseId', label: 'Case', format: 'reference' },
+        { key: 'collectorId', label: 'Collector', format: 'reference' },
+        { key: 'assignedAt', label: 'Assigned', format: 'datetime', sortable: true },
+        { key: 'endedAt', label: 'Ended', format: 'datetime' },
+        { key: 'reason', label: 'Reason' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'assignedAt', label: 'Assigned', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    permissions: {
+      list: P.CASE_ASSIGNMENT_READ.key,
+      read: P.CASE_ASSIGNMENT_READ.key,
+      create: P.CASE_ASSIGNMENT_CREATE.key,
+      update: P.CASE_ASSIGNMENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'payment-promises',
+    label: 'Promises',
+    singular: 'Promise',
+    endpoint: '/payment-promises',
+    description: "A debtor committing to pay by a date.",
+    table: {
+      key: 'payment-promises',
+      label: 'Promises',
+      endpoint: '/payment-promises',
+      emptyHint: 'Create one with POST /api/payment-promises.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'caseId', label: 'Case', format: 'reference' },
+        { key: 'collectorId', label: 'Taken by', format: 'reference' },
+        { key: 'promisedAmount', label: 'Amount', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'promisedFor', label: 'Promised for', format: 'date', sortable: true },
+        { key: 'takenAt', label: 'Taken', format: 'datetime' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'promisedFor', label: 'Promised for', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"OPEN","label":"Open"},{"value":"KEPT","label":"Kept"},{"value":"BROKEN","label":"Broken"},{"value":"CANCELLED","label":"Cancelled"}] },
+    ],
+    permissions: {
+      list: P.PAYMENT_PROMISE_READ.key,
+      read: P.PAYMENT_PROMISE_READ.key,
+      create: P.PAYMENT_PROMISE_CREATE.key,
+      update: P.PAYMENT_PROMISE_UPDATE.key,
+    },
+  },
+  {
+    key: 'field-visits',
+    label: 'Visits',
+    singular: 'Visit',
+    endpoint: '/field-visits',
+    description: "A scheduled or completed visit to a debtor.",
+    table: {
+      key: 'field-visits',
+      label: 'Visits',
+      endpoint: '/field-visits',
+      emptyHint: 'Create one with POST /api/field-visits.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'caseId', label: 'Case', format: 'reference' },
+        { key: 'collectorId', label: 'Collector', format: 'reference' },
+        { key: 'scheduledFor', label: 'Scheduled', format: 'datetime', sortable: true },
+        { key: 'completedAt', label: 'Completed', format: 'datetime' },
+        { key: 'outcome', label: 'Outcome', format: 'badge', sortable: true },
+        { key: 'notes', label: 'Notes' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'scheduledFor', label: 'Scheduled', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'outcome', label: 'Outcome', type: 'enum', operators: ['eq', 'in'], options: [{"value":"NOT_VISITED","label":"Not Visited"},{"value":"MET","label":"Met"},{"value":"NOT_FOUND","label":"Not Found"},{"value":"REFUSED","label":"Refused"},{"value":"RELOCATED","label":"Relocated"}] },
+    ],
+    permissions: {
+      list: P.FIELD_VISIT_READ.key,
+      read: P.FIELD_VISIT_READ.key,
+      create: P.FIELD_VISIT_CREATE.key,
+      update: P.FIELD_VISIT_UPDATE.key,
+    },
+  },
+];

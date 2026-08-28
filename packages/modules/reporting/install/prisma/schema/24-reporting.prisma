@@ -1,0 +1,49 @@
+// =============================================================================
+// reporting module
+//
+// Installed by `trustos add-module reporting`. Generate the SQL with
+// `npm run db:migrate`.
+//
+// Only schedules are stored. Report *definitions* are code — a report that can be
+// authored at runtime is a query builder, and a query builder exposed to customers
+// is an unbounded read of whatever the database will join.
+// =============================================================================
+
+enum ReportFrequency {
+  daily
+  weekly
+  monthly
+}
+
+enum ReportExportFormat {
+  csv
+  pdf
+}
+
+model ReportSchedule {
+  id             String             @id @default(cuid())
+  organizationId String
+  /// Id of a report definition registered by the application at start-up.
+  reportId       String
+  frequency      ReportFrequency
+  /// Stored in UTC so a schedule does not shift with daylight saving.
+  hourUtc        Int                @default(6)
+  /// 1 = Monday .. 7 = Sunday. Set for weekly schedules.
+  dayOfWeek      Int?
+  /// 1..31, clamped to the last day of a shorter month. Set for monthly schedules.
+  dayOfMonth     Int?
+  format         ReportExportFormat @default(csv)
+  /// Filter values, as supplied when the schedule was created.
+  filters        Json               @default("{}")
+  nextRunAt      DateTime
+  lastRunAt      DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, reportId])
+  // Supports the due-schedule sweep.
+  @@index([nextRunAt])
+  @@index([deletedAt])
+}

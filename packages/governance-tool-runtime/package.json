@@ -1,0 +1,29 @@
+{
+  "name": "@trustos/governance-tool-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Executes an internal application definition: pages, data sources and actions, with every mutation routed through the gateway.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/governance-audit-bridge": "0.1.0",
+    "@trustos/governance-auth-context": "0.1.0",
+    "@trustos/governance-data-access": "0.1.0",
+    "@trustos/governance-environment-config": "0.1.0",
+    "@trustos/governance-export-control": "0.1.0",
+    "@trustos/governance-pii-policy": "0.1.0",
+    "@trustos/governance-resource-policy": "0.1.0",
+    "@trustos/governance-tool-core": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

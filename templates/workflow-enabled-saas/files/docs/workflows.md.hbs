@@ -1,0 +1,121 @@
+# Workflows in {{productDisplayName}}
+
+This application's governed processes. The framework's own documentation covers the engine;
+this covers what is specific here.
+
+## The example workflow
+
+`workflows/change-request-approval.json` — a manager reviews every request, and compliance
+reviews high-risk ones.
+
+```
+draft ──submit──▶ submitted ──(automatic)──▶ manager_review
+                                                 │
+                        riskRating = high ────────┼───▶ compliance_review ──approve──▶ approved
+                        riskRating ≠ high ────────┴───────────────────────────────────▶ approved
+                                                 │
+                                                 ├──reject──────────▶ rejected
+                                                 └──return_for_rework▶ returned_for_rework
+                                                                          │
+                                                                     resubmit
+                                                                          └──▶ submitted
+```
+
+The controls it demonstrates, and which one to read for each:
+
+| Control | Where |
+| --- | --- |
+| The submitter cannot approve | `allowSelfApproval: false` on both approval steps |
+| Compliance only for high risk | the condition on `escalate_to_compliance` |
+| Evidence only where it matters | `requireAttachmentWhen` on `manager_review` |
+| A rejection needs a reason | `requiresReason: true` on every rejection and return |
+| Rework is bounded | `rework.maxCycles` |
+| Somebody is told when it stalls | the `escalations` on each approval step |
+
+## Editing it
+
+The definition is a file, so it is reviewable in a diff. Before publishing:
+
+```bash
+# Structural validation, plus permission references checked against the catalog.
+npx trustos workflow validate workflows/change-request-approval.json --strict-permissions
+
+# Every path, the approvals each one requires, and where the clock could run out.
+npx trustos workflow simulate workflows/change-request-approval.json
+```
+
+`simulate` exits non-zero if any path reaches approval with no review at all. That is the
+check worth putting in a pre-commit hook: it is invisible on inspection of the JSON and
+obvious to a graph walk.
+
+`apps/api/src/modules/workflow/maker-checker.spec.ts` runs the same checks in the test suite,
+plus one the CLI cannot: it *fails the build* if `allowSelfApproval` is ever set to true.
+
+## Publishing
+
+A definition file is not live until it is published, and publishing takes three different
+people:
+
+```
+draft ──submit──▶ under_review ──approve──▶ approved ──publish──▶ published
+```
+
+- **submit** — `workflow.definition.submit`. Editing stops, so a reviewer reads a fixed document.
+- **approve** — `workflow.definition.approve`. Refused for the author.
+- **publish** — `workflow.definition.publish`. Refused for the author *and* for the approver.
+
+Three people rather than two is deliberate. Somebody who could author and publish could ship
+a definition with `allowSelfApproval: true` and then approve their own requests through it —
+which would defeat every other control in the system.
+
+A published version is immutable. A change is a new version; running instances keep the
+version they started on.
+
+## Adding a workflow to your own business object
+
+Four steps, and the third is the one people skip:
+
+1. **Write the definition.** Start from `workflows/change-request-approval.json`. Validate it.
+2. **Add the object** to `prisma/schema/` with `organizationId` first in every index.
+3. **Register a `BusinessObjectValidator`** — see `changeRequestValidator` in
+   `change-request.service.ts`. Without one the engine *refuses to start an instance in
+   production*, because `objectType` and `objectId` would be strings nobody has checked, and
+   an instance started against another organization's record puts that record's id into this
+   organization's history.
+4. **Wire a service** like `ChangeRequestWorkflowService`.
+
+### The one pattern to copy
+
+Ask the engine which action applies; do not decide in your controller:
+
+```ts
+const available = await engine.available(actor, instanceId);
+const action = ['escalate_to_compliance', 'approve'].find((a) => available.includes(a));
+```
+
+Branching on `riskRating === 'high'` in application code would be a second copy of the
+routing rule, and the two would disagree the moment somebody edits the threshold in the
+definition.
+
+## Operating it
+
+Two sweeps need a scheduler. Both are idempotent, so a cron that fires twice does nothing the
+second time:
+
+```
+POST /workflow/operations/sweeps/sla     # claim crossed thresholds, fire escalations
+POST /workflow/operations/sweeps/tasks   # expire tasks past their deadline
+```
+
+Every five minutes is a reasonable starting point. An SLA's *status* is recomputed on every
+read, so a sweep being late delays the notification without making any dashboard wrong.
+
+## What is not here
+
+No visual designer, no BPMN, no external workflow engine. Definitions are typed JSON, which
+is reviewable, diffable and testable — and a canvas is none of those.
+
+SLA calendars are elapsed time only. A working-hours calendar registers through
+`CalendarRegistry`; a definition naming an unregistered one fails validation rather than
+silently falling back, because a fallback would be an SLA that looks correct and is wrong by
+a factor of three.

@@ -1,0 +1,135 @@
+// =============================================================================
+// TrustOS Helpdesk — product models
+//
+// Support ticketing: tickets, comments, agents, queues and SLA policies
+// driven by the framework SLA engine.
+//
+// Out of scope, deliberately: email ingestion, live chat, telephony,
+// knowledge base search, customer satisfaction surveys.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  NEW
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+
+/// Where tickets land before somebody picks them up.
+model TicketQueue {
+  id             String @id @default(cuid())
+  organizationId String
+  name String
+  code String
+  description String?
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@index([deletedAt])
+}
+
+/// Somebody who works tickets.
+model SupportAgent {
+  id             String @id @default(cuid())
+  organizationId String
+  userId String
+  displayName String
+  queueId String?
+  isAvailable Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, queueId])
+  @@index([organizationId, isAvailable])
+  @@index([deletedAt])
+}
+
+/// Response and resolution targets per priority. Read by @trustos/workflow-sla;
+/// this template stores the numbers, not the clock.
+model SlaPolicy {
+  id             String @id @default(cuid())
+  organizationId String
+  name String
+  priority TicketPriority
+  firstResponseMinutes Int
+  resolutionMinutes Int
+  businessHoursOnly Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, priority])
+  @@index([deletedAt])
+}
+
+/// A request for help.
+model Ticket {
+  id             String @id @default(cuid())
+  organizationId String
+  reference String
+  queueId String
+  assigneeId String?
+  requesterName String
+  requesterEmail String?
+  subject String
+  body String
+  priority TicketPriority @default(NORMAL)
+  status TicketStatus @default(NEW)
+  openedAt DateTime
+  firstRespondedAt DateTime?
+  resolvedAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, queueId])
+  @@index([organizationId, assigneeId])
+  @@index([organizationId, priority])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A message on a ticket. `isInternal` keeps a note away from the requester —
+/// and the API must filter on it, because a comment hidden only in the UI is
+/// still in the payload.
+model TicketComment {
+  id             String @id @default(cuid())
+  organizationId String
+  ticketId String
+  authorUserId String?
+  body String
+  isInternal Boolean @default(false)
+  postedAt DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, ticketId])
+  @@index([organizationId, isInternal])
+  @@index([deletedAt])
+}

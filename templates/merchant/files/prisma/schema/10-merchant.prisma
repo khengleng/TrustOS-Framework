@@ -1,0 +1,116 @@
+// =============================================================================
+// Product models — TrustOS Merchant
+//
+// Structure only. Payments, loyalty, campaigns, inventory and settlement are
+// deliberately absent; do not add them without approval.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope applied
+// to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum MerchantStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum StoreStatus {
+  ACTIVE
+  CLOSED
+}
+
+/// A merchant business. One organization may operate several.
+model Merchant {
+  id             String         @id @default(cuid())
+  organizationId String
+  name           String
+  legalName      String?
+  /// Merchant-facing reference, unique within the organization.
+  code           String
+  status         MerchantStatus @default(PENDING)
+  contactEmail   String?
+  contactPhone   String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  stores  Store[]
+  members MerchantMember[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A storefront belonging to a merchant.
+model Store {
+  id             String      @id @default(cuid())
+  organizationId String
+  merchantId     String
+  name           String
+  code           String
+  status         StoreStatus @default(ACTIVE)
+  timezone       String      @default("Asia/Phnom_Penh")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  branches Branch[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, merchantId])
+  @@index([deletedAt])
+}
+
+/// A physical location of a store.
+model Branch {
+  id             String  @id @default(cuid())
+  organizationId String
+  storeId        String
+  name           String
+  code           String
+  addressLine    String?
+  city           String?
+  isActive       Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, code])
+  @@index([organizationId, storeId])
+  @@index([deletedAt])
+}
+
+/// A person acting on behalf of a merchant.
+///
+/// `userId` references the framework `User` as a scalar: staff accounts are
+/// framework identities, but the link is not a Prisma relation for the same
+/// reason as `organizationId`.
+model MerchantMember {
+  id             String  @id @default(cuid())
+  organizationId String
+  merchantId     String
+  userId         String
+  /// Merchant-scoped job title. Authorization still comes from framework RBAC.
+  position       String?
+  isPrimary      Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, userId])
+  @@index([organizationId, merchantId])
+  @@index([userId])
+  @@index([deletedAt])
+}

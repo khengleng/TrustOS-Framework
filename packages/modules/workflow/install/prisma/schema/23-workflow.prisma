@@ -1,0 +1,122 @@
+// =============================================================================
+// workflow module
+//
+// Installed by `trustos add-module workflow`. Generate the SQL with
+// `npm run db:migrate`.
+//
+// `WorkflowHistoryEntry` is append-only in application code, and it is not merely
+// a log: it is the source of truth for who approved a task, which is how "two
+// distinct approvers" is counted without a second mutable counter that could
+// disagree with the trail. Consider enforcing immutability in the database too —
+// see the AuditLog trigger in the framework migrations for the pattern.
+// =============================================================================
+
+enum WorkflowInstanceStatus {
+  RUNNING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum WorkflowTaskStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+/// A definition is immutable once registered: a running instance holds a step
+/// index into the definition it started with, so rewriting the steps underneath it
+/// would change what an in-flight approval means.
+model WorkflowDefinition {
+  id             String @id @default(cuid())
+  organizationId String
+  key            String
+  name           String
+  description    String @default("")
+  /// ApprovalStep[]. Stored as JSON because a step list is read and written whole,
+  /// and never queried by its contents.
+  steps          Json
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, key])
+  @@index([deletedAt])
+}
+
+model WorkflowInstance {
+  id             String                 @id @default(cuid())
+  organizationId String
+  definitionKey  String
+  /// What is being approved. The module does not interpret either field.
+  subjectType    String
+  subjectId      String
+  submittedBy    String
+  status         WorkflowInstanceStatus @default(RUNNING)
+  currentStep    Int                    @default(1)
+  startedAt      DateTime
+  completedAt    DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  tasks   WorkflowTask[]
+  history WorkflowHistoryEntry[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, subjectType, subjectId])
+  @@index([deletedAt])
+}
+
+model WorkflowTask {
+  id                String             @id @default(cuid())
+  organizationId    String
+  instanceId        String
+  stepOrder         Int
+  stepName          String
+  /// Assignment is by permission, not by user id: a workflow that names
+  /// individuals stops working the first time someone leaves.
+  approverPermission String
+  requiredApprovals Int                @default(1)
+  status            WorkflowTaskStatus @default(PENDING)
+  dueAt             DateTime
+  escalatedAt       DateTime?
+  decidedAt         DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  instance WorkflowInstance       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  history  WorkflowHistoryEntry[]
+
+  @@unique([instanceId, stepOrder])
+  @@index([organizationId, status])
+  // Supports the SLA sweep: pending tasks, most overdue first.
+  @@index([status, dueAt])
+  @@index([deletedAt])
+}
+
+/// Append-only. Never updated by application code.
+model WorkflowHistoryEntry {
+  id             String  @id @default(cuid())
+  organizationId String
+  instanceId     String
+  taskId         String?
+  action         String
+  actorId        String?
+  comment        String?
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  instance WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  task     WorkflowTask?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, instanceId, createdAt])
+  @@index([taskId])
+  @@index([deletedAt])
+}

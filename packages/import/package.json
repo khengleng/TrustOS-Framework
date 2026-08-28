@@ -1,0 +1,25 @@
+{
+  "name": "@trustos/import",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Structured import: parsing ports, validation, preview, dry run, rollback and reports.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/audit": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "@trustos/observability": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "@trustos/validation": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

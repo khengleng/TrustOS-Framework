@@ -1,0 +1,23 @@
+{
+  "name": "@trustos/observability",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Health and readiness probes, request timing, and OpenTelemetry-ready interfaces.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@trustos/config": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "@trustos/shared-types": "0.1.0"
+  }
+}

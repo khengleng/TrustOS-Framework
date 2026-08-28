@@ -1,0 +1,54 @@
+// =============================================================================
+// feature-flags module
+//
+// Installed by `trustos add-module feature-flags`. Generate the SQL with
+// `npm run db:migrate`.
+//
+// Flags are per-organization rows, so "tenant-specific" is not a mode — it is the
+// only thing a flag can be. There is deliberately no platform-wide flag table: a
+// single mistake on one row would otherwise enable a feature for every customer.
+// =============================================================================
+
+model FeatureFlag {
+  id             String  @id @default(cuid())
+  organizationId String
+  key            String
+  description    String
+  /// A new flag is created off. Enabling it is a separate, audited change.
+  enabled        Boolean @default(false)
+  /// 0..100. 100 with `enabled` means on for everyone in this organization.
+  rolloutPercentage Int  @default(0)
+  /// Empty means every environment.
+  environments   String[]
+  /// After this instant the flag evaluates to off without anyone deleting it.
+  expiresAt      DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, key])
+  @@index([organizationId, key])
+  @@index([expiresAt])
+  @@index([deletedAt])
+}
+
+/// A pinned decision for one subject — a beta tester allow-list, or one account
+/// held back from a rollout. A separate table rather than an array on the flag, so
+/// adding one subject is not a rewrite of the flag and the audit trail shows who
+/// was added when.
+model FeatureFlagOverride {
+  id             String  @id @default(cuid())
+  organizationId String
+  flagKey        String
+  subjectId      String
+  enabled        Boolean
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, flagKey, subjectId])
+  @@index([organizationId, flagKey])
+  @@index([deletedAt])
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@trustos/financial-product-composer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The product composer: build a product from approved blocks, validate the graph, start from a template, accept an AI proposal as a draft.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/connector-registry": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/financial-block-registry": "0.1.0",
+    "@trustos/financial-core": "0.1.0",
+    "@trustos/financial-product-core": "0.1.0",
+    "@trustos/financial-product-rules": "0.1.0",
+    "@trustos/financial-product-state-machine": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../accounts"
+    },
+    {
+      "path": "../audit"
+    },
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../fees"
+    },
+    {
+      "path": "../financial-core"
+    },
+    {
+      "path": "../financial-policy"
+    },
+    {
+      "path": "../financial-risk"
+    },
+    {
+      "path": "../ledger"
+    },
+    {
+      "path": "../limits"
+    },
+    {
+      "path": "../logging"
+    },
+    {
+      "path": "../shared-types"
+    },
+    {
+      "path": "../wallet"
+    }
+  ]
+}

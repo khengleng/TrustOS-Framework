@@ -1,0 +1,84 @@
+{
+  "name": "trustos-framework",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TrustOS Engineering Framework \u2014 reusable foundation for TrustOS products.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "packages/modules/*",
+    "apps/*",
+    "templates/*"
+  ],
+  "scripts": {
+    "audit:security": "npm audit --audit-level=high",
+    "bench:ai": "node scripts/bench-ai.mjs",
+    "bench:financial": "node scripts/bench-financial.mjs",
+    "build": "npm run build:packages && npm run build:apps",
+    "build:apps": "npm run build -w @trustos/api-example && npm run build -w @trustos/security-admin-example && npm run build -w @trustos/workflow-admin-example && npm run build -w @trustos/saas-starter && npm run build -w @trustos/admin-example && npm run build -w @trustos/financial-product-admin && npm run build -w @trustos/internal-app-gateway && npm run build -w @trustos/governance-tool",
+    "build:packages": "tsc -b tsconfig.build.json",
+    "clean": "tsc -b tsconfig.build.json --clean && rimraf \"packages/*/dist\" \"apps/*/dist\" \"apps/admin-example/.next\" \"templates/*/dist\"",
+    "cli": "node packages/cli/bin/trustos.js",
+    "db:deploy": "npm run migrate:deploy -w @trustos/database",
+    "db:generate": "npm run generate -w @trustos/database",
+    "db:migrate": "npm run migrate:dev -w @trustos/database",
+    "db:seed": "npm run seed -w @trustos/database",
+    "db:validate": "npm run validate -w @trustos/database",
+    "dev:admin": "npm run dev -w @trustos/admin-example",
+    "dev:api": "npm run dev -w @trustos/api-example",
+    "dev:gateway": "npm run dev -w @trustos/internal-app-gateway",
+    "dev:governance": "npm run dev -w @trustos/governance-tool",
+    "dev:product-admin": "npm run dev -w @trustos/financial-product-admin",
+    "docker:build": "docker build --build-arg SERVICE=$npm_config_service -t trustos/$npm_config_service .",
+    "evidence": "TRUSTOS_WRITE_EVIDENCE=1 vitest run apps/merchant-wallet-basic && node scripts/pilot-reuse.mjs",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "migrations:check": "node scripts/migration-safety.mjs",
+    "modules:validate": "vitest run packages/module-registry packages/module-sdk",
+    "postinstall": "npm run db:generate",
+    "smoke": "node scripts/smoke-test.mjs",
+    "templates:validate": "node packages/cli/bin/trustos.js validate-template --all",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:modules": "vitest run packages/module-sdk packages/module-registry packages/modules",
+    "test:tenancy": "vitest run packages/tenancy",
+    "test:watch": "vitest",
+    "typecheck": "npm run build:packages && npm run typecheck -w @trustos/api-example && npm run typecheck -w @trustos/security-admin-example && npm run typecheck -w @trustos/workflow-admin-example && npm run typecheck -w @trustos/saas-starter && npm run typecheck -w @trustos/admin-example && npm run typecheck -w @trustos/financial-product-admin && npm run typecheck -w @trustos/internal-app-gateway && npm run typecheck -w @trustos/governance-tool"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@nestjs/platform-express": "^11.1.28",
+    "@nestjs/testing": "^11.1.28",
+    "@types/node": "^20.17.10",
+    "@vitest/coverage-v8": "^3.2.7",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "reflect-metadata": "^0.2.2",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "@nestjs/swagger": {
+      "js-yaml": "^5.2.2"
+    },
+    "brace-expansion@^1": "^1.1.12",
+    "brace-expansion@^2": "^2.0.2",
+    "brace-expansion@^3": "^3.0.1",
+    "brace-expansion@^4": "^4.0.1",
+    "brace-expansion@^5": "^5.0.8",
+    "postcss": "^8.5.25",
+    "sharp": "^0.35.3"
+  },
+  "dependencies": {
+    "jose": "^5.10.0"
+  }
+}

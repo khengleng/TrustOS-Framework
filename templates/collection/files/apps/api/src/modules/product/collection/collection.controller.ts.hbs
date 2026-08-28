@@ -1,0 +1,386 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { COLLECTION_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  CollectionService,
+  type CollectorRow,
+  type CollectionCaseRow,
+  type CaseAssignmentRow,
+  type PaymentPromiseRow,
+  type FieldVisitRow,
+} from './collection.service';
+
+/**
+ * TrustOS Collections endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createCollectorSchema = z.object({
+  userId: z.string().trim().min(1).max(255),
+  displayName: z.string().trim().min(1).max(255),
+  team: z.string().trim().min(1).max(255).optional(),
+  isActive: z.coerce.boolean().optional(),
+});
+
+const updateCollectorSchema = z
+  .object({
+    userId: z.string().trim().min(1).max(255).optional(),
+    displayName: z.string().trim().min(1).max(255).optional(),
+    team: z.string().trim().min(1).max(255).optional(),
+    isActive: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createCollectionCaseSchema = z.object({
+  reference: z.string().trim().min(1).max(255),
+  debtorName: z.string().trim().min(1).max(255),
+  debtorPhone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  externalAccountRef: z.string().trim().min(1).max(255).optional(),
+  outstandingAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  daysPastDue: z.coerce.number().int().optional(),
+  bucket: z.enum(['B0', 'B1', 'B2', 'B3', 'B4_PLUS']).optional(),
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'PROMISED', 'SETTLED', 'ESCALATED', 'CLOSED']).optional(),
+});
+
+const updateCollectionCaseSchema = z
+  .object({
+    debtorName: z.string().trim().min(1).max(255).optional(),
+    debtorPhone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    externalAccountRef: z.string().trim().min(1).max(255).optional(),
+    outstandingAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    daysPastDue: z.coerce.number().int().optional(),
+    bucket: z.enum(['B0', 'B1', 'B2', 'B3', 'B4_PLUS']).optional(),
+    status: z.enum(['OPEN', 'IN_PROGRESS', 'PROMISED', 'SETTLED', 'ESCALATED', 'CLOSED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createCaseAssignmentSchema = z.object({
+  caseId: z.string().trim().min(1).max(64),
+  collectorId: z.string().trim().min(1).max(64),
+  assignedAt: z.coerce.date(),
+  endedAt: z.coerce.date().optional(),
+  reason: z.string().trim().min(1).max(255).optional(),
+});
+
+const updateCaseAssignmentSchema = z
+  .object({
+    caseId: z.string().trim().min(1).max(64).optional(),
+    collectorId: z.string().trim().min(1).max(64).optional(),
+    assignedAt: z.coerce.date().optional(),
+    endedAt: z.coerce.date().optional(),
+    reason: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createPaymentPromiseSchema = z.object({
+  caseId: z.string().trim().min(1).max(64),
+  collectorId: z.string().trim().min(1).max(64),
+  promisedAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  promisedFor: z.coerce.date(),
+  takenAt: z.coerce.date(),
+  status: z.enum(['OPEN', 'KEPT', 'BROKEN', 'CANCELLED']).optional(),
+  note: z.string().trim().min(1).max(4000).optional(),
+});
+
+const updatePaymentPromiseSchema = z
+  .object({
+    caseId: z.string().trim().min(1).max(64).optional(),
+    collectorId: z.string().trim().min(1).max(64).optional(),
+    promisedAmount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    promisedFor: z.coerce.date().optional(),
+    takenAt: z.coerce.date().optional(),
+    status: z.enum(['OPEN', 'KEPT', 'BROKEN', 'CANCELLED']).optional(),
+    note: z.string().trim().min(1).max(4000).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createFieldVisitSchema = z.object({
+  caseId: z.string().trim().min(1).max(64),
+  collectorId: z.string().trim().min(1).max(64),
+  scheduledFor: z.coerce.date(),
+  completedAt: z.coerce.date().optional(),
+  outcome: z.enum(['NOT_VISITED', 'MET', 'NOT_FOUND', 'REFUSED', 'RELOCATED']).optional(),
+  notes: z.string().trim().min(1).max(4000).optional(),
+});
+
+const updateFieldVisitSchema = z
+  .object({
+    caseId: z.string().trim().min(1).max(64).optional(),
+    collectorId: z.string().trim().min(1).max(64).optional(),
+    scheduledFor: z.coerce.date().optional(),
+    completedAt: z.coerce.date().optional(),
+    outcome: z.enum(['NOT_VISITED', 'MET', 'NOT_FOUND', 'REFUSED', 'RELOCATED']).optional(),
+    notes: z.string().trim().min(1).max(4000).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('collectors')
+@ApiBearerAuth('access-token')
+@Controller('collectors')
+export class CollectorController {
+  constructor(private readonly product: CollectionService) {}
+
+  @Get()
+  @RequirePermissions(P.COLLECTOR_READ.key)
+  @ApiOperation({ summary: 'List collectors' })
+  list(): Promise<CollectorRow[]> {
+    return this.product.listCollectors();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.COLLECTOR_READ.key)
+  @ApiOperation({ summary: 'Read one collector' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CollectorRow> {
+    return this.product.findCollector(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.COLLECTOR_CREATE.key)
+  @ApiOperation({ summary: 'Create a collector' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCollectorSchema))
+    body: z.infer<typeof createCollectorSchema>,
+  ): Promise<CollectorRow> {
+    return this.product.createCollector(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.COLLECTOR_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a collector' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCollectorSchema))
+    body: z.infer<typeof updateCollectorSchema>,
+  ): Promise<CollectorRow> {
+    return this.product.updateCollector(id, body, organizationId);
+  }
+}
+
+@ApiTags('collection-cases')
+@ApiBearerAuth('access-token')
+@Controller('collection-cases')
+export class CollectionCaseController {
+  constructor(private readonly product: CollectionService) {}
+
+  @Get()
+  @RequirePermissions(P.COLLECTION_CASE_READ.key)
+  @ApiOperation({ summary: 'List cases' })
+  list(): Promise<CollectionCaseRow[]> {
+    return this.product.listCollectionCases();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.COLLECTION_CASE_READ.key)
+  @ApiOperation({ summary: 'Read one case' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CollectionCaseRow> {
+    return this.product.findCollectionCase(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.COLLECTION_CASE_CREATE.key)
+  @ApiOperation({ summary: 'Create a case' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCollectionCaseSchema))
+    body: z.infer<typeof createCollectionCaseSchema>,
+  ): Promise<CollectionCaseRow> {
+    return this.product.createCollectionCase(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.COLLECTION_CASE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a case' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCollectionCaseSchema))
+    body: z.infer<typeof updateCollectionCaseSchema>,
+  ): Promise<CollectionCaseRow> {
+    return this.product.updateCollectionCase(id, body, organizationId);
+  }
+}
+
+@ApiTags('case-assignments')
+@ApiBearerAuth('access-token')
+@Controller('case-assignments')
+export class CaseAssignmentController {
+  constructor(private readonly product: CollectionService) {}
+
+  @Get()
+  @RequirePermissions(P.CASE_ASSIGNMENT_READ.key)
+  @ApiOperation({ summary: 'List assignments' })
+  list(): Promise<CaseAssignmentRow[]> {
+    return this.product.listCaseAssignments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CASE_ASSIGNMENT_READ.key)
+  @ApiOperation({ summary: 'Read one assignment' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<CaseAssignmentRow> {
+    return this.product.findCaseAssignment(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CASE_ASSIGNMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a assignment' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createCaseAssignmentSchema))
+    body: z.infer<typeof createCaseAssignmentSchema>,
+  ): Promise<CaseAssignmentRow> {
+    return this.product.createCaseAssignment(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CASE_ASSIGNMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a assignment' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateCaseAssignmentSchema))
+    body: z.infer<typeof updateCaseAssignmentSchema>,
+  ): Promise<CaseAssignmentRow> {
+    return this.product.updateCaseAssignment(id, body, organizationId);
+  }
+}
+
+@ApiTags('payment-promises')
+@ApiBearerAuth('access-token')
+@Controller('payment-promises')
+export class PaymentPromiseController {
+  constructor(private readonly product: CollectionService) {}
+
+  @Get()
+  @RequirePermissions(P.PAYMENT_PROMISE_READ.key)
+  @ApiOperation({ summary: 'List promises' })
+  list(): Promise<PaymentPromiseRow[]> {
+    return this.product.listPaymentPromises();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.PAYMENT_PROMISE_READ.key)
+  @ApiOperation({ summary: 'Read one promise' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<PaymentPromiseRow> {
+    return this.product.findPaymentPromise(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.PAYMENT_PROMISE_CREATE.key)
+  @ApiOperation({ summary: 'Create a promise' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPaymentPromiseSchema))
+    body: z.infer<typeof createPaymentPromiseSchema>,
+  ): Promise<PaymentPromiseRow> {
+    return this.product.createPaymentPromise(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.PAYMENT_PROMISE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a promise' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updatePaymentPromiseSchema))
+    body: z.infer<typeof updatePaymentPromiseSchema>,
+  ): Promise<PaymentPromiseRow> {
+    return this.product.updatePaymentPromise(id, body, organizationId);
+  }
+}
+
+@ApiTags('field-visits')
+@ApiBearerAuth('access-token')
+@Controller('field-visits')
+export class FieldVisitController {
+  constructor(private readonly product: CollectionService) {}
+
+  @Get()
+  @RequirePermissions(P.FIELD_VISIT_READ.key)
+  @ApiOperation({ summary: 'List visits' })
+  list(): Promise<FieldVisitRow[]> {
+    return this.product.listFieldVisits();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.FIELD_VISIT_READ.key)
+  @ApiOperation({ summary: 'Read one visit' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<FieldVisitRow> {
+    return this.product.findFieldVisit(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.FIELD_VISIT_CREATE.key)
+  @ApiOperation({ summary: 'Create a visit' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createFieldVisitSchema))
+    body: z.infer<typeof createFieldVisitSchema>,
+  ): Promise<FieldVisitRow> {
+    return this.product.createFieldVisit(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.FIELD_VISIT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a visit' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateFieldVisitSchema))
+    body: z.infer<typeof updateFieldVisitSchema>,
+  ): Promise<FieldVisitRow> {
+    return this.product.updateFieldVisit(id, body, organizationId);
+  }
+}

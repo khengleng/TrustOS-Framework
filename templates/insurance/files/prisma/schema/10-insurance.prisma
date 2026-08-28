@@ -1,0 +1,160 @@
+// =============================================================================
+// TrustOS Insurance — product models
+//
+// Policy administration and claims: policyholders, products, policies,
+// premiums and a claim assessed through the framework approval workflow.
+//
+// Out of scope, deliberately: actuarial pricing, reinsurance, payment
+// providers, medical underwriting rules, regulatory reporting.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum InsuranceCategory {
+  LIFE
+  HEALTH
+  MOTOR
+  PROPERTY
+  TRAVEL
+}
+
+enum PolicyStatus {
+  QUOTED
+  ACTIVE
+  LAPSED
+  CANCELLED
+  EXPIRED
+}
+
+enum PremiumStatus {
+  DUE
+  PAID
+  OVERDUE
+  WAIVED
+}
+
+enum ClaimStatus {
+  REPORTED
+  ASSESSING
+  APPROVED
+  REJECTED
+  PAID
+  WITHDRAWN
+}
+
+/// Whoever the policy is issued to.
+model PolicyHolder {
+  id             String @id @default(cuid())
+  organizationId String
+  holderNumber String
+  fullName String
+  email String?
+  phone String?
+  dateOfBirth DateTime? @db.Date
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, holderNumber])
+  @@index([deletedAt])
+}
+
+/// A cover that can be sold.
+model InsuranceProduct {
+  id             String @id @default(cuid())
+  organizationId String
+  code String
+  name String
+  category InsuranceCategory
+  currency String @default("USD")
+  basePremium Decimal @db.Decimal(28, 8)
+  defaultSumInsured Decimal @db.Decimal(28, 8)
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, category])
+  @@index([organizationId, isActive])
+  @@index([deletedAt])
+}
+
+/// Cover sold to a holder. `sumInsured` is copied from the product at issue —
+/// cover that was sold cannot be changed by editing the product later.
+model Policy {
+  id             String @id @default(cuid())
+  organizationId String
+  policyNumber String
+  holderId String
+  productId String
+  sumInsured Decimal @db.Decimal(28, 8)
+  currency String
+  startsOn DateTime @db.Date
+  endsOn DateTime @db.Date
+  status PolicyStatus @default(QUOTED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, policyNumber])
+  @@index([organizationId, holderId])
+  @@index([organizationId, productId])
+  @@index([organizationId, endsOn])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A premium due or received on a policy.
+model Premium {
+  id             String @id @default(cuid())
+  organizationId String
+  policyId String
+  dueOn DateTime @db.Date
+  amount Decimal @db.Decimal(28, 8)
+  currency String
+  paidAt DateTime?
+  status PremiumStatus @default(DUE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, policyId])
+  @@index([organizationId, dueOn])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A request against a policy. The assessment decision lives in the workflow
+/// instance, not in a column here.
+model Claim {
+  id             String @id @default(cuid())
+  organizationId String
+  claimNumber String
+  policyId String
+  incidentOn DateTime @db.Date
+  reportedAt DateTime
+  claimedAmount Decimal @db.Decimal(28, 8)
+  approvedAmount Decimal? @db.Decimal(28, 8)
+  currency String
+  workflowInstanceId String?
+  status ClaimStatus @default(REPORTED)
+  summary String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, claimNumber])
+  @@index([organizationId, policyId])
+  @@index([organizationId, incidentOn])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}

@@ -1,0 +1,91 @@
+{
+  "baseUrl": "http://127.0.0.1:3399",
+  "ranAt": "2026-08-27T09:34:37.376Z",
+  "node": "v20.19.1",
+  "summary": {
+    "total": 11,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 1
+  },
+  "note": "A skipped check is not a passed check. Counting them together would produce a number that reads as coverage and is not.",
+  "checks": [
+    {
+      "name": "health",
+      "proves": "The process is alive and answering.",
+      "status": "pass",
+      "detail": "trustos-service 0.0.0 in production",
+      "durationMs": 16
+    },
+    {
+      "name": "readiness",
+      "proves": "Every required dependency answered.",
+      "status": "pass",
+      "detail": "1 dependency check(s) passed",
+      "durationMs": 2
+    },
+    {
+      "name": "authentication",
+      "proves": "A protected route refuses an unauthenticated caller.",
+      "status": "pass",
+      "detail": "refused with 401",
+      "durationMs": 2
+    },
+    {
+      "name": "login",
+      "proves": "A seeded user can authenticate.",
+      "status": "pass",
+      "detail": "authenticated into org_demo_acme",
+      "durationMs": 213
+    },
+    {
+      "name": "authorized read",
+      "proves": "An authenticated caller reaches a protected route.",
+      "status": "pass",
+      "detail": "read succeeded",
+      "durationMs": 5
+    },
+    {
+      "name": "tenant isolation",
+      "proves": "A caller cannot reach another organization.",
+      "status": "pass",
+      "detail": "refused with 403",
+      "durationMs": 1
+    },
+    {
+      "name": "RBAC",
+      "proves": "A permission the caller lacks is refused.",
+      "status": "pass",
+      "detail": "refused with 404",
+      "durationMs": 2
+    },
+    {
+      "name": "correlation id",
+      "proves": "A request id is echoed, so logs can be traced.",
+      "status": "pass",
+      "detail": "echoed the id sent",
+      "durationMs": 1
+    },
+    {
+      "name": "security headers",
+      "proves": "The response carries the headers the policy sets.",
+      "status": "pass",
+      "detail": "x-content-type-options, x-frame-options",
+      "durationMs": 1
+    },
+    {
+      "name": "error shape",
+      "proves": "A failure returns a structured error, not a stack trace.",
+      "status": "pass",
+      "detail": "structured, with no stack",
+      "durationMs": 1
+    },
+    {
+      "name": "AI gateway",
+      "proves": "The AI gateway answers, if one is configured.",
+      "status": "skipped",
+      "detail": "TRUSTOS_SMOKE_AI is not \"true\"; nothing was proved about AI.",
+      "durationMs": 0
+    }
+  ]
+}

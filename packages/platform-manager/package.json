@@ -1,0 +1,29 @@
+{
+  "name": "@trustos/platform-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "One view of the platform: version, modules, health, licence, dependencies, compatibility and upgrade status.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/compatibility-engine": "0.1.0",
+    "@trustos/dependency-analyzer": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/framework-health": "0.1.0",
+    "@trustos/license-manager": "0.1.0",
+    "@trustos/module-registry": "0.1.0",
+    "@trustos/release-manager": "0.1.0",
+    "@trustos/telemetry": "0.1.0",
+    "@trustos/template-registry": "0.1.0",
+    "@trustos/version-manager": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "name": "{{packageName}}",
+  "version": "0.1.0",
+  "private": true,
+  "description": "{{description}}",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "postinstall": "prisma generate --schema prisma/schema",
+    "build": "npm run build:packages && npm run build:apps",
+    "build:packages": "tsc -b tsconfig.build.json",
+{{#if includeApi}}
+    "build:apps": "npm run build -w {{packageName}}-api{{#if includeAdmin}} && npm run build -w {{packageName}}-admin{{/if}}",
+{{else}}
+    "build:apps": "npm run build -w {{packageName}}-admin",
+{{/if}}
+    "typecheck": "npm run build:packages && npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "db:generate": "prisma generate --schema prisma/schema",
+    "db:validate": "prisma validate --schema prisma/schema",
+    "db:migrate": "prisma migrate dev --schema prisma/schema",
+    "db:deploy": "prisma migrate deploy --schema prisma/schema",
+    "db:seed": "tsx prisma/seed.ts",
+{{#if includeApi}}
+    "dev": "npm run dev -w {{packageName}}-api",
+{{else}}
+    "dev": "npm run dev -w {{packageName}}-admin",
+{{/if}}
+    "clean": "tsc -b tsconfig.build.json --clean"
+  },
+  "dependencies": {
+{{#each frameworkDependencies}}
+    "{{@key}}": "{{this}}"{{#unless @last}},{{/unless}}
+{{/each}}
+  },
+  "//overrides": [
+    "Transitive pins for advisories the direct dependencies have not yet released past.",
+    "Reviewed with the framework's own overrides; keep the two in step.",
+    "js-yaml: DoS in flow collections, reached through @nestjs/swagger.",
+    "postcss: source-map path traversal and XSS, reached through next.",
+    "sharp: inherited libvips CVEs, reached through next."
+  ],
+  "overrides": {
+    "postcss": "^8.5.25",
+    "sharp": "^0.35.3",
+    "@nestjs/swagger": {
+      "js-yaml": "^5.2.2"
+    }
+  },
+  "//devDependencies": [
+    "pino-pretty: development-only log formatting. @trustos/logging asks pino for a pretty transport outside production, and pino resolves the target from this application's node_modules.",
+    "rimraf: used by the API build script to clear dist. Declared at the workspace root so its bin is on PATH for every workspace."
+  ],
+  "devDependencies": {
+    "@prisma/client": "^6.19.3",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.17.10",
+    "bcryptjs": "^2.4.3",
+    "pino-pretty": "^13.0.0",
+    "prisma": "^6.19.3",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.7"
+  }
+}

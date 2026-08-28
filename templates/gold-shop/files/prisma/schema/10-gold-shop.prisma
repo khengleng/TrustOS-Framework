@@ -1,0 +1,142 @@
+// =============================================================================
+// TrustOS Gold Shop — product models
+//
+// Gold retail: weighted inventory, a pricing interface fed by whatever quote
+// source a deployment has, customer orders, invoices and transaction
+// history.
+//
+// Out of scope, deliberately: live gold price feeds, payment providers,
+// assay certification, hedging, customs and export documentation.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum GoldKarat {
+  K10
+  K14
+  K18
+  K21
+  K22
+  K24
+}
+
+enum GoldItemStatus {
+  IN_STOCK
+  RESERVED
+  SOLD
+  MELTED
+}
+
+enum GoldOrderDirection {
+  SELL_TO_CUSTOMER
+  BUY_FROM_CUSTOMER
+}
+
+enum GoldOrderStatus {
+  DRAFT
+  CONFIRMED
+  SETTLED
+  CANCELLED
+}
+
+enum GoldInvoiceStatus {
+  ISSUED
+  PAID
+  VOID
+}
+
+/// A quote at a moment. Immutable once written: an order priced against a quote
+/// that was later edited cannot be reconciled with anything.
+model GoldPrice {
+  id             String @id @default(cuid())
+  organizationId String
+  karat GoldKarat
+  pricePerGram Decimal @db.Decimal(28, 8)
+  currency String @default("USD")
+  source String
+  quotedAt DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, karat])
+  @@index([organizationId, quotedAt])
+  @@index([deletedAt])
+}
+
+/// A physical piece held in stock, identified by its tag.
+model GoldItem {
+  id             String @id @default(cuid())
+  organizationId String
+  tag String
+  name String
+  karat GoldKarat
+  grossWeightGrams Decimal @db.Decimal(28, 8)
+  goldWeightGrams Decimal @db.Decimal(28, 8)
+  labourCost Decimal @db.Decimal(28, 8) @default(0)
+  currency String @default("USD")
+  status GoldItemStatus @default(IN_STOCK)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, tag])
+  @@index([organizationId, karat])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A customer buying or selling back a piece, priced against a recorded quote.
+model GoldOrder {
+  id             String @id @default(cuid())
+  organizationId String
+  reference String
+  itemId String
+  priceId String
+  direction GoldOrderDirection
+  customerName String
+  customerPhone String?
+  goldValue Decimal @db.Decimal(28, 8)
+  labourCost Decimal @db.Decimal(28, 8) @default(0)
+  total Decimal @db.Decimal(28, 8)
+  currency String @default("USD")
+  status GoldOrderStatus @default(DRAFT)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, itemId])
+  @@index([organizationId, priceId])
+  @@index([organizationId, direction])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// The document issued for an order.
+model GoldInvoice {
+  id             String @id @default(cuid())
+  organizationId String
+  orderId String
+  number String
+  issuedAt DateTime
+  total Decimal @db.Decimal(28, 8)
+  currency String @default("USD")
+  status GoldInvoiceStatus @default(ISSUED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, number])
+  @@index([organizationId, orderId])
+  @@index([organizationId, issuedAt])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}

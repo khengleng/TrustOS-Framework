@@ -1,0 +1,146 @@
+# Deployment — {{productDisplayName}}
+
+{{#if isRailway}}
+Generated with Railway as the deployment target. `railway.toml` at the
+repository root is the config-as-code file.
+
+## First deployment
+
+```bash
+npm i -g @railway/cli
+railway login
+railway init --name {{applicationName}}
+railway add --database postgres
+```
+
+Create a service from this repository and set **Settings → Config as code** to
+`railway.toml`.
+
+### Variables
+
+```
+NODE_ENV=production
+PORT=$\{{PORT}}
+DATABASE_URL=$\{{Postgres.DATABASE_URL}}
+JWT_SECRET=<48 random bytes>
+JWT_REFRESH_SECRET=<a different 48 random bytes>
+LOG_LEVEL=info
+SERVICE_NAME={{applicationName}}
+TRUST_PROXY=true
+CORS_ORIGINS=https://your-admin-domain
+OPENAPI_ENABLED=false
+```
+
+Generate each secret separately, and never reuse one for both:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+Reference the database plugin (`$\{{Postgres.DATABASE_URL}}`) rather than
+pasting a connection string, so the value follows credential rotation.
+
+`TRUST_PROXY=true` matters for the audit trail: the platform terminates TLS and
+forwards the client address in `X-Forwarded-For`. Without it the framework
+ignores that header — correctly, since trusting it unconditionally lets any
+caller forge the IP recorded against their actions — and every audit record
+would show the proxy's address.
+
+### Deploying from the CLI
+
+`railway up` uploads the working directory and does **not** read `railway.toml`
+from a subdirectory. Set the build commands as service variables instead — the
+current Railway builder is Railpack, so `NIXPACKS_*` names are silently ignored:
+
+```bash
+railway variables --skip-deploys \
+  --set "RAILPACK_INSTALL_CMD=npm ci" \
+  --set "RAILPACK_BUILD_CMD=npm run build" \
+  --set "RAILPACK_START_CMD=npm run db:deploy && node apps/api/dist/main.js"
+railway up
+```
+
+### Seed and verify
+
+```bash
+railway run npm run db:seed        # roles and permissions; no demo accounts in production
+curl https://<domain>/health       # 200, touches no dependency
+curl https://<domain>/ready        # 200 once PostgreSQL answers
+curl -i https://<domain>/api/nope  # JSON error with a requestId and NO stack trace
+```
+
+Check the startup log line: it prints the effective configuration with every
+secret replaced by `[redacted]`. If you can read a secret there, stop and treat
+it as an incident.
+
+## Operating
+
+**Migrations** are generated locally and applied by `preDeployCommand`:
+
+```bash
+npm run db:migrate -- --name what_changed
+git add prisma/migrations
+```
+
+Write them so the previous application version still runs against the new
+schema — add columns, do not rename them, and drop in a later release. A
+platform rollback redeploys the old build but does **not** undo a migration.
+
+**Health checks** point at `/health`, not `/ready`. Liveness must not depend on
+the database, or a brief outage becomes a restart loop.
+
+**Scaling** is `numReplicas` in `railway.toml`. The application is stateless
+apart from PostgreSQL; the connection pool is the first limit you will hit.
+
+**Logs** are JSON, one object per line, each carrying `requestId`, `service`,
+`env`, and — after authentication — `actorId` and `organizationId`. Search by
+`requestId` to join a user's report to the server side and the audit trail.
+
+## Troubleshooting
+
+| Symptom | Cause |
+| --- | --- |
+| `No start command detected` | `NIXPACKS_*` set instead of `RAILPACK_*`. |
+| `Cannot find module '@prisma/client'` | `postinstall` did not run. Use `npm ci`, not `npm ci --ignore-scripts`. |
+| `Invalid configuration:` at boot | The listed variables are missing or invalid. The message names each one. |
+| Health check fails, logs look fine | Not binding `0.0.0.0:$PORT`. Do not hardcode the port. |
+| `/ready` returns 503 | The database is unreachable. `/health` still returns 200 by design. |
+| Every audit record has the same IP | `TRUST_PROXY` is not `true`. |
+| 401 immediately after deploy | `JWT_SECRET` changed; outstanding tokens are invalid. Expected. |
+{{else}}
+This application was generated for **local use only**, so no platform
+configuration was written.
+
+## What to add when you deploy
+
+1. **A platform.** Any host that can run a Node 20 process and reach
+   PostgreSQL. Regenerate with `--deploy railway` to get a `railway.toml`, or
+   write the equivalent for your platform.
+2. **Real secrets.** `JWT_SECRET` and `JWT_REFRESH_SECRET` must be different,
+   at least 32 characters, and generated per environment:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+   ```
+
+   The application refuses to start in production with a placeholder, a short
+   secret, or two matching secrets.
+3. **Migrations on deploy.** Run `npm run db:deploy` before new instances take
+   traffic. Never run `migrate dev` against production.
+4. **Health checks** pointed at `/health` — not `/ready`, which depends on the
+   database and would turn a brief outage into a restart loop.
+5. **`TRUST_PROXY=true`** if you run behind a load balancer, so the audit trail
+   records real client IPs rather than the proxy's.
+6. **`CORS_ORIGINS`** set to your admin origin. `*` is rejected in production.
+
+## Verify any deployment
+
+```bash
+curl https://<domain>/health       # 200, touches no dependency
+curl https://<domain>/ready        # 200 once PostgreSQL answers
+curl -i https://<domain>/api/nope  # JSON error with a requestId and NO stack trace
+```
+
+The absence of a stack trace is how you confirm `NODE_ENV` really is
+`production`.
+{{/if}}

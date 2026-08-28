@@ -1,0 +1,69 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../../ai-cache"
+    },
+    {
+      "path": "../../ai-gateway"
+    },
+    {
+      "path": "../../ai-observability"
+    },
+    {
+      "path": "../../ai-policy"
+    },
+    {
+      "path": "../../ai-sdk"
+    },
+    {
+      "path": "../../content-filter"
+    },
+    {
+      "path": "../../cost-monitor"
+    },
+    {
+      "path": "../../errors"
+    },
+    {
+      "path": "../../guardrails"
+    },
+    {
+      "path": "../../logging"
+    },
+    {
+      "path": "../../model-registry"
+    },
+    {
+      "path": "../../model-router"
+    },
+    {
+      "path": "../../module-registry"
+    },
+    {
+      "path": "../../module-sdk"
+    },
+    {
+      "path": "../../observability"
+    },
+    {
+      "path": "../../prompt-registry"
+    },
+    {
+      "path": "../../prompt-security"
+    },
+    {
+      "path": "../../shared-types"
+    },
+    {
+      "path": "../../token-meter"
+    }
+  ]
+}

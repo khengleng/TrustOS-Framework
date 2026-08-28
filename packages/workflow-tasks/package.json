@@ -1,0 +1,41 @@
+{
+  "name": "@trustos/workflow-tasks",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Workflow tasks, assignment strategies and concurrency-safe claiming.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "nest"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/security-events": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "@trustos/workflow-core": "0.1.0",
+    "@trustos/workflow-definition": "0.1.0",
+    "zod": "^3.24.1"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
+    "@nestjs/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28"
+  }
+}

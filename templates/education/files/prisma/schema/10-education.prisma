@@ -1,0 +1,285 @@
+// =============================================================================
+// TrustOS Education — product models
+//
+// A learning platform: courses, lessons, quizzes, assignments, enrolments,
+// teachers and certificates, with an AI tutor hook that ships unwired.
+//
+// Out of scope, deliberately: external AI providers, video hosting and
+// streaming, payment providers, proctoring, SCORM and xAPI.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum StudentStatus {
+  ACTIVE
+  PAUSED
+  GRADUATED
+  WITHDRAWN
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  MARKED
+  RETURNED
+  LATE
+}
+
+enum TutorSessionStatus {
+  PENDING
+  ANSWERED
+  FAILED
+  BLOCKED
+}
+
+/// Somebody who teaches. `userId` is the framework identity.
+model Teacher {
+  id             String @id @default(cuid())
+  organizationId String
+  userId String
+  displayName String
+  email String?
+  bio String?
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, isActive])
+  @@index([deletedAt])
+}
+
+/// Somebody who learns.
+model Student {
+  id             String @id @default(cuid())
+  organizationId String
+  userId String
+  displayName String
+  email String?
+  enrolledOn DateTime @db.Date
+  status StudentStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A body of material a student can enrol in.
+model Course {
+  id             String @id @default(cuid())
+  organizationId String
+  code String
+  title String
+  summary String?
+  teacherId String
+  level CourseLevel @default(BEGINNER)
+  status CourseStatus @default(DRAFT)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, teacherId])
+  @@index([organizationId, level])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// One unit of a course.
+model Lesson {
+  id             String @id @default(cuid())
+  organizationId String
+  courseId String
+  title String
+  position Int @default(0)
+  body String?
+  durationMinutes Int @default(0)
+  isPublished Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, courseId])
+  @@index([organizationId, isPublished])
+  @@index([deletedAt])
+}
+
+/// A set of questions attached to a lesson or a course.
+model Quiz {
+  id             String @id @default(cuid())
+  organizationId String
+  courseId String
+  lessonId String?
+  title String
+  passMarkPercent Int @default(60)
+  timeLimitMinutes Int @default(0)
+  isPublished Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, courseId])
+  @@index([organizationId, lessonId])
+  @@index([organizationId, isPublished])
+  @@index([deletedAt])
+}
+
+/// One question. `correctOption` is never returned to a student — the service
+/// strips it, and there is a test that proves it.
+model QuizQuestion {
+  id             String @id @default(cuid())
+  organizationId String
+  quizId String
+  position Int @default(0)
+  prompt String
+  options Json
+  correctOption Int
+  marks Int @default(1)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, quizId])
+  @@index([deletedAt])
+}
+
+/// A student on a course.
+model Enrollment {
+  id             String @id @default(cuid())
+  organizationId String
+  courseId String
+  studentId String
+  enrolledAt DateTime
+  completedAt DateTime?
+  progressPercent Int @default(0)
+  status EnrollmentStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, courseId])
+  @@index([organizationId, studentId])
+  @@index([organizationId, enrolledAt])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// Work a student submits and a teacher marks.
+model Assignment {
+  id             String @id @default(cuid())
+  organizationId String
+  courseId String
+  title String
+  instructions String?
+  dueAt DateTime?
+  maxMarks Int @default(100)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, courseId])
+  @@index([organizationId, dueAt])
+  @@index([deletedAt])
+}
+
+/// A student handing work in.
+model AssignmentSubmission {
+  id             String @id @default(cuid())
+  organizationId String
+  assignmentId String
+  studentId String
+  submittedAt DateTime
+  body String?
+  marksAwarded Int?
+  feedback String?
+  status SubmissionStatus @default(SUBMITTED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, assignmentId])
+  @@index([organizationId, studentId])
+  @@index([organizationId, submittedAt])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// Proof a student finished a course. `serial` is what a third party verifies
+/// against, so it is immutable and unique.
+model Certificate {
+  id             String @id @default(cuid())
+  organizationId String
+  enrollmentId String
+  serial String
+  issuedAt DateTime
+  revokedAt DateTime?
+  revocationReason String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, serial])
+  @@index([organizationId, enrollmentId])
+  @@index([organizationId, issuedAt])
+  @@index([deletedAt])
+}
+
+/// The AI tutor hook. Records the question, the answer and which model answered
+/// — and calls nothing. Wiring a provider is a deployment decision made through
+/// @trustos/ai-gateway.
+model TutorSession {
+  id             String @id @default(cuid())
+  organizationId String
+  studentId String
+  courseId String?
+  prompt String
+  response String?
+  modelId String?
+  askedAt DateTime
+  status TutorSessionStatus @default(PENDING)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, studentId])
+  @@index([organizationId, courseId])
+  @@index([organizationId, askedAt])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}

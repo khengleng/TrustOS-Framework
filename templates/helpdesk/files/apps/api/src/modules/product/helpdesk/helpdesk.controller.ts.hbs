@@ -1,0 +1,381 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { HELPDESK_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  HelpdeskService,
+  type TicketQueueRow,
+  type SupportAgentRow,
+  type SlaPolicyRow,
+  type TicketRow,
+  type TicketCommentRow,
+} from './helpdesk.service';
+
+/**
+ * TrustOS Helpdesk endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createTicketQueueSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  description: z.string().trim().min(1).max(255).optional(),
+  isActive: z.coerce.boolean().optional(),
+});
+
+const updateTicketQueueSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    description: z.string().trim().min(1).max(255).optional(),
+    isActive: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createSupportAgentSchema = z.object({
+  userId: z.string().trim().min(1).max(255),
+  displayName: z.string().trim().min(1).max(255),
+  queueId: z.string().trim().min(1).max(64).optional(),
+  isAvailable: z.coerce.boolean().optional(),
+});
+
+const updateSupportAgentSchema = z
+  .object({
+    userId: z.string().trim().min(1).max(255).optional(),
+    displayName: z.string().trim().min(1).max(255).optional(),
+    queueId: z.string().trim().min(1).max(64).optional(),
+    isAvailable: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createSlaPolicySchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']),
+  firstResponseMinutes: z.coerce.number().int(),
+  resolutionMinutes: z.coerce.number().int(),
+  businessHoursOnly: z.coerce.boolean().optional(),
+});
+
+const updateSlaPolicySchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']).optional(),
+    firstResponseMinutes: z.coerce.number().int().optional(),
+    resolutionMinutes: z.coerce.number().int().optional(),
+    businessHoursOnly: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createTicketSchema = z.object({
+  reference: z.string().trim().min(1).max(255),
+  queueId: z.string().trim().min(1).max(64),
+  assigneeId: z.string().trim().min(1).max(64).optional(),
+  requesterName: z.string().trim().min(1).max(255),
+  requesterEmail: z.string().trim().toLowerCase().email().max(254).optional(),
+  subject: z.string().trim().min(1).max(255),
+  body: z.string().trim().min(1).max(4000),
+  priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']).optional(),
+  status: z.enum(['NEW', 'OPEN', 'PENDING', 'RESOLVED', 'CLOSED']).optional(),
+  openedAt: z.coerce.date(),
+  firstRespondedAt: z.coerce.date().optional(),
+  resolvedAt: z.coerce.date().optional(),
+});
+
+const updateTicketSchema = z
+  .object({
+    queueId: z.string().trim().min(1).max(64).optional(),
+    assigneeId: z.string().trim().min(1).max(64).optional(),
+    requesterName: z.string().trim().min(1).max(255).optional(),
+    requesterEmail: z.string().trim().toLowerCase().email().max(254).optional(),
+    subject: z.string().trim().min(1).max(255).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']).optional(),
+    status: z.enum(['NEW', 'OPEN', 'PENDING', 'RESOLVED', 'CLOSED']).optional(),
+    openedAt: z.coerce.date().optional(),
+    firstRespondedAt: z.coerce.date().optional(),
+    resolvedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createTicketCommentSchema = z.object({
+  ticketId: z.string().trim().min(1).max(64),
+  authorUserId: z.string().trim().min(1).max(255).optional(),
+  body: z.string().trim().min(1).max(4000),
+  isInternal: z.coerce.boolean().optional(),
+  postedAt: z.coerce.date(),
+});
+
+const updateTicketCommentSchema = z
+  .object({
+    ticketId: z.string().trim().min(1).max(64).optional(),
+    authorUserId: z.string().trim().min(1).max(255).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    isInternal: z.coerce.boolean().optional(),
+    postedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('ticket-queues')
+@ApiBearerAuth('access-token')
+@Controller('ticket-queues')
+export class TicketQueueController {
+  constructor(private readonly product: HelpdeskService) {}
+
+  @Get()
+  @RequirePermissions(P.TICKET_QUEUE_READ.key)
+  @ApiOperation({ summary: 'List queues' })
+  list(): Promise<TicketQueueRow[]> {
+    return this.product.listTicketQueues();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.TICKET_QUEUE_READ.key)
+  @ApiOperation({ summary: 'Read one queue' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<TicketQueueRow> {
+    return this.product.findTicketQueue(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.TICKET_QUEUE_CREATE.key)
+  @ApiOperation({ summary: 'Create a queue' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createTicketQueueSchema))
+    body: z.infer<typeof createTicketQueueSchema>,
+  ): Promise<TicketQueueRow> {
+    return this.product.createTicketQueue(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.TICKET_QUEUE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a queue' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateTicketQueueSchema))
+    body: z.infer<typeof updateTicketQueueSchema>,
+  ): Promise<TicketQueueRow> {
+    return this.product.updateTicketQueue(id, body, organizationId);
+  }
+}
+
+@ApiTags('support-agents')
+@ApiBearerAuth('access-token')
+@Controller('support-agents')
+export class SupportAgentController {
+  constructor(private readonly product: HelpdeskService) {}
+
+  @Get()
+  @RequirePermissions(P.SUPPORT_AGENT_READ.key)
+  @ApiOperation({ summary: 'List agents' })
+  list(): Promise<SupportAgentRow[]> {
+    return this.product.listSupportAgents();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.SUPPORT_AGENT_READ.key)
+  @ApiOperation({ summary: 'Read one agent' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<SupportAgentRow> {
+    return this.product.findSupportAgent(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.SUPPORT_AGENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a agent' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createSupportAgentSchema))
+    body: z.infer<typeof createSupportAgentSchema>,
+  ): Promise<SupportAgentRow> {
+    return this.product.createSupportAgent(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.SUPPORT_AGENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a agent' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateSupportAgentSchema))
+    body: z.infer<typeof updateSupportAgentSchema>,
+  ): Promise<SupportAgentRow> {
+    return this.product.updateSupportAgent(id, body, organizationId);
+  }
+}
+
+@ApiTags('sla-policies')
+@ApiBearerAuth('access-token')
+@Controller('sla-policies')
+export class SlaPolicyController {
+  constructor(private readonly product: HelpdeskService) {}
+
+  @Get()
+  @RequirePermissions(P.SLA_POLICY_READ.key)
+  @ApiOperation({ summary: 'List sla policies' })
+  list(): Promise<SlaPolicyRow[]> {
+    return this.product.listSlaPolicies();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.SLA_POLICY_READ.key)
+  @ApiOperation({ summary: 'Read one sla policy' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<SlaPolicyRow> {
+    return this.product.findSlaPolicy(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.SLA_POLICY_CREATE.key)
+  @ApiOperation({ summary: 'Create a sla policy' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createSlaPolicySchema))
+    body: z.infer<typeof createSlaPolicySchema>,
+  ): Promise<SlaPolicyRow> {
+    return this.product.createSlaPolicy(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.SLA_POLICY_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a sla policy' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateSlaPolicySchema))
+    body: z.infer<typeof updateSlaPolicySchema>,
+  ): Promise<SlaPolicyRow> {
+    return this.product.updateSlaPolicy(id, body, organizationId);
+  }
+}
+
+@ApiTags('tickets')
+@ApiBearerAuth('access-token')
+@Controller('tickets')
+export class TicketController {
+  constructor(private readonly product: HelpdeskService) {}
+
+  @Get()
+  @RequirePermissions(P.TICKET_READ.key)
+  @ApiOperation({ summary: 'List tickets' })
+  list(): Promise<TicketRow[]> {
+    return this.product.listTickets();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.TICKET_READ.key)
+  @ApiOperation({ summary: 'Read one ticket' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<TicketRow> {
+    return this.product.findTicket(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.TICKET_CREATE.key)
+  @ApiOperation({ summary: 'Create a ticket' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createTicketSchema))
+    body: z.infer<typeof createTicketSchema>,
+  ): Promise<TicketRow> {
+    return this.product.createTicket(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.TICKET_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a ticket' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateTicketSchema))
+    body: z.infer<typeof updateTicketSchema>,
+  ): Promise<TicketRow> {
+    return this.product.updateTicket(id, body, organizationId);
+  }
+}
+
+@ApiTags('ticket-comments')
+@ApiBearerAuth('access-token')
+@Controller('ticket-comments')
+export class TicketCommentController {
+  constructor(private readonly product: HelpdeskService) {}
+
+  @Get()
+  @RequirePermissions(P.TICKET_COMMENT_READ.key)
+  @ApiOperation({ summary: 'List comments' })
+  list(): Promise<TicketCommentRow[]> {
+    return this.product.listTicketComments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.TICKET_COMMENT_READ.key)
+  @ApiOperation({ summary: 'Read one comment' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<TicketCommentRow> {
+    return this.product.findTicketComment(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.TICKET_COMMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a comment' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createTicketCommentSchema))
+    body: z.infer<typeof createTicketCommentSchema>,
+  ): Promise<TicketCommentRow> {
+    return this.product.createTicketComment(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.TICKET_COMMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a comment' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateTicketCommentSchema))
+    body: z.infer<typeof updateTicketCommentSchema>,
+  ): Promise<TicketCommentRow> {
+    return this.product.updateTicketComment(id, body, organizationId);
+  }
+}

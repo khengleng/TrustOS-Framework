@@ -1,0 +1,39 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../api-catalog"
+    },
+    {
+      "path": "../api-consumer"
+    },
+    {
+      "path": "../api-policy"
+    },
+    {
+      "path": "../api-quota"
+    },
+    {
+      "path": "../api-rate-limit"
+    },
+    {
+      "path": "../api-versioning"
+    },
+    {
+      "path": "../audit"
+    },
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../policy-registry"
+    }
+  ]
+}

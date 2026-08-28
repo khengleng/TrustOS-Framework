@@ -1,0 +1,584 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/accounts"
+    },
+    {
+      "path": "./packages/modules/adapter"
+    },
+    {
+      "path": "packages/adapter-framework"
+    },
+    {
+      "path": "./packages/modules/agent"
+    },
+    {
+      "path": "./packages/agent-framework"
+    },
+    {
+      "path": "./packages/agent-memory"
+    },
+    {
+      "path": "./packages/agent-runtime"
+    },
+    {
+      "path": "./packages/modules/ai"
+    },
+    {
+      "path": "./packages/ai-cache"
+    },
+    {
+      "path": "./packages/ai-gateway"
+    },
+    {
+      "path": "./packages/ai-observability"
+    },
+    {
+      "path": "./packages/ai-policy"
+    },
+    {
+      "path": "./packages/ai-sdk"
+    },
+    {
+      "path": "./packages/ai-workflows"
+    },
+    {
+      "path": "packages/analytics"
+    },
+    {
+      "path": "packages/api-catalog"
+    },
+    {
+      "path": "packages/api-client-generator"
+    },
+    {
+      "path": "packages/api-consumer"
+    },
+    {
+      "path": "packages/api-keys"
+    },
+    {
+      "path": "packages/api-management"
+    },
+    {
+      "path": "packages/api-policy"
+    },
+    {
+      "path": "packages/api-quota"
+    },
+    {
+      "path": "packages/api-rate-limit"
+    },
+    {
+      "path": "packages/api-versioning"
+    },
+    {
+      "path": "packages/architecture-validator"
+    },
+    {
+      "path": "packages/audit"
+    },
+    {
+      "path": "packages/auth"
+    },
+    {
+      "path": "packages/authorization"
+    },
+    {
+      "path": "packages/backup"
+    },
+    {
+      "path": "packages/case-management"
+    },
+    {
+      "path": "packages/cli"
+    },
+    {
+      "path": "packages/code-generator"
+    },
+    {
+      "path": "packages/compatibility-engine"
+    },
+    {
+      "path": "packages/config"
+    },
+    {
+      "path": "packages/connector-registry"
+    },
+    {
+      "path": "./packages/content-filter"
+    },
+    {
+      "path": "packages/continuity"
+    },
+    {
+      "path": "./packages/conversation"
+    },
+    {
+      "path": "./packages/cost-monitor"
+    },
+    {
+      "path": "packages/data-access-policy"
+    },
+    {
+      "path": "packages/data-catalog"
+    },
+    {
+      "path": "packages/data-classification"
+    },
+    {
+      "path": "packages/data-governance"
+    },
+    {
+      "path": "packages/data-lineage"
+    },
+    {
+      "path": "packages/data-masking"
+    },
+    {
+      "path": "packages/data-retention"
+    },
+    {
+      "path": "packages/database"
+    },
+    {
+      "path": "packages/dependency-analyzer"
+    },
+    {
+      "path": "packages/dependency-health"
+    },
+    {
+      "path": "packages/developer-access"
+    },
+    {
+      "path": "packages/developer-portal"
+    },
+    {
+      "path": "packages/disaster-recovery"
+    },
+    {
+      "path": "packages/modules/document"
+    },
+    {
+      "path": "packages/documentation-center"
+    },
+    {
+      "path": "./packages/embedding"
+    },
+    {
+      "path": "packages/errors"
+    },
+    {
+      "path": "./packages/evaluation"
+    },
+    {
+      "path": "packages/event-bus"
+    },
+    {
+      "path": "packages/event-registry"
+    },
+    {
+      "path": "packages/event-sdk"
+    },
+    {
+      "path": "./packages/modules/events"
+    },
+    {
+      "path": "./packages/modules/export"
+    },
+    {
+      "path": "packages/export"
+    },
+    {
+      "path": "packages/modules/feature-flags"
+    },
+    {
+      "path": "./packages/fees"
+    },
+    {
+      "path": "packages/modules/file-storage"
+    },
+    {
+      "path": "packages/financial-block-registry"
+    },
+    {
+      "path": "./packages/financial-core"
+    },
+    {
+      "path": "./packages/financial-events"
+    },
+    {
+      "path": "./packages/financial-policy"
+    },
+    {
+      "path": "packages/financial-product-api"
+    },
+    {
+      "path": "packages/financial-product-composer"
+    },
+    {
+      "path": "packages/financial-product-core"
+    },
+    {
+      "path": "packages/financial-product-governance"
+    },
+    {
+      "path": "packages/financial-product-observability"
+    },
+    {
+      "path": "packages/financial-product-policy"
+    },
+    {
+      "path": "packages/financial-product-registry"
+    },
+    {
+      "path": "packages/financial-product-rules"
+    },
+    {
+      "path": "packages/financial-product-runtime"
+    },
+    {
+      "path": "packages/financial-product-sandbox"
+    },
+    {
+      "path": "packages/financial-product-simulator"
+    },
+    {
+      "path": "packages/financial-product-state-machine"
+    },
+    {
+      "path": "packages/financial-product-variants"
+    },
+    {
+      "path": "packages/financial-product-versioning"
+    },
+    {
+      "path": "./packages/financial-reporting"
+    },
+    {
+      "path": "./packages/financial-risk"
+    },
+    {
+      "path": "packages/framework-health"
+    },
+    {
+      "path": "./packages/function-calling"
+    },
+    {
+      "path": "./packages/fx"
+    },
+    {
+      "path": "packages/generator-core"
+    },
+    {
+      "path": "packages/governance-ai-bridge"
+    },
+    {
+      "path": "packages/governance-audit-bridge"
+    },
+    {
+      "path": "packages/governance-auth-context"
+    },
+    {
+      "path": "packages/governance-data-access"
+    },
+    {
+      "path": "packages/governance-environment-config"
+    },
+    {
+      "path": "packages/governance-export-control"
+    },
+    {
+      "path": "packages/governance-pii-policy"
+    },
+    {
+      "path": "packages/governance-resource-policy"
+    },
+    {
+      "path": "packages/governance-tool-core"
+    },
+    {
+      "path": "packages/governance-tool-integration"
+    },
+    {
+      "path": "packages/governance-tool-runtime"
+    },
+    {
+      "path": "packages/governance-tool-sdk"
+    },
+    {
+      "path": "packages/governance-workflow-bridge"
+    },
+    {
+      "path": "./packages/guardrails"
+    },
+    {
+      "path": "./packages/human-review"
+    },
+    {
+      "path": "packages/identity"
+    },
+    {
+      "path": "./packages/modules/import"
+    },
+    {
+      "path": "packages/import"
+    },
+    {
+      "path": "packages/incident-management"
+    },
+    {
+      "path": "packages/integration-health"
+    },
+    {
+      "path": "packages/integration-monitor"
+    },
+    {
+      "path": "packages/job-runtime"
+    },
+    {
+      "path": "./packages/modules/jobs"
+    },
+    {
+      "path": "./packages/knowledge"
+    },
+    {
+      "path": "./packages/ledger"
+    },
+    {
+      "path": "./packages/modules/ledger"
+    },
+    {
+      "path": "packages/license-manager"
+    },
+    {
+      "path": "./packages/limits"
+    },
+    {
+      "path": "packages/logging"
+    },
+    {
+      "path": "packages/migration-tools"
+    },
+    {
+      "path": "./packages/model-registry"
+    },
+    {
+      "path": "./packages/model-router"
+    },
+    {
+      "path": "packages/module-marketplace"
+    },
+    {
+      "path": "packages/module-registry"
+    },
+    {
+      "path": "packages/module-sdk"
+    },
+    {
+      "path": "packages/modules/notification"
+    },
+    {
+      "path": "packages/observability"
+    },
+    {
+      "path": "packages/package-manager"
+    },
+    {
+      "path": "./packages/payments"
+    },
+    {
+      "path": "packages/platform-manager"
+    },
+    {
+      "path": "packages/plugin-framework"
+    },
+    {
+      "path": "packages/policy-decision-log"
+    },
+    {
+      "path": "packages/policy-engine"
+    },
+    {
+      "path": "packages/policy-evaluator"
+    },
+    {
+      "path": "packages/policy-registry"
+    },
+    {
+      "path": "./packages/prompt-registry"
+    },
+    {
+      "path": "./packages/prompt-security"
+    },
+    {
+      "path": "packages/provider-sdk"
+    },
+    {
+      "path": "packages/quality-gates"
+    },
+    {
+      "path": "./packages/modules/rag"
+    },
+    {
+      "path": "./packages/rag"
+    },
+    {
+      "path": "packages/rbac"
+    },
+    {
+      "path": "./packages/modules/reconciliation"
+    },
+    {
+      "path": "./packages/reconciliation"
+    },
+    {
+      "path": "packages/recovery"
+    },
+    {
+      "path": "packages/release-manager"
+    },
+    {
+      "path": "packages/modules/reporting"
+    },
+    {
+      "path": "packages/resilience"
+    },
+    {
+      "path": "packages/resilience-testing"
+    },
+    {
+      "path": "packages/retry"
+    },
+    {
+      "path": "./packages/modules/scheduler"
+    },
+    {
+      "path": "packages/scheduler"
+    },
+    {
+      "path": "packages/modules/search"
+    },
+    {
+      "path": "packages/security-events"
+    },
+    {
+      "path": "packages/security-policy"
+    },
+    {
+      "path": "packages/security-testing"
+    },
+    {
+      "path": "packages/service-accounts"
+    },
+    {
+      "path": "packages/session-security"
+    },
+    {
+      "path": "./packages/modules/settlement"
+    },
+    {
+      "path": "./packages/settlement"
+    },
+    {
+      "path": "packages/shared-types"
+    },
+    {
+      "path": "packages/sli"
+    },
+    {
+      "path": "packages/slo"
+    },
+    {
+      "path": "packages/sre-core"
+    },
+    {
+      "path": "./packages/modules/sync"
+    },
+    {
+      "path": "packages/sync"
+    },
+    {
+      "path": "packages/telemetry"
+    },
+    {
+      "path": "packages/template-registry"
+    },
+    {
+      "path": "packages/template-sdk"
+    },
+    {
+      "path": "packages/tenancy"
+    },
+    {
+      "path": "./packages/token-meter"
+    },
+    {
+      "path": "./packages/tool-execution"
+    },
+    {
+      "path": "./packages/modules/transactions"
+    },
+    {
+      "path": "./packages/transactions"
+    },
+    {
+      "path": "packages/upgrade-manager"
+    },
+    {
+      "path": "packages/validation"
+    },
+    {
+      "path": "./packages/vector-store"
+    },
+    {
+      "path": "packages/version-manager"
+    },
+    {
+      "path": "./packages/modules/wallet"
+    },
+    {
+      "path": "./packages/wallet"
+    },
+    {
+      "path": "./packages/modules/webhook"
+    },
+    {
+      "path": "packages/webhook-runtime"
+    },
+    {
+      "path": "packages/webhooks"
+    },
+    {
+      "path": "packages/modules/workflow"
+    },
+    {
+      "path": "packages/workflow-approvals"
+    },
+    {
+      "path": "packages/workflow-core"
+    },
+    {
+      "path": "packages/workflow-definition"
+    },
+    {
+      "path": "packages/workflow-escalation"
+    },
+    {
+      "path": "packages/workflow-history"
+    },
+    {
+      "path": "packages/workflow-policy"
+    },
+    {
+      "path": "packages/workflow-runtime"
+    },
+    {
+      "path": "packages/workflow-sla"
+    },
+    {
+      "path": "packages/workflow-tasks"
+    }
+  ]
+}

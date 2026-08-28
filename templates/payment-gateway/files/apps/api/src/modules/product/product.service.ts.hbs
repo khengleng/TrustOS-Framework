@@ -1,0 +1,384 @@
+import { Inject, Injectable } from '@nestjs/common';
+import type { AuditService } from '@trustos/audit';
+import { PrismaService } from '@trustos/database';
+import type { AppPrismaService } from '../../core/prisma.service';
+import { ApiError } from '@trustos/errors';
+import { canTransition, type PaymentStatus } from '{{packageName}}-product-domain';
+import { AUDIT_SERVICE } from '../../tokens';
+import { TenantRepository } from '../../common/tenant-repository';
+import { generateApiKey, generateWebhookSecret } from './api-key';
+import { MockPaymentProvider, type PaymentProvider } from './payment-provider';
+
+export interface MerchantAccountRow {
+  id: string;
+  organizationId: string;
+  displayName: string;
+  reference: string;
+  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED';
+  defaultCurrency: string;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+export interface ApiKeyRow {
+  id: string;
+  organizationId: string;
+  merchantAccountId: string;
+  label: string;
+  keyHash: string;
+  keyPrefix: string;
+  lastUsedAt: Date | null;
+  revokedAt: Date | null;
+  revokedReason: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+export interface PaymentRow {
+  id: string;
+  organizationId: string;
+  merchantAccountId: string;
+  idempotencyKey: string;
+  amountMinor: number;
+  currency: string;
+  status: PaymentStatus;
+  reference: string;
+  description: string | null;
+  providerReference: string | null;
+  failureReason: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+export interface WebhookEndpointRow {
+  id: string;
+  organizationId: string;
+  merchantAccountId: string;
+  url: string;
+  secretHash: string;
+  events: string[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+/** An API key row plus the plaintext, returned only from the issue call. */
+export interface IssuedApiKey {
+  apiKey: Omit<ApiKeyRow, 'keyHash'>;
+  /** Shown once. Never stored, never logged, never returned again. */
+  key: string;
+}
+
+/**
+ * Payment gateway service.
+ *
+ * Three rules carry the weight here:
+ *
+ *   1. **Money is integer minor units.** Floating point never touches an
+ *      amount; `0.1 + 0.2` is the wrong thing to build a ledger on.
+ *   2. **Status changes go through the state machine** and are written to an
+ *      append-only history. The current status is a claim; the history is the
+ *      evidence.
+ *   3. **Credentials are shown once.** Only hashes are stored, and the
+ *      plaintext never enters an audit record or a log line.
+ */
+@Injectable()
+export class ProductService {
+  private readonly accounts: TenantRepository<MerchantAccountRow>;
+  private readonly apiKeys: TenantRepository<ApiKeyRow>;
+  private readonly payments: TenantRepository<PaymentRow>;
+  private readonly webhooks: TenantRepository<WebhookEndpointRow>;
+  private readonly provider: PaymentProvider;
+
+  constructor(
+    @Inject(PrismaService) private readonly prisma: AppPrismaService,
+    @Inject(AUDIT_SERVICE) private readonly audit: AuditService,
+  ) {
+    this.accounts = new TenantRepository<MerchantAccountRow>(prisma, 'merchantAccount');
+    this.apiKeys = new TenantRepository<ApiKeyRow>(prisma, 'gatewayApiKey');
+    this.payments = new TenantRepository<PaymentRow>(prisma, 'payment');
+    this.webhooks = new TenantRepository<WebhookEndpointRow>(prisma, 'gatewayWebhookEndpoint');
+    // Swap for a real adapter when one is approved; nothing else changes.
+    this.provider = new MockPaymentProvider();
+  }
+
+  // --- merchant accounts ----------------------------------------------------
+
+  listAccounts(): Promise<MerchantAccountRow[]> {
+    return this.accounts.list();
+  }
+
+  findAccount(id: string, organizationId: string): Promise<MerchantAccountRow> {
+    return this.accounts.findById(id, organizationId);
+  }
+
+  async createAccount(
+    input: { displayName: string; reference: string; defaultCurrency?: string },
+    organizationId: string,
+  ): Promise<MerchantAccountRow> {
+    const account = await this.accounts.create({
+      displayName: input.displayName,
+      reference: input.reference,
+      ...(input.defaultCurrency ? { defaultCurrency: input.defaultCurrency } : {}),
+    });
+
+    await this.audit.record({
+      action: 'gateway.account.created',
+      entityType: 'MerchantAccount',
+      entityId: account.id,
+      organizationId,
+      after: { reference: account.reference, displayName: account.displayName },
+    });
+
+    return account;
+  }
+
+  // --- API keys -------------------------------------------------------------
+
+  /** Never returns `keyHash`: the list endpoint has no reason to expose it. */
+  async listApiKeys(): Promise<Array<Omit<ApiKeyRow, 'keyHash'>>> {
+    const keys = await this.apiKeys.list();
+    return keys.map(({ keyHash: _keyHash, ...rest }) => rest);
+  }
+
+  async issueApiKey(
+    input: { merchantAccountId: string; label: string; environment?: 'test' | 'live' },
+    organizationId: string,
+  ): Promise<IssuedApiKey> {
+    await this.accounts.findById(input.merchantAccountId, organizationId);
+
+    const generated = generateApiKey(input.environment ?? 'test');
+
+    const row = await this.apiKeys.create({
+      merchantAccountId: input.merchantAccountId,
+      label: input.label,
+      keyHash: generated.keyHash,
+      keyPrefix: generated.keyPrefix,
+    });
+
+    await this.audit.record({
+      action: 'gateway.apiKey.issued',
+      entityType: 'ApiKey',
+      entityId: row.id,
+      organizationId,
+      // The prefix identifies the credential; the key itself must never reach
+      // an audit record, which is read far more widely than the key store.
+      after: { label: row.label, keyPrefix: row.keyPrefix, merchantAccountId: row.merchantAccountId },
+    });
+
+    const { keyHash: _keyHash, ...safe } = row;
+    return { apiKey: safe, key: generated.key };
+  }
+
+  async revokeApiKey(id: string, reason: string, organizationId: string): Promise<void> {
+    const existing = await this.apiKeys.findById(id, organizationId);
+    if (existing.revokedAt) return; // Idempotent: re-revoking changes nothing.
+
+    await this.apiKeys.update(id, { revokedAt: new Date(), revokedReason: reason });
+
+    await this.audit.record({
+      action: 'gateway.apiKey.revoked',
+      entityType: 'ApiKey',
+      entityId: id,
+      organizationId,
+      before: { keyPrefix: existing.keyPrefix, revokedAt: null },
+      after: { keyPrefix: existing.keyPrefix, reason },
+    });
+  }
+
+  // --- payments -------------------------------------------------------------
+
+  listPayments(): Promise<PaymentRow[]> {
+    return this.payments.list();
+  }
+
+  findPayment(id: string, organizationId: string): Promise<PaymentRow> {
+    return this.payments.findById(id, organizationId);
+  }
+
+  /**
+   * Creates a payment, or returns the existing one for the same idempotency
+   * key.
+   *
+   * Idempotency is not optional in a payments API: a client that retries after
+   * a timeout must not create a second charge.
+   */
+  async createPayment(
+    input: {
+      merchantAccountId: string;
+      idempotencyKey: string;
+      amountMinor: number;
+      currency: string;
+      reference: string;
+      description?: string;
+    },
+    organizationId: string,
+  ): Promise<PaymentRow> {
+    await this.accounts.findById(input.merchantAccountId, organizationId);
+
+    const existing = await this.payments.list({ idempotencyKey: input.idempotencyKey });
+    if (existing.length > 0) return existing[0] as PaymentRow;
+
+    const payment = await this.payments.create({
+      merchantAccountId: input.merchantAccountId,
+      idempotencyKey: input.idempotencyKey,
+      amountMinor: input.amountMinor,
+      currency: input.currency,
+      reference: input.reference,
+      description: input.description ?? null,
+      status: 'CREATED',
+    });
+
+    await this.writeHistory(payment.id, null, 'CREATED', 'created', organizationId);
+
+    await this.audit.record({
+      action: 'gateway.payment.created',
+      entityType: 'Payment',
+      entityId: payment.id,
+      organizationId,
+      after: {
+        reference: payment.reference,
+        amountMinor: payment.amountMinor,
+        currency: payment.currency,
+      },
+    });
+
+    return payment;
+  }
+
+  /**
+   * Moves a payment to a new status.
+   *
+   * The transition is checked against the state machine before anything is
+   * written, so a payment can never move out of a terminal state — which is
+   * what makes downstream reconciliation trustworthy.
+   */
+  async transitionPayment(
+    id: string,
+    toStatus: PaymentStatus,
+    reason: string | null,
+    organizationId: string,
+    actorId: string | null,
+  ): Promise<PaymentRow> {
+    const existing = await this.payments.findById(id, organizationId);
+    const fromStatus = existing.status;
+
+    if (!canTransition(fromStatus, toStatus)) {
+      throw ApiError.conflict(`A payment cannot move from ${fromStatus} to ${toStatus}.`, {
+        paymentId: id,
+        fromStatus,
+        toStatus,
+      });
+    }
+
+    const data: Record<string, unknown> = { status: toStatus };
+
+    // The provider is consulted on authorization only; the rest of the state
+    // machine is the gateway's own bookkeeping until a real provider exists.
+    if (toStatus === 'AUTHORIZED') {
+      const result = await this.provider.authorize({
+        paymentId: existing.id,
+        amountMinor: existing.amountMinor,
+        currency: existing.currency,
+        reference: existing.reference,
+      });
+
+      if (!result.ok) {
+        await this.payments.update(id, { status: 'FAILED', failureReason: result.failureReason });
+        await this.writeHistory(id, fromStatus, 'FAILED', result.failureReason, organizationId, actorId);
+
+        await this.audit.record({
+          action: 'gateway.payment.failed',
+          entityType: 'Payment',
+          entityId: id,
+          organizationId,
+          before: { status: fromStatus },
+          after: { status: 'FAILED', failureReason: result.failureReason },
+        });
+
+        throw ApiError.conflict('The payment was declined.', {
+          paymentId: id,
+          failureReason: result.failureReason,
+        });
+      }
+
+      data.providerReference = result.providerReference;
+    }
+
+    const updated = await this.payments.update(id, data);
+    await this.writeHistory(id, fromStatus, toStatus, reason, organizationId, actorId);
+
+    await this.audit.recordChange({
+      action: 'gateway.payment.transitioned',
+      entityType: 'Payment',
+      entityId: id,
+      organizationId,
+      before: { status: fromStatus },
+      after: { status: updated.status },
+    });
+
+    return updated;
+  }
+
+  /** Reads the append-only history for one payment. */
+  async paymentHistory(id: string, organizationId: string): Promise<unknown[]> {
+    // Verifies the payment belongs to the caller before reading its history.
+    await this.payments.findById(id, organizationId);
+
+    return this.prisma.paymentStatusHistory.findMany({
+      where: { paymentId: id, organizationId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  private async writeHistory(
+    paymentId: string,
+    fromStatus: PaymentStatus | null,
+    toStatus: PaymentStatus,
+    reason: string | null,
+    organizationId: string,
+    actorId: string | null = null,
+  ): Promise<void> {
+    await this.prisma.paymentStatusHistory.create({
+      data: { paymentId, organizationId, fromStatus, toStatus, reason, actorId },
+    });
+  }
+
+  // --- webhooks -------------------------------------------------------------
+
+  async listWebhooks(): Promise<Array<Omit<WebhookEndpointRow, 'secretHash'>>> {
+    const endpoints = await this.webhooks.list();
+    return endpoints.map(({ secretHash: _secretHash, ...rest }) => rest);
+  }
+
+  async registerWebhook(
+    input: { merchantAccountId: string; url: string; events: string[] },
+    organizationId: string,
+  ): Promise<{ endpoint: Omit<WebhookEndpointRow, 'secretHash'>; secret: string }> {
+    await this.accounts.findById(input.merchantAccountId, organizationId);
+
+    const { secret, secretHash } = generateWebhookSecret();
+
+    const endpoint = await this.webhooks.create({
+      merchantAccountId: input.merchantAccountId,
+      url: input.url,
+      events: input.events,
+      secretHash,
+    });
+
+    await this.audit.record({
+      action: 'gateway.webhook.registered',
+      entityType: 'WebhookEndpoint',
+      entityId: endpoint.id,
+      organizationId,
+      after: { url: endpoint.url, events: endpoint.events },
+    });
+
+    const { secretHash: _secretHash, ...safe } = endpoint;
+    return { endpoint: safe, secret };
+  }
+}

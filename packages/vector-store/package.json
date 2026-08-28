@@ -1,0 +1,23 @@
+{
+  "name": "@trustos/vector-store",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vector storage abstraction: upsert, search, filter, delete. In-memory default.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/ai-sdk": "0.1.0",
+    "@trustos/embedding": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

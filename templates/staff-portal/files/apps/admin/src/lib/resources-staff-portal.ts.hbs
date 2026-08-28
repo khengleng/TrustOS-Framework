@@ -1,0 +1,164 @@
+/**
+ * TrustOS Staff Portal — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { STAFF_PORTAL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const STAFF_PORTAL_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'staff-profiles',
+    label: 'Staff',
+    singular: 'Staff member',
+    endpoint: '/staff-profiles',
+    description: "A colleague.",
+    table: {
+      key: 'staff-profiles',
+      label: 'Staff',
+      endpoint: '/staff-profiles',
+      emptyHint: 'Create one with POST /api/staff-profiles.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'userId', label: 'User', sortable: true },
+        { key: 'displayName', label: 'Name' },
+        { key: 'team', label: 'Team', sortable: true },
+        { key: 'jobTitle', label: 'Job title' },
+        { key: 'isAvailable', label: 'Available', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'team', label: 'Team', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'isAvailable', label: 'Available', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'displayName', label: 'Name' },
+      ],
+    },
+    permissions: {
+      list: P.STAFF_PROFILE_READ.key,
+      read: P.STAFF_PROFILE_READ.key,
+      create: P.STAFF_PROFILE_CREATE.key,
+      update: P.STAFF_PROFILE_UPDATE.key,
+    },
+  },
+  {
+    key: 'staff-tasks',
+    label: 'Tasks',
+    singular: 'Task',
+    endpoint: '/staff-tasks',
+    description: "Something assigned to a person.",
+    table: {
+      key: 'staff-tasks',
+      label: 'Tasks',
+      endpoint: '/staff-tasks',
+      emptyHint: 'Create one with POST /api/staff-tasks.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'assigneeUserId', label: 'Assignee', sortable: true },
+        { key: 'title', label: 'Task' },
+        { key: 'detail', label: 'Detail' },
+        { key: 'workflowTaskId', label: 'Workflow task' },
+        { key: 'dueAt', label: 'Due', format: 'datetime', sortable: true },
+        { key: 'priority', label: 'Priority', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'assigneeUserId', label: 'Assignee', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'dueAt', label: 'Due', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'priority', label: 'Priority', type: 'enum', operators: ['eq', 'in'], options: [{"value":"LOW","label":"Low"},{"value":"NORMAL","label":"Normal"},{"value":"HIGH","label":"High"}] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"OPEN","label":"Open"},{"value":"IN_PROGRESS","label":"In Progress"},{"value":"BLOCKED","label":"Blocked"},{"value":"DONE","label":"Done"},{"value":"CANCELLED","label":"Cancelled"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'title', label: 'Task' },
+      ],
+    },
+    permissions: {
+      list: P.STAFF_TASK_READ.key,
+      read: P.STAFF_TASK_READ.key,
+      create: P.STAFF_TASK_CREATE.key,
+      update: P.STAFF_TASK_UPDATE.key,
+    },
+  },
+  {
+    key: 'saved-searches',
+    label: 'Saved searches',
+    singular: 'Saved search',
+    endpoint: '/saved-searches',
+    description: "A stored filter set.",
+    table: {
+      key: 'saved-searches',
+      label: 'Saved searches',
+      endpoint: '/saved-searches',
+      emptyHint: 'Create one with POST /api/saved-searches.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'ownerUserId', label: 'Owner' },
+        { key: 'name', label: 'Name' },
+        { key: 'resourceKey', label: 'Resource', sortable: true },
+        { key: 'filters', label: 'Filters' },
+        { key: 'isShared', label: 'Shared', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'resourceKey', label: 'Resource', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'isShared', label: 'Shared', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Name' },
+      ],
+    },
+    permissions: {
+      list: P.SAVED_SEARCH_READ.key,
+      read: P.SAVED_SEARCH_READ.key,
+      create: P.SAVED_SEARCH_CREATE.key,
+      update: P.SAVED_SEARCH_UPDATE.key,
+    },
+  },
+  {
+    key: 'staff-notifications',
+    label: 'Notifications',
+    singular: 'Notification',
+    endpoint: '/staff-notifications',
+    description: "Something a colleague should look at.",
+    table: {
+      key: 'staff-notifications',
+      label: 'Notifications',
+      endpoint: '/staff-notifications',
+      emptyHint: 'Create one with POST /api/staff-notifications.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'recipientUserId', label: 'Recipient', sortable: true },
+        { key: 'subject', label: 'Subject' },
+        { key: 'body', label: 'Body' },
+        { key: 'href', label: 'Link' },
+        { key: 'sentAt', label: 'Sent', format: 'datetime', sortable: true },
+        { key: 'readAt', label: 'Read', format: 'datetime' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'recipientUserId', label: 'Recipient', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'sentAt', label: 'Sent', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    permissions: {
+      list: P.STAFF_NOTIFICATION_READ.key,
+      read: P.STAFF_NOTIFICATION_READ.key,
+      create: P.STAFF_NOTIFICATION_CREATE.key,
+      update: P.STAFF_NOTIFICATION_UPDATE.key,
+    },
+  },
+];

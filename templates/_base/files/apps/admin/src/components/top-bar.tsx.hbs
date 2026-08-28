@@ -1,0 +1,66 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { RESOURCES } from '@/lib/resources';
+import { useSession } from '@/lib/session';
+
+/**
+ * Application shell.
+ *
+ * Navigation is driven by the resource registry, so adding a product screen is
+ * one entry in `lib/resources.ts` rather than an edit here.
+ */
+export function TopBar() {
+  const { session, signOut } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const activeOrganization = session?.organizations.find(
+    (organization) => organization.id === session.organizationId,
+  );
+
+  return (
+    <>
+      <header className="topbar">
+        <span className="brand">{{productDisplayName}}</span>
+        {session ? (
+          <span className="muted">
+            {session.user.email}
+            {activeOrganization ? ` · ${activeOrganization.name}` : ' · no organization selected'}
+            {'  '}
+            <button
+              type="button"
+              className="button link"
+              onClick={async () => {
+                await signOut();
+                router.push('/login');
+              }}
+            >
+              Sign out
+            </button>
+          </span>
+        ) : null}
+      </header>
+
+      {session?.organizationId ? (
+        <nav className="tabs shell tabs-flush">
+          {RESOURCES.map((resource) => {
+            const href = `/resources/${resource.key}`;
+            return (
+              <Link key={resource.key} href={href} className={pathname === href ? 'active' : ''}>
+                {resource.label}
+              </Link>
+            );
+          })}
+          <Link href="/audit" className={pathname === '/audit' ? 'active' : ''}>
+            Audit log
+          </Link>
+          <Link href="/organizations" className={pathname === '/organizations' ? 'active' : ''}>
+            Switch organization
+          </Link>
+        </nav>
+      ) : null}
+    </>
+  );
+}

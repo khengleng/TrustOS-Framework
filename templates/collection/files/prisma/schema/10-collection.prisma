@@ -1,0 +1,160 @@
+// =============================================================================
+// TrustOS Collections — product models
+//
+// Debt collection operations: cases, collectors, assignments, payment
+// promises, field visits and the reports a collections manager runs each
+// morning.
+//
+// Out of scope, deliberately: dialler and telephony integration, SMS and
+// messaging providers, geolocation tracking, credit bureau reporting,
+// automated legal action.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum CollectionBucket {
+  B0
+  B1
+  B2
+  B3
+  B4_PLUS
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  PROMISED
+  SETTLED
+  ESCALATED
+  CLOSED
+}
+
+enum PromiseStatus {
+  OPEN
+  KEPT
+  BROKEN
+  CANCELLED
+}
+
+enum VisitOutcome {
+  NOT_VISITED
+  MET
+  NOT_FOUND
+  REFUSED
+  RELOCATED
+}
+
+/// A person working cases. Authorization comes from framework RBAC.
+model Collector {
+  id             String @id @default(cuid())
+  organizationId String
+  userId String
+  displayName String
+  team String?
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, team])
+  @@index([organizationId, isActive])
+  @@index([deletedAt])
+}
+
+/// An overdue obligation being worked.
+model CollectionCase {
+  id             String @id @default(cuid())
+  organizationId String
+  reference String
+  debtorName String
+  debtorPhone String?
+  externalAccountRef String?
+  outstandingAmount Decimal @db.Decimal(28, 8)
+  currency String
+  daysPastDue Int @default(0)
+  bucket CollectionBucket @default(B0)
+  status CaseStatus @default(OPEN)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, daysPastDue])
+  @@index([organizationId, bucket])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// Who is working a case, from when. History is kept: reassigning writes a new
+/// row and ends the old one, so "who had this case in March" has an answer.
+model CaseAssignment {
+  id             String @id @default(cuid())
+  organizationId String
+  caseId String
+  collectorId String
+  assignedAt DateTime
+  endedAt DateTime?
+  reason String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, caseId])
+  @@index([organizationId, collectorId])
+  @@index([organizationId, assignedAt])
+  @@index([deletedAt])
+}
+
+/// A debtor committing to pay by a date. Kept or broken, never rescheduled in
+/// place — see the migration note.
+model PaymentPromise {
+  id             String @id @default(cuid())
+  organizationId String
+  caseId String
+  collectorId String
+  promisedAmount Decimal @db.Decimal(28, 8)
+  currency String
+  promisedFor DateTime @db.Date
+  takenAt DateTime
+  status PromiseStatus @default(OPEN)
+  note String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, caseId])
+  @@index([organizationId, collectorId])
+  @@index([organizationId, promisedFor])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A scheduled or completed visit to a debtor.
+model FieldVisit {
+  id             String @id @default(cuid())
+  organizationId String
+  caseId String
+  collectorId String
+  scheduledFor DateTime
+  completedAt DateTime?
+  outcome VisitOutcome?
+  notes String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, caseId])
+  @@index([organizationId, collectorId])
+  @@index([organizationId, scheduledFor])
+  @@index([organizationId, outcome])
+  @@index([deletedAt])
+}

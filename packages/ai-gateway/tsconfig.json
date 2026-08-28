@@ -1,0 +1,60 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../ai-cache"
+    },
+    {
+      "path": "../ai-policy"
+    },
+    {
+      "path": "../ai-sdk"
+    },
+    {
+      "path": "../audit"
+    },
+    {
+      "path": "../content-filter"
+    },
+    {
+      "path": "../cost-monitor"
+    },
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../guardrails"
+    },
+    {
+      "path": "../logging"
+    },
+    {
+      "path": "../model-registry"
+    },
+    {
+      "path": "../model-router"
+    },
+    {
+      "path": "../observability"
+    },
+    {
+      "path": "../provider-sdk"
+    },
+    {
+      "path": "../retry"
+    },
+    {
+      "path": "../shared-types"
+    },
+    {
+      "path": "../token-meter"
+    }
+  ]
+}

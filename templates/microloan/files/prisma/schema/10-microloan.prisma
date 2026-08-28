@@ -1,0 +1,200 @@
+// =============================================================================
+// TrustOS Microloan — product models
+//
+// Small-ticket lending: borrowers, loan products, an application under the
+// framework approval workflow, disbursed loan accounts and a repayment
+// schedule.
+//
+// Out of scope, deliberately: credit bureau integration, credit scoring
+// models, payment providers, collections field operations, regulatory
+// reporting.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum BorrowerStatus {
+  ACTIVE
+  BLOCKED
+  CLOSED
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum LoanStatus {
+  ACTIVE
+  IN_ARREARS
+  CLOSED
+  WRITTEN_OFF
+  RESTRUCTURED
+}
+
+enum InstalmentStatus {
+  DUE
+  PAID
+  PARTIAL
+  OVERDUE
+  WAIVED
+}
+
+enum RepaymentMethod {
+  CASH
+  WALLET
+  BANK_TRANSFER
+  ADJUSTMENT
+}
+
+/// A person or business that can hold a loan.
+model Borrower {
+  id             String @id @default(cuid())
+  organizationId String
+  borrowerNumber String
+  fullName String
+  phone String?
+  addressLine String?
+  status BorrowerStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, borrowerNumber])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// The terms a loan can be written on. Rates are stored as decimal strings,
+/// never floats — a rate multiplied in binary floating point is wrong by the
+/// third instalment.
+model LoanProduct {
+  id             String @id @default(cuid())
+  organizationId String
+  code String
+  name String
+  currency String @default("USD")
+  minPrincipal Decimal @db.Decimal(28, 8)
+  maxPrincipal Decimal @db.Decimal(28, 8)
+  annualRate Decimal @db.Decimal(28, 8)
+  termMonths Int
+  isActive Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@index([deletedAt])
+}
+
+/// A request for a loan, governed by the framework approval workflow.
+/// `workflowInstanceId` is where the decision actually lives — this row must
+/// not grow its own approval columns.
+model LoanApplication {
+  id             String @id @default(cuid())
+  organizationId String
+  reference String
+  borrowerId String
+  productId String
+  requestedPrincipal Decimal @db.Decimal(28, 8)
+  currency String
+  purpose String?
+  workflowInstanceId String?
+  status ApplicationStatus @default(SUBMITTED)
+  submittedAt DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, borrowerId])
+  @@index([organizationId, productId])
+  @@index([organizationId, status])
+  @@index([organizationId, submittedAt])
+  @@index([deletedAt])
+}
+
+/// A disbursed loan. The outstanding balance is derived from the ledger, not
+/// stored — the same rule as a wallet, for the same reason.
+model LoanAccount {
+  id             String @id @default(cuid())
+  organizationId String
+  applicationId String
+  borrowerId String
+  accountNumber String
+  principal Decimal @db.Decimal(28, 8)
+  currency String
+  annualRate Decimal @db.Decimal(28, 8)
+  termMonths Int
+  disbursedAt DateTime
+  status LoanStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, accountNumber])
+  @@index([organizationId, applicationId])
+  @@index([organizationId, borrowerId])
+  @@index([organizationId, disbursedAt])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// One scheduled payment. Generated at disbursement and never recomputed: a
+/// schedule that changes retroactively cannot be reconciled against what the
+/// borrower was told.
+model RepaymentInstalment {
+  id             String @id @default(cuid())
+  organizationId String
+  loanId String
+  sequence Int
+  dueDate DateTime @db.Date
+  principalDue Decimal @db.Decimal(28, 8)
+  interestDue Decimal @db.Decimal(28, 8)
+  totalDue Decimal @db.Decimal(28, 8)
+  currency String
+  status InstalmentStatus @default(DUE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, loanId])
+  @@index([organizationId, dueDate])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// Money received against a loan, linked to the ledger journal that moved it.
+model Repayment {
+  id             String @id @default(cuid())
+  organizationId String
+  loanId String
+  reference String
+  amount Decimal @db.Decimal(28, 8)
+  currency String
+  receivedAt DateTime
+  journalId String?
+  method RepaymentMethod @default(CASH)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, loanId])
+  @@index([organizationId, receivedAt])
+  @@index([organizationId, method])
+  @@index([deletedAt])
+}

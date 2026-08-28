@@ -1,0 +1,46 @@
+{
+  "name": "@trustos/database",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prisma schema, client lifecycle and tenant-safe query helpers.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "prisma"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "generate": "prisma generate",
+    "validate": "DATABASE_URL=\"${DATABASE_URL:-postgresql://schema:validation@localhost:5432/validate}\" prisma validate",
+    "format:schema": "prisma format",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:status": "prisma migrate status",
+    "migrate:diff": "DATABASE_URL=\"${DATABASE_URL:-postgresql://schema:validation@localhost:5432/validate}\" prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script",
+    "studio": "prisma studio",
+    "seed": "tsx prisma/seed.ts",
+    "db:push": "prisma db push",
+    "migrate:drift": "prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --shadow-database-url \"$SHADOW_DATABASE_URL\" --exit-code"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma",
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@prisma/client": "^6.19.3",
+    "@trustos/config": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/rbac": "0.1.0"
+  },
+  "devDependencies": {
+    "@trustos/rbac": "0.1.0",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^2.4.3",
+    "prisma": "^6.19.3",
+    "tsx": "^4.19.2"
+  }
+}

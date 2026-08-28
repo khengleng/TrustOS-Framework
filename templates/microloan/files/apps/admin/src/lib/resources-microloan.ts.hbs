@@ -1,0 +1,239 @@
+/**
+ * TrustOS Microloan — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { MICROLOAN_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const MICROLOAN_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'borrowers',
+    label: 'Borrowers',
+    singular: 'Borrower',
+    endpoint: '/borrowers',
+    description: "A person or business that can hold a loan.",
+    table: {
+      key: 'borrowers',
+      label: 'Borrowers',
+      endpoint: '/borrowers',
+      emptyHint: 'Create one with POST /api/borrowers.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'borrowerNumber', label: 'Borrower no.', sortable: true },
+        { key: 'fullName', label: 'Name' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'addressLine', label: 'Address' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ACTIVE","label":"Active"},{"value":"BLOCKED","label":"Blocked"},{"value":"CLOSED","label":"Closed"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'borrowerNumber', label: 'Borrower no.', prefixOnly: true },
+        { key: 'fullName', label: 'Name' },
+        { key: 'phone', label: 'Phone' },
+      ],
+    },
+    permissions: {
+      list: P.BORROWER_READ.key,
+      read: P.BORROWER_READ.key,
+      create: P.BORROWER_CREATE.key,
+      update: P.BORROWER_UPDATE.key,
+    },
+  },
+  {
+    key: 'loan-products',
+    label: 'Loan products',
+    singular: 'Loan product',
+    endpoint: '/loan-products',
+    description: "The terms a loan can be written on.",
+    table: {
+      key: 'loan-products',
+      label: 'Loan products',
+      endpoint: '/loan-products',
+      emptyHint: 'Create one with POST /api/loan-products.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'code', label: 'Code', sortable: true },
+        { key: 'name', label: 'Product' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'minPrincipal', label: 'Min principal', format: 'money', currencyKey: 'currency' },
+        { key: 'maxPrincipal', label: 'Max principal', format: 'money', currencyKey: 'currency' },
+        { key: 'annualRate', label: 'Annual rate', format: 'money', currencyKey: 'currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'isActive', label: 'Active', type: 'boolean', operators: ['eq'] },
+    ],
+    search: {
+      fields: [
+        { key: 'name', label: 'Product' },
+      ],
+    },
+    permissions: {
+      list: P.LOAN_PRODUCT_READ.key,
+      read: P.LOAN_PRODUCT_READ.key,
+      create: P.LOAN_PRODUCT_CREATE.key,
+      update: P.LOAN_PRODUCT_UPDATE.key,
+    },
+  },
+  {
+    key: 'loan-applications',
+    label: 'Applications',
+    singular: 'Application',
+    endpoint: '/loan-applications',
+    description: "A request for a loan, governed by the framework approval workflow.",
+    table: {
+      key: 'loan-applications',
+      label: 'Applications',
+      endpoint: '/loan-applications',
+      emptyHint: 'Create one with POST /api/loan-applications.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'borrowerId', label: 'Borrower', format: 'reference' },
+        { key: 'productId', label: 'Product', format: 'reference' },
+        { key: 'requestedPrincipal', label: 'Requested', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'purpose', label: 'Purpose' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DRAFT","label":"Draft"},{"value":"SUBMITTED","label":"Submitted"},{"value":"UNDER_REVIEW","label":"Under Review"},{"value":"APPROVED","label":"Approved"},{"value":"REJECTED","label":"Rejected"},{"value":"WITHDRAWN","label":"Withdrawn"}] },
+      { key: 'submittedAt', label: 'Submitted', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.LOAN_APPLICATION_READ.key,
+      read: P.LOAN_APPLICATION_READ.key,
+      create: P.LOAN_APPLICATION_CREATE.key,
+      update: P.LOAN_APPLICATION_UPDATE.key,
+    },
+  },
+  {
+    key: 'loan-accounts',
+    label: 'Loans',
+    singular: 'Loan',
+    endpoint: '/loan-accounts',
+    description: "A disbursed loan.",
+    table: {
+      key: 'loan-accounts',
+      label: 'Loans',
+      endpoint: '/loan-accounts',
+      emptyHint: 'Create one with POST /api/loan-accounts.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'applicationId', label: 'Application', format: 'reference' },
+        { key: 'borrowerId', label: 'Borrower', format: 'reference' },
+        { key: 'accountNumber', label: 'Loan no.', sortable: true },
+        { key: 'principal', label: 'Principal', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'annualRate', label: 'Rate', format: 'money', currencyKey: 'currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'disbursedAt', label: 'Disbursed', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"ACTIVE","label":"Active"},{"value":"IN_ARREARS","label":"In Arrears"},{"value":"CLOSED","label":"Closed"},{"value":"WRITTEN_OFF","label":"Written Off"},{"value":"RESTRUCTURED","label":"Restructured"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'accountNumber', label: 'Loan no.', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.LOAN_ACCOUNT_READ.key,
+      read: P.LOAN_ACCOUNT_READ.key,
+      create: P.LOAN_ACCOUNT_CREATE.key,
+      update: P.LOAN_ACCOUNT_UPDATE.key,
+    },
+  },
+  {
+    key: 'repayment-instalments',
+    label: 'Instalments',
+    singular: 'Instalment',
+    endpoint: '/repayment-instalments',
+    description: "One scheduled payment.",
+    table: {
+      key: 'repayment-instalments',
+      label: 'Instalments',
+      endpoint: '/repayment-instalments',
+      emptyHint: 'Create one with POST /api/repayment-instalments.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'loanId', label: 'Loan', format: 'reference' },
+        { key: 'sequence', label: '#', format: 'number' },
+        { key: 'dueDate', label: 'Due', format: 'date', sortable: true },
+        { key: 'principalDue', label: 'Principal', format: 'money', currencyKey: 'currency' },
+        { key: 'interestDue', label: 'Interest', format: 'money', currencyKey: 'currency' },
+        { key: 'totalDue', label: 'Total', format: 'money', currencyKey: 'currency' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'dueDate', label: 'Due', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"DUE","label":"Due"},{"value":"PAID","label":"Paid"},{"value":"PARTIAL","label":"Partial"},{"value":"OVERDUE","label":"Overdue"},{"value":"WAIVED","label":"Waived"}] },
+    ],
+    permissions: {
+      list: P.REPAYMENT_INSTALMENT_READ.key,
+      read: P.REPAYMENT_INSTALMENT_READ.key,
+      create: P.REPAYMENT_INSTALMENT_CREATE.key,
+      update: P.REPAYMENT_INSTALMENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'repayments',
+    label: 'Repayments',
+    singular: 'Repayment',
+    endpoint: '/repayments',
+    description: "Money received against a loan, linked to the ledger journal that moved it.",
+    table: {
+      key: 'repayments',
+      label: 'Repayments',
+      endpoint: '/repayments',
+      emptyHint: 'Create one with POST /api/repayments.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'loanId', label: 'Loan', format: 'reference' },
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'amount', label: 'Amount', format: 'money', currencyKey: 'currency' },
+        { key: 'currency', label: 'Currency' },
+        { key: 'receivedAt', label: 'Received', format: 'datetime', sortable: true },
+        { key: 'journalId', label: 'Journal' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'receivedAt', label: 'Received', type: 'date', operators: ['gte', 'lte', 'between'] },
+      { key: 'method', label: 'Method', type: 'enum', operators: ['eq', 'in'], options: [{"value":"CASH","label":"Cash"},{"value":"WALLET","label":"Wallet"},{"value":"BANK_TRANSFER","label":"Bank Transfer"},{"value":"ADJUSTMENT","label":"Adjustment"}] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+      ],
+    },
+    permissions: {
+      list: P.REPAYMENT_READ.key,
+      read: P.REPAYMENT_READ.key,
+      create: P.REPAYMENT_CREATE.key,
+      update: P.REPAYMENT_UPDATE.key,
+    },
+  },
+];

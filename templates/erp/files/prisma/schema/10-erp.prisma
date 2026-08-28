@@ -1,0 +1,159 @@
+// =============================================================================
+// TrustOS ERP — product models
+//
+// Internal operations: departments, employees, projects, and interfaces for
+// inventory and purchasing that a deployment fills in against its own
+// systems.
+//
+// Out of scope, deliberately: general ledger accounting, payroll,
+// manufacturing planning, warehouse management systems, supplier portals.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum EmploymentStatus {
+  ACTIVE
+  ON_LEAVE
+  SUSPENDED
+  LEFT
+}
+
+enum ProjectStatus {
+  PLANNED
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum PurchaseStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  ORDERED
+  RECEIVED
+  CANCELLED
+}
+
+/// An organizational unit. Nests via `parentId`.
+model Department {
+  id             String @id @default(cuid())
+  organizationId String
+  name String
+  code String
+  parentId String?
+  costCentre String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, parentId])
+  @@index([organizationId, costCentre])
+  @@index([deletedAt])
+}
+
+/// A person working for the organization. `userId` links to the framework
+/// identity; authorization is RBAC, never a job title.
+model Employee {
+  id             String @id @default(cuid())
+  organizationId String
+  employeeNumber String
+  userId String?
+  departmentId String
+  fullName String
+  jobTitle String?
+  email String?
+  startedOn DateTime @db.Date
+  status EmploymentStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, employeeNumber])
+  @@index([organizationId, departmentId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A piece of work with a budget and an owner.
+model Project {
+  id             String @id @default(cuid())
+  organizationId String
+  code String
+  name String
+  departmentId String
+  managerEmployeeId String?
+  budget Decimal @db.Decimal(28, 8) @default(0)
+  currency String @default("USD")
+  startsOn DateTime? @db.Date
+  endsOn DateTime? @db.Date
+  status ProjectStatus @default(PLANNED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, departmentId])
+  @@index([organizationId, managerEmployeeId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// What is held, where. An *interface* to whatever system actually owns stock —
+/// see the migration note before treating this as a warehouse system.
+model InventoryItem {
+  id             String @id @default(cuid())
+  organizationId String
+  sku String
+  name String
+  unit String @default("each")
+  quantityOnHand Int @default(0)
+  reorderLevel Int @default(0)
+  location String?
+  unitCost Decimal @db.Decimal(28, 8) @default(0)
+  currency String @default("USD")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, sku])
+  @@index([organizationId, location])
+  @@index([deletedAt])
+}
+
+/// A request to buy something, approved through the framework workflow. The
+/// decision is in the workflow instance; this row holds what was asked for.
+model PurchaseRequest {
+  id             String @id @default(cuid())
+  organizationId String
+  reference String
+  departmentId String
+  requestedByEmployeeId String
+  projectId String?
+  description String
+  estimatedAmount Decimal @db.Decimal(28, 8)
+  currency String @default("USD")
+  workflowInstanceId String?
+  status PurchaseStatus @default(DRAFT)
+  neededBy DateTime? @db.Date
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, departmentId])
+  @@index([organizationId, requestedByEmployeeId])
+  @@index([organizationId, projectId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}

@@ -1,0 +1,28 @@
+# Everything that must not reach the build context.
+#
+# The first two entries are the security ones: a `.env` copied into an image is a secret in every
+# layer of that image, recoverable by anybody who can pull it, and `docker history` shows it.
+.env
+.env.*
+!.env.example
+
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+
+.git
+.github
+.vscode
+.idea
+
+# Documentation and tests. The image runs a service; it does not need either, and excluding them
+# keeps the context small enough that the build does not spend its time on transfer.
+docs
+**/*.spec.ts
+**/*.test.ts
+
+*.log
+.DS_Store

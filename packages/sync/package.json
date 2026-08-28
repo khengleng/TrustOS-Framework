@@ -1,0 +1,26 @@
+{
+  "name": "@trustos/sync",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pull and push synchronization: incremental cursors, conflict resolution, sync log and policy.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/audit": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/event-sdk": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "@trustos/observability": "0.1.0",
+    "@trustos/retry": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

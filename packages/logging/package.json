@@ -1,0 +1,25 @@
+{
+  "name": "@trustos/logging",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Structured Pino logging with request correlation and mandatory secret redaction.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@trustos/config": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "pino": "^9.5.0"
+  },
+  "devDependencies": {
+    "pino-pretty": "^13.0.0"
+  }
+}

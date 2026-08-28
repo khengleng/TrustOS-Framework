@@ -1,0 +1,87 @@
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { GATEWAY_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+/** Payment gateway console screens. */
+export const RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'merchant-accounts',
+    label: 'Merchant accounts',
+    singular: 'Merchant account',
+    endpoint: '/merchant-accounts',
+    description: 'Merchant accounts held with the gateway.',
+    table: {
+      key: 'merchant-accounts',
+      label: 'Merchant accounts',
+      endpoint: '/merchant-accounts',
+      emptyHint: 'Create one with POST /api/merchant-accounts.',
+      columns: [
+        { key: 'displayName', label: 'Account' },
+        { key: 'reference', label: 'Reference' },
+        { key: 'status', label: 'Status', format: 'badge' },
+        { key: 'defaultCurrency', label: 'Currency', format: 'badge' },
+        { key: 'createdAt', label: 'Created', format: 'datetime' },
+      ],
+    },
+    permissions: { list: P.ACCOUNT_READ.key, read: P.ACCOUNT_READ.key },
+  },
+  {
+    key: 'payments',
+    label: 'Payments',
+    singular: 'Payment',
+    endpoint: '/payments',
+    description: 'Amounts are minor units — 1050 USD means $10.50.',
+    table: {
+      key: 'payments',
+      label: 'Payments',
+      endpoint: '/payments',
+      emptyHint: 'Create one with POST /api/payments.',
+      columns: [
+        { key: 'reference', label: 'Reference' },
+        { key: 'amountMinor', label: 'Amount (minor)' },
+        { key: 'currency', label: 'Currency', format: 'badge' },
+        { key: 'status', label: 'Status', format: 'badge' },
+        { key: 'createdAt', label: 'Created', format: 'datetime' },
+      ],
+    },
+    permissions: { list: P.PAYMENT_READ.key, read: P.PAYMENT_READ.key },
+  },
+  {
+    key: 'api-keys',
+    label: 'API keys',
+    singular: 'API key',
+    endpoint: '/api-keys',
+    table: {
+      key: 'api-keys',
+      label: 'API keys',
+      endpoint: '/api-keys',
+      emptyHint: 'Issue one with POST /api/api-keys.',
+      columns: [
+        { key: 'label', label: 'Label' },
+        { key: 'keyPrefix', label: 'Prefix' },
+        { key: 'lastUsedAt', label: 'Last used', format: 'datetime' },
+        { key: 'revokedAt', label: 'Revoked', format: 'datetime' },
+        { key: 'createdAt', label: 'Issued', format: 'datetime' },
+      ],
+    },
+    permissions: { list: P.ACCOUNT_READ.key, read: P.ACCOUNT_READ.key },
+  },
+  {
+    key: 'webhook-endpoints',
+    label: 'Webhooks',
+    singular: 'Webhook',
+    endpoint: '/webhook-endpoints',
+    description: 'Where events will be delivered once delivery is implemented.',
+    table: {
+      key: 'webhook-endpoints',
+      label: 'Webhooks',
+      endpoint: '/webhook-endpoints',
+      emptyHint: 'Register one with POST /api/webhook-endpoints.',
+      columns: [
+        { key: 'url', label: 'URL' },
+        { key: 'isActive', label: 'Active', format: 'badge' },
+        { key: 'createdAt', label: 'Registered', format: 'datetime' },
+      ],
+    },
+    permissions: { list: P.WEBHOOK_READ.key, read: P.WEBHOOK_READ.key },
+  },
+];

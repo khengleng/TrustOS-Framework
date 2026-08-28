@@ -1,0 +1,380 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { SCHOOL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  SchoolService,
+  type AcademicTermRow,
+  type ClassGroupRow,
+  type AttendanceRow,
+  type GradeRow,
+  type GuardianRow,
+} from './school.service';
+
+/**
+ * TrustOS School endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createAcademicTermSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  startsOn: z.coerce.date(),
+  endsOn: z.coerce.date(),
+  isCurrent: z.coerce.boolean().optional(),
+});
+
+const updateAcademicTermSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    startsOn: z.coerce.date().optional(),
+    endsOn: z.coerce.date().optional(),
+    isCurrent: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createClassGroupSchema = z.object({
+  termId: z.string().trim().min(1).max(64),
+  courseId: z.string().trim().min(1).max(64),
+  teacherId: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(255),
+  room: z.string().trim().min(1).max(255).optional(),
+  capacity: z.coerce.number().int().optional(),
+});
+
+const updateClassGroupSchema = z
+  .object({
+    termId: z.string().trim().min(1).max(64).optional(),
+    courseId: z.string().trim().min(1).max(64).optional(),
+    teacherId: z.string().trim().min(1).max(64).optional(),
+    name: z.string().trim().min(1).max(255).optional(),
+    room: z.string().trim().min(1).max(255).optional(),
+    capacity: z.coerce.number().int().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createAttendanceSchema = z.object({
+  classGroupId: z.string().trim().min(1).max(64),
+  studentId: z.string().trim().min(1).max(64),
+  sessionOn: z.coerce.date(),
+  period: z.coerce.number().int(),
+  state: z.enum(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED']),
+  note: z.string().trim().min(1).max(255).optional(),
+});
+
+const updateAttendanceSchema = z
+  .object({
+    classGroupId: z.string().trim().min(1).max(64).optional(),
+    studentId: z.string().trim().min(1).max(64).optional(),
+    sessionOn: z.coerce.date().optional(),
+    period: z.coerce.number().int().optional(),
+    state: z.enum(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED']).optional(),
+    note: z.string().trim().min(1).max(255).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createGradeSchema = z.object({
+  classGroupId: z.string().trim().min(1).max(64),
+  studentId: z.string().trim().min(1).max(64),
+  component: z.string().trim().min(1).max(255),
+  marksAwarded: z.coerce.number().int(),
+  maxMarks: z.coerce.number().int(),
+  recordedAt: z.coerce.date(),
+});
+
+const updateGradeSchema = z
+  .object({
+    classGroupId: z.string().trim().min(1).max(64).optional(),
+    studentId: z.string().trim().min(1).max(64).optional(),
+    component: z.string().trim().min(1).max(255).optional(),
+    marksAwarded: z.coerce.number().int().optional(),
+    maxMarks: z.coerce.number().int().optional(),
+    recordedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createGuardianSchema = z.object({
+  studentId: z.string().trim().min(1).max(64),
+  fullName: z.string().trim().min(1).max(255),
+  relationship: z.string().trim().min(1).max(255),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
+  isPrimaryContact: z.coerce.boolean().optional(),
+});
+
+const updateGuardianSchema = z
+  .object({
+    studentId: z.string().trim().min(1).max(64).optional(),
+    fullName: z.string().trim().min(1).max(255).optional(),
+    relationship: z.string().trim().min(1).max(255).optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    email: z.string().trim().toLowerCase().email().max(254).optional(),
+    isPrimaryContact: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('academic-terms')
+@ApiBearerAuth('access-token')
+@Controller('academic-terms')
+export class AcademicTermController {
+  constructor(private readonly product: SchoolService) {}
+
+  @Get()
+  @RequirePermissions(P.ACADEMIC_TERM_READ.key)
+  @ApiOperation({ summary: 'List terms' })
+  list(): Promise<AcademicTermRow[]> {
+    return this.product.listAcademicTerms();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.ACADEMIC_TERM_READ.key)
+  @ApiOperation({ summary: 'Read one term' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<AcademicTermRow> {
+    return this.product.findAcademicTerm(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.ACADEMIC_TERM_CREATE.key)
+  @ApiOperation({ summary: 'Create a term' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createAcademicTermSchema))
+    body: z.infer<typeof createAcademicTermSchema>,
+  ): Promise<AcademicTermRow> {
+    return this.product.createAcademicTerm(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.ACADEMIC_TERM_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a term' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateAcademicTermSchema))
+    body: z.infer<typeof updateAcademicTermSchema>,
+  ): Promise<AcademicTermRow> {
+    return this.product.updateAcademicTerm(id, body, organizationId);
+  }
+}
+
+@ApiTags('class-groups')
+@ApiBearerAuth('access-token')
+@Controller('class-groups')
+export class ClassGroupController {
+  constructor(private readonly product: SchoolService) {}
+
+  @Get()
+  @RequirePermissions(P.CLASS_GROUP_READ.key)
+  @ApiOperation({ summary: 'List classes' })
+  list(): Promise<ClassGroupRow[]> {
+    return this.product.listClassGroups();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.CLASS_GROUP_READ.key)
+  @ApiOperation({ summary: 'Read one class' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<ClassGroupRow> {
+    return this.product.findClassGroup(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.CLASS_GROUP_CREATE.key)
+  @ApiOperation({ summary: 'Create a class' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createClassGroupSchema))
+    body: z.infer<typeof createClassGroupSchema>,
+  ): Promise<ClassGroupRow> {
+    return this.product.createClassGroup(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.CLASS_GROUP_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a class' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateClassGroupSchema))
+    body: z.infer<typeof updateClassGroupSchema>,
+  ): Promise<ClassGroupRow> {
+    return this.product.updateClassGroup(id, body, organizationId);
+  }
+}
+
+@ApiTags('attendances')
+@ApiBearerAuth('access-token')
+@Controller('attendances')
+export class AttendanceController {
+  constructor(private readonly product: SchoolService) {}
+
+  @Get()
+  @RequirePermissions(P.ATTENDANCE_READ.key)
+  @ApiOperation({ summary: 'List attendance' })
+  list(): Promise<AttendanceRow[]> {
+    return this.product.listAttendances();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.ATTENDANCE_READ.key)
+  @ApiOperation({ summary: 'Read one attendance record' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<AttendanceRow> {
+    return this.product.findAttendance(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.ATTENDANCE_CREATE.key)
+  @ApiOperation({ summary: 'Create a attendance record' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createAttendanceSchema))
+    body: z.infer<typeof createAttendanceSchema>,
+  ): Promise<AttendanceRow> {
+    return this.product.createAttendance(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.ATTENDANCE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a attendance record' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateAttendanceSchema))
+    body: z.infer<typeof updateAttendanceSchema>,
+  ): Promise<AttendanceRow> {
+    return this.product.updateAttendance(id, body, organizationId);
+  }
+}
+
+@ApiTags('grades')
+@ApiBearerAuth('access-token')
+@Controller('grades')
+export class GradeController {
+  constructor(private readonly product: SchoolService) {}
+
+  @Get()
+  @RequirePermissions(P.GRADE_READ.key)
+  @ApiOperation({ summary: 'List grades' })
+  list(): Promise<GradeRow[]> {
+    return this.product.listGrades();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.GRADE_READ.key)
+  @ApiOperation({ summary: 'Read one grade' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<GradeRow> {
+    return this.product.findGrade(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.GRADE_CREATE.key)
+  @ApiOperation({ summary: 'Create a grade' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createGradeSchema))
+    body: z.infer<typeof createGradeSchema>,
+  ): Promise<GradeRow> {
+    return this.product.createGrade(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.GRADE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a grade' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateGradeSchema))
+    body: z.infer<typeof updateGradeSchema>,
+  ): Promise<GradeRow> {
+    return this.product.updateGrade(id, body, organizationId);
+  }
+}
+
+@ApiTags('guardians')
+@ApiBearerAuth('access-token')
+@Controller('guardians')
+export class GuardianController {
+  constructor(private readonly product: SchoolService) {}
+
+  @Get()
+  @RequirePermissions(P.GUARDIAN_READ.key)
+  @ApiOperation({ summary: 'List guardians' })
+  list(): Promise<GuardianRow[]> {
+    return this.product.listGuardians();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.GUARDIAN_READ.key)
+  @ApiOperation({ summary: 'Read one guardian' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<GuardianRow> {
+    return this.product.findGuardian(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.GUARDIAN_CREATE.key)
+  @ApiOperation({ summary: 'Create a guardian' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createGuardianSchema))
+    body: z.infer<typeof createGuardianSchema>,
+  ): Promise<GuardianRow> {
+    return this.product.createGuardian(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.GUARDIAN_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a guardian' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateGuardianSchema))
+    body: z.infer<typeof updateGuardianSchema>,
+  ): Promise<GuardianRow> {
+    return this.product.updateGuardian(id, body, organizationId);
+  }
+}

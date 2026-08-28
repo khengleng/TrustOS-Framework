@@ -1,0 +1,307 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { STAFF_PORTAL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  StaffPortalService,
+  type StaffProfileRow,
+  type StaffTaskRow,
+  type SavedSearchRow,
+  type StaffNotificationRow,
+} from './staff-portal.service';
+
+/**
+ * TrustOS Staff Portal endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createStaffProfileSchema = z.object({
+  userId: z.string().trim().min(1).max(255),
+  displayName: z.string().trim().min(1).max(255),
+  team: z.string().trim().min(1).max(255).optional(),
+  jobTitle: z.string().trim().min(1).max(255).optional(),
+  isAvailable: z.coerce.boolean().optional(),
+});
+
+const updateStaffProfileSchema = z
+  .object({
+    displayName: z.string().trim().min(1).max(255).optional(),
+    team: z.string().trim().min(1).max(255).optional(),
+    jobTitle: z.string().trim().min(1).max(255).optional(),
+    isAvailable: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createStaffTaskSchema = z.object({
+  assigneeUserId: z.string().trim().min(1).max(255),
+  title: z.string().trim().min(1).max(255),
+  detail: z.string().trim().min(1).max(4000).optional(),
+  workflowTaskId: z.string().trim().min(1).max(255).optional(),
+  dueAt: z.coerce.date().optional(),
+  priority: z.enum(['LOW', 'NORMAL', 'HIGH']).optional(),
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELLED']).optional(),
+});
+
+const updateStaffTaskSchema = z
+  .object({
+    assigneeUserId: z.string().trim().min(1).max(255).optional(),
+    title: z.string().trim().min(1).max(255).optional(),
+    detail: z.string().trim().min(1).max(4000).optional(),
+    dueAt: z.coerce.date().optional(),
+    priority: z.enum(['LOW', 'NORMAL', 'HIGH']).optional(),
+    status: z.enum(['OPEN', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELLED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createSavedSearchSchema = z.object({
+  ownerUserId: z.string().trim().min(1).max(255),
+  name: z.string().trim().min(1).max(255),
+  resourceKey: z.string().trim().min(1).max(255),
+  filters: z.record(z.unknown()),
+  isShared: z.coerce.boolean().optional(),
+});
+
+const updateSavedSearchSchema = z
+  .object({
+    ownerUserId: z.string().trim().min(1).max(255).optional(),
+    name: z.string().trim().min(1).max(255).optional(),
+    resourceKey: z.string().trim().min(1).max(255).optional(),
+    filters: z.record(z.unknown()).optional(),
+    isShared: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createStaffNotificationSchema = z.object({
+  recipientUserId: z.string().trim().min(1).max(255),
+  subject: z.string().trim().min(1).max(255),
+  body: z.string().trim().min(1).max(4000),
+  href: z.string().trim().min(1).max(255).optional(),
+  sentAt: z.coerce.date(),
+  readAt: z.coerce.date().optional(),
+});
+
+const updateStaffNotificationSchema = z
+  .object({
+    recipientUserId: z.string().trim().min(1).max(255).optional(),
+    subject: z.string().trim().min(1).max(255).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    href: z.string().trim().min(1).max(255).optional(),
+    sentAt: z.coerce.date().optional(),
+    readAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('staff-profiles')
+@ApiBearerAuth('access-token')
+@Controller('staff-profiles')
+export class StaffProfileController {
+  constructor(private readonly product: StaffPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.STAFF_PROFILE_READ.key)
+  @ApiOperation({ summary: 'List staff' })
+  list(): Promise<StaffProfileRow[]> {
+    return this.product.listStaffProfiles();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.STAFF_PROFILE_READ.key)
+  @ApiOperation({ summary: 'Read one staff member' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<StaffProfileRow> {
+    return this.product.findStaffProfile(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.STAFF_PROFILE_CREATE.key)
+  @ApiOperation({ summary: 'Create a staff member' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createStaffProfileSchema))
+    body: z.infer<typeof createStaffProfileSchema>,
+  ): Promise<StaffProfileRow> {
+    return this.product.createStaffProfile(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.STAFF_PROFILE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a staff member' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateStaffProfileSchema))
+    body: z.infer<typeof updateStaffProfileSchema>,
+  ): Promise<StaffProfileRow> {
+    return this.product.updateStaffProfile(id, body, organizationId);
+  }
+}
+
+@ApiTags('staff-tasks')
+@ApiBearerAuth('access-token')
+@Controller('staff-tasks')
+export class StaffTaskController {
+  constructor(private readonly product: StaffPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.STAFF_TASK_READ.key)
+  @ApiOperation({ summary: 'List tasks' })
+  list(): Promise<StaffTaskRow[]> {
+    return this.product.listStaffTasks();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.STAFF_TASK_READ.key)
+  @ApiOperation({ summary: 'Read one task' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<StaffTaskRow> {
+    return this.product.findStaffTask(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.STAFF_TASK_CREATE.key)
+  @ApiOperation({ summary: 'Create a task' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createStaffTaskSchema))
+    body: z.infer<typeof createStaffTaskSchema>,
+  ): Promise<StaffTaskRow> {
+    return this.product.createStaffTask(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.STAFF_TASK_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a task' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateStaffTaskSchema))
+    body: z.infer<typeof updateStaffTaskSchema>,
+  ): Promise<StaffTaskRow> {
+    return this.product.updateStaffTask(id, body, organizationId);
+  }
+}
+
+@ApiTags('saved-searches')
+@ApiBearerAuth('access-token')
+@Controller('saved-searches')
+export class SavedSearchController {
+  constructor(private readonly product: StaffPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.SAVED_SEARCH_READ.key)
+  @ApiOperation({ summary: 'List saved searches' })
+  list(): Promise<SavedSearchRow[]> {
+    return this.product.listSavedSearches();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.SAVED_SEARCH_READ.key)
+  @ApiOperation({ summary: 'Read one saved search' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<SavedSearchRow> {
+    return this.product.findSavedSearch(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.SAVED_SEARCH_CREATE.key)
+  @ApiOperation({ summary: 'Create a saved search' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createSavedSearchSchema))
+    body: z.infer<typeof createSavedSearchSchema>,
+  ): Promise<SavedSearchRow> {
+    return this.product.createSavedSearch(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.SAVED_SEARCH_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a saved search' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateSavedSearchSchema))
+    body: z.infer<typeof updateSavedSearchSchema>,
+  ): Promise<SavedSearchRow> {
+    return this.product.updateSavedSearch(id, body, organizationId);
+  }
+}
+
+@ApiTags('staff-notifications')
+@ApiBearerAuth('access-token')
+@Controller('staff-notifications')
+export class StaffNotificationController {
+  constructor(private readonly product: StaffPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.STAFF_NOTIFICATION_READ.key)
+  @ApiOperation({ summary: 'List notifications' })
+  list(): Promise<StaffNotificationRow[]> {
+    return this.product.listStaffNotifications();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.STAFF_NOTIFICATION_READ.key)
+  @ApiOperation({ summary: 'Read one notification' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<StaffNotificationRow> {
+    return this.product.findStaffNotification(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.STAFF_NOTIFICATION_CREATE.key)
+  @ApiOperation({ summary: 'Create a notification' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createStaffNotificationSchema))
+    body: z.infer<typeof createStaffNotificationSchema>,
+  ): Promise<StaffNotificationRow> {
+    return this.product.createStaffNotification(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.STAFF_NOTIFICATION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a notification' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateStaffNotificationSchema))
+    body: z.infer<typeof updateStaffNotificationSchema>,
+  ): Promise<StaffNotificationRow> {
+    return this.product.updateStaffNotification(id, body, organizationId);
+  }
+}

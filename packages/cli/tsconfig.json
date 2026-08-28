@@ -1,0 +1,156 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../agent-framework"
+    },
+    {
+      "path": "../analytics"
+    },
+    {
+      "path": "../api-catalog"
+    },
+    {
+      "path": "../api-versioning"
+    },
+    {
+      "path": "../architecture-validator"
+    },
+    {
+      "path": "../backup"
+    },
+    {
+      "path": "../code-generator"
+    },
+    {
+      "path": "../compatibility-engine"
+    },
+    {
+      "path": "../connector-registry"
+    },
+    {
+      "path": "../data-catalog"
+    },
+    {
+      "path": "../data-classification"
+    },
+    {
+      "path": "../data-lineage"
+    },
+    {
+      "path": "../dependency-analyzer"
+    },
+    {
+      "path": "../developer-portal"
+    },
+    {
+      "path": "../disaster-recovery"
+    },
+    {
+      "path": "../documentation-center"
+    },
+    {
+      "path": "../evaluation"
+    },
+    {
+      "path": "../financial-block-registry"
+    },
+    {
+      "path": "../financial-core"
+    },
+    {
+      "path": "../financial-product-composer"
+    },
+    {
+      "path": "../financial-product-core"
+    },
+    {
+      "path": "../financial-product-governance"
+    },
+    {
+      "path": "../financial-product-simulator"
+    },
+    {
+      "path": "../financial-product-versioning"
+    },
+    {
+      "path": "../framework-health"
+    },
+    {
+      "path": "../generator-core"
+    },
+    {
+      "path": "../license-manager"
+    },
+    {
+      "path": "../migration-tools"
+    },
+    {
+      "path": "../model-registry"
+    },
+    {
+      "path": "../module-marketplace"
+    },
+    {
+      "path": "../module-registry"
+    },
+    {
+      "path": "../package-manager"
+    },
+    {
+      "path": "../platform-manager"
+    },
+    {
+      "path": "../plugin-framework"
+    },
+    {
+      "path": "../policy-evaluator"
+    },
+    {
+      "path": "../policy-registry"
+    },
+    {
+      "path": "../prompt-registry"
+    },
+    {
+      "path": "../quality-gates"
+    },
+    {
+      "path": "../rbac"
+    },
+    {
+      "path": "../release-manager"
+    },
+    {
+      "path": "../slo"
+    },
+    {
+      "path": "../sre-core"
+    },
+    {
+      "path": "../telemetry"
+    },
+    {
+      "path": "../template-registry"
+    },
+    {
+      "path": "../upgrade-manager"
+    },
+    {
+      "path": "../version-manager"
+    },
+    {
+      "path": "../workflow-core"
+    },
+    {
+      "path": "../workflow-definition"
+    }
+  ]
+}

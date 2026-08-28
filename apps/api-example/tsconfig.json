@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "composite": false,
+    "incremental": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noUncheckedIndexedAccess": false,
+    "baseUrl": ".",
+    /**
+     * Deliberately empty: the app resolves framework packages through
+     * node_modules, exactly as a real product would. Mapping them back to
+     * source here would compile package sources into the app's bundle and hide
+     * any packaging mistake until deployment.
+     */
+    "paths": {}
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

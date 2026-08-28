@@ -1,0 +1,469 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { MICROLOAN_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  MicroloanService,
+  type BorrowerRow,
+  type LoanProductRow,
+  type LoanApplicationRow,
+  type LoanAccountRow,
+  type RepaymentInstalmentRow,
+  type RepaymentRow,
+} from './microloan.service';
+
+/**
+ * TrustOS Microloan endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createBorrowerSchema = z.object({
+  borrowerNumber: z.string().trim().min(1).max(255),
+  fullName: z.string().trim().min(1).max(255),
+  phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+  addressLine: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['ACTIVE', 'BLOCKED', 'CLOSED']).optional(),
+});
+
+const updateBorrowerSchema = z
+  .object({
+    fullName: z.string().trim().min(1).max(255).optional(),
+    phone: z.string().trim().min(6).max(24).regex(/^[+()\-. \d]+$/).optional(),
+    addressLine: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['ACTIVE', 'BLOCKED', 'CLOSED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createLoanProductSchema = z.object({
+  code: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(255),
+  currency: z.string().trim().min(1).max(255),
+  minPrincipal: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  maxPrincipal: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  annualRate: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  termMonths: z.coerce.number().int(),
+  isActive: z.coerce.boolean().optional(),
+});
+
+const updateLoanProductSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    minPrincipal: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    maxPrincipal: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    annualRate: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    termMonths: z.coerce.number().int().optional(),
+    isActive: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createLoanApplicationSchema = z.object({
+  reference: z.string().trim().min(1).max(255),
+  borrowerId: z.string().trim().min(1).max(64),
+  productId: z.string().trim().min(1).max(64),
+  requestedPrincipal: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  purpose: z.string().trim().min(1).max(4000).optional(),
+  workflowInstanceId: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'WITHDRAWN']).optional(),
+  submittedAt: z.coerce.date(),
+});
+
+const updateLoanApplicationSchema = z
+  .object({
+    borrowerId: z.string().trim().min(1).max(64).optional(),
+    productId: z.string().trim().min(1).max(64).optional(),
+    requestedPrincipal: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    purpose: z.string().trim().min(1).max(4000).optional(),
+    workflowInstanceId: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'WITHDRAWN']).optional(),
+    submittedAt: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createLoanAccountSchema = z.object({
+  applicationId: z.string().trim().min(1).max(64),
+  borrowerId: z.string().trim().min(1).max(64),
+  accountNumber: z.string().trim().min(1).max(255),
+  principal: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  annualRate: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  termMonths: z.coerce.number().int(),
+  disbursedAt: z.coerce.date(),
+  status: z.enum(['ACTIVE', 'IN_ARREARS', 'CLOSED', 'WRITTEN_OFF', 'RESTRUCTURED']).optional(),
+});
+
+const updateLoanAccountSchema = z
+  .object({
+    applicationId: z.string().trim().min(1).max(64).optional(),
+    borrowerId: z.string().trim().min(1).max(64).optional(),
+    principal: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    annualRate: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    termMonths: z.coerce.number().int().optional(),
+    disbursedAt: z.coerce.date().optional(),
+    status: z.enum(['ACTIVE', 'IN_ARREARS', 'CLOSED', 'WRITTEN_OFF', 'RESTRUCTURED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createRepaymentInstalmentSchema = z.object({
+  loanId: z.string().trim().min(1).max(64),
+  sequence: z.coerce.number().int(),
+  dueDate: z.coerce.date(),
+  principalDue: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  interestDue: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  totalDue: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  status: z.enum(['DUE', 'PAID', 'PARTIAL', 'OVERDUE', 'WAIVED']).optional(),
+});
+
+const updateRepaymentInstalmentSchema = z
+  .object({
+    loanId: z.string().trim().min(1).max(64).optional(),
+    sequence: z.coerce.number().int().optional(),
+    dueDate: z.coerce.date().optional(),
+    principalDue: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    interestDue: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    totalDue: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    status: z.enum(['DUE', 'PAID', 'PARTIAL', 'OVERDUE', 'WAIVED']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createRepaymentSchema = z.object({
+  loanId: z.string().trim().min(1).max(64),
+  reference: z.string().trim().min(1).max(255),
+  amount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.'),
+  currency: z.string().trim().min(1).max(255),
+  receivedAt: z.coerce.date(),
+  journalId: z.string().trim().min(1).max(255).optional(),
+  method: z.enum(['CASH', 'WALLET', 'BANK_TRANSFER', 'ADJUSTMENT']).optional(),
+});
+
+const updateRepaymentSchema = z
+  .object({
+    loanId: z.string().trim().min(1).max(64).optional(),
+    amount: z.string().trim().regex(/^-?\d{1,15}(\.\d{1,8})?$/, 'Must be a decimal amount.').optional(),
+    currency: z.string().trim().min(1).max(255).optional(),
+    receivedAt: z.coerce.date().optional(),
+    method: z.enum(['CASH', 'WALLET', 'BANK_TRANSFER', 'ADJUSTMENT']).optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('borrowers')
+@ApiBearerAuth('access-token')
+@Controller('borrowers')
+export class BorrowerController {
+  constructor(private readonly product: MicroloanService) {}
+
+  @Get()
+  @RequirePermissions(P.BORROWER_READ.key)
+  @ApiOperation({ summary: 'List borrowers' })
+  list(): Promise<BorrowerRow[]> {
+    return this.product.listBorrowers();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.BORROWER_READ.key)
+  @ApiOperation({ summary: 'Read one borrower' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<BorrowerRow> {
+    return this.product.findBorrower(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.BORROWER_CREATE.key)
+  @ApiOperation({ summary: 'Create a borrower' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createBorrowerSchema))
+    body: z.infer<typeof createBorrowerSchema>,
+  ): Promise<BorrowerRow> {
+    return this.product.createBorrower(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.BORROWER_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a borrower' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateBorrowerSchema))
+    body: z.infer<typeof updateBorrowerSchema>,
+  ): Promise<BorrowerRow> {
+    return this.product.updateBorrower(id, body, organizationId);
+  }
+}
+
+@ApiTags('loan-products')
+@ApiBearerAuth('access-token')
+@Controller('loan-products')
+export class LoanProductController {
+  constructor(private readonly product: MicroloanService) {}
+
+  @Get()
+  @RequirePermissions(P.LOAN_PRODUCT_READ.key)
+  @ApiOperation({ summary: 'List loan products' })
+  list(): Promise<LoanProductRow[]> {
+    return this.product.listLoanProducts();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.LOAN_PRODUCT_READ.key)
+  @ApiOperation({ summary: 'Read one loan product' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<LoanProductRow> {
+    return this.product.findLoanProduct(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.LOAN_PRODUCT_CREATE.key)
+  @ApiOperation({ summary: 'Create a loan product' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createLoanProductSchema))
+    body: z.infer<typeof createLoanProductSchema>,
+  ): Promise<LoanProductRow> {
+    return this.product.createLoanProduct(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.LOAN_PRODUCT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a loan product' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateLoanProductSchema))
+    body: z.infer<typeof updateLoanProductSchema>,
+  ): Promise<LoanProductRow> {
+    return this.product.updateLoanProduct(id, body, organizationId);
+  }
+}
+
+@ApiTags('loan-applications')
+@ApiBearerAuth('access-token')
+@Controller('loan-applications')
+export class LoanApplicationController {
+  constructor(private readonly product: MicroloanService) {}
+
+  @Get()
+  @RequirePermissions(P.LOAN_APPLICATION_READ.key)
+  @ApiOperation({ summary: 'List applications' })
+  list(): Promise<LoanApplicationRow[]> {
+    return this.product.listLoanApplications();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.LOAN_APPLICATION_READ.key)
+  @ApiOperation({ summary: 'Read one application' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<LoanApplicationRow> {
+    return this.product.findLoanApplication(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.LOAN_APPLICATION_CREATE.key)
+  @ApiOperation({ summary: 'Create a application' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createLoanApplicationSchema))
+    body: z.infer<typeof createLoanApplicationSchema>,
+  ): Promise<LoanApplicationRow> {
+    return this.product.createLoanApplication(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.LOAN_APPLICATION_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a application' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateLoanApplicationSchema))
+    body: z.infer<typeof updateLoanApplicationSchema>,
+  ): Promise<LoanApplicationRow> {
+    return this.product.updateLoanApplication(id, body, organizationId);
+  }
+}
+
+@ApiTags('loan-accounts')
+@ApiBearerAuth('access-token')
+@Controller('loan-accounts')
+export class LoanAccountController {
+  constructor(private readonly product: MicroloanService) {}
+
+  @Get()
+  @RequirePermissions(P.LOAN_ACCOUNT_READ.key)
+  @ApiOperation({ summary: 'List loans' })
+  list(): Promise<LoanAccountRow[]> {
+    return this.product.listLoanAccounts();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.LOAN_ACCOUNT_READ.key)
+  @ApiOperation({ summary: 'Read one loan' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<LoanAccountRow> {
+    return this.product.findLoanAccount(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.LOAN_ACCOUNT_CREATE.key)
+  @ApiOperation({ summary: 'Create a loan' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createLoanAccountSchema))
+    body: z.infer<typeof createLoanAccountSchema>,
+  ): Promise<LoanAccountRow> {
+    return this.product.createLoanAccount(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.LOAN_ACCOUNT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a loan' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateLoanAccountSchema))
+    body: z.infer<typeof updateLoanAccountSchema>,
+  ): Promise<LoanAccountRow> {
+    return this.product.updateLoanAccount(id, body, organizationId);
+  }
+}
+
+@ApiTags('repayment-instalments')
+@ApiBearerAuth('access-token')
+@Controller('repayment-instalments')
+export class RepaymentInstalmentController {
+  constructor(private readonly product: MicroloanService) {}
+
+  @Get()
+  @RequirePermissions(P.REPAYMENT_INSTALMENT_READ.key)
+  @ApiOperation({ summary: 'List instalments' })
+  list(): Promise<RepaymentInstalmentRow[]> {
+    return this.product.listRepaymentInstalments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.REPAYMENT_INSTALMENT_READ.key)
+  @ApiOperation({ summary: 'Read one instalment' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<RepaymentInstalmentRow> {
+    return this.product.findRepaymentInstalment(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.REPAYMENT_INSTALMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a instalment' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createRepaymentInstalmentSchema))
+    body: z.infer<typeof createRepaymentInstalmentSchema>,
+  ): Promise<RepaymentInstalmentRow> {
+    return this.product.createRepaymentInstalment(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.REPAYMENT_INSTALMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a instalment' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateRepaymentInstalmentSchema))
+    body: z.infer<typeof updateRepaymentInstalmentSchema>,
+  ): Promise<RepaymentInstalmentRow> {
+    return this.product.updateRepaymentInstalment(id, body, organizationId);
+  }
+}
+
+@ApiTags('repayments')
+@ApiBearerAuth('access-token')
+@Controller('repayments')
+export class RepaymentController {
+  constructor(private readonly product: MicroloanService) {}
+
+  @Get()
+  @RequirePermissions(P.REPAYMENT_READ.key)
+  @ApiOperation({ summary: 'List repayments' })
+  list(): Promise<RepaymentRow[]> {
+    return this.product.listRepayments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.REPAYMENT_READ.key)
+  @ApiOperation({ summary: 'Read one repayment' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<RepaymentRow> {
+    return this.product.findRepayment(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.REPAYMENT_CREATE.key)
+  @ApiOperation({ summary: 'Create a repayment' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createRepaymentSchema))
+    body: z.infer<typeof createRepaymentSchema>,
+  ): Promise<RepaymentRow> {
+    return this.product.createRepayment(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.REPAYMENT_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a repayment' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateRepaymentSchema))
+    body: z.infer<typeof updateRepaymentSchema>,
+  ): Promise<RepaymentRow> {
+    return this.product.updateRepayment(id, body, organizationId);
+  }
+}

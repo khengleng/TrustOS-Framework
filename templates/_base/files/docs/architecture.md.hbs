@@ -1,0 +1,81 @@
+# Architecture — {{productDisplayName}}
+
+A modular monolith on the TrustOS Engineering Framework v{{frameworkVersion}},
+generated from the `{{templateId}}` template.
+
+## Principle
+
+The framework owns the cross-cutting concerns; this repository owns the
+product. Anything in the first list below has already been solved, tested and
+reviewed once — reimplementing it here would create a second, weaker copy.
+
+| Framework provides | This repository provides |
+| --- | --- |
+| configuration validation | product domain models |
+| authentication and sessions | product endpoints |
+| organization tenant isolation | product permissions |
+| RBAC and route guards | admin screens |
+| audit trail | product migrations |
+| structured logging | product tests |
+| error contract | |
+| health and readiness probes | |
+
+## Request lifecycle
+
+```
+  request
+    │
+    ├─ requestContextMiddleware   request id, log context, timing
+    ├─ tenantScopeMiddleware      opens the per-request tenant scope
+    │
+    ├─ JwtAuthGuard               who is calling?   → request.actor
+    ├─ TenantGuard                whose data?       → request.organizationId
+    ├─ PermissionsGuard           may they do this? → deny by default
+    │
+    ├─ ZodValidationPipe          untrusted input → typed, stripped value
+    ├─ handler                    product logic; queries carry the scope
+    │
+    ├─ AuditService.record        for every sensitive mutation
+    └─ AllExceptionsFilter        any failure → the standard error body
+```
+
+The guard order is the security model. Authentication before tenancy before
+authorization means an anonymous request to a tenant-scoped route returns 401
+rather than 403, and a cross-tenant request never reaches a permission check.
+
+The tenant scope is opened by **middleware**, not by the guard: a guard returns
+before the handler runs, and the async context it entered does not reliably
+survive that boundary. The middleware opens a holder for the whole request and
+the guard fills it in.
+
+## Tenant isolation
+
+1. Every query against a tenant-owned model includes `organizationId`.
+2. The organization comes from the access token, never from the request.
+3. A lookup by primary key is verified with `assertTenantMatch` after loading.
+4. A cross-tenant hit reports `not_found`, never `forbidden`.
+5. Frontend filtering is never a control.
+6. Every tenant-owned model has isolation tests.
+
+## Adding a feature
+
+1. Add the model to `prisma/schema/10-product.prisma` with `organizationId`,
+   timestamps, `deletedAt` and an index on `organizationId`.
+2. `npm run db:migrate -- --name add_your_model`
+3. Add permission keys to `packages/product-domain/src/index.ts`.
+4. Add the module under `apps/api/src/modules/`, following
+   `modules/product`: a permission on every route, `@OrganizationId()` in the
+   handler, audit on every mutation.
+5. Add isolation tests beside the code.
+6. Seed the new permissions onto roles in `prisma/seed.ts`.
+
+## Dependency rules
+
+- `packages/shared-types` has no runtime dependencies and is safe for the
+  browser.
+- `packages/product-domain` may depend on `shared-types` and on framework
+  packages, never on an application.
+- Applications may depend on any package. Nothing depends on an application.
+- The admin app may only import `@trustos/shared-types`, `@trustos/errors` and
+  `@trustos/validation` from the framework — the rest are server-only and would
+  drag secrets or Node built-ins into a browser bundle.

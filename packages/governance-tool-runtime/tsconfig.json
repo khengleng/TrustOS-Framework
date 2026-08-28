@@ -1,0 +1,42 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../governance-audit-bridge"
+    },
+    {
+      "path": "../governance-auth-context"
+    },
+    {
+      "path": "../governance-data-access"
+    },
+    {
+      "path": "../governance-environment-config"
+    },
+    {
+      "path": "../governance-export-control"
+    },
+    {
+      "path": "../governance-pii-policy"
+    },
+    {
+      "path": "../governance-resource-policy"
+    },
+    {
+      "path": "../governance-tool-core"
+    },
+    {
+      "path": "../logging"
+    }
+  ]
+}

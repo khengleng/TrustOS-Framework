@@ -1,0 +1,60 @@
+// =============================================================================
+// Product models — TrustOS Telegram Mini App
+//
+// Payments, games, referrals and rewards are deliberately absent.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade.
+// =============================================================================
+
+enum TaskStatus {
+  TODO
+  DOING
+  DONE
+}
+
+/// A Telegram user linked to a framework identity.
+///
+/// `telegramUserId` is the numeric id from validated initData, stored as a
+/// string because it exceeds the safe integer range in JavaScript.
+model TelegramProfile {
+  id             String  @id @default(cuid())
+  organizationId String
+  telegramUserId String
+  /// Framework User this profile authenticates as.
+  userId         String
+  username       String?
+  firstName      String?
+  languageCode   String?
+  lastSeenAt     DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  tasks Task[]
+
+  @@unique([organizationId, telegramUserId])
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+/// The example feature.
+model Task {
+  id                String     @id @default(cuid())
+  organizationId    String
+  telegramProfileId String
+  title             String
+  status            TaskStatus @default(TODO)
+  completedAt       DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  profile TelegramProfile @relation(fields: [telegramProfileId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([organizationId, telegramProfileId])
+  @@index([deletedAt])
+}

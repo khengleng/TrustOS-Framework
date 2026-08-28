@@ -1,0 +1,54 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../audit"
+    },
+    {
+      "path": "../authorization"
+    },
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../observability"
+    },
+    {
+      "path": "../security-events"
+    },
+    {
+      "path": "../shared-types"
+    },
+    {
+      "path": "../workflow-approvals"
+    },
+    {
+      "path": "../workflow-core"
+    },
+    {
+      "path": "../workflow-definition"
+    },
+    {
+      "path": "../workflow-escalation"
+    },
+    {
+      "path": "../workflow-history"
+    },
+    {
+      "path": "../workflow-policy"
+    },
+    {
+      "path": "../workflow-sla"
+    },
+    {
+      "path": "../workflow-tasks"
+    }
+  ]
+}

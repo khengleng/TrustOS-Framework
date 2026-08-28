@@ -1,0 +1,162 @@
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { ADMIN_PORTAL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+import {
+  AdminPortalService,
+  type SystemSettingRow,
+  type OperatorNoteRow,
+} from './admin-portal.service';
+
+/**
+ * TrustOS Admin Portal endpoints.
+ *
+ * Every route declares a permission — `PermissionsGuard` denies any route that declares none —
+ * and the key is the same constant the admin console reads to decide whether to show the screen.
+ * A guard and a menu reading different lists disagree, and the disagreement is always in the
+ * direction of showing somebody a screen that then refuses them.
+ *
+ * The organization always comes from `@OrganizationId()`, which reads what the tenant guard
+ * derived from the access token. It is never read from a path, a body or a header — a tenant id
+ * a caller can supply is not a tenant boundary.
+ */
+
+const createSystemSettingSchema = z.object({
+  key: z.string().trim().toLowerCase().min(2).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  value: z.string().trim().min(1).max(4000),
+  description: z.string().trim().min(1).max(255),
+  category: z.string().trim().min(1).max(255),
+  isSecret: z.coerce.boolean().optional(),
+});
+
+const updateSystemSettingSchema = z
+  .object({
+    value: z.string().trim().min(1).max(4000).optional(),
+    description: z.string().trim().min(1).max(255).optional(),
+    category: z.string().trim().min(1).max(255).optional(),
+    isSecret: z.coerce.boolean().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+const createOperatorNoteSchema = z.object({
+  subjectType: z.string().trim().min(1).max(255),
+  subjectId: z.string().trim().min(1).max(255),
+  body: z.string().trim().min(1).max(4000),
+  authorUserId: z.string().trim().min(1).max(255).optional(),
+  pinnedUntil: z.coerce.date().optional(),
+});
+
+const updateOperatorNoteSchema = z
+  .object({
+    subjectType: z.string().trim().min(1).max(255).optional(),
+    subjectId: z.string().trim().min(1).max(255).optional(),
+    body: z.string().trim().min(1).max(4000).optional(),
+    authorUserId: z.string().trim().min(1).max(255).optional(),
+    pinnedUntil: z.coerce.date().optional(),
+  })
+  /*
+   * Refused rather than accepted as a no-op. An empty PATCH is almost always a
+   * client that dropped its body, and a 200 tells it everything worked.
+   */
+  .refine((body) => Object.keys(body).length > 0, 'No fields to update.');
+
+@ApiTags('system-settings')
+@ApiBearerAuth('access-token')
+@Controller('system-settings')
+export class SystemSettingController {
+  constructor(private readonly product: AdminPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.SYSTEM_SETTING_READ.key)
+  @ApiOperation({ summary: 'List configuration' })
+  list(): Promise<SystemSettingRow[]> {
+    return this.product.listSystemSettings();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.SYSTEM_SETTING_READ.key)
+  @ApiOperation({ summary: 'Read one setting' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<SystemSettingRow> {
+    return this.product.findSystemSetting(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.SYSTEM_SETTING_CREATE.key)
+  @ApiOperation({ summary: 'Create a setting' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createSystemSettingSchema))
+    body: z.infer<typeof createSystemSettingSchema>,
+  ): Promise<SystemSettingRow> {
+    return this.product.createSystemSetting(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.SYSTEM_SETTING_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a setting' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateSystemSettingSchema))
+    body: z.infer<typeof updateSystemSettingSchema>,
+  ): Promise<SystemSettingRow> {
+    return this.product.updateSystemSetting(id, body, organizationId);
+  }
+}
+
+@ApiTags('operator-notes')
+@ApiBearerAuth('access-token')
+@Controller('operator-notes')
+export class OperatorNoteController {
+  constructor(private readonly product: AdminPortalService) {}
+
+  @Get()
+  @RequirePermissions(P.OPERATOR_NOTE_READ.key)
+  @ApiOperation({ summary: 'List operator notes' })
+  list(): Promise<OperatorNoteRow[]> {
+    return this.product.listOperatorNotes();
+  }
+
+  @Get(':id')
+  @RequirePermissions(P.OPERATOR_NOTE_READ.key)
+  @ApiOperation({ summary: 'Read one note' })
+  find(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+  ): Promise<OperatorNoteRow> {
+    return this.product.findOperatorNote(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(P.OPERATOR_NOTE_CREATE.key)
+  @ApiOperation({ summary: 'Create a note' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createOperatorNoteSchema))
+    body: z.infer<typeof createOperatorNoteSchema>,
+  ): Promise<OperatorNoteRow> {
+    return this.product.createOperatorNote(body, organizationId);
+  }
+
+  @Patch(':id')
+  @RequirePermissions(P.OPERATOR_NOTE_UPDATE.key)
+  @ApiOperation({ summary: 'Modify a note' })
+  update(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(updateOperatorNoteSchema))
+    body: z.infer<typeof updateOperatorNoteSchema>,
+  ): Promise<OperatorNoteRow> {
+    return this.product.updateOperatorNote(id, body, organizationId);
+  }
+}

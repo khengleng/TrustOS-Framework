@@ -1,0 +1,113 @@
+// =============================================================================
+// TrustOS Staff Portal — product models
+//
+// An internal workspace: my tasks, approvals waiting on me, notifications,
+// saved searches and the reports a team runs.
+//
+// Out of scope, deliberately: HR systems, payroll, calendar integration,
+// business intelligence tools, document management systems.
+//
+// `organizationId` is a scalar rather than a Prisma relation so that
+// 00-framework.prisma stays replaceable on upgrade — the same trade the
+// framework makes for AuditLog. Isolation comes from the tenant scope
+// applied to every query, and is proven by the isolation tests.
+// =============================================================================
+
+enum StaffTaskPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum StaffTaskStatus {
+  OPEN
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
+}
+
+/// A colleague. Authorization is RBAC, never the job title in this row.
+model StaffProfile {
+  id             String @id @default(cuid())
+  organizationId String
+  userId String
+  displayName String
+  team String?
+  jobTitle String?
+  isAvailable Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, team])
+  @@index([organizationId, isAvailable])
+  @@index([deletedAt])
+}
+
+/// Something assigned to a person. A task originating from a workflow carries
+/// `workflowTaskId` and is *read* from the engine — completing it here must go
+/// through the engine, not around it.
+model StaffTask {
+  id             String @id @default(cuid())
+  organizationId String
+  assigneeUserId String
+  title String
+  detail String?
+  workflowTaskId String?
+  dueAt DateTime?
+  priority StaffTaskPriority @default(NORMAL)
+  status StaffTaskStatus @default(OPEN)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, assigneeUserId])
+  @@index([organizationId, dueAt])
+  @@index([organizationId, priority])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+}
+
+/// A stored filter set. Stored as declared filters, not as a raw query — a
+/// saved search that replayed arbitrary query text would be a stored injection.
+model SavedSearch {
+  id             String @id @default(cuid())
+  organizationId String
+  ownerUserId String
+  name String
+  resourceKey String
+  filters Json
+  isShared Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, resourceKey])
+  @@index([organizationId, isShared])
+  @@index([deletedAt])
+}
+
+/// Something a colleague should look at.
+model StaffNotification {
+  id             String @id @default(cuid())
+  organizationId String
+  recipientUserId String
+  subject String
+  body String
+  href String?
+  sentAt DateTime
+  readAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId, recipientUserId])
+  @@index([organizationId, sentAt])
+  @@index([deletedAt])
+}

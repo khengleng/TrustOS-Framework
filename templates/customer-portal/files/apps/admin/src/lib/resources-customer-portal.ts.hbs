@@ -1,0 +1,161 @@
+/**
+ * TrustOS Customer Portal — console screens.
+ *
+ * One declaration per resource, read by the table, the filters, the search box and the
+ * permission checks. The recurring admin-console bug is a field added to the form and forgotten
+ * in the table; it cannot happen when there is one list.
+ *
+ * A column carrying personal data declares a permission, and the *API* projects it away — see
+ * visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in the
+ * payload.
+ */
+
+import type { ResourceDefinition } from '@trustos/template-sdk';
+import { CUSTOMER_PORTAL_PERMISSIONS as P } from '{{packageName}}-product-domain';
+
+export const CUSTOMER_PORTAL_RESOURCES: ResourceDefinition[] = [
+  {
+    key: 'portal-profiles',
+    label: 'Profiles',
+    singular: 'Profile',
+    endpoint: '/portal-profiles',
+    description: "What a customer can see and edit about themselves.",
+    table: {
+      key: 'portal-profiles',
+      label: 'Profiles',
+      endpoint: '/portal-profiles',
+      emptyHint: 'Create one with POST /api/portal-profiles.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'userId', label: 'User', sortable: true },
+        { key: 'displayName', label: 'Name' },
+        { key: 'email', label: 'Email', permission: 'customerportal.pii.read' },
+        { key: 'phone', label: 'Phone', permission: 'customerportal.pii.read' },
+        { key: 'locale', label: 'Language' },
+        { key: 'timezone', label: 'Timezone' },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    search: {
+      fields: [
+        { key: 'displayName', label: 'Name' },
+      ],
+    },
+    permissions: {
+      list: P.PORTAL_PROFILE_READ.key,
+      read: P.PORTAL_PROFILE_READ.key,
+      create: P.PORTAL_PROFILE_CREATE.key,
+      update: P.PORTAL_PROFILE_UPDATE.key,
+    },
+  },
+  {
+    key: 'portal-documents',
+    label: 'Documents',
+    singular: 'Document',
+    endpoint: '/portal-documents',
+    description: "A file made available to a customer.",
+    table: {
+      key: 'portal-documents',
+      label: 'Documents',
+      endpoint: '/portal-documents',
+      emptyHint: 'Create one with POST /api/portal-documents.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'ownerUserId', label: 'Owner' },
+        { key: 'title', label: 'Document' },
+        { key: 'storageKey', label: 'Storage key' },
+        { key: 'contentType', label: 'Type' },
+        { key: 'sizeBytes', label: 'Size', format: 'number' },
+        { key: 'category', label: 'Category', format: 'badge', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'category', label: 'Category', type: 'enum', operators: ['eq', 'in'], options: [{"value":"STATEMENT","label":"Statement"},{"value":"CONTRACT","label":"Contract"},{"value":"INVOICE","label":"Invoice"},{"value":"IDENTITY","label":"Identity"},{"value":"OTHER","label":"Other"}] },
+      { key: 'availableFrom', label: 'Available from', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'title', label: 'Document' },
+      ],
+    },
+    permissions: {
+      list: P.PORTAL_DOCUMENT_READ.key,
+      read: P.PORTAL_DOCUMENT_READ.key,
+      create: P.PORTAL_DOCUMENT_CREATE.key,
+      update: P.PORTAL_DOCUMENT_UPDATE.key,
+    },
+  },
+  {
+    key: 'portal-notifications',
+    label: 'Notifications',
+    singular: 'Notification',
+    endpoint: '/portal-notifications',
+    description: "Something the customer should see when they next log in.",
+    table: {
+      key: 'portal-notifications',
+      label: 'Notifications',
+      endpoint: '/portal-notifications',
+      emptyHint: 'Create one with POST /api/portal-notifications.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'recipientUserId', label: 'Recipient' },
+        { key: 'notificationKey', label: 'Key', sortable: true },
+        { key: 'subject', label: 'Subject' },
+        { key: 'body', label: 'Body' },
+        { key: 'href', label: 'Link' },
+        { key: 'sentAt', label: 'Sent', format: 'datetime', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'notificationKey', label: 'Key', type: 'string', operators: ['eq', 'contains'] },
+      { key: 'sentAt', label: 'Sent', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    permissions: {
+      list: P.PORTAL_NOTIFICATION_READ.key,
+      read: P.PORTAL_NOTIFICATION_READ.key,
+      create: P.PORTAL_NOTIFICATION_CREATE.key,
+      update: P.PORTAL_NOTIFICATION_UPDATE.key,
+    },
+  },
+  {
+    key: 'support-requests',
+    label: 'Support requests',
+    singular: 'Support request',
+    endpoint: '/support-requests',
+    description: "A customer asking for help.",
+    table: {
+      key: 'support-requests',
+      label: 'Support requests',
+      endpoint: '/support-requests',
+      emptyHint: 'Create one with POST /api/support-requests.',
+      defaultSort: { key: 'createdAt', direction: 'desc' },
+      columns: [
+        { key: 'requesterUserId', label: 'Requester' },
+        { key: 'reference', label: 'Reference', sortable: true },
+        { key: 'subject', label: 'Subject' },
+        { key: 'body', label: 'Detail' },
+        { key: 'status', label: 'Status', format: 'badge', sortable: true },
+        { key: 'openedAt', label: 'Opened', format: 'datetime', sortable: true },
+        { key: 'createdAt', label: 'Created', format: 'datetime', sortable: true },
+      ],
+    },
+    filters: [
+      { key: 'status', label: 'Status', type: 'enum', operators: ['eq', 'in'], options: [{"value":"OPEN","label":"Open"},{"value":"IN_PROGRESS","label":"In Progress"},{"value":"WAITING_ON_CUSTOMER","label":"Waiting On Customer"},{"value":"RESOLVED","label":"Resolved"},{"value":"CLOSED","label":"Closed"}] },
+      { key: 'openedAt', label: 'Opened', type: 'date', operators: ['gte', 'lte', 'between'] },
+    ],
+    search: {
+      fields: [
+        { key: 'reference', label: 'Reference', prefixOnly: true },
+        { key: 'subject', label: 'Subject' },
+      ],
+    },
+    permissions: {
+      list: P.SUPPORT_REQUEST_READ.key,
+      read: P.SUPPORT_REQUEST_READ.key,
+      create: P.SUPPORT_REQUEST_CREATE.key,
+      update: P.SUPPORT_REQUEST_UPDATE.key,
+    },
+  },
+];

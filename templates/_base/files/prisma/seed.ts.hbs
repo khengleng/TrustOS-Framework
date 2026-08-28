@@ -1,0 +1,171 @@
+/**
+ * Seed for {{productDisplayName}}.
+ *
+ * Idempotent by construction: permissions and roles are upserted by stable
+ * keys, so running it twice — or against a half-seeded database — converges
+ * rather than duplicating.
+ *
+ *   npm run db:seed
+ *
+ * Demo data is created only outside production. A seeded account with a known
+ * password in production is a backdoor, not a convenience.
+ */
+import { PrismaClient } from './generated/client';
+import { ALL_PERMISSIONS, SYSTEM_ROLE_LIST } from '@trustos/rbac';
+import { PRODUCT_PERMISSIONS, PRODUCT_ROLE_PERMISSIONS } from '{{packageName}}-product-domain';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+/** Development-only password. Obviously fake so nobody mistakes it for real. */
+const DEMO_PASSWORD = 'TrustOSDemo2026!';
+
+const DEMO_ORGANIZATION = {
+  id: 'org_demo_{{snakeCase applicationName}}',
+  name: '{{productDisplayName}} Demo',
+  slug: '{{kebabCase applicationName}}-demo',
+};
+
+const DEMO_USER = {
+  id: 'user_demo_{{snakeCase applicationName}}',
+  email: 'owner@{{kebabCase applicationName}}.test',
+  displayName: 'Demo Owner',
+  role: 'organization_owner',
+};
+
+async function seedPermissions(): Promise<void> {
+  // Framework permissions plus this product's own catalog. Product keys are
+  // namespaced so they can never collide with a framework key.
+  const all = [...ALL_PERMISSIONS, ...PRODUCT_PERMISSIONS];
+
+  for (const permission of all) {
+    await prisma.permission.upsert({
+      where: { key: permission.key },
+      create: {
+        key: permission.key,
+        resource: permission.resource,
+        action: permission.action,
+        description: permission.description,
+      },
+      update: {
+        resource: permission.resource,
+        action: permission.action,
+        description: permission.description,
+      },
+    });
+  }
+  console.log(`  permissions: ${all.length} (${PRODUCT_PERMISSIONS.length} product)`);
+}
+
+async function seedRoles(): Promise<void> {
+  for (const role of SYSTEM_ROLE_LIST) {
+    await prisma.role.upsert({
+      where: { id: role.id },
+      create: {
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        isSystem: true,
+        organizationId: null,
+      },
+      update: { description: role.description, isSystem: true },
+    });
+
+    // Framework grants for this role, plus any product permissions the product
+    // domain says this role should hold. `super_admin` holds the wildcard,
+    // which is a flag on the user rather than rows here.
+    const keys = [
+      ...role.permissions.filter((key) => key !== '*'),
+      ...(PRODUCT_ROLE_PERMISSIONS[role.name] ?? []),
+    ];
+
+    const permissions = await prisma.permission.findMany({ where: { key: { in: keys } } });
+
+    // Re-point the role at exactly the definition: removing a permission from
+    // the catalog must actually revoke it.
+    await prisma.rolePermission.deleteMany({
+      where: { roleId: role.id, permission: { key: { notIn: keys } } },
+    });
+
+    for (const permission of permissions) {
+      await prisma.rolePermission.upsert({
+        where: { roleId_permissionId: { roleId: role.id, permissionId: permission.id } },
+        create: { roleId: role.id, permissionId: permission.id },
+        update: {},
+      });
+    }
+
+    console.log(`  role ${role.name}: ${permissions.length} permissions`);
+  }
+}
+
+async function seedDemoData(): Promise<void> {
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+
+  await prisma.organization.upsert({
+    where: { id: DEMO_ORGANIZATION.id },
+    create: DEMO_ORGANIZATION,
+    update: { name: DEMO_ORGANIZATION.name },
+  });
+
+  const user = await prisma.user.upsert({
+    where: { id: DEMO_USER.id },
+    create: {
+      id: DEMO_USER.id,
+      email: DEMO_USER.email,
+      displayName: DEMO_USER.displayName,
+      passwordHash,
+      isActive: true,
+    },
+    update: { displayName: DEMO_USER.displayName, passwordHash },
+  });
+
+  const membership = await prisma.organizationMember.upsert({
+    where: { organizationId_userId: { organizationId: DEMO_ORGANIZATION.id, userId: user.id } },
+    create: {
+      organizationId: DEMO_ORGANIZATION.id,
+      userId: user.id,
+      status: 'ACTIVE',
+      joinedAt: new Date(),
+    },
+    update: { status: 'ACTIVE' },
+  });
+
+  const role = SYSTEM_ROLE_LIST.find((candidate) => candidate.name === DEMO_USER.role);
+  if (role) {
+    await prisma.organizationMemberRole.upsert({
+      where: { memberId_roleId: { memberId: membership.id, roleId: role.id } },
+      create: { memberId: membership.id, roleId: role.id },
+      update: {},
+    });
+  }
+
+  console.log(`  demo user ${DEMO_USER.email} (${DEMO_USER.role})`);
+}
+
+async function main(): Promise<void> {
+  const environment = process.env.NODE_ENV ?? 'development';
+  console.log(`Seeding {{productDisplayName}} (NODE_ENV=${environment})`);
+
+  await seedPermissions();
+  await seedRoles();
+
+  if (environment === 'production') {
+    console.log('  demo data: skipped in production');
+  } else {
+    await seedDemoData();
+    console.log(`\n  Demo password: ${DEMO_PASSWORD}`);
+    console.log('  This account exists only outside production.');
+  }
+
+  console.log('\nSeed complete.');
+}
+
+main()
+  .catch((error) => {
+    console.error('Seed failed:', error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

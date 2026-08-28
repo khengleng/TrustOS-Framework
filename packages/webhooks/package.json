@@ -1,0 +1,25 @@
+{
+  "name": "@trustos/webhooks",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Webhook endpoints, subscriptions, secrets and HMAC signatures.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/audit": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/event-registry": "0.1.0",
+    "@trustos/event-sdk": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

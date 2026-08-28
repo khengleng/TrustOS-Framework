@@ -1,0 +1,227 @@
+import { Body, Controller, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '@trustos/auth';
+import { RequirePermissions } from '@trustos/rbac';
+import { OrganizationId } from '@trustos/tenancy';
+import type { ActorContext } from '@trustos/shared-types';
+import { z } from '@trustos/validation';
+import { ZodValidationPipe } from '@trustos/validation/nest';
+import { GATEWAY_PERMISSIONS, SUPPORTED_CURRENCIES } from '{{packageName}}-product-domain';
+import {
+  ProductService,
+  type IssuedApiKey,
+  type MerchantAccountRow,
+  type PaymentRow,
+} from './product.service';
+
+const idSchema = z.string().trim().min(1).max(64);
+
+const createAccountSchema = z.object({
+  displayName: z.string().trim().min(1).max(160),
+  reference: z
+    .string()
+    .trim()
+    .min(2)
+    .max(64)
+    .regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/, 'Use letters, digits, hyphens and underscores.'),
+  defaultCurrency: z.enum(SUPPORTED_CURRENCIES).optional(),
+});
+
+const issueKeySchema = z.object({
+  merchantAccountId: idSchema,
+  label: z.string().trim().min(1).max(120),
+  environment: z.enum(['test', 'live']).optional(),
+});
+
+const revokeKeySchema = z.object({
+  reason: z.string().trim().min(1).max(200),
+});
+
+const createPaymentSchema = z.object({
+  merchantAccountId: idSchema,
+  idempotencyKey: z.string().trim().min(8).max(128),
+  // Integer minor units. A decimal here would be a float somewhere.
+  amountMinor: z.number().int().min(1).max(100_000_000_00),
+  currency: z.enum(SUPPORTED_CURRENCIES),
+  reference: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(500).optional(),
+});
+
+const transitionSchema = z.object({
+  status: z.enum(['PENDING', 'AUTHORIZED', 'CAPTURED', 'FAILED', 'CANCELLED']),
+  reason: z.string().trim().max(200).optional(),
+});
+
+const registerWebhookSchema = z.object({
+  merchantAccountId: idSchema,
+  url: z
+    .string()
+    .trim()
+    .url()
+    .max(500)
+    // http would put event payloads on the wire in clear text.
+    .refine((value) => value.startsWith('https://'), { message: 'Webhook URLs must use https.' }),
+  events: z.array(z.string().trim().min(1).max(120)).min(1).max(50),
+});
+
+@ApiTags('merchant-accounts')
+@ApiBearerAuth('access-token')
+@Controller('merchant-accounts')
+export class MerchantAccountsController {
+  constructor(private readonly product: ProductService) {}
+
+  @Get()
+  @RequirePermissions(GATEWAY_PERMISSIONS.ACCOUNT_READ.key)
+  @ApiOperation({ summary: 'List merchant accounts' })
+  list(): Promise<MerchantAccountRow[]> {
+    return this.product.listAccounts();
+  }
+
+  @Post()
+  @RequirePermissions(GATEWAY_PERMISSIONS.ACCOUNT_CREATE.key)
+  @ApiOperation({ summary: 'Create a merchant account' })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createAccountSchema)) body: z.infer<typeof createAccountSchema>,
+  ): Promise<MerchantAccountRow> {
+    return this.product.createAccount(body, organizationId);
+  }
+}
+
+@ApiTags('api-keys')
+@ApiBearerAuth('access-token')
+@Controller('api-keys')
+export class ApiKeysController {
+  constructor(private readonly product: ProductService) {}
+
+  @Get()
+  @RequirePermissions(GATEWAY_PERMISSIONS.APIKEY_READ.key)
+  @ApiOperation({
+    summary: 'List API keys',
+    description: 'Returns metadata and a display prefix only. The key itself is never returned.',
+  })
+  list(): Promise<Array<Record<string, unknown>>> {
+    return this.product.listApiKeys() as Promise<Array<Record<string, unknown>>>;
+  }
+
+  @Post()
+  @RequirePermissions(GATEWAY_PERMISSIONS.APIKEY_ISSUE.key)
+  @ApiOperation({
+    summary: 'Issue an API key',
+    description:
+      'The key is returned exactly once, in this response. Only a hash is stored, so it cannot be recovered.',
+  })
+  issue(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(issueKeySchema)) body: z.infer<typeof issueKeySchema>,
+  ): Promise<IssuedApiKey> {
+    return this.product.issueApiKey(body, organizationId);
+  }
+
+  @Put(':id/revoke')
+  @HttpCode(204)
+  @RequirePermissions(GATEWAY_PERMISSIONS.APIKEY_REVOKE.key)
+  @ApiOperation({ summary: 'Revoke an API key' })
+  revoke(
+    @Param('id') id: string,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(revokeKeySchema)) body: z.infer<typeof revokeKeySchema>,
+  ): Promise<void> {
+    return this.product.revokeApiKey(id, body.reason, organizationId);
+  }
+}
+
+@ApiTags('payments')
+@ApiBearerAuth('access-token')
+@Controller('payments')
+export class PaymentsController {
+  constructor(private readonly product: ProductService) {}
+
+  @Get()
+  @RequirePermissions(GATEWAY_PERMISSIONS.PAYMENT_READ.key)
+  @ApiOperation({ summary: 'List payments' })
+  list(): Promise<PaymentRow[]> {
+    return this.product.listPayments();
+  }
+
+  @Get(':id')
+  @RequirePermissions(GATEWAY_PERMISSIONS.PAYMENT_READ.key)
+  @ApiOperation({ summary: 'Look up one payment' })
+  find(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<PaymentRow> {
+    return this.product.findPayment(id, organizationId);
+  }
+
+  @Get(':id/history')
+  @RequirePermissions(GATEWAY_PERMISSIONS.PAYMENT_READ.key)
+  @ApiOperation({
+    summary: 'Read the status history',
+    description: 'Append-only. The current status is a claim; this is the evidence.',
+  })
+  history(@Param('id') id: string, @OrganizationId() organizationId: string): Promise<unknown[]> {
+    return this.product.paymentHistory(id, organizationId);
+  }
+
+  @Post()
+  @RequirePermissions(GATEWAY_PERMISSIONS.PAYMENT_CREATE.key)
+  @ApiOperation({
+    summary: 'Create a payment',
+    description: 'Idempotent: the same idempotencyKey returns the existing payment.',
+  })
+  create(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(createPaymentSchema)) body: z.infer<typeof createPaymentSchema>,
+  ): Promise<PaymentRow> {
+    return this.product.createPayment(body, organizationId);
+  }
+
+  @Put(':id/status')
+  @RequirePermissions(GATEWAY_PERMISSIONS.PAYMENT_TRANSITION.key)
+  @ApiOperation({
+    summary: 'Move a payment to a new status',
+    description: 'Rejected when the transition is not permitted by the state machine.',
+  })
+  transition(
+    @Param('id') id: string,
+    @CurrentUser() actor: ActorContext,
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(transitionSchema)) body: z.infer<typeof transitionSchema>,
+  ): Promise<PaymentRow> {
+    return this.product.transitionPayment(
+      id,
+      body.status,
+      body.reason ?? null,
+      organizationId,
+      actor.userId,
+    );
+  }
+}
+
+@ApiTags('webhook-endpoints')
+@ApiBearerAuth('access-token')
+@Controller('webhook-endpoints')
+export class WebhookEndpointsController {
+  constructor(private readonly product: ProductService) {}
+
+  @Get()
+  @RequirePermissions(GATEWAY_PERMISSIONS.WEBHOOK_READ.key)
+  @ApiOperation({ summary: 'List webhook endpoints' })
+  list(): Promise<Array<Record<string, unknown>>> {
+    return this.product.listWebhooks() as Promise<Array<Record<string, unknown>>>;
+  }
+
+  @Post()
+  @RequirePermissions(GATEWAY_PERMISSIONS.WEBHOOK_MANAGE.key)
+  @ApiOperation({
+    summary: 'Register a webhook endpoint',
+    description: 'The signing secret is returned exactly once, in this response.',
+  })
+  register(
+    @OrganizationId() organizationId: string,
+    @Body(new ZodValidationPipe(registerWebhookSchema)) body: z.infer<typeof registerWebhookSchema>,
+  ): Promise<{ endpoint: Record<string, unknown>; secret: string }> {
+    return this.product.registerWebhook(body, organizationId) as Promise<{
+      endpoint: Record<string, unknown>;
+      secret: string;
+    }>;
+  }
+}

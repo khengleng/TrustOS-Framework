@@ -1,0 +1,39 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../ai-sdk"
+    },
+    {
+      "path": "../audit"
+    },
+    {
+      "path": "../authorization"
+    },
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../function-calling"
+    },
+    {
+      "path": "../logging"
+    },
+    {
+      "path": "../observability"
+    },
+    {
+      "path": "../retry"
+    },
+    {
+      "path": "../shared-types"
+    }
+  ]
+}

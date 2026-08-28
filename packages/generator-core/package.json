@@ -1,0 +1,22 @@
+{
+  "name": "@trustos/generator-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Safe, deterministic, transactional file generation from local TrustOS templates.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/module-registry": "0.1.0",
+    "@trustos/template-registry": "0.1.0",
+    "handlebars": "^4.7.8",
+    "zod": "^3.24.1"
+  }
+}

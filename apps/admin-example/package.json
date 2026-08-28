@@ -1,0 +1,26 @@
+{
+  "name": "@trustos/admin-example",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference Next.js admin console for the TrustOS example API.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --port 3001",
+    "start": "next start --port 3001",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "next": "^15.5.22",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "typescript": "^5.7.2"
+  }
+}

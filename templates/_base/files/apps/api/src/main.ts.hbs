@@ -1,0 +1,96 @@
+import 'reflect-metadata';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigurationError, loadConfig, loadDotenv } from '@trustos/config';
+import { AllExceptionsFilter } from '@trustos/errors/nest';
+import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
+import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
+import { tenantScopeMiddleware } from '@trustos/tenancy';
+import { AppModule } from './app.module';
+
+/**
+ * {{productDisplayName}} API entry point.
+ *
+ * The startup sequence is framework contract, not preference:
+ *
+ *   validate configuration -> build the logger -> open the request context ->
+ *   open the tenant scope -> install the error filter -> listen
+ *
+ * Configuration is validated before a port is bound, so a misconfigured deploy
+ * fails immediately and visibly rather than serving broken traffic.
+ */
+async function bootstrap(): Promise<void> {
+  loadDotenv();
+
+  const config = loadConfig();
+  const logger = createLogger(config);
+  const metrics = new InMemoryMetricsRecorder();
+
+  const app = await NestFactory.create(AppModule.forRoot({ config, logger, metrics }), {
+    logger: new NestPinoLogger(logger),
+    bufferLogs: true,
+  });
+
+  // Registered before Nest routing so a 404 or a guard failure still carries a
+  // request id.
+  app.use(
+    requestContextMiddleware({
+      config,
+      logger,
+      ignorePaths: ['/health', '/ready'],
+      onComplete: (completion) => recordHttpRequest(metrics, completion),
+    }),
+  );
+
+  // Opens the per-request tenant scope that TenantGuard fills in. Must run
+  // before the guards, which is why it is middleware and not an interceptor.
+  app.use(tenantScopeMiddleware());
+
+  app.useGlobalFilters(new AllExceptionsFilter({ environment: config.env, logger }));
+
+  // Health probes stay at the root so a platform check need not know the prefix.
+  app.setGlobalPrefix(config.http.globalPrefix, { exclude: ['health', 'ready'] });
+
+  if (config.http.corsOrigins.length > 0) {
+    app.enableCors({
+      origin: config.http.corsOrigins,
+      credentials: true,
+      exposedHeaders: [config.http.requestIdHeader],
+    });
+  }
+
+  if (config.observability.openApiEnabled) {
+    const document = SwaggerModule.createDocument(
+      app,
+      new DocumentBuilder()
+        .setTitle('{{productDisplayName}}')
+        .setDescription('{{description}}')
+        .setVersion(config.serviceVersion)
+        .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token')
+        .build(),
+    );
+    SwaggerModule.setup('docs', app, document, {
+      swaggerOptions: { persistAuthorization: true },
+    });
+  }
+
+  app.enableShutdownHooks();
+  await app.listen(config.port, '0.0.0.0');
+
+  logger.info(
+    { port: config.port, docs: config.observability.openApiEnabled ? '/docs' : null },
+    '{{applicationName}} api started',
+  );
+}
+
+bootstrap().catch((error) => {
+  if (error instanceof ConfigurationError) {
+    // No logger yet, and this has to be readable in a deploy log.
+    // eslint-disable-next-line no-console -- bootstrap failure, before the logger exists
+    console.error(error.message);
+    process.exit(1);
+  }
+  // eslint-disable-next-line no-console -- bootstrap failure, before the logger exists
+  console.error('Failed to start:', error);
+  process.exit(1);
+});

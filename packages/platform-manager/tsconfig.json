@@ -1,0 +1,42 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"],
+  "references": [
+    {
+      "path": "../compatibility-engine"
+    },
+    {
+      "path": "../dependency-analyzer"
+    },
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../framework-health"
+    },
+    {
+      "path": "../license-manager"
+    },
+    {
+      "path": "../module-registry"
+    },
+    {
+      "path": "../release-manager"
+    },
+    {
+      "path": "../telemetry"
+    },
+    {
+      "path": "../template-registry"
+    },
+    {
+      "path": "../version-manager"
+    }
+  ]
+}

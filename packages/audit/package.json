@@ -1,0 +1,23 @@
+{
+  "name": "@trustos/audit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Append-only audit logging for security-sensitive actions.",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@trustos/database": "0.1.0",
+    "@trustos/errors": "0.1.0",
+    "@trustos/logging": "0.1.0",
+    "@trustos/shared-types": "0.1.0"
+  }
+}
