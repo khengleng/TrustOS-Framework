@@ -5,7 +5,7 @@ import { CurrentUser } from '@trustos/auth';
 import { HumanActorsOnly } from '@trustos/identity/nest';
 import { RequirePermissions } from '@trustos/rbac';
 import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
+import { CrossOrganization, OrganizationId } from '@trustos/tenancy';
 import {
   CONSOLE_TEMPLATES,
   GOVERNANCE_PERMISSIONS,
@@ -48,7 +48,21 @@ export class CatalogController {
     @Inject(GATEWAY_ENVIRONMENT) private readonly environment: Environment,
   ) {}
 
+  /*
+   * Platform-level, not tenant data.
+   *
+   * The internal application catalog is keyed by environment and appId — there is no
+   * organization column on it and `catalog.list()` takes no organization. Requiring a
+   * tenant scope over data that has none meant these reads were refused for every
+   * caller, including the platform staff they exist for.
+   *
+   * `CrossOrganization` is the framework's primitive for this and it is not a
+   * loosening: TenantGuard refuses it outright unless the actor is `isSuperAdmin`, so
+   * this narrows the audience to platform staff rather than widening it. The writes
+   * below are deliberately left alone.
+   */
   @Get()
+  @CrossOrganization()
   @ApiOperation({ summary: 'Every registered internal application, with its catalog metadata' })
   @RequirePermissions(GOVERNANCE_PERMISSIONS.APP_READ.key)
   @Authorize(GOVERNANCE_PERMISSIONS.APP_READ.key)
@@ -76,6 +90,7 @@ export class CatalogController {
   }
 
   @Get('by-resource/:resourceId')
+  @CrossOrganization()
   @ApiOperation({ summary: 'Which internal tools can reach a resource' })
   @RequirePermissions(GOVERNANCE_PERMISSIONS.RESOURCE_READ.key)
   @Authorize(GOVERNANCE_PERMISSIONS.RESOURCE_READ.key)
@@ -101,6 +116,7 @@ export class CatalogController {
   }
 
   @Get('reviews/overdue')
+  @CrossOrganization()
   @ApiOperation({ summary: 'Applications and resources whose review has passed' })
   @RequirePermissions(GOVERNANCE_PERMISSIONS.APP_READ.key)
   @Authorize(GOVERNANCE_PERMISSIONS.APP_READ.key)
@@ -120,6 +136,7 @@ export class CatalogController {
   }
 
   @Get('templates')
+  @CrossOrganization()
   @ApiOperation({ summary: 'The ten console templates' })
   @RequirePermissions(GOVERNANCE_PERMISSIONS.APP_READ.key)
   @Authorize(GOVERNANCE_PERMISSIONS.APP_READ.key)
@@ -134,6 +151,7 @@ export class CatalogController {
   }
 
   @Get(':appId/access')
+  @CrossOrganization()
   @ApiOperation({
     summary: 'What this application is allowed to reach — the security review screen',
   })
