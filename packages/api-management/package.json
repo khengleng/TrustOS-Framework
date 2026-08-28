@@ -1,13 +1,16 @@
 {
   "name": "@trustos/api-management",
   "version": "0.1.0",
-  "private": true,
   "description": "The API management surface: catalog, lifecycle, consumers, quotas, limits and analytics, in one place.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

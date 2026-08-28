@@ -1,14 +1,17 @@
 {
   "name": "@trustos/security-policy",
   "version": "0.1.0",
-  "private": true,
   "description": "Typed security policy: token lifetimes, session limits, lockout, API key lifetime, MFA requirements, trusted issuers \u2014 validated at start-up.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

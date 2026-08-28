@@ -113,6 +113,15 @@ jobs:
       - name: Build packages
         run: npm run build:packages
 
+      # npm workspaces resolve every @trustos/* name locally, so a package that could
+      # never be installed from a registry looks perfectly healthy in this repository.
+      # It breaks in the consuming repository instead, which is the worst place to
+      # find out. The dry run asserts the publishable set is closed: entry points
+      # exist, nothing depends on an application, and no dependency is written as a
+      # workspace: or file: specifier.
+      - name: Framework is publishable
+        run: npm run release
+
       - name: Type check applications
         run: |
           npm run typecheck -w @trustos/api-example

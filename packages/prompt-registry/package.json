@@ -1,13 +1,16 @@
 {
   "name": "@trustos/prompt-registry",
   "version": "0.1.0",
-  "private": true,
   "description": "Versioned, approved, immutable prompts with typed variables and output schemas.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

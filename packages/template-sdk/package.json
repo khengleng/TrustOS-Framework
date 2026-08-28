@@ -1,13 +1,16 @@
 {
   "name": "@trustos/template-sdk",
   "version": "0.1.0",
-  "private": true,
   "description": "Headless building blocks every TrustOS industry template shares: navigation, forms, tables, filters, search, pagination, dashboards, charts, CRUD, uploads and notifications.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

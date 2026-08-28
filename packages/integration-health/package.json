@@ -1,14 +1,17 @@
 {
   "name": "@trustos/integration-health",
   "version": "0.1.0",
-  "private": true,
   "description": "Health checks across the event bus, scheduler, jobs, webhooks, providers and sync.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

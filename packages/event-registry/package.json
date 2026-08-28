@@ -1,13 +1,16 @@
 {
   "name": "@trustos/event-registry",
   "version": "0.1.0",
-  "private": true,
   "description": "The versioned event schema catalog. An unregistered schema is never published.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

@@ -1,13 +1,16 @@
 {
   "name": "@trustos/plugin-framework",
   "version": "0.1.0",
-  "private": true,
   "description": "Plugin manifests, declared permissions, signature verification and the extension points a plugin may claim.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

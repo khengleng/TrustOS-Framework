@@ -1,14 +1,17 @@
 {
   "name": "@trustos/workflow-runtime",
   "version": "0.1.0",
-  "private": true,
   "description": "The deterministic state-machine runtime: transitions, idempotency, optimistic locking and event emission.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

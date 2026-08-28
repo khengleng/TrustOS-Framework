@@ -1,13 +1,16 @@
 {
   "name": "@trustos/governance-data-access",
   "version": "0.1.0",
-  "private": true,
   "description": "Enforces the three data-access classes: approved read-only, API-only mutation, and forbidden.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

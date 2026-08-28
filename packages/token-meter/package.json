@@ -1,13 +1,16 @@
 {
   "name": "@trustos/token-meter",
   "version": "0.1.0",
-  "private": true,
   "description": "Token counting and budget accounting, provider-neutral.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

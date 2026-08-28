@@ -1,13 +1,16 @@
 {
   "name": "@trustos/sli",
   "version": "0.1.0",
-  "private": true,
   "description": "Service level indicators: what is measured, how, and over which window.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

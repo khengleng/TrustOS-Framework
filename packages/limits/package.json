@@ -1,13 +1,16 @@
 {
   "name": "@trustos/limits",
   "version": "0.1.0",
-  "private": true,
   "description": "The limit engine: per-transaction, daily, monthly, velocity, wallet and organization limits.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

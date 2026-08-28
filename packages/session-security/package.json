@@ -1,14 +1,17 @@
 {
   "name": "@trustos/session-security",
   "version": "0.1.0",
-  "private": true,
   "description": "Session registry with refresh-token rotation and reuse detection, concurrency and lifetime limits, plus browser hardening: security headers, CORS and CSRF.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

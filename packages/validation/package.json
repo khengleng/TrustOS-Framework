@@ -1,14 +1,17 @@
 {
   "name": "@trustos/validation",
   "version": "0.1.0",
-  "private": true,
   "description": "Shared Zod schemas and the single conversion point from schema failures to API errors.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

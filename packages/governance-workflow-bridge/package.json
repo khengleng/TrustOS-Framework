@@ -1,13 +1,16 @@
 {
   "name": "@trustos/governance-workflow-bridge",
   "version": "0.1.0",
-  "private": true,
   "description": "The approval and case experience over the TrustOS workflow framework. Authoritative state stays in the workflow engine.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

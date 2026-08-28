@@ -1,13 +1,16 @@
 {
   "name": "@trustos/knowledge",
   "version": "0.1.0",
-  "private": true,
   "description": "Knowledge collections and documents with versions, access policy and expiry.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

@@ -1,13 +1,16 @@
 {
   "name": "@trustos/agent-framework",
   "version": "0.1.0",
-  "private": true,
   "description": "Agent definitions: role, prompt, tools, permissions, limits, output schema.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

@@ -1,13 +1,16 @@
 {
   "name": "@trustos/financial-product-simulator",
   "version": "0.1.0",
-  "private": true,
   "description": "Deterministic product simulation at volume: path distribution, fee and limit totals, SLA timing and exception counts.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

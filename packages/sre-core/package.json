@@ -1,13 +1,16 @@
 {
   "name": "@trustos/sre-core",
   "version": "0.1.0",
-  "private": true,
-  "description": "Services, dependencies, runbooks and maintenance windows — the registry everything else in SRE hangs from.",
+  "description": "Services, dependencies, runbooks and maintenance windows \u2014 the registry everything else in SRE hangs from.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

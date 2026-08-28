@@ -1,13 +1,16 @@
 {
   "name": "@trustos/rbac",
   "version": "0.1.0",
-  "private": true,
   "description": "Roles, permissions, guards and decorators with deny-by-default routing.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

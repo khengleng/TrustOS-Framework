@@ -1,13 +1,16 @@
 {
   "name": "@trustos/api-rate-limit",
   "version": "0.1.0",
-  "private": true,
   "description": "Rate limits: per second, minute and day, with burst, and the honest statement of what a fixed window is.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

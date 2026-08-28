@@ -1,13 +1,16 @@
 {
   "name": "@trustos/developer-portal",
   "version": "0.1.0",
-  "private": true,
   "description": "A self-contained developer site: documentation, API explorer, SDK downloads, marketplace, templates and release notes.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

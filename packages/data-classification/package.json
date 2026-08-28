@@ -1,13 +1,16 @@
 {
   "name": "@trustos/data-classification",
   "version": "0.1.0",
-  "private": true,
   "description": "The five-level data classification model, and what each level obliges.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

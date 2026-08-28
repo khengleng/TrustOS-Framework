@@ -1,13 +1,16 @@
 {
   "name": "@trustos/governance-auth-context",
   "version": "0.1.0",
-  "private": true,
   "description": "Normalizes an authenticated enterprise identity into a TrustOS actor context. Never trusts a client-supplied role or organization.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

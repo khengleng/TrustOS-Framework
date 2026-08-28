@@ -1,9 +1,11 @@
 {
   "name": "@trustos/module-notification",
   "version": "0.1.0",
-  "private": true,
   "description": "TrustOS Notification module. Templated messages over email, Telegram and webhooks with a retry queue and delivery history.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -11,7 +13,8 @@
     "nest",
     "install",
     "README.md",
-    "AGENTS.md"
+    "AGENTS.md",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",
