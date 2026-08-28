@@ -145,7 +145,9 @@ railway domain trustos.cambobia.com --service governance-tool --port 8080
 ```
 
 which returns the DNS record to add. The record, the provider it belongs in and how to verify
-it are in [dns.md](dns.md). The Railway-generated domain stays available, but it is not the
+it are in [dns.md](dns.md). The domain is live: DNS resolves to the required target, Let's
+Encrypt issued a certificate naming `trustos.cambobia.com`, `http://` returns `301` to
+`https://`, and both `/health` and `/ready` answer `200` on it. The Railway-generated domain stays available, but it is not the
 platform's name — anything user-facing should say the custom domain.
 
 Two things to know before treating the domain as finished, both covered in

@@ -101,6 +101,41 @@ curl -sS https://trustos.cambobia.com/health
 Certificate issuance is usually a minute or two after the record propagates, and it cannot
 start before that — Railway validates ownership over the resolved name.
 
+## Verified
+
+Both records were added in Google Cloud DNS on 2026-08-28 — the CNAME and, though Railway did
+not require it, the ownership TXT. Results:
+
+```
+$ dig +short trustos.cambobia.com
+w5sb6cy3.up.railway.app.
+69.46.46.85
+
+$ dig +short TXT _railway-verify.trustos.cambobia.com
+"railway-verify=71f30a96…e96ef"
+
+$ openssl s_client -connect trustos.cambobia.com:443 -servername trustos.cambobia.com
+subject=CN=trustos.cambobia.com
+issuer=C=US, O=Let's Encrypt, CN=YE2
+notBefore=Aug 28 03:00:47 2026 GMT
+notAfter=Nov 26 03:00:46 2026 GMT
+X509v3 Subject Alternative Name: DNS:trustos.cambobia.com
+```
+
+| Check                                       | Result                                      |
+| ------------------------------------------- | ------------------------------------------- |
+| DNS resolves to the required target         | yes                                         |
+| Certificate names the custom domain         | yes — SAN is exactly `trustos.cambobia.com` |
+| `https://trustos.cambobia.com/health`       | `200`                                       |
+| `https://trustos.cambobia.com/ready`        | `200`, database check passing               |
+| `http://` → `https://`                      | `301`, to the custom domain                 |
+| Redirect to localhost or a Railway hostname | none                                        |
+
+Routing came up about a minute before the certificate did. In between, the domain answered
+`200` on `/health` while still presenting the `*.up.railway.app` certificate — so a check that
+ignores certificate errors can report success while a browser still shows a warning. Verify
+the SAN, not just the status code.
+
 ## Cloudflare
 
 Not applicable today; kept because the zone could move.
