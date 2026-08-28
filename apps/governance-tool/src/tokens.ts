@@ -14,6 +14,8 @@ export const ENVIRONMENT_REGISTRY = Symbol.for('governance-tool.environments');
 export const GOVERNANCE_AUDIT = Symbol.for('governance-tool.governance-audit');
 export const GOVERNANCE_RUNTIME = Symbol.for('governance-tool.runtime');
 export const GATEWAY_ENVIRONMENT = Symbol.for('governance-tool.environment');
+/** Issuer and client id the browser needs before it can start a login. Null without OIDC. */
+export const PORTAL_CONFIG = Symbol.for('governance-tool.portal-config');
 
 /** The registered global guards, in registration order. */
 export const GUARD_ORDER = Symbol.for('governance-tool.guard-order');

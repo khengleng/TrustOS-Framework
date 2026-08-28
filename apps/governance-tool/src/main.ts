@@ -1,5 +1,7 @@
 import 'reflect-metadata';
+import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustos/config';
 import { AllExceptionsFilter } from '@trustos/errors/nest';
@@ -85,7 +87,7 @@ async function bootstrap(): Promise<void> {
    */
   const environment = readEnvironment();
 
-  const app = await NestFactory.create(
+  const app = await NestFactory.create<NestExpressApplication>(
     GovernanceToolModule.forRoot({
       config,
       policy,
@@ -103,6 +105,20 @@ async function bootstrap(): Promise<void> {
          * about resources still stands.
          */
         apps: consoleCatalogFor(environment),
+
+        /*
+         * What the browser needs before it holds a token: where to send the user and
+         * which client it is. Null without OIDC, and the portal then says so rather
+         * than offering a sign-in button that cannot work.
+         */
+        ...(identityProvider === 'oidc' && oidcIssuerUrl && oidcClientId
+          ? {
+              portal: {
+                issuerUrl: oidcIssuerUrl,
+                clientId: process.env.OIDC_WEB_CLIENT_ID ?? 'trustos-web',
+              },
+            }
+          : {}),
       },
     }),
     { logger: new NestPinoLogger(logger), bufferLogs: true },
@@ -130,6 +146,21 @@ async function bootstrap(): Promise<void> {
   // Opens the per-request tenant scope that TenantGuard fills in. Middleware rather than an
   // interceptor, because it has to run before the guards.
   app.use(tenantScopeMiddleware());
+
+  /*
+   * The portal.
+   *
+   * Served from this application rather than a separate one because it is this
+   * application's own surface: it renders the descriptors these controllers return, and
+   * a same-origin portal needs no CORS and no second deployable.
+   *
+   * Mounted before the global prefix is set, so the assets sit at `/` while the API
+   * stays under `/api`. `index.html` is served for `/`, which is also the OIDC redirect
+   * target — the browser comes back to `/?code=…` and the portal completes the exchange
+   * there. A path that matches no file falls through to the router and still 404s as
+   * JSON, so the API's behaviour is unchanged.
+   */
+  app.useStaticAssets(join(__dirname, '..', 'public'));
 
   app.useGlobalFilters(new AllExceptionsFilter({ environment: config.env, logger }));
   app.setGlobalPrefix(config.http.globalPrefix, { exclude: ['health', 'ready'] });

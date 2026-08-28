@@ -33,6 +33,7 @@ import { ResourceRegistry } from '@trustos/governance-resource-policy';
 import { GovernanceToolRuntime } from '@trustos/governance-tool-runtime';
 import { CatalogController } from './controllers/catalog.controller';
 import { ConsoleController } from './controllers/console.controller';
+import { PortalController, type PortalConfig } from './controllers/portal.controller';
 import {
   ACCESS_RESOLVER,
   APP_CATALOG,
@@ -46,6 +47,7 @@ import {
   GOVERNANCE_RUNTIME,
   GUARD_ORDER,
   IDENTITY_PROVIDER,
+  PORTAL_CONFIG,
   RESOURCE_REGISTRY,
   SECURITY_EVENTS,
   SECURITY_POLICY,
@@ -82,6 +84,8 @@ export interface GovernanceToolOptions {
     environments: EnvironmentRegistry;
     apps: InternalAppCatalog;
     masking: MaskPolicy;
+    /** What the browser needs to begin a login. Null when this runs without OIDC. */
+    portal: PortalConfig;
   }>;
 }
 
@@ -121,7 +125,7 @@ export class GovernanceToolModule {
           })) as never,
         }),
       ],
-      controllers: [CatalogController, ConsoleController],
+      controllers: [CatalogController, ConsoleController, PortalController],
       providers: [
         { provide: APP_CONFIG_TOKEN, useValue: config },
         { provide: APP_LOGGER, useValue: logger },
@@ -164,6 +168,8 @@ export class GovernanceToolModule {
               additional: [roleGrantPolicy(canGrantRole)],
             }),
         },
+
+        { provide: PORTAL_CONFIG, useValue: overrides.portal ?? null },
 
         {
           provide: IDENTITY_PROVIDER,
