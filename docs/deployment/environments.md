@@ -52,26 +52,64 @@ and DEV become one trust boundary.
 
 ## Setting them up
 
+`dev` and `uat` exist. Both were created by duplicating `production`, migrated, and deployed on
+2026-08-28. All seven services run in each.
+
+|                       | `production`                                | `dev`        | `uat`        |
+| --------------------- | ------------------------------------------- | ------------ | ------------ |
+| Services deployed     | 7                                           | 7            | 7            |
+| Postgres              | own instance                                | own instance | own instance |
+| `TRUSTOS_ENVIRONMENT` | `dev`                                       | `dev`        | `uat`        |
+| `NODE_ENV`            | `production`                                | `production` | `production` |
+| Signing secrets       | distinct                                    | distinct     | distinct     |
+| `CORS_ORIGINS`        | set on `governance-tool` only               | unset        | unset        |
+| Custom domain         | `trustos.cambobia.com` on `governance-tool` | none         | none         |
+
+[`../../scripts/railway-environments.sh`](../../scripts/railway-environments.sh) documents the
+intended shape and is still the reference for what a fresh setup needs. It was not the thing that
+was run, for two reasons worth recording:
+
+- **It configures `trustos-api` only.** The rotation step is the point of the script, and applying
+  it to one of seven services leaves the other six sharing a `JWT_SECRET` across all three
+  environments — the exact hole it exists to close. Rotation was done for all seven, in `dev` and
+  `uat`.
+- **It rewrites `production`.** It rotates production's signing secrets, which invalidates every
+  token issued against a live environment, and sets `TRUSTOS_ENVIRONMENT=prod` there. Neither was
+  asked for. Production was left untouched.
+
+Two things the duplicate copied that had to be undone afterwards, both of which are the same class
+of mistake as the shared `JWT_SECRET`:
+
+- **Signing secrets.** Confirmed shared immediately after duplication — the same `JWT_SECRET`
+  fingerprint in all three environments, so a UAT token would have verified in production. Rotated
+  in `dev` and `uat`, per service, since production already gives each service its own.
+- **`CORS_ORIGINS`.** `dev` and `uat` inherited `https://trustos.cambobia.com`, the production
+  console origin, meaning a page served from the production domain could call the `dev` and `uat`
+  APIs with credentials. Removed from both; neither has a frontend, and an absent value means CORS
+  is never enabled at all rather than enabled-and-empty.
+
+Migrations were applied to each new database separately over Railway's TCP proxy
+(`DATABASE_PUBLIC_URL`), because the container does not migrate on boot and
+`postgres.railway.internal` resolves only inside Railway's network:
+
 ```bash
-./scripts/railway-environments.sh          # dry run — shows every command, changes nothing
-./scripts/railway-environments.sh --apply  # execute
+DATABASE_URL="$(railway variables --service Postgres --environment dev --kv \
+  | grep '^DATABASE_PUBLIC_URL=' | cut -d= -f2-)" npm run db:deploy
 ```
 
-It creates `dev` and `uat` by duplicating the existing environment, then does the step a manual
-setup skips: **it rotates the signing secrets in all three**. `railway environment new --duplicate`
-copies variables, so without rotation every environment shares a `JWT_SECRET` and a UAT token
-verifies in production — the exact thing the section above says must not happen.
+Verified afterwards: `/health` and `/ready` answer `200` in both environments, each with its own
+database check passing, and the `JWT_SECRET` and `DATABASE_URL` fingerprints differ across all
+three.
 
-It sets `TRUSTOS_ENVIRONMENT` per environment, turns Swagger off everywhere, and leaves
-**production needing OIDC**: `SECURITY_ALLOW_LOCAL_IDENTITY_IN_PRODUCTION` is set in DEV and UAT and
-deliberately not in production, so production refuses to start until a real identity provider is
-configured. That refusal is the policy working.
+### Still open
 
-It does not deploy. Deploying is a separate decision, and a script that both provisions and ships
-is a script that does the second thing while you are still reading the first.
-
-**It provisions paid infrastructure** — one Postgres and one service instance per environment — so
-run it yourself rather than having automation run it for you.
+`production` reports `TRUSTOS_ENVIRONMENT=dev`. That was the honest label when it was the only
+environment; now that a real `dev` exists it is actively confusing. Changing it to `prod` is not a
+cosmetic edit — it is what `@trustos/governance-environment-config` reads to enforce the production
+identity rules, and every service currently carries
+`SECURITY_ALLOW_LOCAL_IDENTITY_IN_PRODUCTION=true`. Flipping the label on a live environment
+serving a public domain, without first configuring OIDC, is a change to make deliberately and
+watch, not one to fold into an environment-provisioning run.
 
 ## PROD is documented and not created
 
