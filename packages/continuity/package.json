@@ -1,13 +1,16 @@
 {
   "name": "@trustos/continuity",
   "version": "0.1.0",
-  "private": true,
   "description": "Critical services, RTO and RPO, and the continuity gaps between what is promised and what is proven.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

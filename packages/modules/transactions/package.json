@@ -1,9 +1,11 @@
 {
   "name": "@trustos/module-transactions",
   "version": "0.1.0",
-  "private": true,
   "description": "TrustOS Transactions module. The transaction lifecycle with idempotency, fees, limits, risk hooks and payment requests.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -11,7 +13,8 @@
     "nest",
     "install",
     "README.md",
-    "AGENTS.md"
+    "AGENTS.md",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

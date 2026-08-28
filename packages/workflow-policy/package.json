@@ -1,14 +1,17 @@
 {
   "name": "@trustos/workflow-policy",
   "version": "0.1.0",
-  "private": true,
   "description": "Workflow authorization policies: separation of duties, self-approval prevention and state-transition permissions.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

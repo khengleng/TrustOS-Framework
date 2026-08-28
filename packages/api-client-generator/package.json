@@ -1,13 +1,16 @@
 {
   "name": "@trustos/api-client-generator",
   "version": "0.1.0",
-  "private": true,
   "description": "Generates typed API clients from an OpenAPI document.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

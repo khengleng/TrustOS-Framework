@@ -1,13 +1,16 @@
 {
   "name": "@trustos/financial-product-observability",
   "version": "0.1.0",
-  "private": true,
   "description": "The product metric catalog, the collector the runtime reports through and the dashboard descriptors the admin renders.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

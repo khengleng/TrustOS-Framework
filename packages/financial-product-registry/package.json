@@ -1,13 +1,16 @@
 {
   "name": "@trustos/financial-product-registry",
   "version": "0.1.0",
-  "private": true,
   "description": "The product catalog: draft and published definitions, search, active-version resolution and tenant-scoped storage.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

@@ -1,13 +1,16 @@
 {
   "name": "@trustos/cost-monitor",
   "version": "0.1.0",
-  "private": true,
   "description": "Cost accounting per tenant, application, model and day, with budgets and alerts.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

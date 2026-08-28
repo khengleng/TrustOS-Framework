@@ -1,14 +1,17 @@
 {
   "name": "@trustos/scheduler",
   "version": "0.1.0",
-  "private": true,
   "description": "Cron, recurring, delayed and one-time schedules over the job runtime.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

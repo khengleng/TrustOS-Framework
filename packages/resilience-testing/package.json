@@ -1,13 +1,16 @@
 {
   "name": "@trustos/resilience-testing",
   "version": "0.1.0",
-  "private": true,
   "description": "Controlled failure injection: what may be tested, where, and what may never be tested automatically.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

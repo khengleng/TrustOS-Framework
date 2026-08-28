@@ -1,13 +1,16 @@
 {
   "name": "@trustos/vector-store",
   "version": "0.1.0",
-  "private": true,
   "description": "Vector storage abstraction: upsert, search, filter, delete. In-memory default.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

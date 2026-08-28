@@ -1,9 +1,11 @@
 {
   "name": "@trustos/module-reconciliation",
   "version": "0.1.0",
-  "private": true,
   "description": "TrustOS Reconciliation module. Internal and external reconciliation with tolerance rules, an exception queue and resolution history.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -11,7 +13,8 @@
     "nest",
     "install",
     "README.md",
-    "AGENTS.md"
+    "AGENTS.md",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

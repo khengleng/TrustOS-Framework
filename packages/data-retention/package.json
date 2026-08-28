@@ -1,13 +1,16 @@
 {
   "name": "@trustos/data-retention",
   "version": "0.1.0",
-  "private": true,
-  "description": "Retention, archival, legal hold and deletion — with the refusal that legal hold always wins.",
+  "description": "Retention, archival, legal hold and deletion \u2014 with the refusal that legal hold always wins.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

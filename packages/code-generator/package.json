@@ -1,13 +1,16 @@
 {
   "name": "@trustos/code-generator",
   "version": "0.1.0",
-  "private": true,
-  "description": "Generates a CRUD slice — model, DTOs, repository, service, controller, tests and documentation — from one declaration.",
+  "description": "Generates a CRUD slice \u2014 model, DTOs, repository, service, controller, tests and documentation \u2014 from one declaration.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

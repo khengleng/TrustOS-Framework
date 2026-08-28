@@ -1,14 +1,17 @@
 {
   "name": "@trustos/database",
   "version": "0.1.0",
-  "private": true,
   "description": "Prisma schema, client lifecycle and tenant-safe query helpers.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "prisma"
+    "prisma",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

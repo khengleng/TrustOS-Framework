@@ -1,9 +1,11 @@
 {
   "name": "@trustos/module-wallet",
   "version": "0.1.0",
-  "private": true,
   "description": "TrustOS Wallets module. Ledger-backed customer wallets: available, held and reserved balances, holds, freeze and history.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -11,7 +13,8 @@
     "nest",
     "install",
     "README.md",
-    "AGENTS.md"
+    "AGENTS.md",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

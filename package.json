@@ -40,6 +40,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "migrations:check": "node scripts/migration-safety.mjs",
+    "release": "node scripts/release.mjs",
     "modules:validate": "vitest run packages/module-registry packages/module-sdk",
     "postinstall": "npm run db:generate",
     "smoke": "node scripts/smoke-test.mjs",

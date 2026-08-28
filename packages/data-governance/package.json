@@ -1,13 +1,16 @@
 {
   "name": "@trustos/data-governance",
   "version": "0.1.0",
-  "private": true,
   "description": "Ownership, residency, and the governance assessment that reports what is not in good standing.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

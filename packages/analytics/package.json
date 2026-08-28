@@ -1,13 +1,16 @@
 {
   "name": "@trustos/analytics",
   "version": "0.1.0",
-  "private": true,
   "description": "Summaries over collected telemetry: adoption, popularity, error trends.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

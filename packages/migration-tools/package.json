@@ -1,13 +1,16 @@
 {
   "name": "@trustos/migration-tools",
   "version": "0.1.0",
-  "private": true,
   "description": "Database, configuration, template, module and framework migrations, with dry run and rollback.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

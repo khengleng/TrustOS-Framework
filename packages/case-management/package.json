@@ -1,14 +1,17 @@
 {
   "name": "@trustos/case-management",
   "version": "0.1.0",
-  "private": true,
   "description": "Lightweight case records linking workflow instances, tasks, comments and attachments to a subject.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

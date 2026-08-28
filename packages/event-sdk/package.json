@@ -1,13 +1,16 @@
 {
   "name": "@trustos/event-sdk",
   "version": "0.1.0",
-  "private": true,
   "description": "The event envelope, its metadata, validation and serialization.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

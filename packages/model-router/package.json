@@ -1,13 +1,16 @@
 {
   "name": "@trustos/model-router",
   "version": "0.1.0",
-  "private": true,
   "description": "Chooses a model from a requirement, with fallback and tenant policy.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

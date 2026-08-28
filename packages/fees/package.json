@@ -1,13 +1,16 @@
 {
   "name": "@trustos/fees",
   "version": "0.1.0",
-  "private": true,
   "description": "The fee engine: flat, percentage, tiered, capped, tax, discount and promotional fees, versioned.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

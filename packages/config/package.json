@@ -1,14 +1,17 @@
 {
   "name": "@trustos/config",
   "version": "0.1.0",
-  "private": true,
   "description": "Validated, fail-fast application configuration. The only package permitted to read process.env.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    ".env.example"
+    ".env.example",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

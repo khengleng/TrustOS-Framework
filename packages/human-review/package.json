@@ -1,13 +1,16 @@
 {
   "name": "@trustos/human-review",
   "version": "0.1.0",
-  "private": true,
   "description": "Review queues for AI output: approve, reject, escalate, with SLA and history.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

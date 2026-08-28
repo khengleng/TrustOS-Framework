@@ -1,13 +1,16 @@
 {
   "name": "@trustos/financial-product-governance",
   "version": "0.1.0",
-  "private": true,
   "description": "Product governance: ownership, change classification, maker-checker approval requirements and the audit trail.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

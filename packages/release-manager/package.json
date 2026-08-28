@@ -1,13 +1,16 @@
 {
   "name": "@trustos/release-manager",
   "version": "0.1.0",
-  "private": true,
   "description": "Release channels, the support lifecycle from development to end-of-life, and release notes.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

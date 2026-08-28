@@ -1,13 +1,16 @@
 {
   "name": "@trustos/payments",
   "version": "0.1.0",
-  "private": true,
   "description": "Payment requests: expiry, status, callbacks, idempotency and provider references. No providers.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

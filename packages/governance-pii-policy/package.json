@@ -1,13 +1,16 @@
 {
   "name": "@trustos/governance-pii-policy",
   "version": "0.1.0",
-  "private": true,
   "description": "Centralized masking, and controlled reveal: permission, reason, audit, expiry and optional maker-checker.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

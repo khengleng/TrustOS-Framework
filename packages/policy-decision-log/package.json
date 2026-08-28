@@ -1,13 +1,16 @@
 {
   "name": "@trustos/policy-decision-log",
   "version": "0.1.0",
-  "private": true,
   "description": "Every decision, recorded: what was asked, what was decided, by which policy version, and why.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

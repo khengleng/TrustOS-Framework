@@ -1,14 +1,17 @@
 {
   "name": "@trustos/module-sdk",
   "version": "0.1.0",
-  "private": true,
   "description": "The contract every TrustOS module implements: metadata, lifecycle, configuration, permissions, audit, health and tenant-scoped persistence.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

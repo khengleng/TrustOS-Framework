@@ -1,13 +1,16 @@
 {
   "name": "@trustos/backup",
   "version": "0.1.0",
-  "private": true,
   "description": "The backup inventory: what was backed up, where, encrypted, verified \u2014 and never assumed from a job exit code.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

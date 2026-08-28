@@ -1,13 +1,16 @@
 {
   "name": "@trustos/governance-audit-bridge",
   "version": "0.1.0",
-  "private": true,
   "description": "Forwards Governance Tool actions into the TrustOS audit trail, enriched with the internal application that caused them.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

@@ -1,13 +1,16 @@
 {
   "name": "@trustos/sync",
   "version": "0.1.0",
-  "private": true,
   "description": "Pull and push synchronization: incremental cursors, conflict resolution, sync log and policy.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

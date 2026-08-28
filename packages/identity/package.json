@@ -1,14 +1,17 @@
 {
   "name": "@trustos/identity",
   "version": "0.1.0",
-  "private": true,
   "description": "Provider-neutral identity: a local provider, an OIDC/Keycloak provider with JWKS verification, and the guards that enforce authentication assurance.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

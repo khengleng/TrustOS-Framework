@@ -1,9 +1,11 @@
 {
   "name": "@trustos/module-reporting",
   "version": "0.1.0",
-  "private": true,
   "description": "TrustOS Reporting module. Report definitions with filtering, pagination, CSV export and a PDF renderer port.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -11,7 +13,8 @@
     "nest",
     "install",
     "README.md",
-    "AGENTS.md"
+    "AGENTS.md",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",

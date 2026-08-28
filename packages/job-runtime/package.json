@@ -1,14 +1,17 @@
 {
   "name": "@trustos/job-runtime",
   "version": "0.1.0",
-  "private": true,
   "description": "Background jobs: queue, worker abstraction, priority, progress, timeout and history.",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "nest"
+    "nest",
+    "!dist/**/*.tsbuildinfo"
   ],
   "scripts": {
     "build": "tsc -b",
