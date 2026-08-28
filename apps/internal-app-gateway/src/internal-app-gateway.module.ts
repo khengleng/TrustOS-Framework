@@ -4,7 +4,8 @@ import { AuditService, PrismaAuditSink } from '@trustos/audit';
 import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
 import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
 import type { AppConfig } from '@trustos/config';
-import { DatabaseModule, PrismaService } from '@trustos/database';
+import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustos/database';
+import { ObservabilityModule, databaseHealthIndicator } from '@trustos/observability';
 import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
 import type { AccessResolver, CredentialAuthenticator, IdentityProvider } from '@trustos/identity';
 import type { Logger } from '@trustos/logging';
@@ -104,7 +105,28 @@ export class InternalAppGatewayModule {
 
     return {
       module: InternalAppGatewayModule,
-      imports: [DatabaseModule.forRoot({ config, logger })],
+      imports: [
+        DatabaseModule.forRoot({ config, logger }),
+        /*
+         * Health and readiness.
+         *
+         * Added after a deployment found their absence: the platform probes `/health`, the route
+         * did not exist, and the container was killed as unhealthy having started perfectly well.
+         *
+         * AGENTS.md states the rule — every deployable HTTP service exposes both — and six
+         * applications in this repository did not, because nothing had ever deployed them.
+         *
+         * `/health` answers without touching a dependency and `/ready` consults the database, so a
+         * database blip degrades readiness rather than restarting the container.
+         */
+        ObservabilityModule.forRootAsync({
+          config,
+          inject: [PrismaService],
+          useFactory: ((prisma: PrismaService) => ({
+            indicators: [databaseHealthIndicator(() => checkDatabaseConnection(prisma))],
+          })) as never,
+        }),
+      ],
       controllers: [GatewayController],
       providers: [
         { provide: APP_CONFIG_TOKEN, useValue: config },
