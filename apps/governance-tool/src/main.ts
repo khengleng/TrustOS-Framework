@@ -151,6 +151,17 @@ async function bootstrap(): Promise<void> {
     { logger: new NestPinoLogger(logger), bufferLogs: true },
   );
 
+  /*
+   * Turn the banner off at the source.
+   *
+   * `securityHeadersMiddleware` also removes `X-Powered-By`, and that is the portable
+   * belt for any server this framework is mounted on. This is the braces: Express sets
+   * the header in its own initialisation middleware, and disabling the setting means it
+   * is never written in the first place rather than written and then unwritten — which
+   * does not depend on this middleware running before anything that sends a response.
+   */
+  app.disable('x-powered-by');
+
   // First among the middleware, so the headers are present on 404s and on error responses —
   // the responses a misconfigured client is most likely to see.
   app.use(
