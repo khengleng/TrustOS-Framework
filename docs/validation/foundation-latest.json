@@ -1,0 +1,88 @@
+{
+  "generatedAt": "2026-08-29T04:44:59.744Z",
+  "correlationId": "val_7cf0aafc-b63e-464e-8472-a77f97c1a165",
+  "environment": "dev",
+  "results": [
+    {
+      "check": "tenancy: a scoped delegate reads its own tenant rows",
+      "status": "PASS",
+      "detail": "found membership cmtdwcmak0007s6du1r6l895u"
+    },
+    {
+      "check": "tenancy: a scoped delegate refuses a cross-tenant read by id",
+      "status": "PASS",
+      "detail": "returned nothing for the other tenant"
+    },
+    {
+      "check": "tenancy: a membership in A does not resolve in B",
+      "status": "PASS",
+      "detail": "own=resolved other=null"
+    },
+    {
+      "check": "tenancy: the reverse direction also refuses",
+      "status": "PASS",
+      "detail": "null"
+    },
+    {
+      "check": "maker-checker: the requester cannot approve their own request",
+      "status": "PASS",
+      "detail": "refused: self_approval_forbidden"
+    },
+    {
+      "check": "maker-checker: a different person may approve",
+      "status": "PASS",
+      "detail": "eligible"
+    },
+    {
+      "check": "workflow: the change-request definition has the required states",
+      "status": "PASS",
+      "detail": "submit, route_to_manager, escalate_to_compliance, approve, reject, return_for_rework, resubmit, cancel"
+    },
+    {
+      "check": "workflow: an unknown transition is not in the definition",
+      "status": "PASS",
+      "detail": "draft cannot be approved"
+    },
+    {
+      "check": "workflow: a request starts in draft and persists",
+      "status": "PASS",
+      "detail": "instance cmtdwcogl000os6duadhna4yu in draft"
+    },
+    {
+      "check": "workflow: the maker submits it and it reaches review",
+      "status": "PASS",
+      "detail": "state manager_review"
+    },
+    {
+      "check": "maker-checker: the engine refuses the maker's approval",
+      "status": "PASS",
+      "detail": "refused (reason not attributed): You do not have permission to perform this action."
+    },
+    {
+      "check": "workflow: the checker approves it",
+      "status": "PASS",
+      "detail": "state approved"
+    },
+    {
+      "check": "persistence: the instance is in Postgres, in its final state",
+      "status": "PASS",
+      "detail": "row cmtdwcogl000os6duadhna4yu state=approved org=A"
+    },
+    {
+      "check": "persistence: a decision was recorded against it",
+      "status": "PASS",
+      "detail": "1 decision row(s)"
+    },
+    {
+      "check": "audit: the log has no update path through the client",
+      "status": "PASS",
+      "detail": "refused: "
+    }
+  ],
+  "totals": {
+    "checks": 15,
+    "passed": 15,
+    "failed": 0
+  },
+  "verdict": "PASS"
+}

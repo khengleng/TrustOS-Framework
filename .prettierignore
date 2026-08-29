@@ -9,3 +9,4 @@ package-lock.json
 # every run — format-checking them turns a validation run into a lint failure.
 docs/validation/latest.json
 docs/validation/capability-registry.json
+docs/validation/foundation-latest.json

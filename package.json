@@ -42,6 +42,7 @@
     "migrations:check": "node scripts/migration-safety.mjs",
     "release": "node scripts/release.mjs",
     "validate": "node scripts/validate.mjs",
+    "validate:foundation": "node scripts/validate-foundation.mjs",
     "modules:validate": "vitest run packages/module-registry packages/module-sdk",
     "postinstall": "npm run db:generate",
     "smoke": "node scripts/smoke-test.mjs",
