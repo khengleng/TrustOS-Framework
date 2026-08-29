@@ -420,3 +420,127 @@ describe('health', () => {
     expect(JSON.stringify(health)).not.toContain(keys.publicJwk.n ?? 'modulus');
   });
 });
+
+describe('which check refused, attributed rather than inferred', () => {
+  /*
+   * The evidence model this file exists to make honest.
+   *
+   * A token is refused at the *first* check it fails, so a negative test only proves
+   * the check it actually reached. A deployed run earlier sent a token with a wrong
+   * issuer signed by an unpublished key and recorded it as evidence that issuer
+   * validation works. It was refused at key resolution; the issuer was never compared.
+   *
+   * Each case below fails exactly one check, with everything before it correct, and
+   * asserts the layer the provider reports. Getting there needs control of the signing
+   * key — which is why this evidence is cryptographic-integration level and cannot be
+   * reproduced against a deployed realm without its private key.
+   */
+  const layerOf = async (token: string, overrides = {}) => {
+    const provider = await buildProvider(keys, overrides);
+    try {
+      await provider.validateAccessToken(token);
+      return 'accepted';
+    } catch (error) {
+      return ((error as ApiError).context as { rejectionLayer?: string } | undefined)
+        ?.rejectionLayer;
+    }
+  };
+
+  it('reaches the expiry check with a valid signature, issuer and audience', async () => {
+    expect(await layerOf(await expiredToken(keys))).toBe('expiry');
+  });
+
+  it('reaches the issuer check with a valid signature', async () => {
+    expect(await layerOf(await wrongIssuer(keys))).toBe('issuer');
+  });
+
+  it('reaches the audience check with a valid signature and issuer', async () => {
+    expect(await layerOf(await wrongAudience(keys))).toBe('audience');
+  });
+
+  it('reaches the signature check when the key is published but wrong', async () => {
+    // Signed by an attacker key carrying this realm's `kid`, so key resolution
+    // succeeds and only the signature can refuse it.
+    expect(await layerOf(await signedByAnotherKey({ kid: keys.kid }))).toBe('signature');
+  });
+
+  it('stops at key resolution for a kid the realm does not publish', async () => {
+    /*
+     * The case that was previously mis-attributed on the deployed runtime.
+     *
+     * The resolver is overridden rather than the token's `kid` changed, because the
+     * test fixture's JWKS returns one key whatever the header says — so with the
+     * fixture alone this layer cannot be reached at all, and a test that looked like it
+     * covered key resolution would in fact have been covering the issuer check. That is
+     * the same class of mistake this describe block exists to catch, one level down.
+     */
+    const noMatchingKey = Object.assign(
+      new Error('no applicable key found in the JSON Web Key Set'),
+      { code: 'ERR_JWKS_NO_MATCHING_KEY' },
+    );
+
+    const token = await signTestToken(keys, {
+      issuer: 'https://elsewhere.test',
+      audience: 'another-api',
+    });
+
+    expect(await layerOf(token, { fetchJwks: () => Promise.reject(noMatchingKey) })).toBe(
+      'key_resolution',
+    );
+  });
+
+  it('stops at the algorithm check for alg=none', async () => {
+    expect(await layerOf(algNoneToken())).toBe('algorithm');
+  });
+
+  it('stops at format for something that is not a JWT', async () => {
+    expect(await layerOf('not-a-token')).toBe('format');
+  });
+
+  it('reports key retrieval, distinctly from a token being wrong', async () => {
+    const timeout = Object.assign(new Error('Timeout reached'), { code: 'ERR_JWKS_TIMEOUT' });
+
+    expect(
+      await layerOf(await signTestToken(keys, {}), { fetchJwks: () => Promise.reject(timeout) }),
+    ).toBe('key_retrieval');
+  });
+
+  it('reaches the authorized-party check only after everything else passed', async () => {
+    const token = await signTestToken(keys, { authorizedParty: 'some-other-client' });
+
+    expect(await layerOf(token)).toBe('authorized_party');
+  });
+
+  it('never reports a layer later than the one that refused', async () => {
+    /*
+     * The property that makes the whole model trustworthy: the reported layer must be
+     * the first failing check, not the most interesting one. A token that is wrong in
+     * several ways at once must report the earliest.
+     */
+    const noMatchingKey = Object.assign(new Error('no applicable key'), {
+      code: 'ERR_JWKS_NO_MATCHING_KEY',
+    });
+
+    const wrongEverything = await signTestToken(keys, {
+      issuer: 'https://elsewhere.test',
+      audience: 'another-api',
+    });
+
+    const layer = await layerOf(wrongEverything, {
+      fetchJwks: () => Promise.reject(noMatchingKey),
+    });
+    const order = [
+      'format',
+      'algorithm',
+      'key_resolution',
+      'key_retrieval',
+      'signature',
+      'issuer',
+      'audience',
+      'expiry',
+    ];
+
+    // Key resolution comes before issuer and audience, so those cannot be claimed.
+    expect(order.indexOf(layer as string)).toBeLessThan(order.indexOf('issuer'));
+  });
+});
