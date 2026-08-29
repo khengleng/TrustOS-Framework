@@ -52,7 +52,8 @@
     "test:modules": "vitest run packages/module-sdk packages/module-registry packages/modules",
     "test:tenancy": "vitest run packages/tenancy",
     "test:watch": "vitest",
-    "typecheck": "npm run build:packages && npm run typecheck -w @trustos/api-example && npm run typecheck -w @trustos/security-admin-example && npm run typecheck -w @trustos/workflow-admin-example && npm run typecheck -w @trustos/saas-starter && npm run typecheck -w @trustos/admin-example && npm run typecheck -w @trustos/financial-product-admin && npm run typecheck -w @trustos/internal-app-gateway && npm run typecheck -w @trustos/governance-tool"
+    "typecheck": "npm run build:packages && npm run typecheck -w @trustos/api-example && npm run typecheck -w @trustos/security-admin-example && npm run typecheck -w @trustos/workflow-admin-example && npm run typecheck -w @trustos/saas-starter && npm run typecheck -w @trustos/admin-example && npm run typecheck -w @trustos/financial-product-admin && npm run typecheck -w @trustos/internal-app-gateway && npm run typecheck -w @trustos/governance-tool",
+    "validate:approval-workbench": "node scripts/validate-approval-workbench.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

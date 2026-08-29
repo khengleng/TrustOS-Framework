@@ -74,6 +74,7 @@ export class ApprovalWorkbenchService {
    * see afterwards is the request and how it ended.
    */
   async queue(actor: WorkflowActor, rawQuery: unknown): Promise<ApprovalQueuePage> {
+    assertTenanted(actor);
     const query = approvalQueueQuerySchema.parse(rawQuery ?? {});
 
     if (query.scope === 'available' || query.scope === 'mine') {
@@ -120,17 +121,18 @@ export class ApprovalWorkbenchService {
    * existing convention, and the right one: "forbidden" confirms the record exists.
    */
   async detail(actor: WorkflowActor, instanceId: string): Promise<ApprovalDetail> {
+    assertTenanted(actor);
     const instance = await this.options.engine.find(actor, instanceId);
 
     const [eligibleActions, decisions, audit] = await Promise.all([
       this.options.engine.available(actor, instance.id),
-      this.options.decisions.listForInstance({
-        organizationId: actor.organizationId,
-        workflowInstanceId: instance.id,
-      }),
+      this.options.decisions.listForInstance(instance.id, actor.organizationId),
       this.options.audit.query({
         organizationId: actor.organizationId,
-        entityType: 'workflow_instance',
+        // The value `HistoryRecorder` actually writes. It was `workflow_instance` here,
+        // which matches nothing, so the timeline rendered empty for every request — and
+        // an empty timeline reads as "nothing happened" rather than "wrong query".
+        entityType: AUDIT_ENTITY_TYPE,
         entityId: instance.id,
         page: 1,
         pageSize: 100,
@@ -218,6 +220,7 @@ export class ApprovalWorkbenchService {
     decisionId: string;
     version: number;
   }> {
+    assertTenanted(actor);
     const request: DecisionRequest = decisionRequestSchema.parse(rawRequest ?? {});
 
     if (decisionNeedsReason(request.action) && !request.reasonCode?.trim()) {
@@ -383,6 +386,15 @@ export class ApprovalWorkbenchService {
   }
 }
 
+/**
+ * The entity type the workflow history recorder writes against a workflow instance.
+ *
+ * Named rather than inlined because it is a cross-package string constant: nothing in
+ * the type system connects this read to that write, so the only protection is a test
+ * that drives a real transition and reads the trail back.
+ */
+const AUDIT_ENTITY_TYPE = 'WorkflowInstance';
+
 /** Which instance states each terminal queue means. */
 const TERMINAL_SCOPES: Record<
   'completed' | 'rejected' | 'returned',
@@ -392,6 +404,23 @@ const TERMINAL_SCOPES: Record<
   rejected: { status: ['rejected'] },
   returned: { status: ['active'], currentState: ['draft', 'rework'] },
 };
+
+/**
+ * Refuses an actor with no organization.
+ *
+ * `toWorkflowActor` already throws without one, so in the deployed path this cannot
+ * happen — which is exactly why it is worth restating here. An actor assembled by some
+ * future caller that skips that helper would otherwise reach the stores with an empty
+ * tenant, and an empty tenant does not fail loudly: it matches nothing, and a queue that
+ * is silently always empty is a bug nobody reports for a month.
+ */
+function assertTenanted(actor: WorkflowActor): void {
+  if (!actor.organizationId?.trim()) {
+    throw ApiError.forbidden('An approval action requires a tenant context.', {
+      reason: 'organization_context_missing',
+    });
+  }
+}
 
 function titleOf(instance: WorkflowInstanceRecord): string {
   const candidate = instance.data?.['title'] ?? instance.data?.['subject'];

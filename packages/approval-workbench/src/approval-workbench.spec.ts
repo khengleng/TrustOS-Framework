@@ -296,6 +296,23 @@ describe('the detail view', () => {
     expect(detail.attachments.available).toBe(false);
   });
 
+  it('queries the entity type the history recorder actually writes', async () => {
+    /*
+     * A cross-package string constant with nothing in the type system connecting the
+     * read to the write. It was `workflow_instance`; the recorder writes
+     * `WorkflowInstance`, so the timeline was empty for every request — and an empty
+     * timeline reads as "nothing happened" rather than "wrong query". Found by driving
+     * a real transition and reading the trail back.
+     */
+    const { service, audit } = build();
+
+    await service.detail(ACTOR, 'wfi_1');
+
+    expect(audit.query).toHaveBeenCalledWith(
+      expect.objectContaining({ entityType: 'WorkflowInstance' }),
+    );
+  });
+
   it('scopes the audit read to the actor s own tenant', async () => {
     const { service, audit } = build();
 

@@ -1,0 +1,197 @@
+{
+  "generatedAt": "2026-08-29T10:11:31.395Z",
+  "correlationId": "awb_8eb3d101-6232-4255-8c2d-a4083c1bc3be",
+  "environment": "dev",
+  "application": "approval-workbench",
+  "totals": {
+    "checks": 33,
+    "passed": 33,
+    "failed": 0,
+    "errorRate": 0
+  },
+  "verdict": "PASS",
+  "performance": {
+    "queue": {
+      "samples": 21,
+      "p50": 47.777917,
+      "p95": 91.865459
+    },
+    "detail": {
+      "samples": 21,
+      "p50": 147.95,
+      "p95": 152.134792
+    },
+    "decide": {
+      "samples": 1,
+      "p50": 756.266,
+      "p95": 756.266
+    }
+  },
+  "results": [
+    {
+      "check": "queue: the workbench shows a real pending approval",
+      "status": "PASS",
+      "detail": "row cmte80cr8000ss6uavz4akokv state=manager_review type=ChangeRequest by=cmte80ao90005s6uawuuumww3"
+    },
+    {
+      "check": "queue: the row carries the fields a reviewer chooses on",
+      "status": "PASS",
+      "detail": "requestId, requestType, title, requestedBy, submittedAt, currentState, priority, version"
+    },
+    {
+      "check": "queue: search narrows to a matching request",
+      "status": "PASS",
+      "detail": "match=true nonMatch=0 row(s)"
+    },
+    {
+      "check": "detail: the workbench reads the real request",
+      "status": "PASS",
+      "detail": "state=manager_review v2 actions=[approve, reject, return_for_rework, cancel]"
+    },
+    {
+      "check": "maker-checker: the maker cannot approve their own request",
+      "status": "PASS",
+      "detail": "refused: self_approval_forbidden"
+    },
+    {
+      "check": "rbac: a viewer cannot approve",
+      "status": "PASS",
+      "detail": "refused: transition_permission_missing"
+    },
+    {
+      "check": "tenancy: another tenant cannot open the request by id",
+      "status": "PASS",
+      "detail": "refused as not_found"
+    },
+    {
+      "check": "tenancy: another tenant cannot approve the request",
+      "status": "PASS",
+      "detail": "refused as not_found"
+    },
+    {
+      "check": "tenancy: another tenant does not see the request in their queue",
+      "status": "PASS",
+      "detail": "0 row(s), none from tenant A"
+    },
+    {
+      "check": "workflow: the checker approves and the request reaches approved",
+      "status": "PASS",
+      "detail": "manager_review -> approved decision=7c0b4b1c-a36c-4b0b-ace2-6f025e95c652"
+    },
+    {
+      "check": "workflow: the approved state is in Postgres",
+      "status": "PASS",
+      "detail": "state=approved org=A"
+    },
+    {
+      "check": "concurrency: a second checker with a stale view is refused",
+      "status": "PASS",
+      "detail": "refused: stale_version"
+    },
+    {
+      "check": "concurrency: only one decision exists for the step",
+      "status": "PASS",
+      "detail": "1 decision row(s) for manager_review"
+    },
+    {
+      "check": "idempotency: replaying the same approval creates no second decision",
+      "status": "PASS",
+      "detail": "1 -> 1 decision row(s)"
+    },
+    {
+      "check": "queue: the approved request has left the pending queue",
+      "status": "PASS",
+      "detail": "absent from 0 pending row(s)"
+    },
+    {
+      "check": "queue: the approved request appears under completed",
+      "status": "PASS",
+      "detail": "present in completed"
+    },
+    {
+      "check": "audit: the decision is visible on the detail timeline",
+      "status": "PASS",
+      "detail": "3 entr(ies): workflow.workflow.started, workflow.workflow.transitioned"
+    },
+    {
+      "check": "policy: the recorded decision names the authorization that permitted it",
+      "status": "PASS",
+      "detail": "decision=cmte80dy2000us6uapdtmzgmp policyDecisionId=7c0b4b1c-a36c-4b0b-ace2-6f025e95c652 role=workflow_checker"
+    },
+    {
+      "check": "reject: a rejection with no reason is refused before it reaches the engine",
+      "status": "PASS",
+      "detail": "refused as validation_error"
+    },
+    {
+      "check": "reject: the checker rejects with a reason",
+      "status": "PASS",
+      "detail": "manager_review -> rejected"
+    },
+    {
+      "check": "reject: the original request still exists, with its reason",
+      "status": "PASS",
+      "detail": "reason=insufficient_justification"
+    },
+    {
+      "check": "rework: the checker returns the request for rework",
+      "status": "PASS",
+      "detail": "manager_review -> returned_for_rework"
+    },
+    {
+      "check": "rework: the maker resubmits and a checker approves",
+      "status": "PASS",
+      "detail": "resubmit -> manager_review, approve -> approved"
+    },
+    {
+      "check": "rework: the full decision history is preserved across the cycle",
+      "status": "PASS",
+      "detail": "2 decision(s): return_for_rework@cycle0, approve@cycle1"
+    },
+    {
+      "check": "rework: the rework cycle is recorded on the instance",
+      "status": "PASS",
+      "detail": "reworkCount=1"
+    },
+    {
+      "check": "security: an actor with no organization is refused",
+      "status": "PASS",
+      "detail": "refused: An approval action requires a tenant context."
+    },
+    {
+      "check": "security: a query carrying its own organization is refused",
+      "status": "PASS",
+      "detail": "refused by the strict schema"
+    },
+    {
+      "check": "security: a submission carrying its own actor is refused",
+      "status": "PASS",
+      "detail": "refused by the strict schema"
+    },
+    {
+      "check": "security: an action outside the workbench is refused",
+      "status": "PASS",
+      "detail": "refused"
+    },
+    {
+      "check": "security: an unknown request id is not found rather than forbidden",
+      "status": "PASS",
+      "detail": "refused as not_found"
+    },
+    {
+      "check": "capability: reassignment is reported unavailable rather than faked",
+      "status": "PASS",
+      "detail": "refused: reassignment_unavailable"
+    },
+    {
+      "check": "performance: the queue and detail are sampled, not guessed",
+      "status": "PASS",
+      "detail": "queue n=21, detail n=21"
+    },
+    {
+      "check": "capability: comments are reported unavailable rather than empty",
+      "status": "PASS",
+      "detail": "Comments are not configured for this deployment."
+    }
+  ]
+}

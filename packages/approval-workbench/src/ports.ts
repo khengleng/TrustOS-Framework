@@ -87,12 +87,18 @@ export interface EnginePort {
   }>;
 }
 
-/** Decision history. Satisfied by the engine's decision store. */
+/**
+ * Decision history. Satisfied by the engine's decision store.
+ *
+ * Positional, matching the framework's own signature rather than a friendlier one of
+ * this application's invention. A port that restates a dependency in a different shape
+ * has to be adapted at every call site, and an adapter that silently builds the wrong
+ * query is exactly what happened here the first time.
+ */
 export interface DecisionPort {
   listForInstance(
-    input: { organizationId: string; workflowInstanceId: string },
-    page?: number,
-    pageSize?: number,
+    workflowInstanceId: string,
+    organizationId: string,
   ): Promise<WorkflowDecisionRecord[]>;
 }
 
