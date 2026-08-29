@@ -135,12 +135,35 @@ export function securityHeaders(
  * Framework-agnostic on purpose — it takes and returns the minimum shape — so the
  * same function works in Nest, in a plain Express app and in a test.
  */
+/** Headers that name the server's software, which a caller has no use for. */
+const DISCLOSING_HEADERS = ['X-Powered-By', 'Server'];
+
 export function securityHeadersMiddleware(options: SecurityHeaderOptions) {
   return function trustosSecurityHeaders(
     request: { path?: string; url?: string },
-    response: { setHeader(name: string, value: string): void },
+    response: {
+      setHeader(name: string, value: string): void;
+      removeHeader?(name: string): void;
+    },
     next: () => void,
   ): void {
+    /*
+     * Remove the framework banner before adding our own headers.
+     *
+     * Express sets `X-Powered-By` in its initialisation middleware, which runs before
+     * this one, so removing it here works — and belongs here rather than in each
+     * application's bootstrap, because every application that mounts these headers
+     * wants it gone and only one of them would remember.
+     *
+     * On its own it is a low finding: knowing the server is Express does not grant
+     * anything. It matters because it is free to an attacker and it narrows which
+     * CVEs are worth trying, and because a response that volunteers its stack tends
+     * to volunteer other things.
+     */
+    for (const header of DISCLOSING_HEADERS) {
+      response.removeHeader?.(header);
+    }
+
     const path = request.path ?? request.url ?? '/';
     for (const [name, value] of Object.entries(securityHeaders(options, path))) {
       response.setHeader(name, value);

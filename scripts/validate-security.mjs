@@ -287,12 +287,28 @@ async function serviceChecks() {
     const longSearch = await rejects(() => workbench.queue(actor, { scope: 'available', search: 'x'.repeat(5000) }));
     record('query rejected: oversized search', longSearch, longSearch ? 'refused by the schema' : 'ACCEPTED');
 
-    // Whatever was accepted, the tenant asked for is always the actor's own.
-    const foreign = asked.filter((entry) => entry.organizationId && entry.organizationId !== orgA.id);
+    /*
+     * Whatever was accepted, the tenant asked for is always the actor's own.
+     *
+     * The first version of this check passed on zero recorded calls, because every
+     * hostile query above had been refused by the schema — so it asserted nothing and
+     * would have kept passing if the scoping were removed entirely. It now drives
+     * legitimate queries first, so there is something to inspect, and fails if there is
+     * not.
+     */
+    asked.length = 0;
+    await workbench.queue(actor, { scope: 'available' });
+    await workbench.queue(actor, { scope: 'mine' });
+    await workbench.queue(actor, { scope: 'completed' });
+    await workbench.detail(actor, 'wfi_probe').catch(() => undefined);
+
+    const foreign = asked.filter((entry) => entry.organizationId !== orgA.id);
     record(
-      'no hostile query changed the tenant that was read',
-      foreign.length === 0,
-      foreign.length ? `LEAKED to ${foreign.length} other tenant(s)` : `${asked.length} call(s), all scoped to the actor`,
+      'every store call carried the actor own tenant, and there were calls to inspect',
+      asked.length >= 4 && foreign.length === 0,
+      foreign.length
+        ? `LEAKED to ${foreign.length} other tenant(s)`
+        : `${asked.length} call(s) inspected, all scoped to the actor`,
     );
 
     // A forged super-admin flag must not turn a scoped read into an unscoped one.

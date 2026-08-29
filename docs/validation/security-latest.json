@@ -1,0 +1,307 @@
+{
+  "generatedAt": "2026-08-29T10:53:55.068Z",
+  "baseUrl": "https://governance-tool-dev.up.railway.app",
+  "totals": {
+    "checks": 49,
+    "passed": 48,
+    "failed": 1,
+    "skipped": 0
+  },
+  "verdict": "FAIL",
+  "results": [
+    {
+      "check": "anonymous GET /api/governance/approvals",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "anonymous GET /api/governance/approvals/wfi_test",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "anonymous POST /api/governance/approvals/wfi_test/decision",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "anonymous POST /api/governance/approvals/wfi_test/comments",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "anonymous POST /api/governance/approvals/tasks/task_test/reassign",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "hostile identifier: path traversal",
+      "status": "PASS",
+      "detail": "404",
+      "severity": "high"
+    },
+    {
+      "check": "hostile identifier: encoded traversal",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "hostile identifier: null byte",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "hostile identifier: sql shaped",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "hostile identifier: very long id",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "hostile identifier: unicode",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "hostile identifier: crlf",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "hostile body: malformed json",
+      "status": "PASS",
+      "detail": "400",
+      "severity": "high"
+    },
+    {
+      "check": "hostile body: deeply nested json",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "hostile body: oversized body",
+      "status": "PASS",
+      "detail": "413",
+      "severity": "high"
+    },
+    {
+      "check": "hostile body: prototype pollution",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "hostile body: array where object expected",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "prototype pollution did not alter the running process",
+      "status": "PASS",
+      "detail": "queue still refuses anonymously with 401",
+      "severity": "high"
+    },
+    {
+      "check": "method override header is not honoured",
+      "status": "PASS",
+      "detail": "401",
+      "severity": "high"
+    },
+    {
+      "check": "error responses still carry strict-transport-security",
+      "status": "PASS",
+      "detail": "max-age=31536000; includeSubDomains",
+      "severity": "medium"
+    },
+    {
+      "check": "error responses still carry x-content-type-options",
+      "status": "PASS",
+      "detail": "nosniff",
+      "severity": "medium"
+    },
+    {
+      "check": "error responses still carry content-security-policy",
+      "status": "PASS",
+      "detail": "default-src 'none'; script-src 'self'; s",
+      "severity": "medium"
+    },
+    {
+      "check": "no framework banner",
+      "status": "FAIL",
+      "detail": "Express",
+      "severity": "medium"
+    },
+    {
+      "check": "CORS refuses an unapproved origin on an authenticated route",
+      "status": "PASS",
+      "detail": "Access-Control-Allow-Origin: absent",
+      "severity": "high"
+    },
+    {
+      "check": "an unknown route does not disclose internals",
+      "status": "PASS",
+      "detail": "404",
+      "severity": "low"
+    },
+    {
+      "check": "query rejected: organization override",
+      "status": "PASS",
+      "detail": "refused by the schema",
+      "severity": "high"
+    },
+    {
+      "check": "query rejected: actor override",
+      "status": "PASS",
+      "detail": "refused by the schema",
+      "severity": "high"
+    },
+    {
+      "check": "query rejected: prototype pollution",
+      "status": "PASS",
+      "detail": "refused by the schema",
+      "severity": "high"
+    },
+    {
+      "check": "query rejected: negative page",
+      "status": "PASS",
+      "detail": "refused by the schema",
+      "severity": "high"
+    },
+    {
+      "check": "query rejected: zero page",
+      "status": "PASS",
+      "detail": "refused by the schema",
+      "severity": "high"
+    },
+    {
+      "check": "query rejected: huge page size",
+      "status": "PASS",
+      "detail": "refused by the schema",
+      "severity": "high"
+    },
+    {
+      "check": "query rejected: NaN page",
+      "status": "PASS",
+      "detail": "refused by the schema",
+      "severity": "high"
+    },
+    {
+      "check": "query rejected: unknown scope",
+      "status": "PASS",
+      "detail": "refused by the schema",
+      "severity": "high"
+    },
+    {
+      "check": "query rejected: unknown sort field",
+      "status": "PASS",
+      "detail": "refused by the schema",
+      "severity": "high"
+    },
+    {
+      "check": "query rejected: oversized search",
+      "status": "PASS",
+      "detail": "refused by the schema",
+      "severity": "high"
+    },
+    {
+      "check": "every store call carried the actor own tenant, and there were calls to inspect",
+      "status": "PASS",
+      "detail": "4 call(s) inspected, all scoped to the actor",
+      "severity": "high"
+    },
+    {
+      "check": "a forged super-admin flag does not widen the tenant scope",
+      "status": "PASS",
+      "detail": "still scoped to the actor organization",
+      "severity": "high"
+    },
+    {
+      "check": "decision rejected: actor override",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "decision rejected: organization override",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "decision rejected: role override",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "decision rejected: superadmin override",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "decision rejected: undeclared action",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "decision rejected: missing version",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "decision rejected: negative version",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "decision rejected: reject without reason",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "decision rejected: prototype pollution",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "tenantless actor refused: empty",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "tenantless actor refused: whitespace",
+      "status": "PASS",
+      "detail": "refused",
+      "severity": "high"
+    },
+    {
+      "check": "a cross-tenant read is not found, not forbidden",
+      "status": "PASS",
+      "detail": "refused as not_found",
+      "severity": "high"
+    }
+  ]
+}

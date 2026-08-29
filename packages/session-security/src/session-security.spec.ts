@@ -3,7 +3,12 @@ import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustos/securi
 import { securityPolicySchema } from '@trustos/security-policy';
 import { assertNoLeakedValues } from '@trustos/security-testing';
 import { checkCsrf, issueCsrfToken, isSafeMethod, verifyCsrfToken } from './csrf';
-import { buildCookie, evaluateCors, securityHeaders } from './http-security';
+import {
+  buildCookie,
+  evaluateCors,
+  securityHeaders,
+  securityHeadersMiddleware,
+} from './http-security';
 import { InMemorySessionStore } from './in-memory-store';
 import { SessionService, describeDevice, hashRefreshToken } from './sessions';
 
@@ -582,5 +587,45 @@ describe('CSRF', () => {
 
     // Well-formed, matching cookie and header, and still refused — this is the replay.
     expect(decision.reason).toBe('csrf_token_not_bound_to_session');
+  });
+});
+
+describe('framework banner', () => {
+  it('removes headers that name the server software', () => {
+    /*
+     * Free information for an attacker: it narrows which CVEs are worth trying, and a
+     * response that volunteers its stack tends to volunteer other things. Found on the
+     * deployed DEV runtime, which was answering `X-Powered-By: Express`.
+     */
+    const removed: string[] = [];
+    const middleware = securityHeadersMiddleware({
+      policy: securityPolicySchema.parse({ environment: 'test' }).http,
+      environment: 'test',
+    });
+
+    middleware(
+      { path: '/api/governance/approvals' },
+      {
+        setHeader: () => undefined,
+        removeHeader: (name: string) => void removed.push(name),
+      },
+      () => undefined,
+    );
+
+    expect(removed).toContain('X-Powered-By');
+    expect(removed).toContain('Server');
+  });
+
+  it('does not require the response to support removal', () => {
+    // A response object without `removeHeader` must not throw — the middleware runs
+    // against more than one server implementation.
+    const middleware = securityHeadersMiddleware({
+      policy: securityPolicySchema.parse({ environment: 'test' }).http,
+      environment: 'test',
+    });
+
+    expect(() =>
+      middleware({ path: '/' }, { setHeader: () => undefined }, () => undefined),
+    ).not.toThrow();
   });
 });
