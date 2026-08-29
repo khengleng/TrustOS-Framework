@@ -1,0 +1,110 @@
+{
+  "generatedAt": "2026-08-29T11:15:00.000Z",
+  "release": "v0.1",
+  "commit": "c7cb557182b5afc78ad6e656e072d1540ef45ca8",
+  "branch": "foundation/phase-1",
+  "mergedToMain": false,
+  "environment": "dev",
+  "devUrl": "https://governance-tool-dev.up.railway.app",
+  "artifact": null,
+  "identity": {
+    "provider": "https://id.cambobia.com",
+    "realm": "trustos-dev",
+    "mode": "oidc"
+  },
+  "gates": {
+    "foundation": {
+      "result": "PARTIAL",
+      "reason": "Authentication positive deployed path unreachable; DEV validation client is public (TOS-003)"
+    },
+    "deployedBoundary": {
+      "result": "NOT_REACHED",
+      "reason": "Requires a machine token from gate 1"
+    },
+    "security": {
+      "result": "PASS",
+      "checks": {
+        "checks": 49,
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    "recovery": {
+      "result": "PARTIAL",
+      "checks": {
+        "checks": 21,
+        "passed": 20,
+        "failed": 0,
+        "skipped": 1
+      },
+      "measurements": {
+        "backupMs": 1052,
+        "restoreMs": 3208
+      }
+    },
+    "uatReadiness": {
+      "result": "PARTIAL",
+      "reason": "Manual promotion, no immutable artifact, PROD deploys on merge (TOS-006, TOS-007)"
+    }
+  },
+  "foundationMatrix": {
+    "authentication": "PARTIAL",
+    "multiTenancy": "PASS",
+    "rbac": "PASS",
+    "policy": "PASS",
+    "workflow": "PASS",
+    "makerChecker": "PASS",
+    "audit": "PASS"
+  },
+  "regression": {
+    "tests": {
+      "tests": 5740,
+      "passed": 5740,
+      "failed": 0,
+      "suites": 1529
+    },
+    "lintErrors": 0,
+    "buildExitCode": 0,
+    "foundationValidator": "24/24 PASS",
+    "approvalWorkbenchValidator": {
+      "checks": 33,
+      "passed": 33,
+      "failed": 0,
+      "errorRate": 0
+    },
+    "ci": {
+      "status": "success",
+      "jobs": 11,
+      "failures": 0
+    }
+  },
+  "rejectionLayerEvidence": {
+    "deployedProven": [
+      "guard",
+      "format",
+      "key_resolution"
+    ],
+    "notExercisedDeployed": [
+      "expiry",
+      "issuer",
+      "audience"
+    ],
+    "note": "Refused at key_resolution before the intended check. Covered at cryptographic-integration level only; not promoted to deployed evidence."
+  },
+  "applications": {
+    "approval-workbench": {
+      "validation": "pass",
+      "environment": "dev",
+      "lifecycle": "draft"
+    }
+  },
+  "prod": {
+    "touched": false,
+    "deployed": false,
+    "healthCheck": "200",
+    "openFinding": "TOS-001"
+  },
+  "overall": "TRUSTOS v0.1 PARTIALLY READY",
+  "safeToStartCaseManagement": false
+}

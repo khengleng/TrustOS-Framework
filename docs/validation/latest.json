@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-08-29T09:36:35.344Z",
+  "generatedAt": "2026-08-29T11:08:28.836Z",
   "totals": {
-    "tests": 5698,
-    "passed": 5698,
+    "tests": 5740,
+    "passed": 5740,
     "failed": 0,
-    "suites": 1519
+    "suites": 1529
   },
   "capabilities": [
     {
@@ -14,8 +14,8 @@
       "sourceFiles": 14,
       "specFiles": 2,
       "tests": {
-        "total": 60,
-        "passed": 60,
+        "total": 70,
+        "passed": 70,
         "failed": 0,
         "files": 2
       },
@@ -224,8 +224,8 @@
       "sourceFiles": 13,
       "specFiles": 3,
       "tests": {
-        "total": 98,
-        "passed": 98,
+        "total": 100,
+        "passed": 100,
         "failed": 0,
         "files": 3
       },
@@ -263,13 +263,13 @@
       "id": "governance-tool",
       "name": "Governance Tool",
       "critical": false,
-      "sourceFiles": 6,
-      "specFiles": 1,
+      "sourceFiles": 7,
+      "specFiles": 2,
       "tests": {
-        "total": 43,
-        "passed": 43,
+        "total": 49,
+        "passed": 49,
         "failed": 0,
-        "files": 1
+        "files": 2
       },
       "status": "IMPLEMENTED"
     },

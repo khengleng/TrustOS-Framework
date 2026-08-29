@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-29T09:36:34.434Z",
+  "generatedAt": "2026-08-29T11:08:27.837Z",
   "frameworkVersion": "0.1.0",
   "capabilities": [
     {
@@ -16,7 +16,7 @@
         "@trustos/identity"
       ],
       "testCoverage": {
-        "tests": 60,
+        "tests": 70,
         "specFiles": 2
       },
       "documentation": "docs/validation/framework-current-state.md",
@@ -373,7 +373,7 @@
         "@trustos/security-events"
       ],
       "testCoverage": {
-        "tests": 98,
+        "tests": 100,
         "specFiles": 3
       },
       "documentation": "docs/validation/framework-current-state.md",
@@ -436,8 +436,8 @@
         "@trustos/governance-tool-core"
       ],
       "testCoverage": {
-        "tests": 43,
-        "specFiles": 1
+        "tests": 49,
+        "specFiles": 2
       },
       "documentation": "docs/validation/framework-current-state.md",
       "deploymentRequirement": "in-process library, no deployed service",
