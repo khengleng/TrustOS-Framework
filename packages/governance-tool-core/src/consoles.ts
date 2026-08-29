@@ -972,6 +972,21 @@ export function approvalWorkbench(): InternalApplication {
       }),
     ],
     /*
+     * These are **gateway** operations, not the Governance Tool's own routes.
+     *
+     * Each one is declared in `@trustos/governance-tool-integration`'s operation
+     * catalog, and an integration test asserts that every path a console calls is
+     * declared there. That is a two-sided contract, which is worth stating because I
+     * changed one side of it and the test caught me: pointing these at the Governance
+     * Tool's own `/api/governance/approvals` routes left four console actions calling
+     * operations nobody had declared.
+     *
+     * The Governance Tool serves the workbench today at `/api/governance/approvals`,
+     * documented in docs/applications/approval-workbench.md. The two surfaces are
+     * deliberately separate: one is what an internal application is permitted to call
+     * through the gateway, the other is what this deployment happens to serve.
+     */
+    /*
      * The routes the Governance Tool actually serves.
      *
      * Approve, reject and return share one endpoint because they differ only in the
@@ -991,29 +1006,23 @@ export function approvalWorkbench(): InternalApplication {
         'approve',
         'Approve',
         R.API_WORKFLOW,
-        '/internal/v1/operations/approvals/:instanceId/decision',
+        '/internal/v1/operations/tasks/:taskId/approve',
         { reversible: false },
       ),
-      action(
-        'reject',
-        'Reject',
-        R.API_WORKFLOW,
-        '/internal/v1/operations/approvals/:instanceId/decision',
-        {
-          reversible: false,
-        },
-      ),
+      action('reject', 'Reject', R.API_WORKFLOW, '/internal/v1/operations/tasks/:taskId/reject', {
+        reversible: false,
+      }),
       action(
         'return',
         'Return for rework',
         R.API_WORKFLOW,
-        '/internal/v1/operations/approvals/:instanceId/decision',
+        '/internal/v1/operations/tasks/:taskId/return',
       ),
       action(
         'reassign',
         'Reassign',
         R.API_WORKFLOW,
-        '/internal/v1/operations/approvals/tasks/:taskId/reassign',
+        '/internal/v1/operations/tasks/:taskId/reassign',
       ),
     ],
     pages: [

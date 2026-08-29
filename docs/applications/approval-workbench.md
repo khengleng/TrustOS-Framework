@@ -73,6 +73,17 @@ The permission opens the workbench. It does **not** grant the right to decide: t
 workflow definition's transition permission, checked inside the engine against the loaded
 instance.
 
+### Two surfaces, deliberately separate
+
+The console descriptor declares its actions against `/internal/v1/operations/...` — the
+**gateway** contract, whose paths are declared in `@trustos/governance-tool-integration`'s
+operation catalog and asserted by an integration test. The routes in the table above are
+what **this deployment** serves today.
+
+They are not the same thing, and conflating them is a mistake worth recording: pointing
+the descriptor at the Governance Tool's own routes left four console actions calling
+gateway operations nobody had declared, and the integration test caught it.
+
 ## Classification
 
 |                     |                             |
