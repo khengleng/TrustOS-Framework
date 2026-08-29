@@ -80,16 +80,8 @@
     }
   },
   "rejectionLayerEvidence": {
-    "deployedProven": [
-      "guard",
-      "format",
-      "key_resolution"
-    ],
-    "notExercisedDeployed": [
-      "expiry",
-      "issuer",
-      "audience"
-    ],
+    "deployedProven": ["guard", "format", "key_resolution"],
+    "notExercisedDeployed": ["expiry", "issuer", "audience"],
     "note": "Refused at key_resolution before the intended check. Covered at cryptographic-integration level only; not promoted to deployed evidence."
   },
   "applications": {
