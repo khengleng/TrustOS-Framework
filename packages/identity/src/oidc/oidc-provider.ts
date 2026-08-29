@@ -154,7 +154,13 @@ export class OidcIdentityProvider implements IdentityProvider {
       this.lastKeyFetchAt = new Date();
       this.keyFetchFailures = 0;
     } catch (error) {
-      this.keyFetchFailures += 1;
+      // Only a failure to *retrieve* the provider's keys says anything about the
+      // provider's health. A token that was refused is this working, and counting
+      // refusals here meant anyone who could reach the API could mark identity
+      // unhealthy — and, because the readiness indicator is critical, take the
+      // instance out of rotation — by sending a handful of invalid bearer tokens.
+      if (isKeyRetrievalFailure(error)) this.keyFetchFailures += 1;
+
       // The caller learns only that the token did not work. Which of the four
       // checks failed is operator detail, and telling an attacker which one is
       // how a token is iteratively repaired.
@@ -360,6 +366,42 @@ export class OidcIdentityProvider implements IdentityProvider {
       providerKind: this.kind,
     };
   }
+}
+
+/**
+ * Whether the provider's key material could not be retrieved.
+ *
+ * Distinct from a token that was checked against keys we hold and correctly refused:
+ * an expired token, a bad signature, a `kid` the realm does not publish. Those say the
+ * provider is working, and treating them as provider faults turns readiness into
+ * something an anonymous caller can switch off.
+ *
+ * The classification is deliberately narrow — an unrecognised error does not count as
+ * an outage. A real outage produces a timeout or a network error reliably, so nothing
+ * is missed by refusing to guess; whereas defaulting the unknown case to "unhealthy"
+ * restores exactly the denial of service this exists to prevent.
+ */
+function isKeyRetrievalFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const code = (error as Error & { code?: string }).code;
+
+  // jose signals a JWKS endpoint that did not answer in time.
+  if (code === 'ERR_JWKS_TIMEOUT') return true;
+
+  // An unreachable endpoint surfaces as the runtime's own fetch failure, which
+  // carries no jose code.
+  if (
+    error.name === 'TypeError' &&
+    /fetch failed|network|ECONN|ENOTFOUND|EAI_AGAIN/i.test(error.message)
+  ) {
+    return true;
+  }
+
+  return Boolean(
+    code === undefined &&
+    /fetch failed|ECONN|ENOTFOUND|EAI_AGAIN|socket hang up/i.test(error.message),
+  );
 }
 
 function readRealmRoles(payload: JWTPayload): string[] {

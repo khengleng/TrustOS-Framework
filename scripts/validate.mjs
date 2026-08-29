@@ -330,6 +330,60 @@ async function checkDeployedAuthentication(url) {
   return results;
 }
 
+/**
+ * Refuses a token that is correct in every respect except its signature.
+ *
+ * `Bearer not-a-token` proves very little: it fails to parse, so a runtime that
+ * never verified anything would still reject it. This asks the deployment which
+ * issuer and audience it trusts, mints a well-formed RS256 token carrying exactly
+ * those claims, and signs it with a key the realm has never published. The only
+ * thing that can refuse it is signature verification against the provider's JWKS.
+ *
+ * It needs no credential, which is what makes it runnable in every environment.
+ *
+ * A 200 here would mean the deployment accepts tokens it cannot verify.
+ */
+async function checkUntrustedSignatureRefused(url) {
+  const check = 'auth-untrusted-signature-refused';
+
+  const config = await probe(url, '/api/portal/config');
+  let identity;
+  try {
+    identity = JSON.parse(config.body ?? '{}').identity;
+  } catch {
+    identity = null;
+  }
+
+  // No configured provider means there is no signature to forge against, and
+  // reporting a pass for a check that never ran is the habit this file exists to break.
+  if (!identity?.issuerUrl || !identity?.clientId) {
+    return { check, pass: null, detail: 'NOT_REACHED — deployment advertises no OIDC issuer' };
+  }
+
+  let token;
+  try {
+    const { SignJWT, generateKeyPair } = await import('jose');
+    const { privateKey } = await generateKeyPair('RS256');
+    token = await new SignJWT({ azp: identity.clientId })
+      .setProtectedHeader({ alg: 'RS256', kid: 'untrusted-key' })
+      .setIssuer(identity.issuerUrl)
+      .setAudience(identity.clientId)
+      .setSubject('00000000-0000-0000-0000-000000000000')
+      .setIssuedAt()
+      .setExpirationTime('10m')
+      .sign(privateKey);
+  } catch (error) {
+    return { check, pass: null, detail: `NOT_REACHED — could not mint a token: ${error.message}` };
+  }
+
+  const response = await probe(url, '/api/governance/apps', { Authorization: `Bearer ${token}` });
+  return {
+    check,
+    pass: response.status === 401 || response.status === 403,
+    detail: `valid claims, untrusted key -> ${response.status}`,
+  };
+}
+
 /** Checks a running deployment answers, and answers safely. */
 async function checkDeployment(url) {
   const results = [];
@@ -372,6 +426,8 @@ async function checkDeployment(url) {
     pass: forged.status === 401 || forged.status === 403,
     detail: `bearer "not-a-token" -> ${forged.status}`,
   });
+
+  results.push(await checkUntrustedSignatureRefused(url));
 
   const headers = health.headers;
   for (const [name, header] of [

@@ -225,7 +225,10 @@ describe('AuthService', () => {
       expect(stored?.passwordHash).not.toBe(weak);
       expect(stored?.passwordHash).toMatch(/^\$2[aby]?\$12\$/);
       expect(eventTypes()).toContain('auth.password_rehashed');
-    });
+      // Three bcrypt operations, one of them at cost 12 deliberately. The five-second
+      // default is a deadline for a unit test, not for real key stretching, and this
+      // timed out during full-suite runs on a tree where nothing was wrong.
+    }, 60_000);
   });
 
   // ---------------------------------------------------------------------------

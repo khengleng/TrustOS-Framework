@@ -113,7 +113,10 @@ describe('validate-template', () => {
 
     expect(output).toContain('30 template(s) valid.');
     expect(code).toBe(0);
-  });
+    // Validates all thirty templates through the CLI. The five-second default is a
+    // deadline for a unit test, not for this, and exceeding it under a parallel suite
+    // run made `npm run validate` report the CLI capability BROKEN on a healthy tree.
+  }, 60_000);
 
   it('validates one template by id', async () => {
     const { code, output } = await invoke([
@@ -153,7 +156,7 @@ describe('validate-template', () => {
     const reports = JSON.parse(output) as Array<{ templateId: string; ok: boolean }>;
     expect(reports.length).toBeGreaterThanOrEqual(30);
     expect(reports.every((report) => report.ok)).toBe(true);
-  });
+  }, 60_000);
 });
 
 describe('new', () => {
