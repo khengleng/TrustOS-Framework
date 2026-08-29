@@ -6,7 +6,11 @@ import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
 import type { AppConfig } from '@trustos/config';
 import { PrismaAccessResolver } from '@trustos/access-resolver';
 import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustos/database';
-import { ObservabilityModule, databaseHealthIndicator } from '@trustos/observability';
+import {
+  ObservabilityModule,
+  databaseHealthIndicator,
+  identityHealthIndicator,
+} from '@trustos/observability';
 import { BearerTokenAuthenticator } from '@trustos/identity';
 import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
 import type { AccessResolver, CredentialAuthenticator, IdentityProvider } from '@trustos/identity';
@@ -123,7 +127,25 @@ export class GovernanceToolModule {
           config,
           inject: [PrismaService],
           useFactory: ((prisma: PrismaService) => ({
-            indicators: [databaseHealthIndicator(() => checkDatabaseConnection(prisma))],
+            indicators: [
+              databaseHealthIndicator(() => checkDatabaseConnection(prisma)),
+              /*
+               * Identity, when there is one to report on.
+               *
+               * A service running OIDC that cannot reach its provider's keys will refuse
+               * every authenticated request, and readiness is the signal that should say
+               * so rather than leaving the instance in rotation to fail one caller at a
+               * time. Reported from what token validation has already observed — no probe
+               * request, because a readiness check that calls the identity provider on
+               * every poll is a way to be rate-limited by it.
+               *
+               * Omitted entirely when no provider is configured: an indicator that
+               * reports "ok" for an absent provider would be worse than none.
+               */
+              ...(overrides.identityProvider
+                ? [identityHealthIndicator(() => overrides.identityProvider!.health())]
+                : []),
+            ],
           })) as never,
         }),
       ],

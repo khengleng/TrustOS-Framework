@@ -114,6 +114,38 @@ export function healthHttpStatus(report: HealthReport): number {
   return report.status === 'down' ? 503 : 200;
 }
 
+/**
+ * Builds an identity-provider readiness indicator.
+ *
+ * A service that cannot verify a token is not ready, however healthy its database is:
+ * it will refuse every authenticated request, and readiness is the signal that should
+ * say so rather than leaving an instance in rotation to fail one caller at a time.
+ *
+ * Critical, for that reason. And the detail is deliberately thin — the provider's own
+ * metadata carries the issuer and key state, and readiness is an unauthenticated
+ * endpoint, so it reports whether identity works and nothing about how it is configured.
+ */
+export function identityHealthIndicator(
+  probe: () => Promise<{ ok: boolean; detail?: string }>,
+): HealthIndicator {
+  return {
+    name: 'identity',
+    critical: true,
+    async check() {
+      try {
+        const result = await probe();
+        return result.ok
+          ? { status: 'ok', detail: 'token verification available' }
+          : { status: 'down', detail: 'cannot verify tokens' };
+      } catch {
+        // A probe that throws is a provider that cannot answer, which is the same
+        // operational fact as one answering "no".
+        return { status: 'down', detail: 'cannot verify tokens' };
+      }
+    },
+  };
+}
+
 /** Builds a database readiness indicator from any client exposing a ping. */
 export function databaseHealthIndicator(
   ping: () => Promise<{ ok: boolean; latencyMs: number; error?: string }>,

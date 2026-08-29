@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   HealthRegistry,
   databaseHealthIndicator,
+  identityHealthIndicator,
   healthHttpStatus,
   type HealthIndicator,
 } from './health';
@@ -106,6 +107,43 @@ describe('databaseHealthIndicator', () => {
   it('reports latency when healthy', async () => {
     const check = databaseHealthIndicator(async () => ({ ok: true, latencyMs: 4 }));
     expect(await check.check()).toEqual({ status: 'ok', detail: '4ms' });
+  });
+
+  it('reports identity as down when tokens cannot be verified', async () => {
+    // A service that cannot verify a token is not ready, whatever its database says:
+    // it will refuse every authenticated request.
+    const check = identityHealthIndicator(async () => ({ ok: false }));
+
+    expect(await check.check()).toEqual({ status: 'down', detail: 'cannot verify tokens' });
+    expect(check.critical).toBe(true);
+  });
+
+  it('reports identity as ok when verification is available', async () => {
+    const check = identityHealthIndicator(async () => ({ ok: true }));
+
+    expect(await check.check()).toEqual({ status: 'ok', detail: 'token verification available' });
+  });
+
+  it('treats a probe that throws as unable to verify', async () => {
+    const check = identityHealthIndicator(async () => {
+      throw new Error('jwks unreachable');
+    });
+
+    expect((await check.check()).status).toBe('down');
+  });
+
+  it('discloses nothing about how identity is configured', async () => {
+    // /ready is unauthenticated. It says whether identity works, never the issuer,
+    // the key state or anything else a prober could use.
+    const check = identityHealthIndicator(async () => ({
+      ok: false,
+      detail: 'issuer https://id.example/realms/secret unreachable, 5 key fetch failures',
+    }));
+
+    const result = await check.check();
+
+    expect(JSON.stringify(result)).not.toContain('id.example');
+    expect(JSON.stringify(result)).not.toContain('key fetch');
   });
 });
 

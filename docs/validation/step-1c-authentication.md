@@ -81,6 +81,31 @@ All of that is adjacent evidence. Section 1 of this brief forbids promoting on i
 prohibition is right: every one of those observations was made somewhere other than the
 DEV runtime path this step exists to exercise.
 
+## Verified while provisioning was blocked
+
+Three of the brief's requirements are properties of the code, checkable without any
+identity administration. All three hold:
+
+| Requirement                              | State                                                                                                                                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| §7 — fail closed, no OIDC→local fallback | **holds.** No fallback path exists. An unreachable JWKS raises `unauthorized` rather than admitting the request                                                                |
+| §8 — startup validation                  | **holds.** `IDENTITY_PROVIDER=oidc` without `OIDC_ISSUER_URL` or `OIDC_CLIENT_ID` refuses to start: _"Refusing to start with an identity provider that cannot verify a token"_ |
+| §9 — readiness reflects identity         | **was missing. Now added.**                                                                                                                                                    |
+
+Readiness reported only `database`. A service running OIDC that cannot reach its
+provider's keys refuses every authenticated request while reporting itself ready — an
+instance left in rotation to fail one caller at a time.
+
+`identityHealthIndicator` is now among the readiness indicators, marked critical. It reads
+what token validation has already observed rather than probing the provider on every poll,
+because a readiness check that calls the identity provider on a timer is a way to be
+rate-limited by it. It is omitted entirely when no provider is configured, since an
+indicator reporting "ok" for an absent provider is worse than none.
+
+`/ready` is unauthenticated, so the indicator says whether identity works and nothing about
+how it is configured — no issuer, no key state. A test asserts that a detail string
+containing an issuer and key-failure counts is not echoed.
+
 ## Exactly what unblocks this
 
 1. **Keycloak administration for `id.cambobia.com`** — either the current `trustos-admin`
