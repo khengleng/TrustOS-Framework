@@ -373,7 +373,8 @@ describe('health', () => {
 
     const health = await provider.health();
     expect(health.ok).toBe(true);
-  });
+    // Thirty token verifications, each doing real signature work.
+  }, 60_000);
 
   it("degrades when the provider's keys cannot be fetched", async () => {
     // The case the counter is actually for: the JWKS endpoint is not answering, so
