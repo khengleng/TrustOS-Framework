@@ -1,0 +1,26 @@
+{
+  "name": "@trustos/approval-workbench",
+  "version": "0.1.0",
+  "description": "The Approval Workbench application. A read model and a decision path over TrustOS Workflow, which remains authoritative for approval state.",
+  "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "!dist/**/*.tsbuildinfo"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/governance-workflow-bridge": "0.1.0",
+    "@trustos/shared-types": "0.1.0",
+    "@trustos/workflow-core": "0.1.0",
+    "zod": "^3.24.1"
+  }
+}

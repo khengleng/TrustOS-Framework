@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./packages/approval-workbench" },
     {
       "path": "./packages/access-resolver"
     },

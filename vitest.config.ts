@@ -57,6 +57,7 @@ export default defineConfig({
       ),
 
       '@trustos/api-keys': pkg('api-keys'),
+      '@trustos/approval-workbench': pkg('approval-workbench'),
       '@trustos/audit': pkg('audit'),
       '@trustos/authorization': pkg('authorization'),
       '@trustos/identity': pkg('identity'),
