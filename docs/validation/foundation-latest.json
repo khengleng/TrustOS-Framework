@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-29T04:44:59.744Z",
-  "correlationId": "val_7cf0aafc-b63e-464e-8472-a77f97c1a165",
+  "generatedAt": "2026-08-29T04:56:01.379Z",
+  "correlationId": "val_829c884f-2334-435f-b5df-353572cc40e5",
   "environment": "dev",
   "results": [
     {
       "check": "tenancy: a scoped delegate reads its own tenant rows",
       "status": "PASS",
-      "detail": "found membership cmtdwcmak0007s6du1r6l895u"
+      "detail": "found membership cmtdwqss40007s6zyf1b6gggj"
     },
     {
       "check": "tenancy: a scoped delegate refuses a cross-tenant read by id",
@@ -46,7 +46,7 @@
     {
       "check": "workflow: a request starts in draft and persists",
       "status": "PASS",
-      "detail": "instance cmtdwcogl000os6duadhna4yu in draft"
+      "detail": "instance cmtdwquvv000os6zy01sbp1dj in draft"
     },
     {
       "check": "workflow: the maker submits it and it reaches review",
@@ -56,7 +56,17 @@
     {
       "check": "maker-checker: the engine refuses the maker's approval",
       "status": "PASS",
-      "detail": "refused (reason not attributed): You do not have permission to perform this action."
+      "detail": "refused, recorded as self_approval_forbidden"
+    },
+    {
+      "check": "rbac: a viewer cannot approve",
+      "status": "PASS",
+      "detail": "refused: You do not have permission to perform this action."
+    },
+    {
+      "check": "tenancy: a checker in another organization cannot approve",
+      "status": "PASS",
+      "detail": "refused: The requested resource was not found."
     },
     {
       "check": "workflow: the checker approves it",
@@ -66,12 +76,32 @@
     {
       "check": "persistence: the instance is in Postgres, in its final state",
       "status": "PASS",
-      "detail": "row cmtdwcogl000os6duadhna4yu state=approved org=A"
+      "detail": "row cmtdwquvv000os6zy01sbp1dj state=approved org=A"
     },
     {
       "check": "persistence: a decision was recorded against it",
       "status": "PASS",
       "detail": "1 decision row(s)"
+    },
+    {
+      "check": "audit: the scenario produced a trail",
+      "status": "PASS",
+      "detail": "3 record(s): workflow.workflow.started, workflow.workflow.transitioned"
+    },
+    {
+      "check": "audit: every record names what acted, and in which tenant",
+      "status": "PASS",
+      "detail": "all 3 name an actor or the system, in tenant A"
+    },
+    {
+      "check": "audit: the trail is scoped to the acting organization",
+      "status": "PASS",
+      "detail": "all in tenant A"
+    },
+    {
+      "check": "policy: refusals were recorded as security events",
+      "status": "PASS",
+      "detail": "2 blocked: self_approval_forbidden, transition_permission_missing"
     },
     {
       "check": "audit: the log has no update path through the client",
@@ -80,8 +110,8 @@
     }
   ],
   "totals": {
-    "checks": 15,
-    "passed": 15,
+    "checks": 21,
+    "passed": 21,
     "failed": 0
   },
   "verdict": "PASS"

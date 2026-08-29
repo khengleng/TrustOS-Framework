@@ -238,7 +238,7 @@ async function main() {
   // history and SLA use in-memory stores: they are not what this scenario is proving,
   // and saying so is better than implying the whole stack is persisted.
 
-  const scenario = await runAccessChangeRequest({ orgA, users, prisma, correlationId });
+  const scenario = await runAccessChangeRequest({ orgA, orgB, users, prisma, correlationId });
 
   await check('workflow: a request starts in draft and persists', async () => ({
     pass: scenario.started?.currentState === 'draft',
@@ -270,11 +270,46 @@ async function main() {
      * `eligible` for anyone else. Claiming this one proves the rule would be reading
      * more into a generic message than it says.
      */
+    /*
+     * The refusal is attributed — in the security event stream rather than the error
+     * message. The message a caller sees stays generic on purpose; telling them which
+     * of several checks refused is how a request gets iteratively repaired. The reason
+     * is recorded where an operator can read it.
+     */
+    const attributed = (scenario.securityEvents ?? []).some(
+      (event) => event.reason === 'self_approval_forbidden',
+    );
     return {
-      pass: scenario.selfApproval.refused === true,
-      detail: scenario.selfApproval.refused
-        ? `refused (reason not attributed): ${String(scenario.selfApproval.reason).slice(0, 60)}`
-        : 'THE ENGINE ALLOWED SELF-APPROVAL',
+      pass: scenario.selfApproval.refused === true && attributed,
+      detail: !scenario.selfApproval.refused
+        ? 'THE ENGINE ALLOWED SELF-APPROVAL'
+        : attributed
+          ? 'refused, recorded as self_approval_forbidden'
+          : 'refused, but no self_approval_forbidden event was recorded',
+    };
+  });
+
+  await check('rbac: a viewer cannot approve', async () => {
+    if (!scenario.viewerApproval) {
+      return { pass: false, detail: `never reached — ${scenario.error ?? 'scenario did not run'}` };
+    }
+    return {
+      pass: scenario.viewerApproval.refused === true,
+      detail: scenario.viewerApproval.refused
+        ? `refused: ${String(scenario.viewerApproval.reason).slice(0, 60)}`
+        : 'A VIEWER APPROVED A REQUEST',
+    };
+  });
+
+  await check('tenancy: a checker in another organization cannot approve', async () => {
+    if (!scenario.crossTenantApproval) {
+      return { pass: false, detail: `never reached — ${scenario.error ?? 'scenario did not run'}` };
+    }
+    return {
+      pass: scenario.crossTenantApproval.refused === true,
+      detail: scenario.crossTenantApproval.refused
+        ? `refused: ${String(scenario.crossTenantApproval.reason).slice(0, 60)}`
+        : 'A FOREIGN TENANT APPROVED THIS REQUEST',
     };
   });
 
@@ -300,6 +335,61 @@ async function main() {
       where: { workflowInstanceId: scenario.started.id },
     });
     return { pass: decisions > 0, detail: `${decisions} decision row(s)` };
+  });
+
+  await check('audit: the scenario produced a trail', async () => {
+    const records = scenario.auditRecords ?? [];
+    return {
+      pass: records.length > 0,
+      detail: records.length
+        ? `${records.length} record(s): ${[...new Set(records.map((r) => r.action))].slice(0, 4).join(', ')}`
+        : 'no audit records were produced',
+    };
+  });
+
+  await check('audit: every record names what acted, and in which tenant', async () => {
+    const records = scenario.auditRecords ?? [];
+    if (records.length === 0) return { pass: false, detail: 'no records to inspect' };
+    /*
+     * "Who acted" is satisfied by an actor id *or* an actorType of `system`.
+     *
+     * An earlier version of this required an actorId on every record and failed the
+     * automatic transition — which the engine deliberately records with a null actor
+     * and `actorType: 'system'`, because putting the maker's name on a transition the
+     * engine took would attribute a decision they did not make. The framework was
+     * right; the check was too crude.
+     */
+    const actedBy = (r) => r.actorId ?? r.actorType ?? r.after?.actorType ?? null;
+    const incomplete = records.filter((r) => !r.organizationId || actedBy(r) === null);
+    return {
+      pass: incomplete.length === 0,
+      detail: incomplete.length
+        ? `${incomplete.length} incomplete: ${incomplete
+            .map((r) => `${r.action}[acted-by=${r.actorId ?? r.after?.actorType ?? 'nothing'}]`)
+            .join(' ')}`
+        : `all ${records.length} name an actor or the system, in tenant A`,
+    };
+  });
+
+  await check('audit: the trail is scoped to the acting organization', async () => {
+    const records = scenario.auditRecords ?? [];
+    if (records.length === 0) return { pass: false, detail: 'no records to inspect' };
+    const foreign = records.filter((r) => r.organizationId !== orgA.id);
+    return {
+      pass: foreign.length === 0,
+      detail: foreign.length ? `${foreign.length} record(s) in another tenant` : 'all in tenant A',
+    };
+  });
+
+  await check('policy: refusals were recorded as security events', async () => {
+    const events = scenario.securityEvents ?? [];
+    const blocked = events.filter((e) => e.result === 'blocked' || e.result === 'failure');
+    return {
+      pass: blocked.length > 0,
+      detail: blocked.length
+        ? `${blocked.length} blocked: ${[...new Set(blocked.map((e) => e.reason ?? e.type))].slice(0, 3).join(', ')}`
+        : 'the refusals produced no security event',
+    };
   });
 
   await check('audit: the log has no update path through the client', async () => {
@@ -349,7 +439,7 @@ async function main() {
  * propagated, so a failure early in the chain still leaves the later checks reporting
  * "never reached" instead of vanishing.
  */
-async function runAccessChangeRequest({ orgA, users, prisma, correlationId }) {
+async function runAccessChangeRequest({ orgA, orgB, users, prisma, correlationId }) {
   const out = { error: null };
 
   try {
@@ -368,7 +458,9 @@ async function runAccessChangeRequest({ orgA, users, prisma, correlationId }) {
     const document = CHANGE_REQUEST_APPROVAL;
     const now = () => new Date();
     const policy = securityPolicySchema.parse({ environment: 'test' });
-    const events = new SecurityEventEmitter({ sinks: [new InMemorySecurityEventSink()] });
+    const securitySink = new InMemorySecurityEventSink();
+    const events = new SecurityEventEmitter({ sinks: [securitySink] });
+    const auditSink = new InMemoryAuditSink();
 
     // All three Prisma-backed. Mixing an in-memory definition store with a persisted
     // instance store violates the foreign key the moment an instance is created — the
@@ -391,7 +483,9 @@ async function runAccessChangeRequest({ orgA, users, prisma, correlationId }) {
       taskStore,
       history: new HistoryRecorder({
         store: new runtime.InMemoryHistoryStore(),
-        audit: new AuditService({ sink: new InMemoryAuditSink() }),
+        // Held so the trail can be read back and enumerated. An audit capability
+        // reported as working because the code path exists is not evidence.
+        audit: new AuditService({ sink: auditSink }),
         now,
       }),
       authorizer: createAuthorizer({ mfa: policy.mfa, events, additional: WORKFLOW_POLICIES }),
@@ -526,11 +620,50 @@ async function runAccessChangeRequest({ orgA, users, prisma, correlationId }) {
       out.selfApproval = { refused: true, reason: error.message };
     }
 
+    /*
+     * A viewer holds no workflow role and no decide permission. Refusing them is the
+     * negative half of the RBAC matrix — an authorization check that only ever sees
+     * authorized callers has not been tested.
+     */
+    const viewer = {
+      ...asActor(users.aViewer, ['viewer']),
+      permissions: ['workflow.instance.read'],
+    };
+    try {
+      await engine.transition(viewer, { instanceId: started.instance.id, action: 'approve' });
+      out.viewerApproval = { refused: false, reason: 'the engine allowed it' };
+    } catch (error) {
+      out.viewerApproval = { refused: true, reason: error.message };
+    }
+
+    /*
+     * A checker in another organization, holding every role and permission its own
+     * tenant would grant. The only thing left to refuse them is the tenant boundary.
+     */
+    const foreignChecker = {
+      ...asActor(users.bMaker, ['workflow_checker']),
+      organizationId: orgB.id,
+    };
+    try {
+      await engine.transition(foreignChecker, {
+        instanceId: started.instance.id,
+        action: 'approve',
+      });
+      out.crossTenantApproval = { refused: false, reason: 'the engine allowed it' };
+    } catch (error) {
+      out.crossTenantApproval = { refused: true, reason: error.message };
+    }
+
     const approved = await engine.transition(checker, {
       instanceId: started.instance.id,
       action: 'approve',
     });
     out.approved = approved.instance;
+
+    // The trail this scenario actually produced, for enumeration rather than assertion
+    // that "audit exists".
+    out.auditRecords = auditSink.records ?? auditSink.entries ?? [];
+    out.securityEvents = securitySink.events ?? [];
   } catch (error) {
     out.error = error.message;
   }
