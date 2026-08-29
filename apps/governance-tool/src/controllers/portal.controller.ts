@@ -9,6 +9,13 @@ import { GATEWAY_ENVIRONMENT, PORTAL_CONFIG } from '../tokens';
 export interface PortalConfig {
   issuerUrl: string;
   clientId: string;
+  /**
+   * Assurance level the browser asks for at sign-in, as an OIDC `acr_values`.
+   *
+   * Configurable because the value is the identity provider's, not this platform's:
+   * it has to match whatever that provider maps its step-up flow onto.
+   */
+  acrValues?: string;
 }
 
 /**

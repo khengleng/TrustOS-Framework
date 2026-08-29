@@ -132,6 +132,7 @@ async function bootstrap(): Promise<void> {
               portal: {
                 issuerUrl: oidcIssuerUrl,
                 clientId: process.env.OIDC_WEB_CLIENT_ID ?? 'trustos-web',
+                acrValues: process.env.OIDC_ACR_VALUES ?? 'mfa',
               },
             }
           : {}),

@@ -123,6 +123,22 @@ async function beginSignIn(identity) {
   url.searchParams.set('code_challenge', await challengeFor(verifier));
   url.searchParams.set('code_challenge_method', 'S256');
 
+  /*
+   * Ask for the assurance level this platform requires, rather than hoping the
+   * provider volunteers a second factor.
+   *
+   * Without this the sign-in completes with a password *and* a TOTP code and the
+   * token still says `acr: 1` with an empty `amr` — indistinguishable from a
+   * password-only login, which is why the platform refused every read by a
+   * privileged role. `acr_values` is the OIDC request parameter for exactly this,
+   * and the identity provider maps `mfa` onto the step-up level its browser flow
+   * enforces.
+   *
+   * Requesting it is not the same as trusting the answer: the token is still
+   * verified, and the platform still decides whether what came back counts.
+   */
+  url.searchParams.set('acr_values', identity.acrValues ?? 'mfa');
+
   window.location.assign(url.toString());
 }
 
