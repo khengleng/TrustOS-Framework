@@ -56,7 +56,12 @@ import type { CompromisedPasswordChecker, PasswordHasher } from './password';
 export interface LocalUserRecord {
   id: string;
   email: string;
-  passwordHash: string;
+  /**
+   * Null for an account that has no local password — one provisioned through an
+   * external identity provider. Such an account cannot authenticate here, and is
+   * refused on exactly the path a wrong password takes.
+   */
+  passwordHash: string | null;
   displayName: string | null;
   isActive: boolean;
   isSuperAdmin: boolean;
@@ -161,14 +166,28 @@ export class LocalIdentityProvider implements IdentityProvider {
 
     const user = await this.options.users.findByEmail(email);
 
-    if (!user || !user.isActive || user.deletedAt !== null) {
+    /*
+     * An account with no local password is refused here rather than further down.
+     *
+     * It is an account provisioned through an external identity provider: there is
+     * nothing to compare against, and reaching the hasher with a null would either
+     * throw or — worse, depending on the implementation — compare against something
+     * that is not a hash. It takes the same path as an unknown or inactive account,
+     * so it costs the same time and returns the same message. Which of the three it
+     * was is recorded in the security event and never in the response.
+     */
+    if (!user || !user.isActive || user.deletedAt !== null || user.passwordHash === null) {
       // Same time, same error, same message as a wrong password.
       await this.options.hasher.verifyAgainstDummy(credentials.password);
       await this.options.lockout.recordFailure(key);
       await this.emit('auth.failed', 'failure', 'invalid_credentials', meta, {
         identifier: key,
         // Distinguished in the event, never in the response.
-        detail: user ? 'account_inactive' : 'unknown_identifier',
+        detail: !user
+          ? 'unknown_identifier'
+          : user.passwordHash === null
+            ? 'no_local_password'
+            : 'account_inactive',
       });
       throw invalidCredentials();
     }

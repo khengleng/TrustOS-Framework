@@ -43,7 +43,7 @@ export class PrismaLocalUserStore implements LocalUserPort {
 function project(user: {
   id: string;
   email: string;
-  passwordHash: string;
+  passwordHash: string | null;
   displayName: string | null;
   isActive: boolean;
   isSuperAdmin: boolean;
