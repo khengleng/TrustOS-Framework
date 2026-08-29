@@ -129,7 +129,16 @@ export class AuthService {
       throw ApiError.unauthorized('Email address or password is incorrect.');
     }
 
-    const passwordMatches = await verifyPassword(input.password ?? '', user.passwordHash);
+    /*
+     * An account with no local password cannot sign in with one.
+     *
+     * That is an account provisioned through an identity provider: it authenticates
+     * there, not here. Refused with the same message and the same audit reason a wrong
+     * password gets, because "this address exists but signs in elsewhere" is exactly the
+     * kind of thing an enumeration attack is looking for.
+     */
+    const passwordMatches =
+      user.passwordHash !== null && (await verifyPassword(input.password ?? '', user.passwordHash));
     if (!passwordMatches) {
       await this.emit({
         type: 'auth.login_failed',
@@ -145,7 +154,10 @@ export class AuthService {
 
     // Upgrade the stored hash if the cost factor has been raised since the
     // account was created. The user notices nothing.
-    if (needsRehash(user.passwordHash, this.deps.config.auth.passwordHashRounds)) {
+    if (
+      user.passwordHash !== null &&
+      needsRehash(user.passwordHash, this.deps.config.auth.passwordHashRounds)
+    ) {
       const upgraded = await hashPassword(input.password, this.deps.config.auth.passwordHashRounds);
       await this.deps.users.updatePasswordHash(user.id, upgraded);
       await this.emit({

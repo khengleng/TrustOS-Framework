@@ -95,6 +95,32 @@ describe('AuthService', () => {
   // ---------------------------------------------------------------------------
 
   describe('login', () => {
+    it('refuses an account that has no local password', async () => {
+      // An account provisioned through an identity provider signs in there, not here.
+      await seedUser({ passwordHash: null });
+
+      await expect(service.login({ email: 'ada@example.com', password: PASSWORD })).rejects.toThrow(
+        /incorrect/i,
+      );
+    });
+
+    it('gives that refusal the same shape as a wrong password', async () => {
+      // "This address exists but signs in elsewhere" is exactly what an enumeration
+      // attack is looking for, so the two refusals must not be tellable apart.
+      await seedUser({ passwordHash: null });
+      const noLocalPassword = await service
+        .login({ email: 'ada@example.com', password: PASSWORD })
+        .catch((error: Error) => error.message);
+
+      await users.clear?.();
+      await seedUser();
+      const wrongPassword = await service
+        .login({ email: 'ada@example.com', password: 'not-the-password' })
+        .catch((error: Error) => error.message);
+
+      expect(noLocalPassword).toBe(wrongPassword);
+    });
+
     it('authenticates a valid credential pair', async () => {
       await seedUser();
       const result = await service.login({ email: 'ada@example.com', password: PASSWORD });
