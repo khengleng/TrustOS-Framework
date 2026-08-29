@@ -19,3 +19,11 @@ export const PORTAL_CONFIG = Symbol.for('governance-tool.portal-config');
 
 /** The registered global guards, in registration order. */
 export const GUARD_ORDER = Symbol.for('governance-tool.guard-order');
+
+/**
+ * The Approval Workbench service.
+ *
+ * Optional: a deployment that has not wired the workflow stores gets a route that says
+ * the application is not configured, rather than a queue that silently returns nothing.
+ */
+export const APPROVAL_WORKBENCH = Symbol.for('governance-tool.approval-workbench');

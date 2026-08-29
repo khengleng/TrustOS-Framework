@@ -971,28 +971,49 @@ export function approvalWorkbench(): InternalApplication {
         operation: 'read',
       }),
     ],
+    /*
+     * The routes the Governance Tool actually serves.
+     *
+     * Approve, reject and return share one endpoint because they differ only in the
+     * action and the reason, while the authorization, freshness and maker-checker
+     * questions are identical — three routes would be three places to forget that an
+     * approval must come from a person.
+     *
+     * The paths stay on the `/internal/v1` gateway convention the descriptor schema
+     * enforces — these describe the gateway contract, not the Governance Tool's own
+     * `/api/governance/approvals` routes that serve it today. What changed is the shape:
+     * they previously declared three separate per-task endpoints, and the application
+     * has one decision endpoint, because approve, reject and return differ only in the
+     * action and the reason.
+     */
     actions: [
       action(
         'approve',
         'Approve',
         R.API_WORKFLOW,
-        '/internal/v1/operations/tasks/:taskId/approve',
+        '/internal/v1/operations/approvals/:instanceId/decision',
         { reversible: false },
       ),
-      action('reject', 'Reject', R.API_WORKFLOW, '/internal/v1/operations/tasks/:taskId/reject', {
-        reversible: false,
-      }),
+      action(
+        'reject',
+        'Reject',
+        R.API_WORKFLOW,
+        '/internal/v1/operations/approvals/:instanceId/decision',
+        {
+          reversible: false,
+        },
+      ),
       action(
         'return',
         'Return for rework',
         R.API_WORKFLOW,
-        '/internal/v1/operations/tasks/:taskId/return',
+        '/internal/v1/operations/approvals/:instanceId/decision',
       ),
       action(
         'reassign',
         'Reassign',
         R.API_WORKFLOW,
-        '/internal/v1/operations/tasks/:taskId/reassign',
+        '/internal/v1/operations/approvals/tasks/:taskId/reassign',
       ),
     ],
     pages: [

@@ -37,6 +37,8 @@ import {
 import { MaskPolicy } from '@trustos/governance-pii-policy';
 import { ResourceRegistry } from '@trustos/governance-resource-policy';
 import { GovernanceToolRuntime } from '@trustos/governance-tool-runtime';
+import type { ApprovalWorkbenchService } from '@trustos/approval-workbench';
+import { ApprovalWorkbenchController } from './controllers/approval-workbench.controller';
 import { CatalogController } from './controllers/catalog.controller';
 import { ConsoleController } from './controllers/console.controller';
 import { PortalController, type PortalConfig } from './controllers/portal.controller';
@@ -48,6 +50,7 @@ import {
   AUDIT_SERVICE,
   AUTHORIZER,
   ENVIRONMENT_REGISTRY,
+  APPROVAL_WORKBENCH,
   GATEWAY_ENVIRONMENT,
   GOVERNANCE_AUDIT,
   GOVERNANCE_RUNTIME,
@@ -92,6 +95,13 @@ export interface GovernanceToolOptions {
     masking: MaskPolicy;
     /** What the browser needs to begin a login. Null when this runs without OIDC. */
     portal: PortalConfig;
+    /**
+     * The Approval Workbench.
+     *
+     * Absent unless a deployment wires the workflow stores. Its routes then answer
+     * "not configured" rather than returning empty pages that read as "no approvals".
+     */
+    approvalWorkbench: ApprovalWorkbenchService;
   }>;
 }
 
@@ -149,12 +159,26 @@ export class GovernanceToolModule {
           })) as never,
         }),
       ],
-      controllers: [CatalogController, ConsoleController, PortalController],
+      controllers: [
+        ApprovalWorkbenchController,
+        CatalogController,
+        ConsoleController,
+        PortalController,
+      ],
       providers: [
         { provide: APP_CONFIG_TOKEN, useValue: config },
         { provide: APP_LOGGER, useValue: logger },
         { provide: SECURITY_POLICY, useValue: policy },
         { provide: GATEWAY_ENVIRONMENT, useValue: environment },
+
+        /*
+         * The Approval Workbench, when a deployment wires it.
+         *
+         * Provided as null rather than omitted so the controller's optional injection
+         * resolves either way, and so the "not configured" answer comes from one place
+         * instead of from a missing-provider crash.
+         */
+        { provide: APPROVAL_WORKBENCH, useValue: overrides.approvalWorkbench ?? null },
 
         ...(overrides.auditService
           ? [{ provide: AUDIT_SERVICE, useValue: overrides.auditService }]
