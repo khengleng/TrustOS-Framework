@@ -22,15 +22,52 @@ PORTAL="https://governance-tool-dev.up.railway.app"
 say() { printf '  %s\n' "$*"; }
 
 say "reading the Keycloak administrator credential from Railway (not printed)"
-KCU="$(railway variables -s keycloak -e production --kv | sed -n 's/^KC_BOOTSTRAP_ADMIN_USERNAME=//p')"
-KCP="$(railway variables -s keycloak -e production --kv | sed -n 's/^KC_BOOTSTRAP_ADMIN_PASSWORD=//p')"
-[ -n "$KCU" ] && [ -n "$KCP" ] || { echo "could not read the admin credential"; exit 1; }
+# 2>/dev/null: the Railway CLI writes deprecation warnings that would otherwise be
+# interleaved with the values.
+VARS="$(railway variables -s keycloak -e production --kv 2>/dev/null)"
+KCU="$(printf '%s\n' "$VARS" | sed -n 's/^KC_BOOTSTRAP_ADMIN_USERNAME=//p')"
+KCP="$(printf '%s\n' "$VARS" | sed -n 's/^KC_BOOTSTRAP_ADMIN_PASSWORD=//p')"
+unset VARS
+if [ -z "$KCU" ] || [ -z "$KCP" ]; then
+  echo "could not read the admin credential from the keycloak service"
+  exit 1
+fi
+say "credential read: username ${#KCU} chars, password ${#KCP} chars (values withheld)"
 
-TOKEN="$(curl -sf -X POST "$KC/realms/master/protocol/openid-connect/token" \
+# No -f. The error body is the diagnosis, and swallowing it turns a clear OAuth
+# message into an opaque JSON parse failure further down.
+RESPONSE="$(curl -s -X POST "$KC/realms/master/protocol/openid-connect/token" \
   -d grant_type=password -d client_id=admin-cli \
-  --data-urlencode "username=$KCU" --data-urlencode "password=$KCP" \
-  | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')"
+  --data-urlencode "username=$KCU" --data-urlencode "password=$KCP")"
 unset KCU KCP
+
+TOKEN="$(printf '%s' "$RESPONSE" | python3 -c 'import sys,json
+try:
+    print(json.load(sys.stdin).get("access_token",""))
+except Exception:
+    print("")' 2>/dev/null)"
+
+if [ -z "$TOKEN" ]; then
+  echo
+  echo "  ADMIN AUTHENTICATION FAILED. Keycloak said:"
+  printf '%s' "$RESPONSE" | python3 -c 'import sys,json
+raw = sys.stdin.read()
+try:
+    d = json.loads(raw)
+    print("    error:", d.get("error"))
+    print("    description:", d.get("error_description"))
+except Exception:
+    print("    (not JSON) first 200 chars:", raw[:200])'
+  echo
+  echo "  Most likely: KC_BOOTSTRAP_ADMIN_PASSWORD on the Railway service is the"
+  echo "  original bootstrap value, and the administrator password has since been"
+  echo "  changed. A bootstrap credential only applies on a realm's first start; it"
+  echo "  is not updated when someone rotates the password afterwards."
+  echo
+  echo "  If that is what happened, the Railway variable is stale and the working"
+  echo "  password exists only wherever it was rotated to."
+  exit 1
+fi
 say "admin token obtained"
 
 api() { curl -sf -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' "$@"; }
