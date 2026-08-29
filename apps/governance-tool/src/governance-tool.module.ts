@@ -4,8 +4,10 @@ import { AuditService, PrismaAuditSink } from '@trustos/audit';
 import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
 import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
 import type { AppConfig } from '@trustos/config';
+import { PrismaAccessResolver } from '@trustos/access-resolver';
 import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustos/database';
 import { ObservabilityModule, databaseHealthIndicator } from '@trustos/observability';
+import { BearerTokenAuthenticator } from '@trustos/identity';
 import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
 import type { AccessResolver, CredentialAuthenticator, IdentityProvider } from '@trustos/identity';
 import type { Logger } from '@trustos/logging';
@@ -176,10 +178,23 @@ export class GovernanceToolModule {
           useValue: overrides.identityProvider ?? refusingIdentityProvider(),
         },
 
+        /*
+         * Membership, resolved from the database rather than trusted from the token.
+         *
+         * The default was a resolver that returned null for everything. It was honest
+         * about provisioning nothing, and its effect was that every subject below
+         * platform-root authenticated and was then refused: roles existed, memberships
+         * existed, and nothing joined them.
+         *
+         * A factory rather than a value, because it needs the Prisma client the module
+         * already owns — building it in `main.ts` would mean a second connection pool
+         * for one query.
+         */
         {
           provide: ACCESS_RESOLVER,
-          useValue:
-            overrides.accessResolver ?? ({ resolve: async () => null } satisfies AccessResolver),
+          inject: [PrismaService],
+          useFactory: (prisma: PrismaService): AccessResolver =>
+            overrides.accessResolver ?? new PrismaAccessResolver({ prisma }),
         },
 
         // --- governance ------------------------------------------------------
@@ -244,8 +259,35 @@ export class GovernanceToolModule {
         orderedGuard(AuthenticationGuard, {
           provide: APP_GUARD,
           inject: [Reflector, IDENTITY_PROVIDER, ACCESS_RESOLVER, SECURITY_EVENTS],
-          useFactory: (reflector: Reflector) =>
-            new AuthenticationGuard(reflector, overrides.authenticators ?? [], {}),
+          /*
+           * The bearer authenticator is assembled here, from the identity provider and
+           * the resolver this module already holds.
+           *
+           * It used to be built in `main.ts` and passed in, which meant the caller had to
+           * supply an access resolver too — and the one it supplied was the null stub.
+           * Wiring it here is what lets the real resolver reach the guard: configuration
+           * stays in main.ts, and what is connected to what stays in the module.
+           */
+          useFactory: (
+            reflector: Reflector,
+            identityProvider: IdentityProvider,
+            accessResolver: AccessResolver,
+            events: SecurityEventEmitter,
+          ) =>
+            new AuthenticationGuard(
+              reflector,
+              overrides.authenticators ??
+                (identityProvider.kind === 'oidc'
+                  ? [
+                      new BearerTokenAuthenticator({
+                        provider: identityProvider,
+                        access: accessResolver,
+                        events,
+                      }),
+                    ]
+                  : []),
+              {},
+            ),
         }),
 
         orderedGuard(TenantGuard, { provide: APP_GUARD, useClass: TenantGuard }),

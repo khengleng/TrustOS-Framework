@@ -6,12 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustos/config';
 import { AllExceptionsFilter } from '@trustos/errors/nest';
 import { consoleCatalogFor } from '@trustos/governance-tool-core';
-import {
-  BearerTokenAuthenticator,
-  OidcIdentityProvider,
-  type CredentialAuthenticator,
-  type IdentityProvider,
-} from '@trustos/identity';
+import { OidcIdentityProvider, type IdentityProvider } from '@trustos/identity';
 import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
 import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
 import {
@@ -266,7 +261,7 @@ function buildIdentityOverrides(input: {
   oidcIssuerUrl: string;
   oidcClientId: string;
   policy: SecurityPolicy;
-}): { identityProvider: IdentityProvider; authenticators: CredentialAuthenticator[] } | undefined {
+}): { identityProvider: IdentityProvider } | undefined {
   if (input.identityProvider !== 'oidc') return undefined;
 
   if (!input.oidcIssuerUrl || !input.oidcClientId) {
@@ -309,29 +304,11 @@ function buildIdentityOverrides(input: {
     input.policy.mfa,
   );
 
-  return {
-    identityProvider: provider,
-    authenticators: [
-      new BearerTokenAuthenticator({
-        provider,
-        /*
-         * No organization memberships are provisioned in this deployment, so this
-         * resolves nothing.
-         *
-         * That is not a hole. The authenticator only *requires* a resolution when the
-         * token carries an organization claim — a subject with one and no membership is
-         * refused, which is the check that matters. A platform-staff subject carries no
-         * organization, and its roles come from the provider's mapped roles, verified
-         * from the token signature rather than looked up here.
-         *
-         * The day this platform provisions tenants, this becomes a real lookup against
-         * OrganizationMember, and until then returning null is the honest answer rather
-         * than a stub that grants something.
-         */
-        access: { resolve: async () => null },
-      }),
-    ],
-  };
+  /*
+   * Only the provider. The bearer authenticator and its access resolver are assembled in
+   * the module, where the Prisma client lives — this file configures, the module wires.
+   */
+  return { identityProvider: provider };
 }
 
 /** `a=b,c=d` into an object. Empty or malformed pairs are dropped rather than guessed at. */
