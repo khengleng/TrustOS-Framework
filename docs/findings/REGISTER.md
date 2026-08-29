@@ -25,7 +25,17 @@ observable changed — not when it was discussed, and not because a later run wa
 
 **Severity** HIGH · **Environment** dev · **Status** OPEN · **Owner** operator with Keycloak administration
 
-**Re-verified 2026-08-29 and still open.** The client-credentials flow returns
+**Re-verified twice on 2026-08-29 and still open.** After the operator reported setting
+Client authentication ON and Service accounts ON in the Admin Console, the token endpoint
+was re-tested rather than trusted: it still answers `unauthorized_client`, where a
+confidential client with a wrong secret answers `invalid_client`. The client exists in
+`trustos-dev` and in no other realm, so this is not a wrong-realm mistake — the change did
+not take effect. Most likely the Capability config section was not saved; a confidential
+client has a Credentials tab and a public one does not, which is the quickest structural
+check. Re-test with `scripts/operator/check-dev-validation-client.sh`. Second attempt:
+[gate-1-attempt-2-2026-08-29.md](../validation/releases/v0.1/gate-1-attempt-2-2026-08-29.md).
+
+**First verification, 2026-08-29.** The client-credentials flow returns
 `401 unauthorized_client`, while a client name that does not exist returns
 `invalid_client` from the same endpoint in the same run — so Keycloak resolves this client
 and refuses it the grant. `TRUSTOS_VALIDATION_CLIENT_SECRET` is also still absent from the
