@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-29T10:11:31.395Z",
-  "correlationId": "awb_8eb3d101-6232-4255-8c2d-a4083c1bc3be",
+  "generatedAt": "2026-08-29T10:18:47.283Z",
+  "correlationId": "awb_c70ba883-e2b9-4182-b6bd-fe358a8d2feb",
   "environment": "dev",
   "application": "approval-workbench",
   "totals": {
@@ -13,25 +13,25 @@
   "performance": {
     "queue": {
       "samples": 21,
-      "p50": 47.777917,
-      "p95": 91.865459
+      "p50": 47.661625,
+      "p95": 91.948
     },
     "detail": {
       "samples": 21,
-      "p50": 147.95,
-      "p95": 152.134792
+      "p50": 148.710083,
+      "p95": 154.30875
     },
     "decide": {
       "samples": 1,
-      "p50": 756.266,
-      "p95": 756.266
+      "p50": 759.611208,
+      "p95": 759.611208
     }
   },
   "results": [
     {
       "check": "queue: the workbench shows a real pending approval",
       "status": "PASS",
-      "detail": "row cmte80cr8000ss6uavz4akokv state=manager_review type=ChangeRequest by=cmte80ao90005s6uawuuumww3"
+      "detail": "row cmte89p7w000ss6ac1vduf30u state=manager_review type=ChangeRequest by=cmte89n3u0005s6acni5itr86"
     },
     {
       "check": "queue: the row carries the fields a reviewer chooses on",
@@ -76,7 +76,7 @@
     {
       "check": "workflow: the checker approves and the request reaches approved",
       "status": "PASS",
-      "detail": "manager_review -> approved decision=7c0b4b1c-a36c-4b0b-ace2-6f025e95c652"
+      "detail": "manager_review -> approved decision=e2ea6fd3-ef0c-4683-b153-115c9c1c0281"
     },
     {
       "check": "workflow: the approved state is in Postgres",
@@ -116,7 +116,7 @@
     {
       "check": "policy: the recorded decision names the authorization that permitted it",
       "status": "PASS",
-      "detail": "decision=cmte80dy2000us6uapdtmzgmp policyDecisionId=7c0b4b1c-a36c-4b0b-ace2-6f025e95c652 role=workflow_checker"
+      "detail": "decision=cmte89qew000us6acaw36ysd6 policyDecisionId=e2ea6fd3-ef0c-4683-b153-115c9c1c0281 role=workflow_checker"
     },
     {
       "check": "reject: a rejection with no reason is refused before it reaches the engine",

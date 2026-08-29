@@ -1,11 +1,16 @@
 import 'reflect-metadata';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustos/config';
 import { AllExceptionsFilter } from '@trustos/errors/nest';
-import { consoleCatalogFor } from '@trustos/governance-tool-core';
+import {
+  NO_APPLICATION_EVIDENCE,
+  consoleCatalogFor,
+  type ApplicationEvidenceIndex,
+} from '@trustos/governance-tool-core';
 import { OidcIdentityProvider, type IdentityProvider } from '@trustos/identity';
 import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
 import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
@@ -116,6 +121,16 @@ async function bootstrap(): Promise<void> {
          * about resources still stands.
          */
         apps: consoleCatalogFor(environment),
+
+        /*
+         * Validation evidence, when the deployment ships it.
+         *
+         * Read from the repository rather than compiled in, so that a status can only be
+         * as current as the validation run that produced it — and so that an image built
+         * without it reports every application as `not_tested` rather than carrying a
+         * stale pass forward.
+         */
+        applicationEvidence: loadApplicationEvidence(logger),
 
         /*
          * What the browser needs before it holds a token: where to send the user and
@@ -319,6 +334,33 @@ function parsePairs(value: string | undefined): Record<string, string> {
     if (from && to) pairs[from.trim()] = to.trim();
   }
   return pairs;
+}
+
+/**
+ * Loads validation evidence written by the validation suites.
+ *
+ * Absent, unreadable or malformed all resolve to no evidence, which reports every
+ * application as `not_tested`. That is the honest failure direction: a catalog that
+ * cannot read its evidence should claim nothing, not claim the last thing it remembered.
+ */
+function loadApplicationEvidence(logger: {
+  warn: (message: string, context?: Record<string, unknown>) => void;
+}): ApplicationEvidenceIndex {
+  const path = join(process.cwd(), 'docs/validation/application-evidence.json');
+
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('not an object');
+    }
+    return parsed as ApplicationEvidenceIndex;
+  } catch (error) {
+    // Not an error condition: most deployments ship without it.
+    logger.warn('No application validation evidence found; every application reports not_tested.', {
+      reason: error instanceof Error ? error.message : 'unreadable',
+    });
+    return NO_APPLICATION_EVIDENCE;
+  }
 }
 
 function parseList(value: string | undefined): string[] {

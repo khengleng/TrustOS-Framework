@@ -27,3 +27,11 @@ export const GUARD_ORDER = Symbol.for('governance-tool.guard-order');
  * the application is not configured, rather than a queue that silently returns nothing.
  */
 export const APPROVAL_WORKBENCH = Symbol.for('governance-tool.approval-workbench');
+
+/**
+ * Validation evidence per application.
+ *
+ * Written by a validation run and read by the catalog. Empty when a deployment ships
+ * without it, which reports every application as `not_tested` — the honest default.
+ */
+export const APPLICATION_EVIDENCE = Symbol.for('governance-tool.application-evidence');

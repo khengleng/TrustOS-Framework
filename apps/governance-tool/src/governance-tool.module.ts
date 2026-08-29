@@ -28,6 +28,8 @@ import {
   InternalAppCatalog,
   consoleCatalogFor,
   type Environment,
+  NO_APPLICATION_EVIDENCE,
+  type ApplicationEvidenceIndex,
 } from '@trustos/governance-tool-core';
 import { GovernanceAuditBridge } from '@trustos/governance-audit-bridge';
 import {
@@ -50,6 +52,7 @@ import {
   AUDIT_SERVICE,
   AUTHORIZER,
   ENVIRONMENT_REGISTRY,
+  APPLICATION_EVIDENCE,
   APPROVAL_WORKBENCH,
   GATEWAY_ENVIRONMENT,
   GOVERNANCE_AUDIT,
@@ -102,6 +105,8 @@ export interface GovernanceToolOptions {
      * "not configured" rather than returning empty pages that read as "no approvals".
      */
     approvalWorkbench: ApprovalWorkbenchService;
+    /** Validation evidence per application. Absent means every application is `not_tested`. */
+    applicationEvidence: ApplicationEvidenceIndex;
   }>;
 }
 
@@ -179,6 +184,10 @@ export class GovernanceToolModule {
          * instead of from a missing-provider crash.
          */
         { provide: APPROVAL_WORKBENCH, useValue: overrides.approvalWorkbench ?? null },
+        {
+          provide: APPLICATION_EVIDENCE,
+          useValue: overrides.applicationEvidence ?? NO_APPLICATION_EVIDENCE,
+        },
 
         ...(overrides.auditService
           ? [{ provide: AUDIT_SERVICE, useValue: overrides.auditService }]

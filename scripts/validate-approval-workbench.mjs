@@ -15,12 +15,22 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const wantJson = process.argv.includes('--json');
+
+/** The commit the suite ran against, so a reviewer can check the claim. */
+const commitSha = (() => {
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+  } catch {
+    return 'unknown';
+  }
+})();
 
 if (!process.env.DATABASE_URL) {
   console.error(
@@ -696,6 +706,38 @@ writeFileSync(
   join(root, 'docs/validation/approval-workbench-latest.json'),
   `${JSON.stringify(summary, null, 2)}\n`,
 );
+
+/*
+ * The evidence record the Governance Tool reads.
+ *
+ * Written from this run's own counts, so the catalog cannot report a status nobody
+ * measured. `lifecycle` is deliberately not written: passing validation is not
+ * promotion, and an application that works is still `draft` until somebody with the
+ * authority to say so decides otherwise.
+ *
+ * A failed or partial run writes its verdict too, rather than leaving a previous pass
+ * standing. Stale green is worse than red.
+ */
+const evidencePath = join(root, 'docs/validation/application-evidence.json');
+let index = {};
+try {
+  index = JSON.parse(readFileSync(evidencePath, 'utf8'));
+} catch {
+  index = {};
+}
+
+index['approval-workbench'] = {
+  appId: 'approval-workbench',
+  status: summary.verdict === 'PASS' ? 'pass' : summary.verdict === 'FAIL' ? 'fail' : 'partial',
+  environment: summary.environment,
+  suite: 'npm run validate:approval-workbench',
+  commit: commitSha,
+  validatedAt: summary.generatedAt,
+  checks: { total: results.length, passed, failed },
+  evidenceRef: 'docs/validation/approval-workbench-latest.json',
+};
+
+writeFileSync(evidencePath, `${JSON.stringify(index, null, 2)}\n`);
 
 if (failed > 0) exitCode = 1;
 process.exit(exitCode);

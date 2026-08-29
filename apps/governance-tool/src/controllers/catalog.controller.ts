@@ -10,9 +10,11 @@ import {
   CONSOLE_TEMPLATES,
   GOVERNANCE_PERMISSIONS,
   findConsoleTemplate,
+  validationStatusFor,
   parseInternalApplication,
   resourcesUsedBy,
   type Environment,
+  type ApplicationEvidenceIndex,
   type InternalAppCatalog,
 } from '@trustos/governance-tool-core';
 import { planPromotion, type EnvironmentRegistry } from '@trustos/governance-environment-config';
@@ -20,6 +22,7 @@ import type { ResourceRegistry } from '@trustos/governance-resource-policy';
 import { summarizeAccess } from '@trustos/governance-data-access';
 import {
   APP_CATALOG,
+  APPLICATION_EVIDENCE,
   ENVIRONMENT_REGISTRY,
   GATEWAY_ENVIRONMENT,
   RESOURCE_REGISTRY,
@@ -46,6 +49,7 @@ export class CatalogController {
     @Inject(RESOURCE_REGISTRY) private readonly resources: ResourceRegistry,
     @Inject(ENVIRONMENT_REGISTRY) private readonly environments: EnvironmentRegistry,
     @Inject(GATEWAY_ENVIRONMENT) private readonly environment: Environment,
+    @Inject(APPLICATION_EVIDENCE) private readonly evidence: ApplicationEvidenceIndex,
   ) {}
 
   /*
@@ -98,7 +102,7 @@ export class CatalogController {
          * else when an implementation exists and its tests run, not when somebody edits
          * a label.
          */
-        validationStatus: validationStatusOf(app),
+        validationStatus: validationStatusOf(app, this.evidence, this.environment),
       })),
     };
   }
@@ -281,15 +285,19 @@ export class CatalogController {
 /**
  * The validation state of a registered application.
  *
- * An application is only more than `not_tested` once something executes it. Nothing does
- * today: every entry in the catalog is an `InternalApplication` descriptor, and the
- * Governance Tool serves descriptors rather than running them. Reporting anything else
- * would make a console that renders look like a console that works, which is the exact
- * confusion the validation exercise existed to remove.
+ * An application is only more than `not_tested` once something executes it, and this now
+ * reads the result of that execution rather than returning a constant. The rule it was
+ * written to protect is unchanged: it is a function over evidence, not a field on a
+ * descriptor, because a status field is a claim an application's author makes about
+ * their own application and every such field eventually says "pass".
  *
- * This is a function rather than a field so it cannot be set by editing data. When an
- * implementation exists, this reads its result — it does not accept a claim.
+ * Evidence is keyed by environment and is not promoted across environments. A pass in
+ * DEV is a pass in DEV; asked about anything else, this says `not_tested`.
  */
-function validationStatusOf(_app: { appId: string }): 'not_tested' | 'partial' | 'pass' | 'fail' {
-  return 'not_tested';
+function validationStatusOf(
+  app: { appId: string },
+  evidence: ApplicationEvidenceIndex,
+  environment: string,
+): 'not_tested' | 'partial' | 'pass' | 'fail' {
+  return validationStatusFor(app.appId, evidence, environment);
 }
