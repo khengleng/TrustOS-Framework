@@ -3,7 +3,7 @@
  *
  * This renders console *descriptors* — it does not know what an "operations console" or
  * a "risk console" is. The governance API returns a document describing what a console
- * contains: pages, and sections typed `kpis`, `list`, `workflow`, `queue` and so on. This
+ * contains: pages, and components of kind `kpi`, `table`, `search`, `queue` and so on. This
  * file turns that into a screen. An application built on TrustOS registers a descriptor
  * and gets an admin surface without anyone writing screens for it.
  *
@@ -277,14 +277,30 @@ function renderConsole(app) {
   const pages = $('console-pages');
   pages.replaceChildren();
 
+  /*
+   * Data sources and actions are declared once on the application and referenced by id
+   * from the components that use them. Resolving them here means a component shows
+   * "reporting.transactions · search" rather than the word "transactions", which is the
+   * difference between a screen you can review and a screen you have to cross-reference
+   * by hand.
+   */
+  const sources = new Map((app.dataSources ?? []).map((source) => [source.id, source]));
+  const actions = new Map((app.actions ?? []).map((action) => [action.id, action]));
+
   for (const page of app.pages ?? []) {
     const section = el('section', 'page');
     section.append(el('h2', null, page.title ?? page.id));
-    if (page.description) section.append(el('p', 'muted', page.description));
+    if (page.permission) section.append(el('p', 'muted small', `Requires ${page.permission}`));
 
     const grid = el('div', 'sections');
-    for (const part of page.sections ?? []) grid.append(renderSection(part));
+    for (const component of page.components ?? []) {
+      grid.append(renderComponent(component, sources, actions));
+    }
     section.append(grid);
+
+    if ((page.components ?? []).length === 0) {
+      section.append(el('p', 'muted small', 'This page declares no components.'));
+    }
     pages.append(section);
   }
 
@@ -294,35 +310,61 @@ function renderConsole(app) {
 }
 
 /*
- * One section, rendered from its declared type.
+ * One component, rendered from what the descriptor says it is.
  *
- * Deliberately generic. The portal shows what the descriptor says a section is and what
- * it reads — it does not fetch the section's data, because this gateway serves
- * descriptors and carries no traffic. A section that claimed to show live transactions
- * here would be inventing them.
+ * Deliberately generic: the portal shows a component's kind, the source it reads and the
+ * fields it exposes. It does not fetch that data, because this gateway serves descriptors
+ * and carries no traffic — a component claiming to show live transactions here would be
+ * inventing them.
+ *
+ * The shape is the descriptor's, not one I invented: `kind`, `dataSourceId`, `actionIds`
+ * and `fields`. An earlier version of this read `type` and `sections`, which exist nowhere
+ * in the schema, so every console rendered its page titles with nothing underneath.
  */
-function renderSection(part) {
+function renderComponent(component, sources, actions) {
   const card = el('article', 'section-card');
 
   const head = el('div', 'section-head');
-  head.append(el('span', 'section-type', part.type ?? 'section'));
-  head.append(el('span', 'section-title', part.title ?? part.id ?? ''));
+  head.append(el('span', 'section-type', component.kind ?? 'component'));
+  head.append(el('span', 'section-title', component.id ?? ''));
   card.append(head);
 
-  if (part.description) card.append(el('p', 'muted small', part.description));
-
   const facts = el('dl', 'facts');
-  for (const [label, value] of [
-    ['Reads', part.dataSource ?? part.source],
-    ['Permission', part.permission],
-    ['Action', part.action],
-  ]) {
-    if (!value) continue;
-    facts.append(el('dt', null, label));
-    facts.append(el('dd', null, value));
-  }
-  if (facts.childElementCount > 0) card.append(facts);
 
+  const source = sources.get(component.dataSourceId);
+  if (source) {
+    facts.append(el('dt', null, 'Reads'));
+    facts.append(el('dd', null, `${source.resourceId} · ${source.operation}`));
+    if (source.maxRows) {
+      facts.append(el('dt', null, 'Max rows'));
+      facts.append(el('dd', null, source.maxRows));
+    }
+  } else if (component.dataSourceId) {
+    facts.append(el('dt', null, 'Reads'));
+    facts.append(el('dd', null, component.dataSourceId));
+  }
+
+  if ((component.fields ?? []).length > 0) {
+    facts.append(el('dt', null, 'Fields'));
+    facts.append(el('dd', null, component.fields.join(', ')));
+  }
+
+  for (const id of component.actionIds ?? []) {
+    const action = actions.get(id);
+    facts.append(el('dt', null, 'Action'));
+    // Whether an action needs a reason or an approval is the governed part, so it is
+    // shown rather than left to whoever opens the console to discover.
+    const notes = action
+      ? [
+          action.requiresReason ? 'reason required' : null,
+          action.requiresApproval ? 'approval required' : null,
+          action.reversible ? 'reversible' : 'not reversible',
+        ].filter(Boolean)
+      : [];
+    facts.append(el('dd', null, action ? `${action.label} — ${notes.join(', ')}` : id));
+  }
+
+  if (facts.childElementCount > 0) card.append(facts);
   return card;
 }
 
