@@ -23,19 +23,32 @@ implementation" and "backend implementation", and **no application may be promot
 
 Counts are read from the descriptors themselves, not from documentation.
 
-| Application                     | Pages | Components | Actions | Data sources | Data              | Risk         | Lifecycle | Validation |
-| ------------------------------- | ----: | ---------: | ------: | -----------: | ----------------- | ------------ | --------- | ---------- |
-| AI Operations Console           |     3 |          5 |       1 |            2 | confidential      | high         | draft     | NOT_TESTED |
-| Approval Workbench              |     2 |          2 |       4 |            1 | confidential      | high         | draft     | NOT_TESTED |
-| Case Management                 |     2 |          3 |       4 |            1 | restricted        | high         | draft     | NOT_TESTED |
-| Customer Support Console        |     2 |          6 |       4 |            3 | restricted        | high         | draft     | NOT_TESTED |
-| Enterprise Governance Console   |     5 |         12 |       6 |           12 | restricted        | high         | draft     | NOT_TESTED |
-| Finance Operations Console      |     3 |          4 |       3 |            4 | restricted        | **critical** | draft     | NOT_TESTED |
-| Financial Product Studio        |     5 |          6 |       5 |            2 | confidential      | high         | draft     | NOT_TESTED |
-| Generic Dashboard               |     1 |          3 |       0 |            2 | internal          | low          | draft     | NOT_TESTED |
-| Operations Console              |     4 |          7 |       4 |            5 | restricted        | high         | draft     | NOT_TESTED |
-| Platform Administration Console |     4 |          6 |       2 |            6 | restricted        | **critical** | draft     | NOT_TESTED |
-| Risk & Compliance Console       |     3 |          4 |       6 |            4 | highly_restricted | **critical** | draft     | NOT_TESTED |
+> **Approval Workbench is no longer only a descriptor.** It is implemented in
+> `packages/approval-workbench` with a route in the Governance Tool, and validated at
+> **33/33 checks against the real DEV database** at commit `1de1f82` — approve, reject and
+> return-for-rework driven end to end, with self-approval, viewer approval and
+> cross-tenant access all refused. Evidence:
+> [approval-workbench-latest.json](approval-workbench-latest.json),
+> [the application document](../applications/approval-workbench.md),
+> [the reuse report](approval-workbench-reuse.md).
+>
+> Its lifecycle stays **draft**. Passing validation is evidence that an application works,
+> not authority to release it. Every other application in this table remains a descriptor
+> and remains NOT_TESTED.
+
+| Application                     | Pages | Components | Actions | Data sources | Data              | Risk         | Lifecycle | Validation     |
+| ------------------------------- | ----: | ---------: | ------: | -----------: | ----------------- | ------------ | --------- | -------------- |
+| AI Operations Console           |     3 |          5 |       1 |            2 | confidential      | high         | draft     | NOT_TESTED     |
+| Approval Workbench              |     2 |          2 |       4 |            1 | confidential      | high         | draft     | **PASS (DEV)** |
+| Case Management                 |     2 |          3 |       4 |            1 | restricted        | high         | draft     | NOT_TESTED     |
+| Customer Support Console        |     2 |          6 |       4 |            3 | restricted        | high         | draft     | NOT_TESTED     |
+| Enterprise Governance Console   |     5 |         12 |       6 |           12 | restricted        | high         | draft     | NOT_TESTED     |
+| Finance Operations Console      |     3 |          4 |       3 |            4 | restricted        | **critical** | draft     | NOT_TESTED     |
+| Financial Product Studio        |     5 |          6 |       5 |            2 | confidential      | high         | draft     | NOT_TESTED     |
+| Generic Dashboard               |     1 |          3 |       0 |            2 | internal          | low          | draft     | NOT_TESTED     |
+| Operations Console              |     4 |          7 |       4 |            5 | restricted        | high         | draft     | NOT_TESTED     |
+| Platform Administration Console |     4 |          6 |       2 |            6 | restricted        | **critical** | draft     | NOT_TESTED     |
+| Risk & Compliance Console       |     3 |          4 |       6 |            4 | highly_restricted | **critical** | draft     | NOT_TESTED     |
 
 Totals: 34 pages, 58 components, 39 actions, 42 data-source declarations.
 
