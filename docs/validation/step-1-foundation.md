@@ -31,7 +31,7 @@ refused, correctly, because by then it was already in review.
 Two organizations and six users are created in DEV, exercised, and deleted in a `finally`
 block so a failed run leaves nothing behind.
 
-## Results — 21/21
+## Results — 24/24
 
 | Check                                                 | Result | Evidence                                                     |
 | ----------------------------------------------------- | ------ | ------------------------------------------------------------ |
@@ -55,6 +55,9 @@ block so a failed run leaves nothing behind.
 | Every record names an actor or the system             | PASS   | all 3, in tenant A                                           |
 | The trail is scoped to the acting organization        | PASS   | all in tenant A                                              |
 | Refusals recorded as security events                  | PASS   | `self_approval_forbidden`, `transition_permission_missing`   |
+| A restarted runtime finds the instance                | PASS   | reloaded in `approved`                                       |
+| A restarted runtime resolves definition and version   | PASS   | `change-request-approval` v1.0.0                             |
+| The instance stays pinned to its own version          | PASS   | republishing cannot change rules mid-flight                  |
 | Audit log has no update path                          | PASS   | trigger refused the `UPDATE`                                 |
 
 ## Capability status
@@ -72,17 +75,49 @@ block so a failed run leaves nothing behind.
 
 ## What this does not prove, stated plainly
 
-**The refusal message stays generic, and that is deliberate.** The engine tells the caller
-_"You do not have permission to perform this action"_ without naming which check refused —
-telling a caller which of several checks stopped them is how a request gets iteratively
-repaired. The reason is recorded where an operator can read it: the security event stream
-carries `self_approval_forbidden`, and the validation now asserts that rather than reading
-the generic message as proof.
+**Denial attribution — traced, and it is (A).** The question was whether self-approval is
+detected and its reason lost, or whether a different rule refuses first. It is the former.
+The maker's own attempt throws an error carrying `reasonCode: self_approval_forbidden`, a
+member of `WORKFLOW_ERROR_REASONS`, and emits a security event with the same reason. Only
+the human-readable message stays generic — deliberately, because naming which of several
+checks refused is how a request gets iteratively repaired.
+
+The validation asserts **reason codes, not prose**. Codes do not change when somebody
+improves the wording:
+
+| Attempt                           | Reason code                     |
+| --------------------------------- | ------------------------------- |
+| Maker approving their own request | `self_approval_forbidden`       |
+| Viewer approving                  | `transition_permission_missing` |
+| Checker from another organization | none — refused as **not found** |
+
+The viewer hits a genuinely different rule, which is why a single generic message covered
+two unrelated causes and looked like lost attribution.
+
+Events are captured **per attempt** rather than across the run, so a denial cannot be
+credited with a reason produced by somebody else's.
 
 **Not everything in the scenario is persisted.** Workflow instances, versions, definitions
 and decisions are Prisma-backed and were read back from Postgres. Tasks, history and SLA
 use in-memory stores: they are not what this scenario proves, and implying the whole stack
 was persisted would be the overclaim this exercise exists to prevent.
+
+**Persistence survives a restart.** A second runtime context — new stores, new engine,
+nothing shared — reloads the instance, resolves its definition and version, and finds it
+pinned to the version it started on rather than to whatever is published now. Without that
+pin, republishing a definition would silently change the rules under a request already in
+flight.
+
+The foreign-key violation found in Step 1 was the database being right: an in-memory
+definition store with a persisted instance store produces an instance referencing a
+definition that exists only in memory. All three stores are Prisma-backed now, and the
+restart check is the regression test.
+
+**The validator is tested too.** `scripts/validation-outcome.spec.mjs` covers the three
+false-positive patterns Step 1 produced — a `NOT_REACHED` step must never be reported as
+allowed, an append-only assertion against zero rows is meaningless, and a tenant assertion
+against a model carrying no `organizationId` cannot demonstrate isolation. Eleven tests,
+run by the ordinary suite.
 
 **This runs below HTTP.** It exercises the engines directly, not the deployed API. The
 deployed surface is covered separately by `npm run validate -- --deployed`, which probes

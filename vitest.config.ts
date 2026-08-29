@@ -239,7 +239,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['packages/**/*.spec.ts', 'apps/**/*.spec.ts', 'templates/**/*.spec.ts'],
+    include: [
+      'packages/**/*.spec.ts',
+      'apps/**/*.spec.ts',
+      'templates/**/*.spec.ts',
+      // The validator is tested too. Its bugs are the expensive kind — they say "PASS".
+      'scripts/**/*.spec.mjs',
+    ],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',

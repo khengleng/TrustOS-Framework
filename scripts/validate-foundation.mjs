@@ -276,16 +276,28 @@ async function main() {
      * of several checks refused is how a request gets iteratively repaired. The reason
      * is recorded where an operator can read it.
      */
-    const attributed = (scenario.securityEvents ?? []).some(
+    // Attributed to *this attempt*, not to the run. An earlier version searched the
+    // whole event stream, which would have credited the maker's denial with a reason
+    // produced by somebody else's.
+    const attributed = (scenario.selfApprovalEvents ?? []).some(
       (event) => event.reason === 'self_approval_forbidden',
     );
+    const code = scenario.selfApproval.reasonCode;
+    /*
+     * Asserted on the reason code, not the message.
+     *
+     * The message a caller sees stays generic on purpose — naming which of several
+     * checks refused is how a request gets iteratively repaired — and it would change
+     * the moment somebody improved the wording. `self_approval_forbidden` is a member
+     * of WORKFLOW_ERROR_REASONS and does not.
+     */
     return {
-      pass: scenario.selfApproval.refused === true && attributed,
+      pass:
+        scenario.selfApproval.refused === true &&
+        (code === 'self_approval_forbidden' || attributed),
       detail: !scenario.selfApproval.refused
         ? 'THE ENGINE ALLOWED SELF-APPROVAL'
-        : attributed
-          ? 'refused, recorded as self_approval_forbidden'
-          : 'refused, but no self_approval_forbidden event was recorded',
+        : `reasonCode=${code ?? 'none'}, event=${attributed ? 'self_approval_forbidden' : 'none'}`,
     };
   });
 
@@ -296,7 +308,7 @@ async function main() {
     return {
       pass: scenario.viewerApproval.refused === true,
       detail: scenario.viewerApproval.refused
-        ? `refused: ${String(scenario.viewerApproval.reason).slice(0, 60)}`
+        ? `reasonCode=${scenario.viewerApproval.reasonCode ?? 'none'}`
         : 'A VIEWER APPROVED A REQUEST',
     };
   });
@@ -308,7 +320,7 @@ async function main() {
     return {
       pass: scenario.crossTenantApproval.refused === true,
       detail: scenario.crossTenantApproval.refused
-        ? `refused: ${String(scenario.crossTenantApproval.reason).slice(0, 60)}`
+        ? `reasonCode=${scenario.crossTenantApproval.reasonCode ?? 'none (not_found)'}`
         : 'A FOREIGN TENANT APPROVED THIS REQUEST',
     };
   });
@@ -335,6 +347,40 @@ async function main() {
       where: { workflowInstanceId: scenario.started.id },
     });
     return { pass: decisions > 0, detail: `${decisions} decision row(s)` };
+  });
+
+  await check('persistence: a restarted runtime finds the instance', async () => {
+    const r = scenario.restart;
+    if (!r)
+      return { pass: false, detail: `never reached — ${scenario.error ?? 'scenario did not run'}` };
+    return {
+      pass: r.instanceFound === true,
+      detail: r.instanceFound ? `reloaded in state ${r.state}` : 'the instance was not found',
+    };
+  });
+
+  await check('persistence: a restarted runtime resolves its definition and version', async () => {
+    const r = scenario.restart;
+    if (!r)
+      return { pass: false, detail: `never reached — ${scenario.error ?? 'scenario did not run'}` };
+    return {
+      pass: r.versionResolved === true && r.definitionKey !== null,
+      detail: r.versionResolved
+        ? `${r.definitionKey} v${r.versionNumber}`
+        : 'the version did not resolve — the instance would be an orphaned row',
+    };
+  });
+
+  await check('persistence: the instance stays pinned to the version it started on', async () => {
+    const r = scenario.restart;
+    if (!r)
+      return { pass: false, detail: `never reached — ${scenario.error ?? 'scenario did not run'}` };
+    // Otherwise republishing a definition silently changes the rules under a request
+    // that is already in flight.
+    return {
+      pass: r.pinnedToVersion === true,
+      detail: r.pinnedToVersion ? 'instance references its own version' : 'NOT PINNED',
+    };
   });
 
   await check('audit: the scenario produced a trail', async () => {
@@ -610,6 +656,7 @@ async function runAccessChangeRequest({ orgA, orgB, users, prisma, correlationId
       ...asActor(users.aMaker, ['workflow_maker', 'workflow_checker']),
     };
 
+    const eventsBefore = (securitySink.events ?? []).length;
     try {
       await engine.transition(makerAsChecker, {
         instanceId: started.instance.id,
@@ -617,8 +664,17 @@ async function runAccessChangeRequest({ orgA, orgB, users, prisma, correlationId
       });
       out.selfApproval = { refused: false, reason: 'the engine allowed it' };
     } catch (error) {
-      out.selfApproval = { refused: true, reason: error.message };
+      out.selfApproval = {
+        refused: true,
+        reason: error.message,
+        // The machine-readable code. Prose is for the person reading the screen; this
+        // is what a validation may assert on, because it does not change when somebody
+        // improves the wording.
+        reasonCode: error.context?.reason ?? null,
+      };
     }
+    // Only the events this attempt produced, so the reason can be attributed to it.
+    out.selfApprovalEvents = (securitySink.events ?? []).slice(eventsBefore);
 
     /*
      * A viewer holds no workflow role and no decide permission. Refusing them is the
@@ -629,12 +685,18 @@ async function runAccessChangeRequest({ orgA, orgB, users, prisma, correlationId
       ...asActor(users.aViewer, ['viewer']),
       permissions: ['workflow.instance.read'],
     };
+    const beforeViewer = (securitySink.events ?? []).length;
     try {
       await engine.transition(viewer, { instanceId: started.instance.id, action: 'approve' });
       out.viewerApproval = { refused: false, reason: 'the engine allowed it' };
     } catch (error) {
-      out.viewerApproval = { refused: true, reason: error.message };
+      out.viewerApproval = {
+        refused: true,
+        reason: error.message,
+        reasonCode: error.context?.reason ?? null,
+      };
     }
+    out.viewerApprovalEvents = (securitySink.events ?? []).slice(beforeViewer);
 
     /*
      * A checker in another organization, holding every role and permission its own
@@ -651,7 +713,11 @@ async function runAccessChangeRequest({ orgA, orgB, users, prisma, correlationId
       });
       out.crossTenantApproval = { refused: false, reason: 'the engine allowed it' };
     } catch (error) {
-      out.crossTenantApproval = { refused: true, reason: error.message };
+      out.crossTenantApproval = {
+        refused: true,
+        reason: error.message,
+        reasonCode: error.context?.reason ?? null,
+      };
     }
 
     const approved = await engine.transition(checker, {
@@ -659,6 +725,41 @@ async function runAccessChangeRequest({ orgA, orgB, users, prisma, correlationId
       action: 'approve',
     });
     out.approved = approved.instance;
+
+    /*
+     * Restart: a second runtime context over the same database.
+     *
+     * New stores, new engine, nothing shared with the one above. This is what proves the
+     * persisted instance still means something after a process dies — that its
+     * definition and version resolve, and that it can still be transitioned rather than
+     * being an orphaned row referencing a definition that lived in memory.
+     */
+    const restarted = {
+      definitions: new runtime.PrismaDefinitionStore(prisma.workflowDefinition),
+      instances: new runtime.PrismaInstanceStore(prisma.workflowInstance),
+    };
+    restarted.versions = new runtime.PrismaVersionStore(
+      prisma.workflowVersion,
+      prisma.workflowInstance,
+      prisma.workflowDefinition,
+    );
+
+    const reloaded = await restarted.instances.findById(started.instance.id, orgA.id);
+    const resolvedVersion = reloaded
+      ? await restarted.versions.findById(reloaded.workflowVersionId)
+      : null;
+
+    out.restart = {
+      instanceFound: reloaded !== null,
+      state: reloaded?.currentState ?? null,
+      versionResolved: resolvedVersion !== null,
+      definitionKey: resolvedVersion?.definition?.id ?? null,
+      versionNumber: resolvedVersion?.version ?? null,
+      // The instance must point at the version it started on, not merely at whatever is
+      // published now — otherwise a republished definition silently changes the rules
+      // under a request that is already in flight.
+      pinnedToVersion: reloaded?.workflowVersionId === resolvedVersion?.id,
+    };
 
     // The trail this scenario actually produced, for enumeration rather than assertion
     // that "audit exists".

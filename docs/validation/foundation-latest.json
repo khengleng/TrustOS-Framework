@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-29T04:56:01.379Z",
-  "correlationId": "val_829c884f-2334-435f-b5df-353572cc40e5",
+  "generatedAt": "2026-08-29T05:02:29.284Z",
+  "correlationId": "val_1d350ec8-99bb-4174-b59e-a1bcd852486f",
   "environment": "dev",
   "results": [
     {
       "check": "tenancy: a scoped delegate reads its own tenant rows",
       "status": "PASS",
-      "detail": "found membership cmtdwqss40007s6zyf1b6gggj"
+      "detail": "found membership cmtdwz3hn0007s6gafpuz20pb"
     },
     {
       "check": "tenancy: a scoped delegate refuses a cross-tenant read by id",
@@ -46,7 +46,7 @@
     {
       "check": "workflow: a request starts in draft and persists",
       "status": "PASS",
-      "detail": "instance cmtdwquvv000os6zy01sbp1dj in draft"
+      "detail": "instance cmtdwz5tb000os6gaw1frdie1 in draft"
     },
     {
       "check": "workflow: the maker submits it and it reaches review",
@@ -56,17 +56,17 @@
     {
       "check": "maker-checker: the engine refuses the maker's approval",
       "status": "PASS",
-      "detail": "refused, recorded as self_approval_forbidden"
+      "detail": "reasonCode=self_approval_forbidden, event=self_approval_forbidden"
     },
     {
       "check": "rbac: a viewer cannot approve",
       "status": "PASS",
-      "detail": "refused: You do not have permission to perform this action."
+      "detail": "reasonCode=transition_permission_missing"
     },
     {
       "check": "tenancy: a checker in another organization cannot approve",
       "status": "PASS",
-      "detail": "refused: The requested resource was not found."
+      "detail": "reasonCode=none (not_found)"
     },
     {
       "check": "workflow: the checker approves it",
@@ -76,12 +76,27 @@
     {
       "check": "persistence: the instance is in Postgres, in its final state",
       "status": "PASS",
-      "detail": "row cmtdwquvv000os6zy01sbp1dj state=approved org=A"
+      "detail": "row cmtdwz5tb000os6gaw1frdie1 state=approved org=A"
     },
     {
       "check": "persistence: a decision was recorded against it",
       "status": "PASS",
       "detail": "1 decision row(s)"
+    },
+    {
+      "check": "persistence: a restarted runtime finds the instance",
+      "status": "PASS",
+      "detail": "reloaded in state approved"
+    },
+    {
+      "check": "persistence: a restarted runtime resolves its definition and version",
+      "status": "PASS",
+      "detail": "change-request-approval v1.0.0"
+    },
+    {
+      "check": "persistence: the instance stays pinned to the version it started on",
+      "status": "PASS",
+      "detail": "instance references its own version"
     },
     {
       "check": "audit: the scenario produced a trail",
@@ -110,8 +125,8 @@
     }
   ],
   "totals": {
-    "checks": 21,
-    "passed": 21,
+    "checks": 24,
+    "passed": 24,
     "failed": 0
   },
   "verdict": "PASS"
