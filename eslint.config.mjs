@@ -111,6 +111,8 @@ export default tseslint.config(
         AbortController: 'readonly',
         AbortSignal: 'readonly',
         performance: 'readonly',
+        // Used by the validation scripts to build form-encoded token requests.
+        URLSearchParams: 'readonly',
       },
     },
     rules: {

@@ -219,6 +219,117 @@ async function probe(url, path, headers = {}) {
   }
 }
 
+/**
+ * Authentication through the deployed runtime, when the inputs to do it exist.
+ *
+ * Requires a token from the environment's own identity provider — obtained by client
+ * credentials from a scoped validation client, never a personal administrator account,
+ * and never embedded in source. The inputs come from the environment:
+ *
+ *   TRUSTOS_VALIDATION_ISSUER          the OIDC issuer for the environment under test
+ *   TRUSTOS_VALIDATION_CLIENT_ID       a DEV-only client scoped to this validation
+ *   TRUSTOS_VALIDATION_CLIENT_SECRET   its secret
+ *
+ * Absent any of them, every check reports NOT_REACHED rather than passing or failing.
+ * That is the honest outcome: no evidence was gathered. It also keeps an ordinary local
+ * run free of deployed credentials, which is why this is separate from the checks above.
+ */
+async function checkDeployedAuthentication(url) {
+  const issuer = process.env.TRUSTOS_VALIDATION_ISSUER;
+  const clientId = process.env.TRUSTOS_VALIDATION_CLIENT_ID;
+  const clientSecret = process.env.TRUSTOS_VALIDATION_CLIENT_SECRET;
+
+  const notReached = (reason) =>
+    [
+      'auth-valid-token-accepted',
+      'auth-anonymous-refused',
+      'auth-forged-token-refused',
+      'auth-actor-resolved',
+    ].map((check) => ({ check, pass: null, detail: `NOT_REACHED — ${reason}` }));
+
+  if (!issuer || !clientId || !clientSecret) {
+    return notReached('TRUSTOS_VALIDATION_ISSUER, _CLIENT_ID and _CLIENT_SECRET are required');
+  }
+
+  // The anonymous and forged cases need no credential, so they are gathered regardless
+  // of whether a token can be obtained.
+  const results = [];
+
+  const anonymous = await probe(url, '/api/governance/apps');
+  results.push({
+    check: 'auth-anonymous-refused',
+    pass: anonymous.status === 401 || anonymous.status === 403,
+    detail: `anonymous -> ${anonymous.status}`,
+  });
+
+  const forged = await probe(url, '/api/governance/apps', {
+    Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmb3JnZWQifQ.not-a-signature',
+  });
+  results.push({
+    check: 'auth-forged-token-refused',
+    pass: forged.status === 401 || forged.status === 403,
+    detail: `well-formed but unsigned -> ${forged.status}`,
+  });
+
+  let token = null;
+  try {
+    const response = await fetch(`${issuer.replace(/\/$/, '')}/protocol/openid-connect/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
+    if (response.ok) token = (await response.json()).access_token;
+    else
+      results.push({
+        check: 'auth-token-obtained',
+        pass: false,
+        detail: `the identity provider refused the validation client (${response.status})`,
+      });
+  } catch (error) {
+    results.push({ check: 'auth-token-obtained', pass: false, detail: error.message });
+  }
+
+  if (!token) {
+    results.push(
+      ...notReached('no token could be obtained').filter(
+        (entry) => !results.some((existing) => existing.check === entry.check),
+      ),
+    );
+    return results;
+  }
+
+  // The token is never logged. Its claims are read only to report which issuer and
+  // audience were accepted.
+  const claims = JSON.parse(
+    Buffer.from(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString(),
+  );
+
+  const authenticated = await probe(url, '/api/governance/apps', {
+    Authorization: `Bearer ${token}`,
+  });
+
+  results.push({
+    check: 'auth-valid-token-accepted',
+    // 200 is acceptance. 403 also proves authentication succeeded — the request got past
+    // the authenticator and was stopped by a later control — and saying so is more
+    // truthful than calling a 403 an authentication failure.
+    pass: authenticated.status === 200 || authenticated.status === 403,
+    detail: `genuine token -> ${authenticated.status}${authenticated.status === 403 ? ' (authenticated, refused later)' : ''}`,
+  });
+
+  results.push({
+    check: 'auth-actor-resolved',
+    pass: authenticated.status !== 401,
+    detail: `iss=${claims.iss ?? '?'} aud=${JSON.stringify(claims.aud ?? null)} azp=${claims.azp ?? '?'}`,
+  });
+
+  return results;
+}
+
 /** Checks a running deployment answers, and answers safely. */
 async function checkDeployment(url) {
   const results = [];
@@ -284,6 +395,8 @@ async function checkDeployment(url) {
     pass: allowed !== '*' && allowed !== 'https://not-approved.example',
     detail: `Access-Control-Allow-Origin: ${allowed ?? 'absent'}`,
   });
+
+  results.push(...(await checkDeployedAuthentication(url)));
 
   return results;
 }
@@ -352,7 +465,8 @@ if (probeDeployed) {
 
 const failing = capabilities.filter((c) => c.status === 'BROKEN');
 const criticalFailing = failing.filter((c) => c.critical);
-const deploymentFailures = (deployment?.checks ?? []).filter((c) => !c.pass);
+const deploymentFailures = (deployment?.checks ?? []).filter((c) => c.pass === false);
+const deploymentNotReached = (deployment?.checks ?? []).filter((c) => c.pass === null);
 
 const summary = {
   generatedAt: new Date().toISOString(),
@@ -369,7 +483,9 @@ const summary = {
       ? 'FAIL'
       : deploymentFailures.length > 0
         ? 'PARTIAL'
-        : 'PASS',
+        : deploymentNotReached.length > 0
+          ? 'PARTIAL'
+          : 'PASS',
 };
 
 if (wantJson) {
@@ -392,7 +508,8 @@ if (wantJson) {
   if (deployment) {
     console.log(`Deployment — ${deployment.baseUrl}`);
     for (const check of deployment.checks) {
-      console.log(`  ${check.pass ? 'PASS' : 'FAIL'}  ${check.check.padEnd(34)} ${check.detail}`);
+      const label = check.pass === null ? 'SKIP' : check.pass ? 'PASS' : 'FAIL';
+      console.log(`  ${label}  ${check.check.padEnd(34)} ${check.detail}`);
     }
     console.log('');
   }
