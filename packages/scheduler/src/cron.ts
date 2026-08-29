@@ -334,7 +334,7 @@ const SEARCH_LIMIT_MINUTES = 2 * 366 * 24 * 60;
  * zones, thirty minutes on Lord Howe — so a short day can never carry the search
  * past a minute that should have matched.
  */
-const DST_SAFETY_MARGIN_MINUTES = 120;
+const MINUTES_PER_DAY = 24 * 60;
 
 /**
  * The next instant at or after `after` that matches.
@@ -370,14 +370,35 @@ export function nextCronOccurrence(cron: ParsedCron, after: Date, timezone: stri
      * them minute by minute is the difference between eight seconds and a tenth of
      * one — slow enough that the two tests covering it timed out in CI.
      *
-     * The jump deliberately stops short of local midnight. A spring-forward day is
-     * an hour shorter than the wall clock implies, so jumping the full remainder
-     * could land past midnight and step over a minute that would have matched.
-     * Landing early is free: it costs a few extra iterations and nothing else.
+     * Daylight saving is handled by measuring rather than predicting. Jumping the
+     * nominal remainder of the day can land before or after local midnight, because
+     * a spring-forward day is an hour shorter than the wall clock implies and a
+     * fall-back day an hour longer. So the landing point's wall clock is read, and
+     * the search is rewound to that day's first minute. Reading is exact where
+     * arithmetic has to guess.
+     *
+     * An earlier version stopped two hours short of midnight instead, to be safe
+     * without a second lookup — and then had to walk those two hours a minute at a
+     * time. That cost 121 iterations per skipped day rather than two: 88,452
+     * iterations to conclude that 30 February never arrives, where 1,464 suffice.
      */
-    offset += matchesCronDate(cron, parts)
-      ? 1
-      : Math.max(1, (23 - parts.hour) * 60 + (60 - parts.minute) - DST_SAFETY_MARGIN_MINUTES);
+    if (matchesCronDate(cron, parts)) {
+      offset += 1;
+      continue;
+    }
+
+    const minutesIntoDay = parts.hour * 60 + parts.minute;
+    const landing = new Date(candidate.getTime() + (MINUTES_PER_DAY - minutesIntoDay) * 60_000);
+    const landingParts = wallClockIn(landing, timezone);
+    const startOfLandingDay = new Date(
+      landing.getTime() - (landingParts.hour * 60 + landingParts.minute) * 60_000,
+    );
+
+    // Never go backwards, and never stand still: a fall-back day can put the landing
+    // point back inside the day just rejected, and one minute of progress is always
+    // correct even if it is slow.
+    const jumped = Math.round((startOfLandingDay.getTime() - candidate.getTime()) / 60_000);
+    offset += Math.max(1, jumped);
   }
 
   return null;
