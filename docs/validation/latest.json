@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-08-29T04:28:16.020Z",
+  "generatedAt": "2026-08-29T09:36:35.344Z",
   "totals": {
-    "tests": 5680,
-    "passed": 5680,
+    "tests": 5698,
+    "passed": 5698,
     "failed": 0,
-    "suites": 1515
+    "suites": 1519
   },
   "capabilities": [
     {
@@ -14,8 +14,8 @@
       "sourceFiles": 14,
       "specFiles": 2,
       "tests": {
-        "total": 57,
-        "passed": 57,
+        "total": 60,
+        "passed": 60,
         "failed": 0,
         "files": 2
       },
@@ -210,8 +210,8 @@
       "sourceFiles": 6,
       "specFiles": 1,
       "tests": {
-        "total": 14,
-        "passed": 14,
+        "total": 18,
+        "passed": 18,
         "failed": 0,
         "files": 1
       },
@@ -288,6 +288,85 @@
       "status": "IMPLEMENTED"
     }
   ],
-  "deployment": null,
-  "verdict": "PASS"
+  "deployment": {
+    "baseUrl": "https://governance-tool-dev.up.railway.app",
+    "checks": [
+      {
+        "check": "health",
+        "pass": true,
+        "detail": "GET /health -> 200"
+      },
+      {
+        "check": "readiness",
+        "pass": true,
+        "detail": "GET /ready -> 200"
+      },
+      {
+        "check": "health-discloses-nothing",
+        "pass": true,
+        "detail": "no credential-shaped keys"
+      },
+      {
+        "check": "protected-route-refuses-anonymous",
+        "pass": true,
+        "detail": "GET /api/governance/apps -> 401"
+      },
+      {
+        "check": "forged-token-refused",
+        "pass": true,
+        "detail": "bearer \"not-a-token\" -> 401"
+      },
+      {
+        "check": "auth-untrusted-signature-refused",
+        "pass": true,
+        "detail": "valid claims, untrusted key -> 401"
+      },
+      {
+        "check": "header-hsts",
+        "pass": true,
+        "detail": "max-age=31536000; includeSubDomains"
+      },
+      {
+        "check": "header-content-type-options",
+        "pass": true,
+        "detail": "nosniff"
+      },
+      {
+        "check": "header-frame-options",
+        "pass": true,
+        "detail": "DENY"
+      },
+      {
+        "check": "header-content-security-policy",
+        "pass": true,
+        "detail": "default-src 'none'; script-src 'self'; style-src 'self'; img"
+      },
+      {
+        "check": "cors-refuses-unapproved-origin",
+        "pass": true,
+        "detail": "Access-Control-Allow-Origin: absent"
+      },
+      {
+        "check": "auth-valid-token-accepted",
+        "pass": null,
+        "detail": "NOT_REACHED — TRUSTOS_VALIDATION_ISSUER, _CLIENT_ID and _CLIENT_SECRET are required"
+      },
+      {
+        "check": "auth-anonymous-refused",
+        "pass": null,
+        "detail": "NOT_REACHED — TRUSTOS_VALIDATION_ISSUER, _CLIENT_ID and _CLIENT_SECRET are required"
+      },
+      {
+        "check": "auth-forged-token-refused",
+        "pass": null,
+        "detail": "NOT_REACHED — TRUSTOS_VALIDATION_ISSUER, _CLIENT_ID and _CLIENT_SECRET are required"
+      },
+      {
+        "check": "auth-actor-resolved",
+        "pass": null,
+        "detail": "NOT_REACHED — TRUSTOS_VALIDATION_ISSUER, _CLIENT_ID and _CLIENT_SECRET are required"
+      }
+    ]
+  },
+  "verdict": "PARTIAL"
 }

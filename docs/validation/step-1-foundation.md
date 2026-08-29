@@ -31,6 +31,13 @@ refused, correctly, because by then it was already in review.
 Two organizations and six users are created in DEV, exercised, and deleted in a `finally`
 block so a failed run leaves nothing behind.
 
+## Re-run on 2026-08-29
+
+Re-run against the DEV database at commit `a77b4d7` as part of the Core Foundation v0.1
+validation: **24/24 checks passed**, correlation `val_9cb8b3b6-ed47-499e-86b0-90e4b4bd6936`.
+No check was changed, and no regression appeared. The seven-control matrix is in
+[foundation-v0.1.md](foundation-v0.1.md).
+
 ## Results — 24/24
 
 | Check                                                 | Result | Evidence                                                     |

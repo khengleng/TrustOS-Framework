@@ -1,7 +1,12 @@
 # Step 1C — deployed authentication validation
 
 **Result: Authentication remains PARTIAL. One prerequisite is left, and it is a
-three-checkbox change in the Keycloak Admin Console.**
+four-checkbox change in the Keycloak Admin Console.**
+
+Re-verified at commit `a77b4d788694`: the validator client in `trustos-dev` is still public,
+and no client secret has been supplied to the DEV environment. The credential-dependent
+checks therefore remain `NOT_REACHED`, reported as SKIP and counted as neither pass nor
+failure. See [foundation-v0.1.md](foundation-v0.1.md) for the seven-control matrix.
 
 Both blockers reported previously are gone. DEV now genuinely validates OIDC tokens, and
 the deployed runtime has been observed refusing a token it could not verify. What is
@@ -82,7 +87,7 @@ authorized party that were accepted.
 
 ## What is now proven on the deployed runtime
 
-Unconditionally, with no credential required:
+Unconditionally, with no credential required. Commit `a77b4d788694`.
 
 ```
 PASS  readiness                          GET /ready -> 200, identity: ok
@@ -90,6 +95,32 @@ PASS  protected-route-refuses-anonymous  GET /api/governance/apps -> 401
 PASS  forged-token-refused               bearer "not-a-token" -> 401
 PASS  auth-untrusted-signature-refused   valid claims, untrusted key -> 401
 ```
+
+### The six negative cases, and what each actually establishes
+
+Every case was refused with 401. The rejection reason and the time taken were read from
+the service's own logs, because the response body is deliberately identical in all six —
+which is correct, and is also why the response alone cannot say which check fired.
+
+| Case                             | Status | Time        | Reason recorded       | What it establishes                                       |
+| -------------------------------- | ------ | ----------- | --------------------- | --------------------------------------------------------- |
+| A — no bearer token              | 401    | 1.72ms      | none                  | Refused at the guard. No crypto, no network               |
+| B — garbage, non-JWT             | 401    | 6.60ms      | `oidc_token_rejected` | Reached the OIDC provider and failed to parse             |
+| C — valid shape, unpublished key | 401    | **39.75ms** | `oidc_token_rejected` | A JWKS lookup and a real signature check happened         |
+| D — expired                      | 401    | 4.46ms      | `oidc_token_rejected` | Denied — **but at key resolution, not for being expired** |
+| E — wrong issuer                 | 401    | 4.71ms      | `oidc_token_rejected` | Denied — **but at key resolution, not for its issuer**    |
+| F — wrong audience               | 401    | 4.28ms      | `oidc_token_rejected` | Denied — **but at key resolution, not for its audience**  |
+
+D, E and F were signed with a key the realm does not publish, because that is the only
+kind of token that can be minted without the validation credential. jose resolves the
+signing key before it evaluates any claim, so all three were refused on an unknown `kid`
+— in about 4.5ms, against C's 39.75ms, because by then the JWKS was cached and the key
+was known to be absent.
+
+They satisfy "expected: DENY". They do **not** demonstrate that the expiry, issuer or
+audience checks work, and recording them as though they did would be the overclaim this
+exercise exists to prevent. Isolating those three needs a token this realm actually
+signed.
 
 The last one is new and is the first deployed evidence that DEV verifies signatures.
 `Bearer not-a-token` proves little — it fails to parse, so a runtime that verified nothing

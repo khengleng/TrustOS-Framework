@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-29T04:28:16.019Z",
+  "generatedAt": "2026-08-29T09:36:34.434Z",
   "frameworkVersion": "0.1.0",
   "capabilities": [
     {
@@ -16,7 +16,7 @@
         "@trustos/identity"
       ],
       "testCoverage": {
-        "tests": 57,
+        "tests": 60,
         "specFiles": 2
       },
       "documentation": "docs/validation/framework-current-state.md",
@@ -348,7 +348,7 @@
         "@trustos/observability"
       ],
       "testCoverage": {
-        "tests": 14,
+        "tests": 18,
         "specFiles": 1
       },
       "documentation": "docs/validation/framework-current-state.md",
