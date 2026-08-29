@@ -25,6 +25,13 @@ observable changed — not when it was discussed, and not because a later run wa
 
 **Severity** HIGH · **Environment** dev · **Status** OPEN · **Owner** operator with Keycloak administration
 
+**Re-verified 2026-08-29 and still open.** The client-credentials flow returns
+`401 unauthorized_client`, while a client name that does not exist returns
+`invalid_client` from the same endpoint in the same run — so Keycloak resolves this client
+and refuses it the grant. `TRUSTOS_VALIDATION_CLIENT_SECRET` is also still absent from the
+DEV service. Evidence:
+[gate-1-attempt-2026-08-29.md](../validation/releases/v0.1/gate-1-attempt-2026-08-29.md).
+
 `trustos-foundation-validator` exists in the `trustos-dev` realm and cannot authenticate.
 A deliberately wrong secret returns `unauthorized_client` rather than `invalid_client`,
 which is what Keycloak says about a client it can find but that is not configured to
@@ -133,3 +140,21 @@ state `approved`.
 state is recoverable by retry, and wrapping the transition in a transaction would pull
 the audit sink and task store into the same transaction boundary — a larger change than
 the risk warrants. Recorded so the choice is visible rather than assumed.
+
+---
+
+## TOS-004 — `trustos-web` exists but accepts no redirect URI
+
+**Severity** MEDIUM · **Environment** dev · **Status** OPEN, progressed
+
+The client has been created in `trustos-dev` since the last run — the authorization
+endpoint now answers for it rather than saying `Client not found`. It is not yet usable:
+every redirect URI tried was refused with `Invalid parameter: redirect_uri`, including
+`https://governance-tool-dev.up.railway.app/` and `https://trustos.cambobia.com/`.
+
+**Consequence.** Browser sign-in to the DEV portal still does not work. This does not
+block the machine-token path, which is TOS-003.
+
+**Remediation.** Add the DEV portal's redirect URI and web origin to the client, and
+confirm it is public with PKCE (S256) rather than confidential — the portal is a browser
+client and holds no secret.

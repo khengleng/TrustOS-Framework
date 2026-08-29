@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-29T11:03:02.665Z",
+  "generatedAt": "2026-08-29T13:36:47.435Z",
   "environment": "dev",
   "totals": {
     "checks": 21,
@@ -8,15 +8,15 @@
     "skipped": 1
   },
   "measurements": {
-    "backupMs": 1052,
-    "restoreMs": 3208
+    "backupMs": 850,
+    "restoreMs": 2787
   },
   "verdict": "PARTIAL",
   "results": [
     {
       "check": "dataset: a controlled two-tenant dataset exists",
       "status": "PASS",
-      "detail": "orgs=2 (A=aj13zf, B=ubw5ju) users=3 instance=cmte9um2z000fs61891l9srz9 tasks=2"
+      "detail": "orgs=2 (A=ktvong, B=6trzny) users=3 instance=cmtefccof000fs6e1xnv4lu3q tasks=2"
     },
     {
       "check": "database failure: a read fails safely rather than returning nothing",
@@ -76,7 +76,7 @@
     {
       "check": "backup: a controlled backup was produced, with rows in it",
       "status": "PASS",
-      "detail": "30 row(s) in 1052ms — Organization=2 User=3 OrganizationMember=3 WorkflowDefinition=1 WorkflowVersion=1 WorkflowInstance=3 WorkflowTask=6 WorkflowDecision=2 AuditLog=9"
+      "detail": "30 row(s) in 850ms — Organization=2 User=3 OrganizationMember=3 WorkflowDefinition=1 WorkflowVersion=1 WorkflowInstance=3 WorkflowTask=6 WorkflowDecision=2 AuditLog=9"
     },
     {
       "check": "backup: it contains no credential material",
@@ -86,7 +86,7 @@
     {
       "check": "restore: rows restored into an isolated schema",
       "status": "PASS",
-      "detail": "every table matched, in 3208ms"
+      "detail": "every table matched, in 2787ms"
     },
     {
       "check": "restore: tenant ownership survived",

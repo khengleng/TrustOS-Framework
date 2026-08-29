@@ -4,8 +4,8 @@
     "status": "pass",
     "environment": "dev",
     "suite": "npm run validate:approval-workbench",
-    "commit": "069ee4319085f4bd8439f578aab28a899087a2d1",
-    "validatedAt": "2026-08-29T10:46:51.386Z",
+    "commit": "97a58b28452bcd31fb0f553dee1913da74593e0f",
+    "validatedAt": "2026-08-29T13:36:29.056Z",
     "checks": {
       "total": 33,
       "passed": 33,
