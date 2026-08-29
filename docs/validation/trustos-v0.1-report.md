@@ -132,13 +132,33 @@ descriptors, and `trustos-api` is the reference example.
 Reporting this as PASS on the strength of in-process tests would misrepresent what was
 verified. It is recorded as the gap it is.
 
+## Lifecycle promotion (section 33)
+
+Evidence-based, and no application moved as a result of this validation.
+
+| From          | To            | Requires                                                                          |
+| ------------- | ------------- | --------------------------------------------------------------------------------- |
+| `draft`       | `implemented` | something executes the descriptor — a service and a UI, not a declaration         |
+| `implemented` | `validated`   | its functional and security tests pass, and tenant isolation is proven at the API |
+| `validated`   | `active`      | deployed, probed live, and an owner accepts it                                    |
+
+An application classified **critical** risk — Finance Operations, Platform Administration,
+Risk & Compliance — needs the same evidence held to a higher standard, not a shortcut.
+All eleven are `draft` with a validation status of `not_tested`, which the Governance
+Tool now reports alongside lifecycle so that a console which renders cannot be mistaken
+for one that works.
+
+The per-application detail is in [`application-matrix.md`](application-matrix.md).
+
 ## Blocking issues
 
-1. **No `AccessResolver` implementation.** Any role below platform-root authenticates and is
-   then refused, because organization membership never resolves. Delegation is impossible
-   until this exists.
-2. **No OIDC-subject-to-`User` link.** A person who signs in has no row in the framework's
-   user tables, so its organization and membership model is unused.
+1. ~~**No `AccessResolver` implementation.**~~ **Fixed.** `@trustos/access-resolver` reads
+   membership per request; 15 tests, each verified to fail when the behaviour it covers is
+   removed.
+2. ~~**No OIDC-subject-to-`User` link.**~~ **Schema fixed, provisioning outstanding.**
+   `User.externalId` exists and the resolver matches on it, but nothing populates it yet —
+   no user has one, so the resolver has nothing to match. Delegation below platform-root
+   remains blocked until a provisioning path exists.
 3. **The console applications have no runtime.** Eleven descriptors, no implementations.
 4. **`trustos-api` runs the reference example** and is the last service on local identity.
 5. **No live end-to-end path** for workflow, maker-checker or case management.

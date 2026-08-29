@@ -37,7 +37,14 @@ function readFlag(name) {
  * a tenancy or authorization regression is not a degraded feature, it is a breach.
  */
 const CAPABILITIES = [
-  { id: 'identity', name: 'Identity', paths: ['packages/identity'], critical: true },
+  {
+    id: 'identity',
+    name: 'Identity',
+    paths: ['packages/identity'],
+    critical: true,
+    classification: 'restricted',
+    deployed: 'governance-tool',
+  },
   { id: 'tenancy', name: 'Multi-tenancy', paths: ['packages/tenancy'], critical: true },
   { id: 'rbac', name: 'RBAC', paths: ['packages/rbac'], critical: true },
   { id: 'authorization', name: 'Authorization', paths: ['packages/authorization'], critical: true },
@@ -300,6 +307,40 @@ const capabilities = CAPABILITIES.map((capability) => {
   };
 });
 
+/*
+ * The machine-readable registry.
+ *
+ * `status` is derived from what was measured, never declared: DRAFT for something with
+ * no executing tests, IMPLEMENTED for code that is exercised, VALIDATED only where a
+ * deployed service was probed as well. Nothing here can be set by editing a label.
+ */
+const registry = {
+  generatedAt: new Date().toISOString(),
+  frameworkVersion: JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version,
+  capabilities: capabilities.map((capability) => {
+    const definition = CAPABILITIES.find((entry) => entry.id === capability.id);
+    return {
+      id: capability.id,
+      name: capability.name,
+      version: '0.1.0',
+      owner: 'role:platform-engineering',
+      status:
+        capability.status === 'BROKEN'
+          ? 'DISABLED'
+          : capability.status === 'STUB' || capability.status === 'NOT_IMPLEMENTED'
+            ? 'DRAFT'
+            : 'IMPLEMENTED',
+      securityClassification: definition?.classification ?? 'internal',
+      dependencies: definition?.paths ?? [],
+      interface: (definition?.paths ?? []).map((path) => `@trustos/${path.split('/').pop()}`),
+      testCoverage: { tests: capability.tests.passed, specFiles: capability.specFiles },
+      documentation: 'docs/validation/framework-current-state.md',
+      deploymentRequirement: definition?.deployed ?? 'in-process library, no deployed service',
+      critical: capability.critical,
+    };
+  }),
+};
+
 let deployment = null;
 if (probeDeployed) {
   if (!baseUrl) {
@@ -359,6 +400,21 @@ if (wantJson) {
   console.log(`Verdict: ${summary.verdict}`);
 }
 
-writeFileSync(join(root, 'docs/validation/latest.json'), `${JSON.stringify(summary, null, 2)}\n`);
+/*
+ * Written only when asked.
+ *
+ * A generated file that changes on every run leaves the working tree dirty after a
+ * command whose whole job is to tell you the truth about the repository — and the first
+ * thing it reports is a diff nobody made. `npm run evidence` already established the
+ * pattern here: artefacts are regenerated deliberately, not as a side effect.
+ */
+if (args.includes('--write') || process.env.TRUSTOS_WRITE_EVIDENCE === '1') {
+  writeFileSync(join(root, 'docs/validation/latest.json'), `${JSON.stringify(summary, null, 2)}\n`);
+  writeFileSync(
+    join(root, 'docs/validation/capability-registry.json'),
+    `${JSON.stringify(registry, null, 2)}\n`,
+  );
+  if (!wantJson) console.log('\nWrote docs/validation/latest.json and capability-registry.json');
+}
 
 if (summary.verdict === 'FAIL') process.exit(1);

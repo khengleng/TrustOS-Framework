@@ -252,6 +252,24 @@ function renderCatalog(payload, onOpen) {
     if (app.description) card.append(el('span', 'card-desc', app.description));
 
     const tags = el('span', 'tags');
+
+    /*
+     * Validation state first, and visually distinct.
+     *
+     * A console that renders is not a console that works. Every application here is a
+     * descriptor, so the honest state is `not_tested` — and showing it beside a
+     * lifecycle of `draft` is what stops a full-looking catalogue reading as a working
+     * platform.
+     */
+    if (app.validationStatus) {
+      const status = el(
+        'span',
+        `tag status-${app.validationStatus}`,
+        app.validationStatus.replace('_', ' '),
+      );
+      tags.append(status);
+    }
+
     for (const [label, value] of [
       ['owner', app.owner],
       ['lifecycle', app.lifecycleStatus],

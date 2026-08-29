@@ -287,3 +287,25 @@ button[disabled] {
   color: var(--muted);
   font-size: 12px;
 }
+
+/* Validation state. Deliberately louder than the other tags: it is the one that says
+   whether anything here has been proven, and it should not read as decoration. */
+.status-not_tested {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.status-pass {
+  color: #3fb950;
+  border-color: #3fb950;
+}
+
+.status-partial {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.status-fail {
+  color: #f85149;
+  border-color: #f85149;
+}

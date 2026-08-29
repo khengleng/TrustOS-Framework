@@ -85,6 +85,20 @@ export class CatalogController {
         aiFeatures: app.aiFeatures,
         lastSecurityReview: app.lastSecurityReview,
         nextSecurityReview: app.nextSecurityReview,
+        /*
+         * Whether anything has actually been proven about this application.
+         *
+         * Derived rather than declared, and deliberately separate from
+         * `lifecycleStatus`: a descriptor renders perfectly and proves nothing, so a
+         * console that looks finished must not be mistaken for one that works.
+         *
+         * `not_tested` is the honest answer for every registered application today —
+         * they are declarations, and nothing executes them. It is not `fail`, because
+         * nothing is broken; there is simply nothing yet to break. It becomes something
+         * else when an implementation exists and its tests run, not when somebody edits
+         * a label.
+         */
+        validationStatus: validationStatusOf(app),
       })),
     };
   }
@@ -262,4 +276,20 @@ export class CatalogController {
       rollbackTarget: body.rollbackTarget,
     });
   }
+}
+
+/**
+ * The validation state of a registered application.
+ *
+ * An application is only more than `not_tested` once something executes it. Nothing does
+ * today: every entry in the catalog is an `InternalApplication` descriptor, and the
+ * Governance Tool serves descriptors rather than running them. Reporting anything else
+ * would make a console that renders look like a console that works, which is the exact
+ * confusion the validation exercise existed to remove.
+ *
+ * This is a function rather than a field so it cannot be set by editing data. When an
+ * implementation exists, this reads its result — it does not accept a claim.
+ */
+function validationStatusOf(_app: { appId: string }): 'not_tested' | 'partial' | 'pass' | 'fail' {
+  return 'not_tested';
 }
