@@ -1,16 +1,11 @@
 import 'reflect-metadata';
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustos/config';
 import { AllExceptionsFilter } from '@trustos/errors/nest';
-import {
-  NO_APPLICATION_EVIDENCE,
-  consoleCatalogFor,
-  type ApplicationEvidenceIndex,
-} from '@trustos/governance-tool-core';
+import { RECORDED_APPLICATION_EVIDENCE, consoleCatalogFor } from '@trustos/governance-tool-core';
 import { OidcIdentityProvider, type IdentityProvider } from '@trustos/identity';
 import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
 import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
@@ -130,7 +125,14 @@ async function bootstrap(): Promise<void> {
          * without it reports every application as `not_tested` rather than carrying a
          * stale pass forward.
          */
-        applicationEvidence: loadApplicationEvidence(logger),
+        /*
+         * Compiled in, not read from disk.
+         *
+         * This used to read docs/validation/application-evidence.json at startup. The
+         * runtime image does not copy docs/, so the file was never present and every
+         * application reported not_tested in every deployed environment.
+         */
+        applicationEvidence: RECORDED_APPLICATION_EVIDENCE,
 
         /*
          * What the browser needs before it holds a token: where to send the user and
@@ -241,9 +243,35 @@ async function bootstrap(): Promise<void> {
       trustosEnvironment: environment,
       registeredResources: 0,
       appCatalog: 'in-memory',
+      /*
+       * What the catalog will report validation status from, stated at start-up.
+       *
+       * This exists because the previous mechanism failed silently in exactly the place
+       * it mattered: evidence was read from a docs/ file the runtime image does not
+       * contain, so every deployed environment reported not_tested and nothing said so.
+       * An operator can now see, without a credential, whether the running build carries
+       * evidence at all — and for which applications and environments.
+       *
+       * Counts and identifiers only. No status is claimed here; that is the catalog's
+       * answer to an authorised caller, not a start-up banner's.
+       */
+      validationEvidence: {
+        records: Object.keys(RECORDED_APPLICATION_EVIDENCE).length,
+        applications: Object.values(RECORDED_APPLICATION_EVIDENCE).map(
+          (record) => `${record.appId}@${record.environment}`,
+        ),
+      },
     },
     'trustos governance-tool started',
   );
+
+  if (Object.keys(RECORDED_APPLICATION_EVIDENCE).length === 0) {
+    logger.warn(
+      {},
+      'No application validation evidence is compiled into this build. Every application ' +
+        'will report not_tested — run the validation suites and rebuild.',
+    );
+  }
 
   logger.warn(
     {},
@@ -345,33 +373,6 @@ function parsePairs(value: string | undefined): Record<string, string> {
     if (from && to) pairs[from.trim()] = to.trim();
   }
   return pairs;
-}
-
-/**
- * Loads validation evidence written by the validation suites.
- *
- * Absent, unreadable or malformed all resolve to no evidence, which reports every
- * application as `not_tested`. That is the honest failure direction: a catalog that
- * cannot read its evidence should claim nothing, not claim the last thing it remembered.
- */
-function loadApplicationEvidence(logger: {
-  warn: (message: string, context?: Record<string, unknown>) => void;
-}): ApplicationEvidenceIndex {
-  const path = join(process.cwd(), 'docs/validation/application-evidence.json');
-
-  try {
-    const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      throw new Error('not an object');
-    }
-    return parsed as ApplicationEvidenceIndex;
-  } catch (error) {
-    // Not an error condition: most deployments ship without it.
-    logger.warn('No application validation evidence found; every application reports not_tested.', {
-      reason: error instanceof Error ? error.message : 'unreadable',
-    });
-    return NO_APPLICATION_EVIDENCE;
-  }
 }
 
 function parseList(value: string | undefined): string[] {

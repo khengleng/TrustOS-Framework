@@ -103,6 +103,16 @@ export class CatalogController {
          * a label.
          */
         validationStatus: validationStatusOf(app, this.evidence, this.environment),
+
+        /*
+         * What the status rests on, so a reader can check it rather than trust it.
+         *
+         * A bare word invites belief. The commit and the suite let somebody re-run the
+         * thing that produced it, and the environment makes it obvious that a DEV pass
+         * is a DEV pass. Null when nothing has been validated, which is not the same
+         * shape as a record full of empty strings.
+         */
+        validationEvidence: evidenceProvenanceOf(app, this.evidence, this.environment),
       })),
     };
   }
@@ -294,6 +304,37 @@ export class CatalogController {
  * Evidence is keyed by environment and is not promoted across environments. A pass in
  * DEV is a pass in DEV; asked about anything else, this says `not_tested`.
  */
+/**
+ * The provenance behind a validation status.
+ *
+ * Only returned when the evidence describes the environment being asked about — the same
+ * rule the status itself follows. Handing over a DEV record while reporting `not_tested`
+ * for production would invite exactly the confusion the environment check exists to
+ * prevent.
+ */
+function evidenceProvenanceOf(
+  app: { appId: string },
+  evidence: ApplicationEvidenceIndex,
+  environment: string,
+): {
+  environment: string;
+  suite: string;
+  commit: string;
+  validatedAt: string;
+  checks: { total: number; passed: number; failed: number };
+} | null {
+  const record = evidence[app.appId];
+  if (!record || record.environment !== environment) return null;
+
+  return {
+    environment: record.environment,
+    suite: record.suite,
+    commit: record.commit,
+    validatedAt: record.validatedAt,
+    checks: record.checks,
+  };
+}
+
 function validationStatusOf(
   app: { appId: string },
   evidence: ApplicationEvidenceIndex,
