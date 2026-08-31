@@ -18,12 +18,20 @@ observable changed — not when it was discussed, and not because a later run wa
 | TOS-011                                               | Invalid caller tokens marked identity unhealthy (DoS)            | **CRITICAL** | all         | **CLOSED**          |
 | TOS-012                                               | Approval detail queried an audit entity type nothing writes      | MEDIUM       | all         | **CLOSED**          |
 | TOS-013                                               | Local provider reached the hasher with a null password hash      | MEDIUM       | all         | **CLOSED**          |
+| TOS-014                                               | Validation evidence never reached the runtime                    | MEDIUM       | all         | **PARTIAL**         |
+| TOS-015                                               | Keycloak administrator credential in Railway is stale            | **HIGH**     | all         | **OPEN**            |
 
 ---
 
 ## TOS-003 — DEV validation client is public
 
 **Severity** HIGH · **Environment** dev · **Status** OPEN · **Owner** operator with Keycloak administration
+
+**Re-verified a third time on 2026-08-31 and still open**, with the same
+`unauthorized_client`. The automated remediation was attempted on that date and could not
+start: the Keycloak administrator credential held in Railway is refused — **TOS-015**.
+Until that credential is recovered, this finding cannot be closed through the admin API,
+only by hand in the Admin Console.
 
 **Re-verified twice on 2026-08-29 and still open.** After the operator reported setting
 Client authentication ON and Service accounts ON in the Admin Console, the token endpoint
@@ -169,6 +177,10 @@ block the machine-token path, which is TOS-003.
 confirm it is public with PKCE (S256) rather than confidential — the portal is a browser
 client and holds no secret.
 
+`scripts/operator/configure-dev-validation-client.sh` already performs exactly that, in
+step 3. It has not been able to run since the administrator credential stopped working —
+**TOS-015** blocks this finding for the same reason it blocks TOS-003.
+
 ---
 
 ## TOS-014 — validation evidence never reached the runtime
@@ -227,3 +239,78 @@ found" warning had stopped appearing. That was not evidence — the function emi
 been deleted, so its absence proved the code had changed and nothing more. The runtime now
 states what it carries positively, and the proof is an observation rather than an inferred
 absence.
+
+---
+
+## TOS-015 — Keycloak administrator credential in Railway is stale
+
+**Severity** HIGH · **Environment** all · **Status** OPEN · **Owner** whoever rotated the
+administrator password
+
+### What was observed
+
+On 2026-08-31 the remediation for TOS-003 was attempted with
+`scripts/operator/configure-dev-validation-client.sh`. It never reached Keycloak's admin
+API. The credential the script reads from the Railway `keycloak` service — a 13-character
+username and a 28-character password, both present and non-empty — is refused by the
+master realm's token endpoint:
+
+```
+error: invalid_grant
+description: Invalid user credentials
+```
+
+The variables are not missing or truncated. They are simply wrong.
+
+### Why
+
+`KC_BOOTSTRAP_ADMIN_USERNAME` / `KC_BOOTSTRAP_ADMIN_PASSWORD` are _bootstrap_ values.
+Keycloak consults them only when a realm starts for the first time with no administrator
+present; it does not read them again afterwards, and rotating the password through the
+Admin Console does not write back to them. The Railway variables therefore record what
+the password was on first boot, not what it is. The working password exists only wherever
+it was rotated to, which is not in this project's infrastructure.
+
+The `keycloak` service holds no other administrator credential — only `KC_BOOTSTRAP_ADMIN_*`
+and the `KC_DB_*` set.
+
+### Consequence
+
+There is no working break-glass administrator for the identity provider. This is not a DEV
+inconvenience: the same instance at `id.cambobia.com` serves the production `trustos`
+realm alongside `trustos-dev`. Nothing can be configured, audited, recovered or revoked
+through the admin API by anyone reading from the recorded credential.
+
+Concretely, it blocks two open findings that were otherwise ready to fix, since the script
+that fixes both cannot authenticate: **TOS-003** (steps 1, 2 and 4) and **TOS-004** (step 3).
+
+### What was done about it
+
+The script no longer depends on the stale variable alone. It now seeks the credential in
+the environment (`KC_ADMIN_USERNAME` / `KC_ADMIN_PASSWORD`), then on the Railway service,
+then at an interactive `read -rs` prompt when run in a terminal — three attempts, then it
+stops rather than walk the account into a lockout policy. Whichever source answers, the
+value is never echoed, never written to a file, and never passed as an argument, which is
+the constraint TOS-002 exists to enforce.
+
+Verified on 2026-08-31: the environment path and the prompt path both reach Keycloak and
+report `invalid_grant` for a deliberately wrong credential; a non-interactive run skips
+the prompt and exits 1. In every case the script stops before the first write, so nothing
+in either realm was changed by any of this.
+
+That is a workaround for the operator, not a fix for the finding.
+
+### Remediation
+
+1. Recover the working administrator password from wherever it was rotated to, and run
+   the script with it — the prompt is there for precisely this.
+2. Then repair the break-glass path properly: put a current administrator credential in
+   the secret store the team actually uses, and stop treating `KC_BOOTSTRAP_ADMIN_*` as
+   a live credential. It is a first-boot artifact and will drift again the next time
+   anyone rotates.
+3. If the password cannot be recovered at all, a new administrator must be minted against
+   the running instance (`kc.sh bootstrap-admin user`), which needs shell access to the
+   `keycloak` service. That was not attempted here.
+
+**Evidence** the run recorded above; reproduce with
+`bash scripts/operator/configure-dev-validation-client.sh`, which fails closed.
