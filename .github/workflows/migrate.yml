@@ -1,0 +1,96 @@
+# Applies pending database migrations to a deployed environment.
+#
+# This exists because the deployed services cannot migrate themselves. The Dockerfile runs
+# `npm prune --omit=dev` after building and the `prisma` CLI is a devDependency, so a
+# Railway `preDeployCommand` calling it fails with `prisma: not found`. That is TOS-017, and
+# this workflow is its first remediation option: migrate from somewhere that has the full
+# toolchain, under review, with a log.
+#
+# It also removes the failure mode that made TOS-017 worth recording. Code that expects a
+# table the database does not have starts, passes its health check — `/health` touches no
+# dependency by design — and then refuses real requests. Running the migration as a
+# deliberate, logged step before the deploy is what stops that.
+#
+# Requires one secret: DATABASE_URL, the target environment's *public* connection string.
+# Railway's internal hostname (`postgres.railway.internal`) is unreachable from a runner, so
+# this needs the value of DATABASE_PUBLIC_URL from the Postgres service.
+name: Migrate database
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Which environment. Only production exists today.'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+      confirm:
+        description: 'Type the environment name to confirm.'
+        required: true
+        default: ''
+
+# Read the code. Nothing else — this workflow touches a database, not the repository.
+permissions:
+  contents: read
+
+concurrency:
+  # Two concurrent migrations against one database is how a partially-applied schema happens.
+  group: migrate-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      # Before the checkout, so a mistyped dispatch costs nothing.
+      - name: Require the environment name typed back
+        if: inputs.confirm != inputs.environment
+        run: |
+          echo "::error::Type '${{ inputs.environment }}' in the confirm field to proceed."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # What is pending, before anything is applied. This is the record a reader wants when
+      # asking later what this run changed.
+      - name: Status before
+        run: npx prisma migrate status --schema packages/database/prisma/schema.prisma
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # `migrate deploy` applies pending migrations in order and never generates or resets.
+      # It is the only Prisma migrate command safe against a database holding real data.
+      - name: Apply
+        run: npx prisma migrate deploy --schema packages/database/prisma/schema.prisma
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Status after
+        run: npx prisma migrate status --schema packages/database/prisma/schema.prisma
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Next step
+        run: |
+          {
+            echo "### Migrations applied to ${{ inputs.environment }}"
+            echo ''
+            echo 'The code is **not** deployed by this workflow. Deploy it now, in this order:'
+            echo ''
+            echo '```'
+            echo 'railway up -s governance-tool -e ${{ inputs.environment }}'
+            echo '```'
+            echo ''
+            echo 'Then confirm the start-up banner reports `appCatalog="database"`.'
+          } >> "$GITHUB_STEP_SUMMARY"

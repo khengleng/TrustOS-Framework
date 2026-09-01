@@ -530,7 +530,10 @@ Two options that actually work:
 
 1. **Migrate from CI**, in a workflow that has the full toolchain, before the deploy. This also
    puts the migration under review and gives it a log, and it is the same reasoning that moved
-   package publishing off a laptop.
+   package publishing off a laptop. **Built:** `.github/workflows/migrate.yml`. It needs one
+   secret — `DATABASE_URL`, set to the target's `DATABASE_PUBLIC_URL`, because a runner cannot
+   reach `postgres.railway.internal`. It reports status before and after, and it does not deploy
+   code: the ordering stays explicit rather than implied.
 2. **Promote `prisma` to a runtime dependency** of `@trustsystem/database` so the CLI survives
    pruning, then add the `preDeployCommand`. Simpler, at the cost of the CLI and its engines in
    every runtime image.
