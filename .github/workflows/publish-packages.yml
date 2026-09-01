@@ -1,0 +1,91 @@
+# Publishes the framework packages to GitHub Packages.
+#
+# Runs here rather than from a developer's machine for two reasons. Publishing needs a token
+# with `write:packages`, and Actions' built-in GITHUB_TOKEN carries it for this repository —
+# so no long-lived personal token has to exist, be stored, or be pasted anywhere. And a
+# publish from a laptop publishes whatever is on that laptop's disk; this publishes a clean
+# checkout of a named ref, which is the distinction TOS-007 is about.
+#
+# Manual only. A publish on every push to `main` would mean a merge silently consumes a
+# version number, and a published version can never be re-published with different contents.
+name: Publish packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "publish" to confirm. A published version cannot be replaced.'
+        required: true
+        default: ''
+      tag:
+        description: 'npm dist-tag'
+        required: false
+        default: 'latest'
+
+# Least privilege: read the code, write the packages, nothing else.
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  # Two concurrent publishes would race for the same version numbers and leave a registry
+  # where some packages resolve to dependencies that are not there yet.
+  group: publish-packages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      # Before the checkout, so a mistyped dispatch costs nothing.
+      - name: Require explicit confirmation
+        if: inputs.confirm != 'publish'
+        run: |
+          echo '::error::Publishing is irreversible. Re-run and type "publish" in the confirm field.'
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          # Writes the .npmrc that points the scope at GitHub Packages and reads
+          # NODE_AUTH_TOKEN. Doing it here means no .npmrc with a token is ever committed.
+          registry-url: https://npm.pkg.github.com
+          scope: '@trustsystem'
+
+      # `npm ci` runs the root postinstall, which generates the Prisma client. The build
+      # depends on those types existing.
+      - name: Install
+        run: npm ci
+
+      # The release script refuses to publish a package whose dist/ is missing, so this is
+      # a precondition rather than a convenience.
+      - name: Build packages
+        run: npm run build:packages
+
+      # Publishing something that does not pass its own tests would put a broken version
+      # number permanently beyond reach.
+      - name: Test
+        run: npm test
+
+      - name: Dry run
+        run: node scripts/release.mjs --registry https://npm.pkg.github.com --tag "${{ inputs.tag }}"
+
+      - name: Publish
+        run: node scripts/release.mjs --registry https://npm.pkg.github.com --tag "${{ inputs.tag }}" --apply
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: What a consumer needs
+        run: |
+          echo "### Published to GitHub Packages" >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo 'In the consuming repository, `.npmrc`:' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '@trustsystem:registry=https://npm.pkg.github.com' >> "$GITHUB_STEP_SUMMARY"
+          echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo 'The token needs `read:packages` only.' >> "$GITHUB_STEP_SUMMARY"
