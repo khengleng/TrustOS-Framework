@@ -2399,3 +2399,41 @@ model SuspiciousActivity {
   @@index([organizationId, status, createdAt])
   @@map("suspicious_activity")
 }
+
+// -----------------------------------------------------------------------------
+// Internal application catalog
+// -----------------------------------------------------------------------------
+
+/// A registered internal application, per environment.
+///
+/// The catalog is itself the control: an application that is not registered does not
+/// exist, so a request naming an unknown app is refused before its declared data
+/// sources and actions are consulted. Holding registrations here rather than in the
+/// gateway's memory is what makes one survive a restart — an in-memory catalog loses
+/// every application created through the API the next time the container moves, which
+/// is a governance record disappearing, not a cache miss.
+///
+/// `definition` is the whole validated application document rather than a column per
+/// field. Its shape is owned by `internalApplicationSchema` in
+/// `@trustos/governance-tool-core` and re-parsed on the way in and on the way out;
+/// mirroring it in columns would put one schema in two places and let them drift.
+///
+/// No `deletedAt`, deliberately. The catalog has no unregister operation, so a
+/// soft-delete column would describe a lifecycle that does not exist — and it would
+/// collide with the unique constraint the moment anyone added one.
+model InternalApplication {
+  id          String   @id @default(cuid())
+  /// `dev`, `uat` or `prod`. Scoped by environment as well as by `appId`, because the
+  /// same `appId` in two environments is two applications with two blast radii.
+  environment String
+  appId       String
+  /// The validated application document. Re-parsed on read: a row written by an older
+  /// build must not enter the catalog unchecked.
+  definition  Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([environment, appId])
+  @@index([environment])
+  @@map("internal_application")
+}

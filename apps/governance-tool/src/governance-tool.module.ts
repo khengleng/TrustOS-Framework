@@ -64,6 +64,7 @@ import {
   SECURITY_EVENTS,
   SECURITY_POLICY,
 } from './tokens';
+import { PersistentAppCatalog } from './persistent-app-catalog';
 
 /**
  * The Governance Tool.
@@ -284,7 +285,27 @@ export class GovernanceToolModule {
             ]),
         },
 
-        { provide: APP_CATALOG, useValue: overrides.apps ?? consoleCatalogFor(environment) },
+        {
+          provide: APP_CATALOG,
+          inject: [PrismaService],
+          /*
+           * Durable, and seeded from the console templates on a genuinely empty environment.
+           *
+           * The previous default was an in-memory catalog, which meant every application
+           * registered through the API existed until the container next moved. That is a
+           * governance record disappearing on a restart. `PersistentAppCatalog` keeps the reads
+           * in memory — the registration check is on every request's path — while making the
+           * table the record of what exists.
+           */
+          useFactory: async (prisma: PrismaService): Promise<InternalAppCatalog> =>
+            overrides.apps ??
+            (await PersistentAppCatalog.load({
+              prisma,
+              environment,
+              seed: consoleCatalogFor(environment).list(environment),
+              logger,
+            })),
+        },
 
         {
           provide: GOVERNANCE_AUDIT,

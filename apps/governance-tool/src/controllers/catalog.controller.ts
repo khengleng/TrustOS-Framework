@@ -209,7 +209,7 @@ export class CatalogController {
   @HumanActorsOnly()
   @RequirePermissions(GOVERNANCE_PERMISSIONS.APP_CREATE.key)
   @Authorize(GOVERNANCE_PERMISSIONS.APP_CREATE.key)
-  fromTemplate(
+  async fromTemplate(
     @CurrentUser() actor: ActorContext,
     @OrganizationId() organizationId: string,
     @Body() body: { templateId: string; appId?: string },
@@ -236,7 +236,7 @@ export class CatalogController {
       lastSecurityReview: null,
     });
 
-    return { created: this.catalog.register(draft) };
+    return { created: await this.catalog.create(draft) };
   }
 
   @Post(':appId/promotion/plan')

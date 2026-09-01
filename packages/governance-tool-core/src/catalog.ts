@@ -62,6 +62,19 @@ export class InternalAppCatalog {
     return app;
   }
 
+  /**
+   * Registers an application durably.
+   *
+   * In memory here, because that is all this class has. It exists as its own method so a
+   * deployment can substitute a catalog that records the application before serving it —
+   * without every caller having to know which one it holds. See `register` for why the
+   * distinction matters: an application that exists until the next restart is a governance
+   * record that silently disappears, not a cache that goes cold.
+   */
+  async create(input: unknown): Promise<InternalApplication> {
+    return this.register(input);
+  }
+
   list(environment: Environment): InternalApplication[] {
     return [...this.apps.values()]
       .filter((app) => app.environment === environment)
