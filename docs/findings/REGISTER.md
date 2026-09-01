@@ -32,11 +32,34 @@ made to carry meanings they do not have:
 | TOS-015                                               | Keycloak administrator credential in Railway is stale             | **HIGH**     | all         | **OPEN**                      |
 | TOS-016                                               | `/health` publishes `NODE_ENV` under a field named `environment`  | LOW          | all         | **OPEN**                      |
 | TOS-017                                               | Deployed services have no deploy-time migration step              | MEDIUM       | production  | **OPEN**                      |
-| TOS-018                                               | Console seed fabricated a security review date                    | MEDIUM       | production  | **FIXED**                     |
+| TOS-018                                               | Console seed fabricated a security review date                    | MEDIUM       | production  | **FIXED — not deployed**      |
 | TOS-019                                               | CLOSED meant closed on a branch; production ran 46 commits behind | **HIGH**     | process     | **FIXED — process gap open**  |
-| TOS-020                                               | Application catalog was in memory; registrations lost on restart  | MEDIUM       | all         | **FIXED**                     |
+| TOS-020                                               | Application catalog was in memory; registrations lost on restart  | MEDIUM       | all         | **FIXED — not deployed**      |
 
 ---
+
+## Deployment gap — 1 September 2026, open
+
+**TOS-018 and TOS-020 are fixed in code and are not running in production.** Recorded this way
+deliberately: TOS-019 exists because this register once said CLOSED when it meant "closed on a
+branch", and writing FIXED here unqualified would repeat that error on the same day it was
+written up.
+
+Production cannot take these commits yet. `PersistentAppCatalog` reads an
+`internal_application` table, and production has not applied
+`20261216000000_internal_application_catalog` — verified with `prisma migrate status`, which
+reports it as the one pending migration of eleven. Deploying the code first would have the
+gateway query a table that does not exist and crash-loop on boot.
+
+**Order matters and is not automated** (that is TOS-017):
+
+1. `npm run db:deploy` against the production database — additive: one `CREATE TABLE`, two
+   indexes, nothing dropped or rewritten.
+2. Then `railway up -s governance-tool -e production`, then the other six services.
+3. Then confirm the start-up banner reports `appCatalog="database"` and the withheld console.
+
+Until step 1 happens, production keeps running the code from `eef1765`'s predecessor, where the
+catalog is in memory and `risk-compliance-console` is registered on a fabricated review date.
 
 ## Scope change — 1 September 2026
 
@@ -494,10 +517,26 @@ database. Prisma fails such queries at runtime (`P2022`), so the failure mode is
 starts, passes its health check — `/health` touches no dependency by design — and then refuses
 real requests.
 
-**Remediation.** Add `"preDeployCommand": "npm run db:deploy"` to the root `railway.json`, the
-same string the examples already use. Note that Railway is retiring `railway.json` in favour of
-`.railway/railway.ts` on **1 December 2026**, so this lands twice unless the migration is done
-first.
+**Remediation — and a correction to the first version of this finding.**
+
+This finding originally said to copy `"preDeployCommand": "npm run db:deploy"` from the examples.
+**That does not work for these services, and the recommendation was wrong.** The Dockerfile runs
+`npm prune --omit=dev` after building, and the `prisma` CLI is a devDependency of
+`@trustsystem/database` — no package declares it as a runtime dependency. A `preDeployCommand`
+invoking it in the deployed image fails with `prisma: not found`. The examples get away with the
+pattern because they are not built by this Dockerfile.
+
+Two options that actually work:
+
+1. **Migrate from CI**, in a workflow that has the full toolchain, before the deploy. This also
+   puts the migration under review and gives it a log, and it is the same reasoning that moved
+   package publishing off a laptop.
+2. **Promote `prisma` to a runtime dependency** of `@trustsystem/database` so the CLI survives
+   pruning, then add the `preDeployCommand`. Simpler, at the cost of the CLI and its engines in
+   every runtime image.
+
+Either way, Railway is retiring `railway.json` in favour of `.railway/railway.ts` on
+**1 December 2026**, so option 2 lands twice unless that migration is done first.
 
 ---
 
