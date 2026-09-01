@@ -5,7 +5,10 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustsystem/config';
 import { AllExceptionsFilter } from '@trustsystem/errors/nest';
-import { RECORDED_APPLICATION_EVIDENCE } from '@trustsystem/governance-tool-core';
+import {
+  RECORDED_APPLICATION_EVIDENCE,
+  templatesWithheldFrom,
+} from '@trustsystem/governance-tool-core';
 import { resourceRegistrationsFor, resourceRegistryFor } from './resource-registrations';
 import { OidcIdentityProvider, type IdentityProvider } from '@trustsystem/identity';
 import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustsystem/logging';
@@ -296,6 +299,24 @@ async function bootstrap(): Promise<void> {
    * operator could not tell which. It also meant the absence of the warning could never be
    * evidence of anything.
    */
+  /*
+   * A console the seed cannot register honestly.
+   *
+   * Production refuses a highly-restricted application with no recorded security review. The
+   * seed used to satisfy that with a hardcoded date, which made the control report a fiction.
+   * It now withholds the template instead — and says so here, because a console that quietly
+   * fails to appear is indistinguishable from one nobody asked for.
+   */
+  const withheld = templatesWithheldFrom(environment);
+  if (withheld.length > 0) {
+    logger.warn(
+      { environment, withheld },
+      'Console templates withheld from the seed: their classification requires a security ' +
+        'review and none is recorded. Every request naming one will be refused until it is ' +
+        'registered with a real review date.',
+    );
+  }
+
   if (declaredResources.length === 0) {
     logger.warn(
       { environment },
