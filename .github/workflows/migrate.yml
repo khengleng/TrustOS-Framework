@@ -64,7 +64,14 @@ jobs:
 
       # What is pending, before anything is applied. This is the record a reader wants when
       # asking later what this run changed.
+      #
+      # `continue-on-error` because `migrate status` is a *check* command: it exits 1 whenever
+      # migrations are pending, which is precisely the state this workflow exists to resolve.
+      # Without this the job dies before applying anything — it did, on the first run.
+      # `Status after` is deliberately left strict: a non-zero exit there means the apply did
+      # not achieve what it claimed.
       - name: Status before
+        continue-on-error: true
         run: npx prisma migrate status --schema packages/database/prisma/schema.prisma
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
