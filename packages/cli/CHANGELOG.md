@@ -1,4 +1,4 @@
-# Changelog — @trustos/cli
+# Changelog — @trustsystem/cli
 
 All notable changes to the TrustOS CLI. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
@@ -112,7 +112,7 @@ Detail in [`docs/generator-security.md`](../../docs/generator-security.md).
 ### Known limitations
 
 1. **The framework packages are unpublished.** A generated application needs
-   `--framework-path` to resolve `@trustos/*` as `file:` links. This disappears
+   `--framework-path` to resolve `@trustsystem/*` as `file:` links. This disappears
    when the packages are published.
 2. **`add-module` and `upgrade` are not implemented.** Framework migrations are
    deliberately out of scope for this phase.
@@ -148,7 +148,7 @@ cd -
 #    patch — a fix that changes no generated output
 #    minor — a new command, a new flag, a new template, additive output
 #    major — a renamed or removed command or flag; restructured output
-npm version <patch|minor|major> -w @trustos/cli --no-git-tag-version
+npm version <patch|minor|major> -w @trustsystem/cli --no-git-tag-version
 
 # 4. Keep the version literal in step with package.json.
 #    packages/cli/src/version.ts is asserted against package.json by a test.
@@ -156,11 +156,11 @@ npm version <patch|minor|major> -w @trustos/cli --no-git-tag-version
 # 5. Record the change above, under a new heading with today's date.
 
 # 6. Commit, tag, and open a pull request.
-git commit -am "release @trustos/cli v<version>"
+git commit -am "release @trustsystem/cli v<version>"
 git tag "cli-v<version>"
 
 # 7. Publish only after review.
-npm publish -w @trustos/cli --access restricted
+npm publish -w @trustsystem/cli --access restricted
 ```
 
 `packages/cli/src/version.ts` holds the version as a literal rather than

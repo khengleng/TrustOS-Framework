@@ -1,14 +1,17 @@
 import { createHash } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { SecurityEventEmitter } from '@trustos/security-events';
+import { ApiError } from '@trustsystem/errors';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
 import type {
   EscalationActionType,
   EscalationTrigger,
   WorkflowEscalationRecord,
   WorkflowPriority,
   WorkflowSlaRecord,
-} from '@trustos/workflow-core';
-import { evaluateCondition, type WorkflowEscalationRuleSpec } from '@trustos/workflow-definition';
+} from '@trustsystem/workflow-core';
+import {
+  evaluateCondition,
+  type WorkflowEscalationRuleSpec,
+} from '@trustsystem/workflow-definition';
 
 /**
  * Escalation.
@@ -32,7 +35,7 @@ import { evaluateCondition, type WorkflowEscalationRuleSpec } from '@trustos/wor
 /**
  * Notification delivery, as this package needs it.
  *
- * Deliberately narrow, and deliberately not `@trustos/module-notification`: the
+ * Deliberately narrow, and deliberately not `@trustsystem/module-notification`: the
  * notification module is an optional install, and a workflow engine that could not
  * escalate without it would be a workflow engine most deployments cannot use. The
  * module satisfies this interface; so does a logger, which is what the default does.
@@ -136,7 +139,7 @@ export interface EscalationEffects {
     to: WorkflowPriority;
   }): Promise<void>;
 
-  /** Opens an exception case. Implemented by `@trustos/case-management`. */
+  /** Opens an exception case. Implemented by `@trustsystem/case-management`. */
   createIncident(input: {
     organizationId: string;
     workflowInstanceId: string;

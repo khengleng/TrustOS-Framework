@@ -1,13 +1,13 @@
-import { ApiError } from '@trustos/errors';
-import type { ModuleContext } from '@trustos/module-sdk';
+import { ApiError } from '@trustsystem/errors';
+import type { ModuleContext } from '@trustsystem/module-sdk';
 import {
   assertKeyBelongsTo,
   assertValidKey,
   checksumOf,
   tenantKey,
   type StorageProvider,
-} from '@trustos/module-file-storage';
-import { buildPageMeta, type Paginated } from '@trustos/shared-types';
+} from '@trustsystem/module-file-storage';
+import { buildPageMeta, type Paginated } from '@trustsystem/shared-types';
 import type { DocumentConfig } from './config';
 import type { DocumentCategoryRow, DocumentRow, DocumentStore, DocumentVersionRow } from './store';
 

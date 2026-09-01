@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { LoggerPort } from '@trustsystem/logging';
 import {
   addMoney,
   compareMoney,
@@ -10,7 +10,7 @@ import {
   zeroMoney,
   type CurrencyRegistry,
   type Money,
-} from '@trustos/financial-core';
+} from '@trustsystem/financial-core';
 
 /**
  * The limit engine.

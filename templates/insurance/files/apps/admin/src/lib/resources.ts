@@ -5,7 +5,7 @@
  * than another near-identical page component.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { INSURANCE_RESOURCES } from './resources-insurance';
 
 export const RESOURCES: ResourceDefinition[] = [...INSURANCE_RESOURCES];

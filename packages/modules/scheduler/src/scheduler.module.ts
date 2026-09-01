@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The scheduler module.
  *
  * Cron, interval and one-time schedules with IANA timezone support and explicit daylight-saving handling.
  *
- * A thin wrapper. The implementation is in `@trustos/scheduler` — this
+ * A thin wrapper. The implementation is in `@trustsystem/scheduler` — this
  * package contributes the declarations the platform needs (permissions, routes, audit events,
  * health) and the start/stop lifecycle.
  *

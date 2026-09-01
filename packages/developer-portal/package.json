@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/developer-portal",
+  "name": "@trustsystem/developer-portal",
   "version": "0.1.0",
   "description": "A self-contained developer site: documentation, API explorer, SDK downloads, marketplace, templates and release notes.",
   "license": "UNLICENSED",
@@ -17,13 +17,13 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/documentation-center": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/module-marketplace": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/release-manager": "0.1.0",
-    "@trustos/template-registry": "0.1.0",
-    "@trustos/version-manager": "0.1.0",
+    "@trustsystem/documentation-center": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/module-marketplace": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/release-manager": "0.1.0",
+    "@trustsystem/template-registry": "0.1.0",
+    "@trustsystem/version-manager": "0.1.0",
     "zod": "^3.24.1"
   }
 }

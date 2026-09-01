@@ -25,39 +25,39 @@ the governance.
 
 ## Capability by capability
 
-| Capability            | Reused TrustOS module                                   | New pilot code                               | Duplicated?               |
-| --------------------- | ------------------------------------------------------- | -------------------------------------------- | ------------------------- |
-| Authentication        | `@trustos/identity`                                     | None                                         | No                        |
-| Authorization         | `@trustos/authorization`                                | None                                         | No                        |
-| Permissions and roles | `@trustos/rbac`                                         | 19 permission keys, one role map (192 lines) | No                        |
-| Tenant isolation      | `@trustos/tenancy`                                      | None — `organizationId` on every record      | No                        |
-| Audit                 | `@trustos/audit`                                        | None — six action names                      | No                        |
-| Accounts              | `@trustos/accounts`                                     | None                                         | No                        |
-| Ledger                | `@trustos/ledger`                                       | None — three entries per journal             | No                        |
-| Wallet                | `@trustos/wallet`                                       | None                                         | No                        |
-| Money arithmetic      | `@trustos/financial-core`                               | None                                         | No                        |
-| Fees                  | `@trustos/fees`                                         | One fee schedule (configuration)             | No                        |
-| Limits                | `@trustos/limits`                                       | Two limits (configuration)                   | No                        |
-| Idempotency           | Payment reference + `@trustos/ledger` key               | The keying decision (12 lines)               | No                        |
-| Product definition    | `@trustos/financial-product-composer` template          | None — used as generated                     | No                        |
-| Product runtime       | `@trustos/financial-product-runtime`                    | None                                         | No                        |
-| Sandbox               | `@trustos/financial-product-sandbox`                    | Eight scenario assertions                    | No                        |
-| Simulation            | `@trustos/financial-product-simulator`                  | One scenario mix                             | No                        |
-| Maker-checker         | Domain state machine + `@trustos/audit`                 | 387 lines                                    | **Partially — see below** |
-| Merchant model        | —                                                       | 282 lines                                    | No — application domain   |
-| Payment flow          | Orchestrates the above                                  | 482 lines                                    | No — application domain   |
-| Data classification   | `@trustos/data-classification`, `@trustos/data-catalog` | Six catalog entries                          | No                        |
-| Policy                | `@trustos/policy-engine` and its three                  | One policy document                          | No                        |
-| API catalog and gate  | `@trustos/api-management` and its seven                 | One API definition, one consumer             | No                        |
-| Objectives            | `@trustos/sli`, `@trustos/slo`, `@trustos/sre-core`     | One indicator, one objective, one service    | No                        |
-| AI assistance         | `@trustos/governance-ai-bridge`                         | None — used as provided                      | No                        |
-| Errors                | `@trustos/errors`                                       | None                                         | No                        |
-| Configuration         | `@trustos/config`                                       | None                                         | No                        |
-| Logging               | `@trustos/logging`                                      | None                                         | No                        |
+| Capability            | Reused TrustOS module                                           | New pilot code                               | Duplicated?               |
+| --------------------- | --------------------------------------------------------------- | -------------------------------------------- | ------------------------- |
+| Authentication        | `@trustsystem/identity`                                         | None                                         | No                        |
+| Authorization         | `@trustsystem/authorization`                                    | None                                         | No                        |
+| Permissions and roles | `@trustsystem/rbac`                                             | 19 permission keys, one role map (192 lines) | No                        |
+| Tenant isolation      | `@trustsystem/tenancy`                                          | None — `organizationId` on every record      | No                        |
+| Audit                 | `@trustsystem/audit`                                            | None — six action names                      | No                        |
+| Accounts              | `@trustsystem/accounts`                                         | None                                         | No                        |
+| Ledger                | `@trustsystem/ledger`                                           | None — three entries per journal             | No                        |
+| Wallet                | `@trustsystem/wallet`                                           | None                                         | No                        |
+| Money arithmetic      | `@trustsystem/financial-core`                                   | None                                         | No                        |
+| Fees                  | `@trustsystem/fees`                                             | One fee schedule (configuration)             | No                        |
+| Limits                | `@trustsystem/limits`                                           | Two limits (configuration)                   | No                        |
+| Idempotency           | Payment reference + `@trustsystem/ledger` key                   | The keying decision (12 lines)               | No                        |
+| Product definition    | `@trustsystem/financial-product-composer` template              | None — used as generated                     | No                        |
+| Product runtime       | `@trustsystem/financial-product-runtime`                        | None                                         | No                        |
+| Sandbox               | `@trustsystem/financial-product-sandbox`                        | Eight scenario assertions                    | No                        |
+| Simulation            | `@trustsystem/financial-product-simulator`                      | One scenario mix                             | No                        |
+| Maker-checker         | Domain state machine + `@trustsystem/audit`                     | 387 lines                                    | **Partially — see below** |
+| Merchant model        | —                                                               | 282 lines                                    | No — application domain   |
+| Payment flow          | Orchestrates the above                                          | 482 lines                                    | No — application domain   |
+| Data classification   | `@trustsystem/data-classification`, `@trustsystem/data-catalog` | Six catalog entries                          | No                        |
+| Policy                | `@trustsystem/policy-engine` and its three                      | One policy document                          | No                        |
+| API catalog and gate  | `@trustsystem/api-management` and its seven                     | One API definition, one consumer             | No                        |
+| Objectives            | `@trustsystem/sli`, `@trustsystem/slo`, `@trustsystem/sre-core` | One indicator, one objective, one service    | No                        |
+| AI assistance         | `@trustsystem/governance-ai-bridge`                             | None — used as provided                      | No                        |
+| Errors                | `@trustsystem/errors`                                           | None                                         | No                        |
+| Configuration         | `@trustsystem/config`                                           | None                                         | No                        |
+| Logging               | `@trustsystem/logging`                                          | None                                         | No                        |
 
 ## The one partial
 
-**Maker-checker.** `@trustos/workflow-approvals` provides `evaluateApproval`,
+**Maker-checker.** `@trustsystem/workflow-approvals` provides `evaluateApproval`,
 `checkApproverEligibility` and `assertApproverEligible` — a complete approval model with quorum,
 delegation and eligibility rules. The pilot did not use it, and wrote 387 lines that overlap it.
 
@@ -88,7 +88,7 @@ expensive to discover later.
 
 - **A ledger.** Double-entry, balanced, immutable, with reversal and adjustment rather than update.
 - **Money arithmetic.** No float appears anywhere on the payment path; amounts are strings and
-  minor units, and `@trustos/financial-core` does the arithmetic.
+  minor units, and `@trustsystem/financial-core` does the arithmetic.
 - **A limit engine** with reservation rather than checking, calendar windows with timezones, and
   idempotent consumption.
 - **A fee engine** with tiers, floors, ceilings, rounding modes and versioned schedules.
@@ -131,5 +131,5 @@ None.
 The check is not a search for copied text — it is a search for a _capability_ the pilot implemented
 that the framework already provides. `npx trustos architecture-check` enforces declared
 dependencies and no deep imports, and passes across all 973 files. The overlap with
-`@trustos/workflow-approvals` is described above and is not duplication of an available API: the
+`@trustsystem/workflow-approvals` is described above and is not duplication of an available API: the
 15 lines that overlap it are a different shape from the one the package offers.

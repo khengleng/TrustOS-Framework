@@ -1,5 +1,5 @@
 /**
- * @trustos/workflow-definition
+ * @trustsystem/workflow-definition
  *
  * The workflow definition document: its schema, its validator, the restricted
  * condition language, version comparison and static simulation.

@@ -150,7 +150,7 @@ export interface Certificate {
 }
 
 /** The AI tutor hook. Records the question, the answer and which model answered — and calls */
-/** nothing. Wiring a provider is a deployment decision made through @trustos/ai-gateway. */
+/** nothing. Wiring a provider is a deployment decision made through @trustsystem/ai-gateway. */
 export interface TutorSession {
   id: string;
   studentId: string;

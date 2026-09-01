@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import type { OrganizationId } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { OrganizationId } from '@trustsystem/shared-types';
 import { tenantData, tenantWhere } from './tenant-scope';
 
 /**

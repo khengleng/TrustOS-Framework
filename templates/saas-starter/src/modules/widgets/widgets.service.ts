@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { AuditService } from '@trustos/audit';
+import type { AuditService } from '@trustsystem/audit';
 import { AUDIT_SERVICE } from '../../tokens';
 import { WidgetsRepository, type Widget } from './widgets.repository';
 

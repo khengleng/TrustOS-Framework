@@ -2,7 +2,7 @@
 
 ## An indicator is a ratio, never an average
 
-**Good events over valid events.** Everything in `@trustos/sli` follows from insisting on that
+**Good events over valid events.** Everything in `@trustsystem/sli` follows from insisting on that
 shape.
 
 An average is the standard way a measurement stops being true. "Average latency 180ms" is

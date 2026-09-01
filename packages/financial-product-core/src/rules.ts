@@ -1,10 +1,10 @@
-import { conditionSchema, type WorkflowCondition } from '@trustos/workflow-definition';
+import { conditionSchema, type WorkflowCondition } from '@trustsystem/workflow-definition';
 import { z } from 'zod';
 
 /**
  * The product rule shape, and the closed vocabulary of facts a rule may read.
  *
- * The condition side is **not written here**. It is `@trustos/workflow-definition`'s structured
+ * The condition side is **not written here**. It is `@trustsystem/workflow-definition`'s structured
  * predicate tree, imported whole. That package's header explains at length why a condition is a
  * tree and not an expression string — a condition is untrusted input that influences an
  * authorization outcome, and every convenient alternative is a code-execution primitive. All of
@@ -240,7 +240,7 @@ export const productRuleSchema = z
     description: z.string().min(1).max(300),
     /**
      * Evaluation order. Lower runs first, and a lower-priority rule cannot overwrite a decision a
-     * higher one already made — see the conflict resolution in `@trustos/financial-product-rules`.
+     * higher one already made — see the conflict resolution in `@trustsystem/financial-product-rules`.
      * Explicit rather than array order because array order changes when somebody sorts a JSON
      * file, and a fee that changes when a file is prettified is a fee nobody can defend.
      */
@@ -258,7 +258,7 @@ export type ProductRule = z.infer<typeof productRuleSchema>;
  * The condition type, re-exported under this layer's name.
  *
  * An alias rather than a copy. Anything that changes about the predicate tree changes in one
- * place — `@trustos/workflow-definition` — and this layer inherits it, including the next
+ * place — `@trustsystem/workflow-definition` — and this layer inherits it, including the next
  * hardening somebody adds to `readField`.
  */
 export type ProductCondition = WorkflowCondition;

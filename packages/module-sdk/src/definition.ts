@@ -1,4 +1,4 @@
-import type { HealthIndicator } from '@trustos/observability';
+import type { HealthIndicator } from '@trustsystem/observability';
 import { z } from 'zod';
 import {
   environmentPrefix,

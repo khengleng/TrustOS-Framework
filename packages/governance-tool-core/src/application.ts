@@ -235,7 +235,7 @@ export const internalApplicationSchema = z
 
     /** Whether the app uses AI assistance, and which features. Declared, so it is reviewable. */
     /**
-     * AI features this application offers, by their `@trustos/governance-ai-bridge` name.
+     * AI features this application offers, by their `@trustsystem/governance-ai-bridge` name.
      *
      * The pattern accepts underscores as well as hyphens, which it did not until the pilot tried
      * to declare one. Every feature in the bridge is named `summarize_case`, `explain_policy` and

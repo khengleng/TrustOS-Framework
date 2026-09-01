@@ -41,7 +41,7 @@ export const MIN_JWT_SECRET_LENGTH = 32;
 /**
  * Placeholder secrets that must never reach production.
  *
- * Duplicated from `@trustos/config` on purpose: this package validates a policy
+ * Duplicated from `@trustsystem/config` on purpose: this package validates a policy
  * that may be assembled without the config package at all — in a test, in a
  * worker, in a script — and a shared list that only one of them can see is a
  * check that silently does not run.

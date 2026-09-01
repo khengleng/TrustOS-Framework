@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-versioning
+ * @trustsystem/financial-product-versioning
  *
  * Immutable published versions, content hashing, version binding and rollback planning.
  *

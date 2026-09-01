@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { CaseRecord, CaseStatus, WorkflowActor } from '@trustos/workflow-core';
-import { WORKFLOW_PERMISSIONS } from '@trustos/workflow-core';
+import type { CaseRecord, CaseStatus, WorkflowActor } from '@trustsystem/workflow-core';
+import { WORKFLOW_PERMISSIONS } from '@trustsystem/workflow-core';
 import {
   HistoryRecorder,
   type HistoryStore,
   type WorkflowEventRecord,
-} from '@trustos/workflow-history';
+} from '@trustsystem/workflow-history';
 import { canTransitionCase, CaseService, EXAMPLE_CASE_TYPES, type CaseStore } from './index';
 
 const ACME = 'org_acme';

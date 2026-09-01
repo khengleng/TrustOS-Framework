@@ -7,7 +7,7 @@ import {
   isGoneStatus,
   isRetryableStatus,
   isSuccessStatus,
-} from '@trustos/webhooks';
+} from '@trustsystem/webhooks';
 import { checkDestination, type DestinationPolicy } from './destination';
 
 /**

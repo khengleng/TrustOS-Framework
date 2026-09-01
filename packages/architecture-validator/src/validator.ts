@@ -76,20 +76,20 @@ const isSource = (path: string): boolean =>
 const isTest = (path: string): boolean => /\.spec\.ts$/.test(path);
 
 /**
- * Whether a line's `from '@trustos/x'` sits inside a string literal.
+ * Whether a line's `from '@trustsystem/x'` sits inside a string literal.
  *
- * `@trustos/code-generator` emits import statements *as strings*. Counting those as imports makes
+ * `@trustsystem/code-generator` emits import statements *as strings*. Counting those as imports makes
  * a generator appear to depend on everything it can generate code for, which is both wrong and
  * unfixable — the whole point is that it does not import them.
  */
 const isQuotedSource = (line: string): boolean =>
-  /['"`][^'"`]*\bfrom\s+\\?['"]@trustos\//.test(line) || /lines\.push\(/.test(line);
+  /['"`][^'"`]*\bfrom\s+\\?['"]@trustsystem\//.test(line) || /lines\.push\(/.test(line);
 
 /**
  * Which lines sit inside a multi-line template literal.
  *
  * Necessary because a code generator writes whole files as backtick templates, and every import
- * statement inside one looks exactly like an import. Without this, `@trustos/generator-core`
+ * statement inside one looks exactly like an import. Without this, `@trustsystem/generator-core`
  * appears to depend on every package it can generate a file for — which is both wrong and
  * unfixable, since not importing them is the point.
  *
@@ -195,7 +195,7 @@ function checkLayering(
   lines.forEach((line, index) => {
     if (generated.has(index) || isQuotedSource(line)) return;
 
-    const match = /from\s+'@trustos\/([a-z0-9-]+)'/.exec(line);
+    const match = /from\s+'@trustsystem\/([a-z0-9-]+)'/.exec(line);
     if (!match) return;
 
     const target = `packages/${match[1]}`;
@@ -209,7 +209,7 @@ function checkLayering(
         byId.get('no-upward-dependency'),
         file.path,
         index + 1,
-        `${own.name} imports @trustos/${match[1]} (${targetLayer.name}), which it may not reach. ` +
+        `${own.name} imports @trustsystem/${match[1]} (${targetLayer.name}), which it may not reach. ` +
           `${own.name} may depend on: ${own.mayDependOn.join(', ') || 'nothing'}.`,
       ),
     );
@@ -231,7 +231,7 @@ function checkImports(
   lines.forEach((line, index) => {
     if (generated.has(index) || isQuotedSource(line)) return;
 
-    const deep = /from\s+'@trustos\/[a-z0-9-]+\/(src|dist)\//.exec(line);
+    const deep = /from\s+'@trustsystem\/[a-z0-9-]+\/(src|dist)\//.exec(line);
 
     if (deep) {
       violations.push(
@@ -246,7 +246,7 @@ function checkImports(
 
     if (!owner || !declared) return;
 
-    const match = /from\s+'@trustos\/([a-z0-9-]+)'/.exec(line);
+    const match = /from\s+'@trustsystem\/([a-z0-9-]+)'/.exec(line);
     if (!match || match[1] === owner) return;
 
     const allowed = declared[owner];
@@ -265,7 +265,7 @@ function checkImports(
         byId.get('declared-dependencies-only'),
         file.path,
         index + 1,
-        `${owner} imports @trustos/${match[1]}, which is not in its dependencies.`,
+        `${owner} imports @trustsystem/${match[1]}, which is not in its dependencies.`,
       ),
     );
   });

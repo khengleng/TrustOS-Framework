@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { authorize, type AuthorizationRequest } from '@trustos/authorization';
-import { PolicyRegistry, policyDocumentSchema } from '@trustos/policy-registry';
-import { InMemoryPolicyDecisionSink, PolicyDecisionLog } from '@trustos/policy-decision-log';
+import { authorize, type AuthorizationRequest } from '@trustsystem/authorization';
+import { PolicyRegistry, policyDocumentSchema } from '@trustsystem/policy-registry';
+import { InMemoryPolicyDecisionSink, PolicyDecisionLog } from '@trustsystem/policy-decision-log';
 import { PolicyEngine, asAuthorizationPolicy, evaluatePolicy } from './index';
 
 const NOW = new Date('2026-06-01T12:00:00.000Z');

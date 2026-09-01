@@ -9,7 +9,7 @@
  * with another template layered beneath this one.
  */
 
-import { definePermission, type PermissionDefinition } from '@trustos/template-sdk';
+import { definePermission, type PermissionDefinition } from '@trustsystem/template-sdk';
 
 export const MESSENGER_MINIAPP_PERMISSIONS = {
   MESSENGER_PROFILE_READ: definePermission(

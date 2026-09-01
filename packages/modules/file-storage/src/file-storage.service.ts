@@ -1,6 +1,6 @@
-import { ApiError } from '@trustos/errors';
-import type { ModuleContext } from '@trustos/module-sdk';
-import { buildPageMeta, type Paginated } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { ModuleContext } from '@trustsystem/module-sdk';
+import { buildPageMeta, type Paginated } from '@trustsystem/shared-types';
 import type { FileStorageConfig } from './config';
 import { assertKeyBelongsTo, assertValidKey, organizationPrefix, tenantKey } from './keys';
 import { checksumOf, type StorageProvider, type StoredBlob } from './provider';

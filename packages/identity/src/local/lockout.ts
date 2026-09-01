@@ -1,12 +1,12 @@
-import { ApiError } from '@trustos/errors';
-import type { LockoutPolicy } from '@trustos/security-policy';
+import { ApiError } from '@trustsystem/errors';
+import type { LockoutPolicy } from '@trustsystem/security-policy';
 
 /**
  * Failed-login tracking and temporary lockout.
  *
  * Two controls that are often confused, doing different jobs:
  *
- *   **Rate limiting** (`@trustos/security-policy`) bounds how fast anyone can try,
+ *   **Rate limiting** (`@trustsystem/security-policy`) bounds how fast anyone can try,
  *   per address and per identifier. It protects the service.
  *
  *   **Lockout** — here — bounds how many times *one account* can be guessed at

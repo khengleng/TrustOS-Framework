@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { message, type Message } from '@trustos/ai-sdk';
-import { TokenMeter } from '@trustos/token-meter';
+import { message, type Message } from '@trustsystem/ai-sdk';
+import { TokenMeter } from '@trustsystem/token-meter';
 import { ConversationService, groupToolPairs } from './conversation';
 import { InMemoryConversationStore } from './testing';
 

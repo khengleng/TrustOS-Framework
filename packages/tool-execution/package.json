@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/tool-execution",
+  "name": "@trustsystem/tool-execution",
   "version": "0.1.0",
   "description": "The tool registry and executor: permissions, timeouts, audit, health.",
   "license": "UNLICENSED",
@@ -17,15 +17,15 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/ai-sdk": "0.1.0",
-    "@trustos/audit": "0.1.0",
-    "@trustos/authorization": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/function-calling": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/retry": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/ai-sdk": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/authorization": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/function-calling": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/retry": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/workflow-policy",
+  "name": "@trustsystem/workflow-policy",
   "version": "0.1.0",
   "description": "Workflow authorization policies: separation of duties, self-approval prevention and state-transition permissions.",
   "license": "UNLICENSED",
@@ -18,13 +18,13 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/authorization": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/rbac": "0.1.0",
-    "@trustos/security-events": "0.1.0",
-    "@trustos/security-policy": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/workflow-core": "0.1.0",
+    "@trustsystem/authorization": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/rbac": "0.1.0",
+    "@trustsystem/security-events": "0.1.0",
+    "@trustsystem/security-policy": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/workflow-core": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

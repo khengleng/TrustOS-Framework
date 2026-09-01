@@ -5,7 +5,7 @@
  * than another near-identical page component.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { COLLECTION_RESOURCES } from './resources-collection';
 
 export const RESOURCES: ResourceDefinition[] = [...COLLECTION_RESOURCES];

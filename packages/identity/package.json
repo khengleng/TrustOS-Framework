@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/identity",
+  "name": "@trustsystem/identity",
   "version": "0.1.0",
   "description": "Provider-neutral identity: a local provider, an OIDC/Keycloak provider with JWKS verification, and the guards that enforce authentication assurance.",
   "license": "UNLICENSED",
@@ -18,12 +18,12 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/rbac": "0.1.0",
-    "@trustos/security-events": "0.1.0",
-    "@trustos/security-policy": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/rbac": "0.1.0",
+    "@trustsystem/security-events": "0.1.0",
+    "@trustsystem/security-policy": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "jose": "^5.9.6",
     "zod": "^3.24.1"
   },
@@ -42,6 +42,6 @@
   "devDependencies": {
     "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.1.28",
-    "@trustos/security-testing": "0.1.0"
+    "@trustsystem/security-testing": "0.1.0"
   }
 }

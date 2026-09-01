@@ -112,7 +112,7 @@ export const webhookSubscriptionSchema = z.object({
   id: z.string(),
   endpointId: z.string(),
   organizationId: z.string().nullable(),
-  /** An event name pattern — see `matchesPattern` in `@trustos/event-sdk`. */
+  /** An event name pattern — see `matchesPattern` in `@trustsystem/event-sdk`. */
   eventPattern: z.string().max(200),
   createdAt: z.date(),
   createdById: z.string().nullable(),

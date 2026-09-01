@@ -1,5 +1,5 @@
 /**
- * @trustos/function-calling
+ * @trustsystem/function-calling
  *
  * Typed function definitions, zod-to-JSON-Schema conversion, argument repair and validation.
  *

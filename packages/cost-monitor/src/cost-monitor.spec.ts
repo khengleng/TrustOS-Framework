@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ModelRegistry } from '@trustos/model-registry';
+import { ModelRegistry } from '@trustsystem/model-registry';
 import { CostMonitor, formatCents, startOfDay, startOfMonth } from './cost';
 import { InMemoryCostStore } from './testing';
 

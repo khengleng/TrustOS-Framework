@@ -42,7 +42,7 @@ export interface SupportAgent {
   updatedAt: IsoDateTime;
 }
 
-/** Response and resolution targets per priority. Read by @trustos/workflow-sla; this template */
+/** Response and resolution targets per priority. Read by @trustsystem/workflow-sla; this template */
 /** stores the numbers, not the clock. */
 export interface SlaPolicy {
   id: string;

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/agent-framework",
+  "name": "@trustsystem/agent-framework",
   "version": "0.1.0",
   "description": "Agent definitions: role, prompt, tools, permissions, limits, output schema.",
   "license": "UNLICENSED",
@@ -17,14 +17,14 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/ai-policy": "0.1.0",
-    "@trustos/ai-sdk": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/function-calling": "0.1.0",
-    "@trustos/model-registry": "0.1.0",
-    "@trustos/prompt-registry": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/tool-execution": "0.1.0",
+    "@trustsystem/ai-policy": "0.1.0",
+    "@trustsystem/ai-sdk": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/function-calling": "0.1.0",
+    "@trustsystem/model-registry": "0.1.0",
+    "@trustsystem/prompt-registry": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/tool-execution": "0.1.0",
     "zod": "^3.24.1"
   }
 }

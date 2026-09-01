@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ApiError } from '@trustos/errors';
-import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
+import { ApiError } from '@trustsystem/errors';
+import { CurrencyRegistry, formatMoney, money } from '@trustsystem/financial-core';
 import { LimitEngine, limitSchema, windowFor } from './limits';
 import { InMemoryLimitStore } from './testing';
 

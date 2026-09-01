@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { CONSOLE_TEMPLATES } from './consoles';
 import {
   parseInternalApplication,

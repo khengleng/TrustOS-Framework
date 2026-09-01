@@ -1,7 +1,7 @@
 /**
- * @trustos/identity/nest
+ * @trustsystem/identity/nest
  *
- * NestJS bindings, behind a subpath so importing `@trustos/identity` does not pull
+ * NestJS bindings, behind a subpath so importing `@trustsystem/identity` does not pull
  * `@nestjs/common` into a worker that only validates tokens.
  */
 export * from './metadata';

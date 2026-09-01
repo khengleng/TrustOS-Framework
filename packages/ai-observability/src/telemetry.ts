@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { MetricsRecorder } from '@trustos/observability';
+import type { MetricsRecorder } from '@trustsystem/observability';
 
 /**
  * AI observability.

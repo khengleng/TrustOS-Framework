@@ -1,5 +1,5 @@
 import type { TaskListQuery, TaskPage, TaskStore } from './service';
-import type { DatabaseRow, GroupedCount, WorkflowTaskRecord } from '@trustos/workflow-core';
+import type { DatabaseRow, GroupedCount, WorkflowTaskRecord } from '@trustsystem/workflow-core';
 
 /**
  * Prisma-backed task store.

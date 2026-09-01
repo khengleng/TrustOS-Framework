@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/api-rate-limit",
+  "name": "@trustsystem/api-rate-limit",
   "version": "0.1.0",
   "description": "Rate limits: per second, minute and day, with burst, and the honest statement of what a fixed window is.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/api-consumer": "0.1.0",
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/api-consumer": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

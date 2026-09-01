@@ -1,5 +1,5 @@
 /**
- * @trustos/recovery
+ * @trustsystem/recovery
  *
  * Restore procedures, and the restore tests that turn a backup from a hypothesis into a capability.
  *

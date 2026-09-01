@@ -1,9 +1,9 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import type {
   WorkflowActor,
   WorkflowInstanceRecord,
   WorkflowTaskRecord,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 import {
   approvalQueueQuerySchema,
   decisionNeedsReason,

@@ -1,5 +1,5 @@
 /**
- * @trustos/data-access-policy
+ * @trustsystem/data-access-policy
  *
  * Who may reach governed data, for what purpose, and the review that proves it.
  *

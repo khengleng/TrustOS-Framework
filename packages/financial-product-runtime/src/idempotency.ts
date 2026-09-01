@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { productError } from '@trustos/financial-product-core';
+import { productError } from '@trustsystem/financial-product-core';
 
 /**
  * Idempotency.

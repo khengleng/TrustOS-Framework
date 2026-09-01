@@ -1,5 +1,5 @@
-import type { AuthRequestMeta } from '@trustos/auth';
-import { getRequestContext } from '@trustos/logging';
+import type { AuthRequestMeta } from '@trustsystem/auth';
+import { getRequestContext } from '@trustsystem/logging';
 
 /**
  * Reads request metadata from the ambient context.

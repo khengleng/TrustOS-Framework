@@ -8,9 +8,9 @@ import {
   validateDefinition,
   type ValidateOptions,
   type ValidationFinding,
-} from '@trustos/workflow-definition';
-import { ALL_WORKFLOW_PERMISSION_KEYS } from '@trustos/workflow-core';
-import { ALL_PERMISSION_KEYS } from '@trustos/rbac';
+} from '@trustsystem/workflow-definition';
+import { ALL_WORKFLOW_PERMISSION_KEYS } from '@trustsystem/workflow-core';
+import { ALL_PERMISSION_KEYS } from '@trustsystem/rbac';
 import { style, type Output } from '../output';
 
 /**

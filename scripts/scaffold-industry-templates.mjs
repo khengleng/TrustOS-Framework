@@ -307,7 +307,7 @@ function domainFile(spec) {
   }
   lines.push(' */');
   lines.push('');
-  lines.push("import { definePermission, type PermissionDefinition } from '@trustos/template-sdk';");
+  lines.push("import { definePermission, type PermissionDefinition } from '@trustsystem/template-sdk';");
   lines.push('');
   lines.push(`export const ${constName} = {`);
 
@@ -441,7 +441,7 @@ function domainIndexFile(spec) {
   }
   lines.push(' */');
   lines.push('');
-  lines.push("import type { PermissionDefinition } from '@trustos/template-sdk';");
+  lines.push("import type { PermissionDefinition } from '@trustsystem/template-sdk';");
 
   for (const member of chain) {
     lines.push(
@@ -526,7 +526,7 @@ function resourcesFile(spec) {
   lines.push(' *');
   for (const line of wrap(
     'A column carrying personal data declares a permission, and the *API* projects it away — ' +
-      'see visibleColumns in @trustos/template-sdk. A column hidden in the browser is still in ' +
+      'see visibleColumns in @trustsystem/template-sdk. A column hidden in the browser is still in ' +
       'the payload.',
     94,
   )) {
@@ -534,7 +534,7 @@ function resourcesFile(spec) {
   }
   lines.push(' */');
   lines.push('');
-  lines.push("import type { ResourceDefinition } from '@trustos/template-sdk';");
+  lines.push("import type { ResourceDefinition } from '@trustsystem/template-sdk';");
   lines.push(`import { ${memberOf(spec).domainConst} as P } from '{{packageName}}-product-domain';`);
   lines.push('');
   lines.push(`export const ${constNameFor(spec)}: ResourceDefinition[] = [`);
@@ -662,7 +662,7 @@ function resourcesIndexFile(spec) {
   }
   lines.push(' */');
   lines.push('');
-  lines.push("import type { ResourceDefinition } from '@trustos/template-sdk';");
+  lines.push("import type { ResourceDefinition } from '@trustsystem/template-sdk';");
 
   for (const member of chain) {
     const meta = memberOf(member);
@@ -711,9 +711,9 @@ function serviceFile(spec) {
   const lines = [];
 
   lines.push("import { Inject, Injectable } from '@nestjs/common';");
-  lines.push("import type { AuditService } from '@trustos/audit';");
-  lines.push("import { PrismaService } from '@trustos/database';");
-  lines.push("import { ApiError } from '@trustos/errors';");
+  lines.push("import type { AuditService } from '@trustsystem/audit';");
+  lines.push("import { PrismaService } from '@trustsystem/database';");
+  lines.push("import { ApiError } from '@trustsystem/errors';");
   lines.push("import type { AppPrismaService } from '../../../core/prisma.service';");
   lines.push("import { AUDIT_SERVICE } from '../../../tokens';");
   lines.push("import { TenantRepository } from '../../../common/tenant-repository';");
@@ -971,10 +971,10 @@ function controllerFile(spec) {
     "import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';",
   );
   lines.push("import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';");
-  lines.push("import { RequirePermissions } from '@trustos/rbac';");
-  lines.push("import { OrganizationId } from '@trustos/tenancy';");
-  lines.push("import { z } from '@trustos/validation';");
-  lines.push("import { ZodValidationPipe } from '@trustos/validation/nest';");
+  lines.push("import { RequirePermissions } from '@trustsystem/rbac';");
+  lines.push("import { OrganizationId } from '@trustsystem/tenancy';");
+  lines.push("import { z } from '@trustsystem/validation';");
+  lines.push("import { ZodValidationPipe } from '@trustsystem/validation/nest';");
   lines.push(`import { ${constName} as P } from '{{packageName}}-product-domain';`);
   lines.push('import {');
   lines.push(`  ${service},`);
@@ -1229,9 +1229,9 @@ function isolationSpecFile(spec) {
   const lines = [];
 
   lines.push("import { beforeEach, describe, expect, it } from 'vitest';");
-  lines.push("import { AuditService, InMemoryAuditSink } from '@trustos/audit';");
-  lines.push("import type { ApiError } from '@trustos/errors';");
-  lines.push("import { FakeModelDelegate, runInTenantContext } from '@trustos/tenancy';");
+  lines.push("import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';");
+  lines.push("import type { ApiError } from '@trustsystem/errors';");
+  lines.push("import { FakeModelDelegate, runInTenantContext } from '@trustsystem/tenancy';");
   lines.push(`import { ${service} } from './${spec.id}.service';`);
   lines.push('');
   lines.push('/**');
@@ -1246,7 +1246,7 @@ function isolationSpecFile(spec) {
   }
   lines.push(' *');
   for (const line of wrap(
-    'The fake delegate and the tenant context come from `@trustos/tenancy` rather than being ' +
+    'The fake delegate and the tenant context come from `@trustsystem/tenancy` rather than being ' +
       'rebuilt here. A hand-rolled fake that ignored the scope it was passed would make this ' +
       'suite pass against a broken repository, which is worse than having no suite.',
     94,

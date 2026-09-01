@@ -1,4 +1,4 @@
-import { ApiError, type ValidationDetail } from '@trustos/errors';
+import { ApiError, type ValidationDetail } from '@trustsystem/errors';
 import { z } from 'zod';
 
 /**

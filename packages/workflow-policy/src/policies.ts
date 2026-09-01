@@ -1,10 +1,10 @@
-import type { AuthorizationRequest, Policy, PolicyResult } from '@trustos/authorization';
-import { hasPermission } from '@trustos/rbac';
+import type { AuthorizationRequest, Policy, PolicyResult } from '@trustsystem/authorization';
+import { hasPermission } from '@trustsystem/rbac';
 import {
   isSameActor,
   type WorkflowDecisionRecord,
   type WorkflowInstanceStatus,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 
 /**
  * Workflow authorization policies.
@@ -178,7 +178,7 @@ export const selfApprovalPolicy: Policy = {
  * two approvals defeats "2 of 3" entirely.
  *
  * The decisions are scoped to the current step and cycle by the runtime — see the note
- * on `EvaluateApprovalInput` in `@trustos/workflow-approvals` for why the cycle
+ * on `EvaluateApprovalInput` in `@trustsystem/workflow-approvals` for why the cycle
  * scoping is load-bearing.
  */
 export const duplicateApprovalPolicy: Policy = {

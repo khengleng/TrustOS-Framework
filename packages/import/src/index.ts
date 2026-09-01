@@ -1,5 +1,5 @@
 /**
- * @trustos/import
+ * @trustsystem/import
  *
  * CSV and JSON parsing, row validation, preview, dry run, apply and rollback.
  *

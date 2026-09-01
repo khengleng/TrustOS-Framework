@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   addMoney,
   formatMoney,
@@ -11,7 +11,7 @@ import {
   zeroMoney,
   type CurrencyRegistry,
   type Money,
-} from '@trustos/financial-core';
+} from '@trustsystem/financial-core';
 
 /**
  * Double-entry bookkeeping.

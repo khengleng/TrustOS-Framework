@@ -7,11 +7,11 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthService, CurrentUser, Public } from '@trustos/auth';
-import { AllowAnyAuthenticated } from '@trustos/rbac';
-import { NoTenantRequired } from '@trustos/tenancy';
-import type { ActorContext, AuthResponse } from '@trustos/shared-types';
-import { ZodValidationPipe } from '@trustos/validation/nest';
+import { AuthService, CurrentUser, Public } from '@trustsystem/auth';
+import { AllowAnyAuthenticated } from '@trustsystem/rbac';
+import { NoTenantRequired } from '@trustsystem/tenancy';
+import type { ActorContext, AuthResponse } from '@trustsystem/shared-types';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
 import { AUTH_SERVICE } from '../../tokens';
 import { currentRequestMeta } from '../../common/request-meta';
 import { OrganizationsService } from '../organizations/organizations.service';

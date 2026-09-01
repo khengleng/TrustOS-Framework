@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/developer-access",
+  "name": "@trustsystem/developer-access",
   "version": "0.1.0",
   "description": "Developer portal access: registration, sandbox credentials, key requests and what a portal may never show.",
   "license": "UNLICENSED",
@@ -17,11 +17,11 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/api-catalog": "0.1.0",
-    "@trustos/api-consumer": "0.1.0",
-    "@trustos/api-keys": "0.1.0",
-    "@trustos/data-classification": "0.1.0",
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/api-catalog": "0.1.0",
+    "@trustsystem/api-consumer": "0.1.0",
+    "@trustsystem/api-keys": "0.1.0",
+    "@trustsystem/data-classification": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

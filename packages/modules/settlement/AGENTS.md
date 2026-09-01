@@ -1,11 +1,11 @@
-# AGENTS.md — @trustos/module-settlement
+# AGENTS.md — @trustsystem/module-settlement
 
 Settlement batches, instructions and windows, with partial confirmation and returns. Asynchronous by construction.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/financial-core`, `@trustos/settlement` does the work.
+   wires; `@trustsystem/financial-core`, `@trustsystem/settlement` does the work.
 2. **Never modify a posted journal.** A correction is a reversal or an adjustment, both of which
    post a new journal and leave the original standing.
 3. **Never use floating-point arithmetic for money.** Every amount is a fixed-point decimal, and

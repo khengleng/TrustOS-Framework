@@ -1,11 +1,11 @@
-# AGENTS.md — @trustos/module-transactions
+# AGENTS.md — @trustsystem/module-transactions
 
 The transaction lifecycle with idempotency, fees, limits, risk hooks and payment requests.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/fees`, `@trustos/financial-core`, `@trustos/financial-risk`, `@trustos/fx`, `@trustos/limits`, `@trustos/payments`, `@trustos/transactions` does the work.
+   wires; `@trustsystem/fees`, `@trustsystem/financial-core`, `@trustsystem/financial-risk`, `@trustsystem/fx`, `@trustsystem/limits`, `@trustsystem/payments`, `@trustsystem/transactions` does the work.
 2. **Never modify a posted journal.** A correction is a reversal or an adjustment, both of which
    post a new journal and leave the original standing.
 3. **Never use floating-point arithmetic for money.** Every amount is a fixed-point decimal, and

@@ -171,9 +171,9 @@ deployment that has installed none of the optional modules.
 | ------------------------- | ------------------------- | -------------------------------------------------- |
 | `MemberDirectory`         | refuses everything        | the membership tables                              |
 | `AssigneeResolver`        | absent                    | an org chart, a workload index, an ownership model |
-| `EscalationNotifier`      | logs                      | `@trustos/module-notification`                     |
+| `EscalationNotifier`      | logs                      | `@trustsystem/module-notification`                 |
 | `EscalationRecipients`    | nobody                    | an org chart                                       |
-| `DocumentPort`            | finds nothing             | `@trustos/module-document`                         |
+| `DocumentPort`            | finds nothing             | `@trustsystem/module-document`                     |
 | `BusinessCalendar`        | elapsed time              | a working-hours or holiday calendar                |
 | `BusinessObjectValidator` | **refuses in production** | one per object type                                |
 
@@ -189,7 +189,7 @@ off in every deployment that has not thought about it.
 
 There are two things called "workflow" in this framework, and choosing wrongly wastes a week.
 
-**`@trustos/module-workflow`** (phase 3) is a linear approval chain: an ordered list of steps,
+**`@trustsystem/module-workflow`** (phase 3) is a linear approval chain: an ordered list of steps,
 each with a permission and a required approval count. Installed with
 `trustos add-module workflow`. Choose it when the process is "N people approve in order" and
 will stay that way.

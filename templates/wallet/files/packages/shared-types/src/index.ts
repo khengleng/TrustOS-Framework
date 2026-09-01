@@ -21,7 +21,7 @@ export interface TenantOwnedSummary {
 }
 
 /** The product-side record of a wallet. `walletId` points at the framework wallet that owns the */
-/** money; everything financial is read through @trustos/wallet. */
+/** money; everything financial is read through @trustsystem/wallet. */
 export interface WalletProfile {
   id: string;
   walletId: string;
@@ -34,7 +34,7 @@ export interface WalletProfile {
   updatedAt: IsoDateTime;
 }
 
-/** A movement between two wallets. The journal is written by @trustos/ledger; this row is the */
+/** A movement between two wallets. The journal is written by @trustsystem/ledger; this row is the */
 /** product-level record of *why*, and `journalId` is the link between them. */
 export interface WalletTransfer {
   id: string;
@@ -51,7 +51,7 @@ export interface WalletTransfer {
 }
 
 /** Which framework limit keys apply to a wallet tier. The ceilings themselves live in */
-/** @trustos/limits — this maps tiers onto them so a tier change is one row, not a migration. */
+/** @trustsystem/limits — this maps tiers onto them so a tier change is one row, not a migration. */
 export interface TransferLimitProfile {
   id: string;
   tier: 'BASIC' | 'VERIFIED' | 'PREMIUM';

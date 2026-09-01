@@ -1,4 +1,4 @@
-import type { HealthIndicator, HealthStatus } from '@trustos/observability';
+import type { HealthIndicator, HealthStatus } from '@trustsystem/observability';
 
 /**
  * Re-exported so a module needs one import.

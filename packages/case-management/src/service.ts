@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import type { SecurityEventEmitter } from '@trustos/security-events';
+import { ApiError } from '@trustsystem/errors';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
 import {
   actorHasPermission,
   crossTenant,
@@ -11,8 +11,8 @@ import {
   type WorkflowActor,
   type WorkflowInstanceRecord,
   type WorkflowPriority,
-} from '@trustos/workflow-core';
-import type { HistoryRecorder } from '@trustos/workflow-history';
+} from '@trustsystem/workflow-core';
+import type { HistoryRecorder } from '@trustsystem/workflow-history';
 
 /**
  * Cases.
@@ -443,7 +443,7 @@ export class CaseService {
         resolutionCode: input.resolutionCode.trim(),
         // The narrative's length rather than its text. It lives on the case row, and a
         // copy in history would be a second version that a later correction does not
-        // update — see the same reasoning for comments in `@trustos/workflow-history`.
+        // update — see the same reasoning for comments in `@trustsystem/workflow-history`.
         resolutionLength: resolution.length,
         openForSeconds: Math.round((this.now().getTime() - record.createdAt.getTime()) / 1000),
       },

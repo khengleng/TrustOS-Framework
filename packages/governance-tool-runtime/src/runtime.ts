@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   GOVERNANCE_PERMISSIONS,
   accessRefused,
@@ -6,24 +6,24 @@ import {
   type InternalAction,
   type InternalApplication,
   type ResourceOperation,
-} from '@trustos/governance-tool-core';
-import type { GovernanceActorContext } from '@trustos/governance-auth-context';
-import { assertTenantResolved } from '@trustos/governance-auth-context';
-import type { ResourceRegistry } from '@trustos/governance-resource-policy';
+} from '@trustsystem/governance-tool-core';
+import type { GovernanceActorContext } from '@trustsystem/governance-auth-context';
+import { assertTenantResolved } from '@trustsystem/governance-auth-context';
+import type { ResourceRegistry } from '@trustsystem/governance-resource-policy';
 import {
   DataAccessGuard,
   summarizeAccess,
   type AccessSummary,
   type ReadPlan,
   type MutationPlan,
-} from '@trustos/governance-data-access';
-import { MaskPolicy } from '@trustos/governance-pii-policy';
+} from '@trustsystem/governance-data-access';
+import { MaskPolicy } from '@trustsystem/governance-pii-policy';
 import {
   GOVERNANCE_AUDIT_ACTIONS,
   governanceAuditEntry,
   type GovernanceAuditBridge,
-} from '@trustos/governance-audit-bridge';
-import type { EnvironmentRegistry } from '@trustos/governance-environment-config';
+} from '@trustsystem/governance-audit-bridge';
+import type { EnvironmentRegistry } from '@trustsystem/governance-environment-config';
 
 /**
  * The Governance Tool runtime.

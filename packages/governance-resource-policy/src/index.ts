@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-resource-policy
+ * @trustsystem/governance-resource-policy
  *
  * The approved resource registry: what an internal application may reach, under which access
  * class, with whose approval.

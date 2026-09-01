@@ -7,16 +7,16 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { CurrentUser } from '@trustos/auth';
-import { AllowAnyAuthenticated, PERMISSIONS, RequirePermissions } from '@trustos/rbac';
-import { NoTenantRequired, OrganizationId } from '@trustos/tenancy';
+import { CurrentUser } from '@trustsystem/auth';
+import { AllowAnyAuthenticated, PERMISSIONS, RequirePermissions } from '@trustsystem/rbac';
+import { NoTenantRequired, OrganizationId } from '@trustsystem/tenancy';
 import type {
   ActorContext,
   OrganizationMemberSummary,
   OrganizationSummary,
   RoleSummary,
-} from '@trustos/shared-types';
-import { ZodValidationPipe } from '@trustos/validation/nest';
+} from '@trustsystem/shared-types';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
 import { OrganizationsService } from './organizations.service';
 import {
   AssignRoleDto,

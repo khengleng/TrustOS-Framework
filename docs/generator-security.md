@@ -194,7 +194,7 @@ and the blast radius of a mistaken template becomes the whole machine.
 | Generated projects ignore secrets | The generated `.gitignore` covers `.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`                                     |
 
 `.env.example` ships obvious placeholders — `development-only-jwt-secret-change-me-please`
-— which `@trustos/config` **rejects in production**. A generated application
+— which `@trustsystem/config` **rejects in production**. A generated application
 refuses to start with a placeholder secret, so the failure surfaces at deploy
 time rather than as a guessable signing key in production.
 

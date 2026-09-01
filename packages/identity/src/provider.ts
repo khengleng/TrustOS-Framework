@@ -2,8 +2,8 @@ import type {
   ActorAuthentication,
   ActorAuthenticationLevel,
   ActorContext,
-} from '@trustos/shared-types';
-import type { IdentityProviderKind } from '@trustos/security-policy';
+} from '@trustsystem/shared-types';
+import type { IdentityProviderKind } from '@trustsystem/security-policy';
 
 /**
  * The identity abstraction.
@@ -156,7 +156,7 @@ export interface IdentityProvider {
    * Must verify the signature, the issuer, the audience and the expiry. A
    * provider that decodes without verifying is the single most common way an
    * identity integration is broken, so `docs/enterprise-identity.md` states the
-   * requirement and `@trustos/security-testing` tests it.
+   * requirement and `@trustsystem/security-testing` tests it.
    */
   validateAccessToken(token: string): Promise<VerifiedIdentity>;
 

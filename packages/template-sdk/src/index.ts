@@ -1,5 +1,5 @@
 /**
- * @trustos/template-sdk
+ * @trustsystem/template-sdk
  *
  * The building blocks every TrustOS industry template shares.
  *
@@ -11,8 +11,8 @@
  * form, a filter set, a dashboard — plus the pure logic that operates on them.
  *
  * **It reuses the framework rather than restating it.** Validation primitives come from
- * `@trustos/validation`, errors from `@trustos/errors`, permissions are the same keys `@trustos/rbac`
- * enforces, money is a string on its way to `@trustos/financial-core`. The SDK adds the layer
+ * `@trustsystem/validation`, errors from `@trustsystem/errors`, permissions are the same keys `@trustsystem/rbac`
+ * enforces, money is a string on its way to `@trustsystem/financial-core`. The SDK adds the layer
  * above those — the part where a screen, an endpoint and a permission have to agree — and nothing
  * below it.
  *

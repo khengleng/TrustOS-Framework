@@ -7,7 +7,7 @@ import {
   requireTemplate,
   resolveTemplateChain,
   type TemplateManifest,
-} from '@trustos/template-registry';
+} from '@trustsystem/template-registry';
 import { GeneratorError } from './errors';
 import { collectTemplateVariables } from './render';
 import { listFilesRecursively, toTargetPath } from './plan';
@@ -656,7 +656,7 @@ async function checkNoSecrets(
  * Removes comments before scanning for package references.
  *
  * A doc comment that *mentions* a package is not a dependency on it. The framework schema
- * carries lines like "Redacted by @trustos/security-events before it lands", and counting those
+ * carries lines like "Redacted by @trustsystem/security-events before it lands", and counting those
  * as references would force every template to declare packages it never imports — which would
  * make the check useless in the direction that matters, since a template declaring everything
  * cannot be caught depending on something it should not.
@@ -691,7 +691,7 @@ async function checkPackageReferences(
     for (const file of layer.files) {
       const source = await readFile(join(layer.root, file), 'utf8');
 
-      for (const match of stripComments(source).matchAll(/@trustos\/([a-z-]+)/g)) {
+      for (const match of stripComments(source).matchAll(/@trustsystem\/([a-z-]+)/g)) {
         const name = match[1];
         if (name) referenced.add(name);
       }

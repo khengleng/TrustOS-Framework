@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONSOLE_TEMPLATES } from '@trustos/governance-tool-core';
+import { CONSOLE_TEMPLATES } from '@trustsystem/governance-tool-core';
 import {
   GATEWAY_OPERATIONS,
   findOperation,

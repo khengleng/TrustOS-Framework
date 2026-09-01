@@ -1,17 +1,17 @@
-import { ApiError } from '@trustos/errors';
-import { apiClassification, type ApiDefinition, type ApiOperation } from '@trustos/api-catalog';
-import { KIND_CEILINGS, type Consumer, type Entitlement } from '@trustos/api-consumer';
-import { policyDocumentSchema, type PolicyDocument } from '@trustos/policy-registry';
+import { ApiError } from '@trustsystem/errors';
+import { apiClassification, type ApiDefinition, type ApiOperation } from '@trustsystem/api-catalog';
+import { KIND_CEILINGS, type Consumer, type Entitlement } from '@trustsystem/api-consumer';
+import { policyDocumentSchema, type PolicyDocument } from '@trustsystem/policy-registry';
 import {
   evaluatePolicy,
   type PolicyAttributes,
   type PolicyDecision,
-} from '@trustos/policy-evaluator';
+} from '@trustsystem/policy-evaluator';
 
 /**
  * API access as policy.
  *
- * The framework already decides API access in code: `decideAccess` in `@trustos/api-consumer`
+ * The framework already decides API access in code: `decideAccess` in `@trustsystem/api-consumer`
  * checks status, environment, entitlement, version and scope. That code is the floor, and it
  * should stay code — it is the same on every deployment and it is not something an operator should
  * be able to weaken through configuration.
@@ -21,7 +21,7 @@ import {
  * unreviewed consumer keeps working. Those are policy, and this package expresses them as
  * documents the phase-13 engine evaluates.
  *
- * The composition rule is the same one `@trustos/policy-engine` establishes and is worth repeating
+ * The composition rule is the same one `@trustsystem/policy-engine` establishes and is worth repeating
  * because it is what makes configuration safe here: **a document policy can refuse, and can never
  * grant.** Code decides first. If code says no, the answer is no and no document changes it. If
  * code says yes, a document may still refuse. A configuration surface that could widen access past

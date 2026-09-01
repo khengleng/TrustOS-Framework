@@ -6,7 +6,7 @@ Read `docs/modules.md` first for what a module is. This is how to write one.
 
 ```
 packages/modules/<id>/
-  package.json          @trustos/module-<id>
+  package.json          @trustsystem/module-<id>
   tsconfig.json
   nest/package.json     subpath stub: keeps @nestjs out of non-Nest consumers
   README.md
@@ -76,9 +76,9 @@ security reviewer looks.
     tags: ['compliance'],
   },
   packaging: {
-    packageName: '@trustos/module-audit-export',
+    packageName: '@trustsystem/module-audit-export',
     directory: 'packages/modules/audit-export',
-    nestModule: { className: 'AuditExportModule', importPath: '@trustos/module-audit-export/nest' },
+    nestModule: { className: 'AuditExportModule', importPath: '@trustsystem/module-audit-export/nest' },
   },
   permissions: [
     { key: 'audit-export.export.read', description: 'View exports.', suggestedRoles: ['auditor'] },
@@ -126,7 +126,7 @@ Two rules, both enforced:
 
 ### 3. Write the store
 
-Persistence goes through `ModuleRepository`, which wraps `@trustos/tenancy`:
+Persistence goes through `ModuleRepository`, which wraps `@trustsystem/tenancy`:
 
 ```ts
 export class PrismaAuditExportStore implements AuditExportStore {
@@ -236,8 +236,8 @@ and `eslint.config.mjs` `MODULE_PACKAGES`.
 Restated because they are the ones that get broken under deadline:
 
 1. **Never duplicate framework functionality.** Tenant scoping is
-   `@trustos/tenancy`. Audit is the audit port. Validation is Zod through
-   `@trustos/validation`. Errors are `ApiError`. Health is `HealthIndicator`. If you
+   `@trustsystem/tenancy`. Audit is the audit port. Validation is Zod through
+   `@trustsystem/validation`. Errors are `ApiError`. Health is `HealthIndicator`. If you
    are about to write one of these, you are about to write a second implementation
    that will diverge.
 2. **Reuse the SDK.** `ModuleRepository`, `createModuleContext`,

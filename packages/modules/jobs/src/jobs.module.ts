@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The background jobs module.
  *
  * A durable job queue in the database: leased execution, retry with backoff, priority, progress and history.
  *
- * A thin wrapper. The implementation is in `@trustos/job-runtime` — this
+ * A thin wrapper. The implementation is in `@trustsystem/job-runtime` — this
  * package contributes the declarations the platform needs (permissions, routes, audit events,
  * health) and the start/stop lifecycle.
  *

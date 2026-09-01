@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ApiError } from '@trustos/errors';
-import type { ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { ActorContext } from '@trustsystem/shared-types';
 import { setTenantContext, type TenantContext } from '../tenant-context';
 
 export const TENANT_METADATA = {

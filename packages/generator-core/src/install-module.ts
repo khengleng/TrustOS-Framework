@@ -7,7 +7,7 @@ import {
   requireModule,
   resolveInstallOrder,
   type ModuleCatalogEntry,
-} from '@trustos/module-registry';
+} from '@trustsystem/module-registry';
 import {
   installedModuleIds,
   loadApplicationManifest,
@@ -62,7 +62,7 @@ export interface InstallModuleRequest {
   applicationRoot: string;
   /**
    * Framework checkout, used to find each module's `install/` payload and to
-   * rewrite `@trustos/*` dependencies to `file:` links.
+   * rewrite `@trustsystem/*` dependencies to `file:` links.
    */
   frameworkPath: string;
   /** Overrides the version recorded in the application manifest. */
@@ -339,17 +339,17 @@ export function nextStepsFor(planned: InstallModulePlan): string[] {
 /**
  * Packages the module system itself needs in a host application.
  *
- * The SDK is here because the generated wiring imports `@trustos/module-sdk/nest`,
+ * The SDK is here because the generated wiring imports `@trustsystem/module-sdk/nest`,
  * and the registry because a module reads its own declarations from the catalog.
  * They are added explicitly rather than relied on as transitive dependencies: npm
  * links a `file:` dependency but does not install that package's own unpublished
- * `@trustos/*` requirements, so a transitive-only assumption leaves the application
+ * `@trustsystem/*` requirements, so a transitive-only assumption leaves the application
  * unable to resolve the import — which is a `tsc` error at build time and a boot
  * failure at run time.
  */
 const MODULE_SYSTEM_PACKAGES = [
-  { name: '@trustos/module-sdk', directory: 'packages/module-sdk' },
-  { name: '@trustos/module-registry', directory: 'packages/module-registry' },
+  { name: '@trustsystem/module-sdk', directory: 'packages/module-sdk' },
+  { name: '@trustsystem/module-registry', directory: 'packages/module-registry' },
 ];
 
 /** Dependency specifiers for the module packages being installed. */

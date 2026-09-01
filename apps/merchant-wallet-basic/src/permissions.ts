@@ -5,7 +5,7 @@ import { MERCHANT_ROLES, ROLE_CAPABILITIES, type MerchantRole } from './domain/m
  *
  * Nineteen keys, and they are the *only* thing the pilot adds to the framework's authorization
  * model. There is no second permission system, no per-merchant ACL and no bespoke role engine —
- * `@trustos/rbac` checks these exactly as it checks its own.
+ * `@trustsystem/rbac` checks these exactly as it checks its own.
  *
  * That is the point of counting them. Nineteen permissions and one role map is roughly the
  * irreducible application-specific part of a payment acceptance product; anything more would mean

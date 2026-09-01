@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { LoggerPort } from '@trustsystem/logging';
 import {
   citationCoverage,
   containsExpected,
@@ -128,7 +128,7 @@ export type EvaluationTarget = (input: {
   costCents?: number;
   /** For `schema_compliance`, when the case expects structured output. */
   parsed?: unknown;
-  /** For `safety`, from `@trustos/guardrails`. */
+  /** For `safety`, from `@trustsystem/guardrails`. */
   safety?: { outcome: 'allowed' | 'blocked' | 'needs_review'; reasons?: string[] };
 }>;
 

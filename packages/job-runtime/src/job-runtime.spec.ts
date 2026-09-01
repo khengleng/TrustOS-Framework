@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { retryPolicySchema } from '@trustos/retry';
+import { retryPolicySchema } from '@trustsystem/retry';
 import { JOB_PRIORITY, isTerminal } from './entities';
 import { JobQueue, MAX_SCHEDULE_AHEAD_MS } from './queue';
 import { JobRegistry, type JobHandlerDefinition } from './registry';

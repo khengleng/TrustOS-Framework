@@ -2,8 +2,8 @@ import {
   ResourceRegistry,
   resourceRegistrationSchema,
   type ResourceRegistration,
-} from '@trustos/governance-resource-policy';
-import type { Environment } from '@trustos/governance-tool-core';
+} from '@trustsystem/governance-resource-policy';
+import type { Environment } from '@trustsystem/governance-tool-core';
 
 /**
  * The resources this deployment has approved, per environment.

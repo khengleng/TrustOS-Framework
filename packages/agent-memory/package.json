@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/agent-memory",
+  "name": "@trustsystem/agent-memory",
   "version": "0.1.0",
   "description": "Conversation, session, user, organization and long-term memory with expiry.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/ai-sdk": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/ai-sdk": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

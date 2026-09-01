@@ -102,83 +102,83 @@ apps/ and templates/ may depend on any package. Nothing may depend on them.
 | No cross-package deep imports (`../../pkg/src/x`)                   | eslint         |
 | Browser-safe packages ship NestJS bindings behind a `/nest` subpath | package layout |
 
-**Why the `/nest` subpath.** `@trustos/errors` and `@trustos/validation` are
+**Why the `/nest` subpath.** `@trustsystem/errors` and `@trustsystem/validation` are
 imported by the browser. If their root entry point re-exported a NestJS filter
 or pipe, a bundler would pull a server framework — and everything it transitively
-imports — into the client bundle. The subpath (`@trustos/errors/nest`) makes the
+imports — into the client bundle. The subpath (`@trustsystem/errors/nest`) makes the
 split physical rather than advisory.
 
 ---
 
 ## 4. Package responsibilities
 
-### `@trustos/shared-types`
+### `@trustsystem/shared-types`
 
 Types only, zero runtime dependencies. Entity summaries, request/response
 contracts, pagination. The one package the browser and the server genuinely
 share.
 
-### `@trustos/errors`
+### `@trustsystem/errors`
 
 The seven error codes, the `ApiError` class, and `toErrorResponse` — the single
 place that decides what a caller is allowed to see. Unexpected errors never
 contribute their message or stack to a production response. `ApiError.context`
 is for logs and is never serialized to the wire.
 
-### `@trustos/validation`
+### `@trustsystem/validation`
 
 Shared Zod schemas and `parseOrThrow`, the only sanctioned route from untrusted
 input to a typed value. Parsing _replaces_ the value, so unknown keys are
 stripped — which is what prevents mass-assignment through a DTO.
 
-### `@trustos/config`
+### `@trustsystem/config`
 
 Validates the environment once, at startup, and returns a frozen `AppConfig`.
 Reports every problem at once. Refuses to boot production on placeholder or
 short secrets, or when the access and refresh secrets match. Development and
 test get working defaults; production gets none.
 
-### `@trustos/logging`
+### `@trustsystem/logging`
 
 Pino with service/environment/version on every line, request id, actor id and
 organization id pulled from `AsyncLocalStorage`. Redaction runs twice — Pino's
 fast path for known shapes, plus a deep key scan for everything else — because a
 credential in a log sink cannot be recalled.
 
-### `@trustos/database`
+### `@trustsystem/database`
 
 The Prisma schema and client lifecycle. Convention rather than magic:
 `createdAt`/`updatedAt`/`deletedAt` on mutable models, `organizationId` first in
 the index on tenant-owned models, and no hard deletes from application code.
 `AuditLog` is the deliberate exception — append-only, no foreign keys.
 
-### `@trustos/auth`
+### `@trustsystem/auth`
 
 Email and password only. bcrypt (pure JS, so no native build ever breaks a
 deploy), separate signing keys for access and refresh tokens, and refresh-token
 rotation with reuse detection. Emits events; it does not know that
-`@trustos/audit` exists.
+`@trustsystem/audit` exists.
 
-### `@trustos/rbac`
+### `@trustsystem/rbac`
 
 The permission catalog, five system roles, and a guard that denies any
 authenticated route declaring no policy. `canGrantRole` stops the standard
 escalation: an administrator who can assign roles must not be able to assign
 `organization_owner`.
 
-### `@trustos/tenancy`
+### `@trustsystem/tenancy`
 
 Organization scope. Read `docs/security-standards.md` before changing anything
 here.
 
-### `@trustos/audit`
+### `@trustsystem/audit`
 
 Append-only records with actor, organization, action, entity, before/after,
 timestamp, request id, IP and user agent. `before`/`after` are redacted with the
 logger's rules. A sink failure is logged, never propagated — an audit outage
 must not turn a successful login into a 500.
 
-### `@trustos/observability`
+### `@trustsystem/observability`
 
 `GET /health` (liveness, touches nothing) and `GET /ready` (readiness, checks
 dependencies). Metrics and tracing are _interfaces_ with no-op defaults: the

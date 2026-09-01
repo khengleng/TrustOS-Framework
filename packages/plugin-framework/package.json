@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/plugin-framework",
+  "name": "@trustsystem/plugin-framework",
   "version": "0.1.0",
   "description": "Plugin manifests, declared permissions, signature verification and the extension points a plugin may claim.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/version-manager": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/version-manager": "0.1.0",
     "zod": "^3.24.1"
   }
 }

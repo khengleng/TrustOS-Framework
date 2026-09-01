@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { message, type AiRequestContext, type CompletionRequest } from '@trustos/ai-sdk';
-import { ModelRegistry } from '@trustos/model-registry';
-import { ModelRouter } from '@trustos/model-router';
-import { AiPolicyEngine } from '@trustos/ai-policy';
-import { CostMonitor, InMemoryCostStore } from '@trustos/cost-monitor';
-import { AiCache, InMemoryCacheStore, cachePolicySchema } from '@trustos/ai-cache';
-import { Guardrails } from '@trustos/guardrails';
-import { retryPolicySchema } from '@trustos/retry';
+import { message, type AiRequestContext, type CompletionRequest } from '@trustsystem/ai-sdk';
+import { ModelRegistry } from '@trustsystem/model-registry';
+import { ModelRouter } from '@trustsystem/model-router';
+import { AiPolicyEngine } from '@trustsystem/ai-policy';
+import { CostMonitor, InMemoryCostStore } from '@trustsystem/cost-monitor';
+import { AiCache, InMemoryCacheStore, cachePolicySchema } from '@trustsystem/ai-cache';
+import { Guardrails } from '@trustsystem/guardrails';
+import { retryPolicySchema } from '@trustsystem/retry';
 import { AiGateway } from './gateway';
 import { EchoAdapter, ProviderError, redactAdapterConfig } from './provider';
 

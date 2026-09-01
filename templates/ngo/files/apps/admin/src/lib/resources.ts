@@ -5,7 +5,7 @@
  * than another near-identical page component.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { NGO_RESOURCES } from './resources-ngo';
 
 export const RESOURCES: ResourceDefinition[] = [...NGO_RESOURCES];

@@ -1,6 +1,6 @@
 {
-  "//": "Subpath stub: keeps NestJS bindings out of consumers that import '@trustos/workflow-policy'.",
-  "name": "@trustos/workflow-policy-nest",
+  "//": "Subpath stub: keeps NestJS bindings out of consumers that import '@trustsystem/workflow-policy'.",
+  "name": "@trustsystem/workflow-policy-nest",
   "private": true,
   "main": "../dist/nest/index.js",
   "types": "../dist/nest/index.d.ts"

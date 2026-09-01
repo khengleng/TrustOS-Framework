@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { compareVersions, satisfies } from '@trustos/version-manager';
+import { compareVersions, satisfies } from '@trustsystem/version-manager';
 
 /**
  * Module identity and versioning.
@@ -84,14 +84,14 @@ export type ModuleDependency = z.infer<typeof moduleDependencySchema>;
 // ---------------------------------------------------------------------------
 // Version comparison
 //
-// Delegated to `@trustos/version-manager`, which is the framework's one complete implementation.
+// Delegated to `@trustsystem/version-manager`, which is the framework's one complete implementation.
 //
 // This was a local copy, justified at the time by keeping the module system free of a semver
 // dependency. The justification did not survive: the copy stripped prerelease identifiers, so
 // `1.0.0-rc.1` and `1.0.0` compared equal and `^1.0.0` accepted `2.0.0-rc.1`. Both are exactly
 // the failures a version comparison exists to prevent, and neither was visible without a test.
 //
-// `version-manager` depends only on `@trustos/errors`, which every module package already has.
+// `version-manager` depends only on `@trustsystem/errors`, which every module package already has.
 // ---------------------------------------------------------------------------
 
 /** Returns <0, 0 or >0, comparing major, then minor, then patch. */
@@ -107,7 +107,7 @@ export function satisfiesMinimum(version: string, minimum: string): boolean {
 /**
  * True when `version` satisfies `range`.
  *
- * Delegates to `@trustos/version-manager`. Caret semantics follow npm, including the pre-1.0
+ * Delegates to `@trustsystem/version-manager`. Caret semantics follow npm, including the pre-1.0
  * rule — `^0.2.3` allows `0.2.x` but not `0.3.0` — which matters because every module here is
  * still `0.x`, so treating `^0.1.0` as "any 0.x" would let a breaking change through unnoticed.
  *

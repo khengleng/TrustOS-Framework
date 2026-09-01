@@ -3,7 +3,7 @@ import {
   moduleProviders,
   moduleServiceProvider,
   type ModuleHostBinding,
-} from '@trustos/module-sdk/nest';
+} from '@trustsystem/module-sdk/nest';
 import { notificationModule, type NotificationInstance } from '../notification.module';
 import { NotificationController } from './notification.controller';
 import { NOTIFICATION_SERVICE } from './tokens';

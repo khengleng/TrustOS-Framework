@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-events
+ * @trustsystem/financial-events
  *
  * The financial event catalog: wallets, transactions, journals, settlement, fees, limits.
  *

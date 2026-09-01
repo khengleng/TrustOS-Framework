@@ -1,5 +1,5 @@
 /**
- * @trustos/api-quota
+ * @trustsystem/api-quota
  *
  * How much a consumer may use over a calendar period, and what happens past it.
  *

@@ -127,7 +127,7 @@ nothing about the prompt looks wrong without it.
 Untrusted content can also be fenced explicitly:
 
 ```ts
-import { fenceUntrusted } from '@trustos/prompt-security';
+import { fenceUntrusted } from '@trustsystem/prompt-security';
 
 const fenced = fenceUntrusted(ticket.body, 'customer message');
 ```

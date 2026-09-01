@@ -1,5 +1,5 @@
 /**
- * @trustos/logging
+ * @trustsystem/logging
  *
  * Server-only. Structured logging, request correlation, and the redaction
  * rules that keep credentials out of log sinks.

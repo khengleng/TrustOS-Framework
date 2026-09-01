@@ -1,7 +1,7 @@
-import { ApiError } from '@trustos/errors';
-import type { SecurityEventEmitter } from '@trustos/security-events';
-import type { ApiKeyPolicy } from '@trustos/security-policy';
-import type { ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
+import type { ApiKeyPolicy } from '@trustsystem/security-policy';
+import type { ActorContext } from '@trustsystem/shared-types';
 import {
   assertKeyEnvironment,
   generateApiKey,

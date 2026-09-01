@@ -1,15 +1,15 @@
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
 import {
   FINANCIAL_PRODUCT_PERMISSIONS,
   parseProductDefinition,
   type ReferenceDataRegistry,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 import {
   DESIGNER_NAVIGATION,
   PRODUCT_TEMPLATES,
@@ -18,18 +18,18 @@ import {
   designerPalette,
   findTemplate,
   validateProduct,
-} from '@trustos/financial-product-composer';
+} from '@trustsystem/financial-product-composer';
 import {
   APPROVED_BLOCKS,
   blockCatalogSummary,
   type BlockRegistry,
-} from '@trustos/financial-block-registry';
+} from '@trustsystem/financial-block-registry';
 import {
   PROVIDER_INTERFACES,
   PROVIDER_INTERFACE_NAMES,
   type ConnectorRegistry,
-} from '@trustos/connector-registry';
-import type { ProductRegistry } from '@trustos/financial-product-registry';
+} from '@trustsystem/connector-registry';
+import type { ProductRegistry } from '@trustsystem/financial-product-registry';
 import { BLOCK_REGISTRY, CONNECTOR_REGISTRY, PRODUCT_REGISTRY, REFERENCE_DATA } from '../tokens';
 
 /**
@@ -38,7 +38,7 @@ import { BLOCK_REGISTRY, CONNECTOR_REGISTRY, PRODUCT_REGISTRY, REFERENCE_DATA } 
  * Everything the canvas draws comes from here, and none of it is drawn here. The palette, the
  * canvas, the inspector and the validation findings are descriptors; a React surface renders
  * them, a CLI prints them, and a comparison view diffs them — three renderers over one
- * description. See the header of `designer.ts` in `@trustos/financial-product-composer`.
+ * description. See the header of `designer.ts` in `@trustsystem/financial-product-composer`.
  *
  * The endpoint worth noticing is `validate`: the designer calls it on every change, and the
  * findings come back **attached to the block they concern** rather than as a list at the bottom

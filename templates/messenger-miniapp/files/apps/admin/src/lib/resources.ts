@@ -5,7 +5,7 @@
  * hide a parent screen would filter this array, never edit the parent file.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { TELEGRAM_MINIAPP_RESOURCES } from './resources-telegram-miniapp';
 import { MESSENGER_MINIAPP_RESOURCES } from './resources-messenger-miniapp';
 

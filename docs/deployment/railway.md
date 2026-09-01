@@ -29,8 +29,8 @@ The readiness specification's example topology names `workflow-worker`, `job-wor
 `ai-gateway`. **Those applications do not exist in this repository**, and the specification says
 not to invent them.
 
-`@trustos/job-runtime`, `@trustos/scheduler`, `@trustos/workflow-runtime` and
-`@trustos/ai-gateway` are **libraries**. A deployment hosts them inside its own process; none ships
+`@trustsystem/job-runtime`, `@trustsystem/scheduler`, `@trustsystem/workflow-runtime` and
+`@trustsystem/ai-gateway` are **libraries**. A deployment hosts them inside its own process; none ships
 a `main`. See [`current-state-assessment.md`](current-state-assessment.md).
 
 **No Redis**, because nothing in the repository requires it. **No object storage**, for the same
@@ -102,7 +102,7 @@ Three of those need explanation.
 
 **`TRUSTOS_ENVIRONMENT` is not `NODE_ENV`.** A UAT service runs with `NODE_ENV=production` —
 that is what the word means to Node — so `NODE_ENV` cannot tell UAT from production.
-`TRUSTOS_ENVIRONMENT` can, and it is what `@trustos/governance-environment-config` refuses a
+`TRUSTOS_ENVIRONMENT` can, and it is what `@trustsystem/governance-environment-config` refuses a
 lower-environment credential against.
 
 **`TRUST_PROXY=true` on Railway and `false` locally.** Railway sets `X-Forwarded-For`; trusting the
@@ -220,7 +220,7 @@ forward-only.
 
 ### The service will not start
 
-Read the first log line. `@trustos/config` validates every variable before a port is bound and
+Read the first log line. `@trustsystem/config` validates every variable before a port is bound and
 reports **all** the problems at once:
 
 ```text

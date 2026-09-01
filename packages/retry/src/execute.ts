@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { backoffDelay, DEFAULT_RETRY_POLICY, isRetryableError, type RetryPolicy } from './policy';
 
 /**

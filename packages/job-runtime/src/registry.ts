@@ -1,6 +1,6 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { z } from 'zod';
-import type { RetryPolicy } from '@trustos/retry';
+import type { RetryPolicy } from '@trustsystem/retry';
 import { JOB_PRIORITY } from './entities';
 
 /**

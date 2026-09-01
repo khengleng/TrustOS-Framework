@@ -1,11 +1,11 @@
 import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { HumanActorsOnly } from '@trustos/identity/nest';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { CrossOrganization, OrganizationId } from '@trustos/tenancy';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { HumanActorsOnly } from '@trustsystem/identity/nest';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { CrossOrganization, OrganizationId } from '@trustsystem/tenancy';
 import {
   CONSOLE_TEMPLATES,
   GOVERNANCE_PERMISSIONS,
@@ -16,10 +16,13 @@ import {
   type Environment,
   type ApplicationEvidenceIndex,
   type InternalAppCatalog,
-} from '@trustos/governance-tool-core';
-import { planPromotion, type EnvironmentRegistry } from '@trustos/governance-environment-config';
-import type { ResourceRegistry } from '@trustos/governance-resource-policy';
-import { summarizeAccess } from '@trustos/governance-data-access';
+} from '@trustsystem/governance-tool-core';
+import {
+  planPromotion,
+  type EnvironmentRegistry,
+} from '@trustsystem/governance-environment-config';
+import type { ResourceRegistry } from '@trustsystem/governance-resource-policy';
+import { summarizeAccess } from '@trustsystem/governance-data-access';
 import {
   APP_CATALOG,
   APPLICATION_EVIDENCE,

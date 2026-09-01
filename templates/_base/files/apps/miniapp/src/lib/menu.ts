@@ -1,4 +1,4 @@
-import type { NavigationItem } from '@trustos/template-sdk';
+import type { NavigationItem } from '@trustsystem/template-sdk';
 
 /**
  * The mini app menu.

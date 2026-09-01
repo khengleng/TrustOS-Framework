@@ -1,7 +1,7 @@
 /**
- * @trustos/authorization/nest
+ * @trustsystem/authorization/nest
  *
- * NestJS bindings, behind a subpath so importing `@trustos/authorization` does not
+ * NestJS bindings, behind a subpath so importing `@trustsystem/authorization` does not
  * pull `@nestjs/common` into a worker that only evaluates a policy.
  */
 export * from './metadata';

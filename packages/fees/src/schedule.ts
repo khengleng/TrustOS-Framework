@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { LoggerPort } from '@trustsystem/logging';
 import {
   DEFAULT_ROUNDING,
   addMoney,
@@ -22,7 +22,7 @@ import {
   type CurrencyRegistry,
   type Money,
   type RoundingMode,
-} from '@trustos/financial-core';
+} from '@trustsystem/financial-core';
 
 /**
  * The fee engine.
@@ -241,7 +241,7 @@ export function calculateFee(input: {
           path: 'amount',
           message:
             `The "${schedule.key}" schedule prices in ${schedule.currency} and this amount is in ` +
-            `${amount.currency}. Convert first, and record the rate — see @trustos/fx.`,
+            `${amount.currency}. Convert first, and record the rate — see @trustsystem/fx.`,
         },
       ],
       'Currency mismatch with the fee schedule.',

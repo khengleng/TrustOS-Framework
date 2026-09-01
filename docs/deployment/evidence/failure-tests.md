@@ -148,7 +148,7 @@ debugging at the time.
 
 - **Worker termination.** There are no worker services; see
   [`../current-state-assessment.md`](../current-state-assessment.md).
-- **AI provider unavailable.** No AI provider is configured. `@trustos/ai-gateway` ships no
+- **AI provider unavailable.** No AI provider is configured. `@trustsystem/ai-gateway` ships no
   provider client, so there is nothing to make unavailable.
 - **Queue backlog.** No queue is deployed.
 - **Chaos against UAT.** No UAT environment exists, and the specification says not to run

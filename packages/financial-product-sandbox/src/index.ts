@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-sandbox
+ * @trustsystem/financial-product-sandbox
  *
  * Isolated sandbox execution: a runtime wired entirely to mocks, synthetic balances, and a
  * scenario plan that makes a chosen block fail in a chosen way.
@@ -11,7 +11,7 @@
  * that has nowhere to be violated.
  *
  * The *providers* are mocked and the *money* is not: balances and limits are computed with
- * `@trustos/financial-core`'s `Money`, because a sandbox that used floats would tell a product
+ * `@trustsystem/financial-core`'s `Money`, because a sandbox that used floats would tell a product
  * owner something that disagrees with production once in ten thousand transactions.
  */
 export * from './scenarios';

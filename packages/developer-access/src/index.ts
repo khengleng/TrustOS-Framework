@@ -1,5 +1,5 @@
 /**
- * @trustos/developer-access
+ * @trustsystem/developer-access
  *
  * Registration, sandbox credentials, access requests, and what a portal may never show.
  *

@@ -1,20 +1,20 @@
 import { Body, Controller, Get, Inject, Optional, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { ApiError } from '@trustos/errors';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
-import type { AuditService } from '@trustos/audit';
-import { apiClassification, type ApiCatalog } from '@trustos/api-catalog';
-import type { ConsumerRegistry } from '@trustos/api-consumer';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { ApiError } from '@trustsystem/errors';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
+import type { AuditService } from '@trustsystem/audit';
+import { apiClassification, type ApiCatalog } from '@trustsystem/api-catalog';
+import type { ConsumerRegistry } from '@trustsystem/api-consumer';
 import {
   analyseCompatibility,
   unacknowledgedConsumers,
   type MigrationPlan,
-} from '@trustos/api-versioning';
-import { readQuota, type Quota, type QuotaUsageStore } from '@trustos/api-quota';
+} from '@trustsystem/api-versioning';
+import { readQuota, type Quota, type QuotaUsageStore } from '@trustsystem/api-quota';
 import {
   accessRequestSchema,
   assertSandboxOnly,
@@ -26,7 +26,7 @@ import {
   visibleCatalog,
   type AccessRequest,
   type DeveloperRegistration,
-} from '@trustos/developer-access';
+} from '@trustsystem/developer-access';
 import {
   API_CATALOG,
   AUDIT_SERVICE,
@@ -59,7 +59,7 @@ export interface PortalState {
  * access is a *request*, decided by a named person, which creates a consumer through the registry.
  * Self-service ends at the sandbox boundary.
  *
- * **No route returns a key.** `@trustos/api-keys` hashes on creation, so the value cannot be
+ * **No route returns a key.** `@trustsystem/api-keys` hashes on creation, so the value cannot be
  * recovered; this controller returns a prefix and says so, because the portal is exactly where
  * somebody would add a "show key" button.
  */
@@ -216,7 +216,7 @@ export class PortalController {
     const consumer = this.viewer(actor).consumer;
 
     /*
-     * A credential id is a *reference* into `@trustos/api-keys`, not the key and not derived from
+     * A credential id is a *reference* into `@trustsystem/api-keys`, not the key and not derived from
      * it. Slicing an id to produce a "prefix" would be wrong twice over: the prefix a key
      * authenticates with comes from the key store, and treating the two as the same thing is how
      * an id that happened to be derived from a key ends up echoed back.

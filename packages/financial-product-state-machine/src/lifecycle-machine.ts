@@ -3,7 +3,7 @@ import {
   PRODUCT_LIFECYCLE_STATUSES,
   productError,
   type ProductLifecycleStatus,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 import { StateMachine, type TransitionRule } from './machine';
 
 /**
@@ -51,7 +51,7 @@ export interface LifecyclePrecondition {
   actorId: string;
   /** Approval levels already recorded for this version, from the decision trail. */
   recordedApprovalLevels: readonly string[];
-  /** Approval levels this change requires, from `@trustos/financial-product-governance`. */
+  /** Approval levels this change requires, from `@trustsystem/financial-product-governance`. */
   requiredApprovalLevels: readonly string[];
   /** Whether the definition still hashes to what was reviewed. */
   definitionUnchanged: boolean;

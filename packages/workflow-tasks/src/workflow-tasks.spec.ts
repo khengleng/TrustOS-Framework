@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustos/security-events';
+import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustsystem/security-events';
 import {
   WORKFLOW_PERMISSIONS,
   type WorkflowActor,
   type WorkflowTaskRecord,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 import {
   InMemoryRoundRobinCursor,
   isEligibleForTask,
@@ -51,7 +51,7 @@ function actor(overrides: Partial<WorkflowActor> = {}): WorkflowActor {
 }
 
 // A local in-memory store, with the race hook. Kept here rather than imported from
-// @trustos/workflow-runtime so this package's tests do not depend on the runtime.
+// @trustsystem/workflow-runtime so this package's tests do not depend on the runtime.
 class TestTaskStore implements TaskStore {
   readonly records = new Map<string, WorkflowTaskRecord>();
   onBeforeClaimWrite?: () => void | Promise<void>;

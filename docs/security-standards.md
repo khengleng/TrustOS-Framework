@@ -28,7 +28,7 @@ A change that violates one of these is not merged, regardless of what it fixes.
 - Login gives the same answer for a wrong password and an unknown account, and
   spends the same time on both (`verifyPasswordAgainstDummy`). Do not add a
   "user not found" branch that returns early.
-- Access and refresh tokens are signed with **different** secrets. `@trustos/config`
+- Access and refresh tokens are signed with **different** secrets. `@trustsystem/config`
   refuses to start production if they match or are shorter than 32 characters.
 - Token verification pins `algorithms: ['HS256']`. Removing that pin accepts
   `alg: none`.
@@ -163,7 +163,7 @@ DELETE` trigger, shipped as migration `20260729010000_auditlog_append_only`.
 
 ## 8. Configuration and secrets
 
-- `@trustos/config` is the only reader of `process.env` (enforced by eslint).
+- `@trustsystem/config` is the only reader of `process.env` (enforced by eslint).
 - Production refuses to start on: a missing required variable, a secret under 32
   characters, a known placeholder secret, identical access/refresh secrets,
   wildcard CORS, or a non-PostgreSQL `DATABASE_URL`.

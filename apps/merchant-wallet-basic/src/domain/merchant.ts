@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * The merchant model.
@@ -57,7 +57,7 @@ export type MerchantRole = (typeof MERCHANT_ROLES)[number];
 /**
  * What each merchant role may do inside the application.
  *
- * These are *application* permissions checked by `@trustos/rbac` alongside the framework's own.
+ * These are *application* permissions checked by `@trustsystem/rbac` alongside the framework's own.
  * The pilot adds no second permission system — see `permissions.ts`.
  *
  * `auditor` is read-only and holds no write permission at all. That is the role most often given a

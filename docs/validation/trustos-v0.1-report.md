@@ -152,7 +152,7 @@ The per-application detail is in [`application-matrix.md`](application-matrix.md
 
 ## Blocking issues
 
-1. ~~**No `AccessResolver` implementation.**~~ **Fixed.** `@trustos/access-resolver` reads
+1. ~~**No `AccessResolver` implementation.**~~ **Fixed.** `@trustsystem/access-resolver` reads
    membership per request; 15 tests, each verified to fail when the behaviour it covers is
    removed.
 2. ~~**No OIDC-subject-to-`User` link.**~~ **Schema fixed, provisioning outstanding.**

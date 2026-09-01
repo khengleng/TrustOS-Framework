@@ -6,7 +6,7 @@
  * near-identical page component — and means every screen gets the same loading, empty and error
  * handling for free.
  *
- * The shape comes from `@trustos/template-sdk`, and it is the *same* declaration the API reads to
+ * The shape comes from `@trustsystem/template-sdk`, and it is the *same* declaration the API reads to
  * decide which columns a caller may see and which filters it will accept. That is the whole point:
  * a table described twice is a table where a field added to one description is missing from the
  * other, and the version somebody notices is always the wrong one.
@@ -17,9 +17,9 @@ export type {
   TableColumn,
   TableDefinition,
   ColumnFormat,
-} from '@trustos/template-sdk';
+} from '@trustsystem/template-sdk';
 
-export { defaultAlign } from '@trustos/template-sdk';
+export { defaultAlign } from '@trustsystem/template-sdk';
 
 /** Resolves "user.email" against a row. */
 export function readCell(row: Record<string, unknown>, key: string): unknown {

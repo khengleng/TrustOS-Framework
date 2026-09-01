@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-composer
+ * @trustsystem/financial-product-composer
  *
  * The composer, the validator, the template library and the path an AI proposal takes to become
  * a draft.

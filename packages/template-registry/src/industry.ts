@@ -177,7 +177,7 @@ export function industryManifests(COMMON_VARIABLES: TemplateVariable[]): Templat
       displayName: 'TrustOS Wallet',
       description:
         'Customer wallets over the framework ledger: wallet profiles, transfers, transfer limits and ' +
-        'history. Balances come from @trustos/wallet — this template stores no balance column.',
+        'history. Balances come from @trustsystem/wallet — this template stores no balance column.',
       version: '0.1.0',
       category: 'financial-services',
       status: 'experimental',
@@ -208,7 +208,7 @@ export function industryManifests(COMMON_VARIABLES: TemplateVariable[]): Templat
       entities: ['WalletProfile', 'WalletTransfer', 'TransferLimitProfile'],
       migrationNotes:
         'Initial release. There is deliberately no balance column anywhere in this schema: ' +
-        '@trustos/wallet computes it from the ledger, and a cached copy is the one thing that makes ' +
+        '@trustsystem/wallet computes it from the ledger, and a cached copy is the one thing that makes ' +
         'two sources of truth. WalletProfile is the *product* record; the money lives in the ' +
         'framework.',
       owner: 'TrustOS Financial Team',
@@ -330,7 +330,7 @@ export function industryManifests(COMMON_VARIABLES: TemplateVariable[]): Templat
         'Repayment',
       ],
       migrationNotes:
-        'Initial release. The approval path is a @trustos/workflow-definition document in workflows/ ' +
+        'Initial release. The approval path is a @trustsystem/workflow-definition document in workflows/ ' +
         '— edit it there and validate with `trustos workflow validate`, rather than adding status ' +
         'columns here. The repayment schedule is generated once at disbursement and never recomputed; ' +
         'a restructure writes a new schedule and supersedes the old one.',
@@ -579,7 +579,7 @@ export function industryManifests(COMMON_VARIABLES: TemplateVariable[]): Templat
       deploymentTargets: ['railway', 'local'],
       entities: ['TicketQueue', 'SupportAgent', 'SlaPolicy', 'Ticket', 'TicketComment'],
       migrationNotes:
-        'Initial release. SLA timing is computed by @trustos/workflow-sla rather than stored as a ' +
+        'Initial release. SLA timing is computed by @trustsystem/workflow-sla rather than stored as a ' +
         'deadline column: a deadline written at creation is wrong the moment the calendar or the ' +
         'priority changes, and the ticket that silently missed its SLA is the one nobody can explain ' +
         'afterwards.',
@@ -635,7 +635,7 @@ export function industryManifests(COMMON_VARIABLES: TemplateVariable[]): Templat
       migrationNotes:
         'Initial release. The AI tutor is a *hook*, not an integration: TutorSession records what was ' +
         'asked and what was answered, and the answering is done by whatever the deployment wires into ' +
-        '@trustos/ai-gateway. Nothing here calls a model, and nothing here should.',
+        '@trustsystem/ai-gateway. Nothing here calls a model, and nothing here should.',
       owner: 'TrustOS Learn Team',
       outOfScope: [
         'external AI providers',
@@ -837,7 +837,7 @@ export function industryManifests(COMMON_VARIABLES: TemplateVariable[]): Templat
       migrationNotes:
         'Initial release. Beneficiary identity is the sensitive part of this domain: names and ' +
         'contact details sit behind their own PII permission, and a report exported for a donor must ' +
-        'not carry them. The export path in @trustos/export is where that filtering belongs.',
+        'not carry them. The export path in @trustsystem/export is where that filtering belongs.',
       owner: 'TrustOS Platform Team',
       outOfScope: [
         'payment providers',
@@ -894,7 +894,7 @@ export function industryManifests(COMMON_VARIABLES: TemplateVariable[]): Templat
       migrationNotes:
         'Initial release. Deliberately generic: there is no national ID validation, no ministry ' +
         'taxonomy and no country-specific form. An application is routed by a ' +
-        '@trustos/workflow-definition document the deployment writes, which is the seam that lets one ' +
+        '@trustsystem/workflow-definition document the deployment writes, which is the seam that lets one ' +
         'template serve agencies whose processes have nothing in common.',
       owner: 'TrustOS Public Sector Team',
       outOfScope: [
@@ -1171,7 +1171,7 @@ export function industryManifests(COMMON_VARIABLES: TemplateVariable[]): Templat
       deploymentTargets: ['railway', 'local'],
       entities: ['StaffProfile', 'StaffTask', 'SavedSearch', 'StaffNotification'],
       migrationNotes:
-        'Initial release. Approvals are not stored here: @trustos/workflow-approvals owns them, and ' +
+        'Initial release. Approvals are not stored here: @trustsystem/workflow-approvals owns them, and ' +
         'this template holds only the *view* — which saved search a person uses, which report they ' +
         'run. A portal that copied approval state would be a second source of truth for whether ' +
         'something was approved.',
@@ -1216,7 +1216,7 @@ export function industryManifests(COMMON_VARIABLES: TemplateVariable[]): Templat
       deploymentTargets: ['railway', 'local'],
       entities: ['ApiApplication', 'ApiKeyRecord', 'ApiUsageRecord', 'CodeExample', 'SdkRelease'],
       migrationNotes:
-        'Initial release. Keys are issued and verified by @trustos/api-keys — this template stores ' +
+        'Initial release. Keys are issued and verified by @trustsystem/api-keys — this template stores ' +
         'the *record* of a key (its prefix, its owner, when it was last used) and never the key ' +
         'itself. A portal that could show a key again after issuing it would be a portal that stores ' +
         'it in a readable form, which defeats the whole design.',

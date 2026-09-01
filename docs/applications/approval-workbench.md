@@ -51,11 +51,11 @@ instance, sets a state or creates a decision. The only mutation available is
 
 ## TrustOS dependencies
 
-`@trustos/workflow-runtime`, `@trustos/workflow-tasks`, `@trustos/workflow-core`,
-`@trustos/workflow-approvals`, `@trustos/workflow-history`, `@trustos/workflow-policy`,
-`@trustos/workflow-sla`, `@trustos/authorization`, `@trustos/rbac`, `@trustos/tenancy`,
-`@trustos/policy-engine`, `@trustos/audit`, `@trustos/identity`,
-`@trustos/governance-workflow-bridge`, `@trustos/errors`.
+`@trustsystem/workflow-runtime`, `@trustsystem/workflow-tasks`, `@trustsystem/workflow-core`,
+`@trustsystem/workflow-approvals`, `@trustsystem/workflow-history`, `@trustsystem/workflow-policy`,
+`@trustsystem/workflow-sla`, `@trustsystem/authorization`, `@trustsystem/rbac`, `@trustsystem/tenancy`,
+`@trustsystem/policy-engine`, `@trustsystem/audit`, `@trustsystem/identity`,
+`@trustsystem/governance-workflow-bridge`, `@trustsystem/errors`.
 
 Full accounting in [approval-workbench-reuse.md](../validation/approval-workbench-reuse.md).
 
@@ -76,7 +76,7 @@ instance.
 ### Two surfaces, deliberately separate
 
 The console descriptor declares its actions against `/internal/v1/operations/...` — the
-**gateway** contract, whose paths are declared in `@trustos/governance-tool-integration`'s
+**gateway** contract, whose paths are declared in `@trustsystem/governance-tool-integration`'s
 operation catalog and asserted by an integration test. The routes in the table above are
 what **this deployment** serves today.
 
@@ -110,7 +110,7 @@ cycles are kept.
 
 | Control          | Where it is enforced                 | Observed                                                                      |
 | ---------------- | ------------------------------------ | ----------------------------------------------------------------------------- |
-| Authentication   | `@trustos/identity`                  | Anonymous requests refused at the guard                                       |
+| Authentication   | `@trustsystem/identity`              | Anonymous requests refused at the guard                                       |
 | Human actor      | `@HumanActorsOnly`                   | A service account cannot be the checker                                       |
 | Permission       | `@RequirePermissions` + `@Authorize` | Viewer refused: `transition_permission_missing`                               |
 | Tenant isolation | `@OrganizationId` + scoped stores    | Cross-tenant read refused as **not found**, never forbidden                   |
@@ -140,7 +140,7 @@ they carry the network twice and predict nothing about a production deployment.
 
 ## Known limitations
 
-- **Comments are not wired.** `CommentService` exists in `@trustos/workflow-history`;
+- **Comments are not wired.** `CommentService` exists in `@trustsystem/workflow-history`;
   this deployment does not construct it. The detail view reports comments as
   _unavailable_ rather than returning an empty list, because an empty list reads as
   "nobody commented".

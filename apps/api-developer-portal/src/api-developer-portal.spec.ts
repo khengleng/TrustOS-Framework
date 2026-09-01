@@ -2,15 +2,15 @@ import 'reflect-metadata';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import { afterEach, describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
-import { loadConfig } from '@trustos/config';
-import { PrismaService } from '@trustos/database';
-import { createLogger } from '@trustos/logging';
-import { InMemorySecurityEventSink } from '@trustos/security-events';
-import { securityPolicySchema } from '@trustos/security-policy';
-import { ApiCatalog, apiDefinitionSchema } from '@trustos/api-catalog';
-import { ConsumerRegistry, consumerSchema } from '@trustos/api-consumer';
-import type { ActorContext } from '@trustos/shared-types';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
+import { loadConfig } from '@trustsystem/config';
+import { PrismaService } from '@trustsystem/database';
+import { createLogger } from '@trustsystem/logging';
+import { InMemorySecurityEventSink } from '@trustsystem/security-events';
+import { securityPolicySchema } from '@trustsystem/security-policy';
+import { ApiCatalog, apiDefinitionSchema } from '@trustsystem/api-catalog';
+import { ConsumerRegistry, consumerSchema } from '@trustsystem/api-consumer';
+import type { ActorContext } from '@trustsystem/shared-types';
 import { ApiDeveloperPortalModule } from './api-developer-portal.module';
 import { API_CATALOG, CONSUMER_REGISTRY, GUARD_ORDER, PORTAL_STATE } from './tokens';
 import { PortalController, type PortalState } from './controllers/portal.controller';
@@ -274,7 +274,7 @@ describe('the catalog a viewer sees', () => {
 describe('credentials', () => {
   it('never returns a key', async () => {
     /*
-     * @trustos/api-keys hashes on creation, so the value cannot be recovered. This is where
+     * @trustsystem/api-keys hashes on creation, so the value cannot be recovered. This is where
      * somebody would add a "show key" button, so the correct answer is one call away.
      */
     app = await boot();

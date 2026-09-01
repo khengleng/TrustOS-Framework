@@ -28,7 +28,7 @@ const MODULES = [
     title: 'Event Bus',
     summary:
       'Typed, versioned domain events with a schema registry, ordering per aggregate, retry, dead letters and replay.',
-    framework: ['@trustos/event-bus', '@trustos/event-registry', '@trustos/event-sdk'],
+    framework: ['@trustsystem/event-bus', '@trustsystem/event-registry', '@trustsystem/event-sdk'],
     healthDetail: 'The bus is running and the schema registry is populated.',
     note:
       'The registry is the load-bearing part: an event whose schema is not registered is never\n * published, so a renamed payload field fails at the publisher rather than at three consumers.',
@@ -40,10 +40,10 @@ const MODULES = [
     title: 'Webhooks',
     summary:
       'Outbound webhooks with HMAC signatures, overlapping secret rotation, replay protection and delivery history.',
-    framework: ['@trustos/webhooks', '@trustos/webhook-runtime'],
+    framework: ['@trustsystem/webhooks', '@trustsystem/webhook-runtime'],
     healthDetail: 'Endpoints are configured and deliveries are not backing up.',
     note:
-      'Read `destination.ts` in `@trustos/webhook-runtime` before changing anything about where a\n * delivery goes. A webhook URL is attacker-controlled input the server then makes a request to.',
+      'Read `destination.ts` in `@trustsystem/webhook-runtime` before changing anything about where a\n * delivery goes. A webhook URL is attacker-controlled input the server then makes a request to.',
   },
   {
     id: 'jobs',
@@ -52,7 +52,7 @@ const MODULES = [
     title: 'Background Jobs',
     summary:
       'A durable job queue in the database: leased execution, retry with backoff, priority, progress and history.',
-    framework: ['@trustos/job-runtime'],
+    framework: ['@trustsystem/job-runtime'],
     healthDetail: 'The queue is being worked and nothing has been waiting too long.',
     note:
       'The lease is what keeps a job from running twice. A worker that loses its lease mid-run\n * discards its outcome rather than writing it — see the header of `worker.ts`.',
@@ -64,7 +64,7 @@ const MODULES = [
     title: 'Scheduler',
     summary:
       'Cron, interval and one-time schedules with IANA timezone support and explicit daylight-saving handling.',
-    framework: ['@trustos/scheduler'],
+    framework: ['@trustsystem/scheduler'],
     healthDetail: 'The scheduler is ticking and no schedule is overdue.',
     note:
       'A schedule enqueues a job rather than running work itself, which is what makes a scheduled\n * task retryable, cancellable and recoverable after a crash.',
@@ -76,7 +76,7 @@ const MODULES = [
     title: 'Provider Adapters',
     summary:
       'The five-method provider contract with a registry, circuit-breaker-guarded calls and lifecycle management.',
-    framework: ['@trustos/adapter-framework', '@trustos/provider-sdk'],
+    framework: ['@trustsystem/adapter-framework', '@trustsystem/provider-sdk'],
     healthDetail: 'Every registered provider is reachable.',
     note:
       'The framework ships no provider implementation. That is the phase 6 boundary: the seam is\n * the deliverable, and the adapter belongs to whatever product is built on this.',
@@ -88,7 +88,7 @@ const MODULES = [
     title: 'Import',
     summary:
       'Bulk import with CSV and JSON parsing, per-row validation, preview, dry run, apply and rollback.',
-    framework: ['@trustos/import'],
+    framework: ['@trustsystem/import'],
     healthDetail: 'The import handlers are registered.',
     note:
       'Validation runs over every row before anything is written. An import that wrote 4,000 rows\n * and then failed leaves a state nobody can describe afterwards.',
@@ -100,7 +100,7 @@ const MODULES = [
     title: 'Export',
     summary:
       'Streaming export to CSV, JSON and NDJSON with keyset pagination and formula-injection escaping.',
-    framework: ['@trustos/export'],
+    framework: ['@trustsystem/export'],
     healthDetail: 'The export sources are registered.',
     note:
       'Rows are never all in memory at once, and a cell beginning `=` is neutralised on the way\n * out — an export is the one file guaranteed to be opened in a spreadsheet.',
@@ -112,7 +112,7 @@ const MODULES = [
     title: 'Synchronization',
     summary:
       'Pull, push and bidirectional synchronization with incremental watermarks and conflict policies.',
-    framework: ['@trustos/sync'],
+    framework: ['@trustsystem/sync'],
     healthDetail: 'No sync connection is paused or accumulating conflicts.',
     note:
       'The watermark is always the remote’s own value, and it advances only after a batch is\n * processed. Both rules are silent when broken — see the header of `sync.ts`.',
@@ -120,12 +120,12 @@ const MODULES = [
 ];
 
 const SHARED_DEPENDENCIES = [
-  '@trustos/errors',
-  '@trustos/logging',
-  '@trustos/module-registry',
-  '@trustos/module-sdk',
-  '@trustos/observability',
-  '@trustos/shared-types',
+  '@trustsystem/errors',
+  '@trustsystem/logging',
+  '@trustsystem/module-registry',
+  '@trustsystem/module-sdk',
+  '@trustsystem/observability',
+  '@trustsystem/shared-types',
 ];
 
 function packageJson(module) {
@@ -136,7 +136,7 @@ function packageJson(module) {
 
   return `${JSON.stringify(
     {
-      name: `@trustos/module-${module.id}`,
+      name: `@trustsystem/module-${module.id}`,
       version: '0.1.0',
       private: true,
       description: `TrustOS ${module.title} module. ${module.summary}`,
@@ -160,7 +160,7 @@ function packageJson(module) {
 
 function tsconfig(module) {
   const references = [...SHARED_DEPENDENCIES, ...module.framework]
-    .map((name) => ({ path: `../../${name.replace('@trustos/', '')}` }))
+    .map((name) => ({ path: `../../${name.replace('@trustsystem/', '')}` }))
     .sort((a, b) => a.path.localeCompare(b.path));
 
   return `${JSON.stringify(
@@ -182,14 +182,14 @@ function tsconfig(module) {
 
 function moduleSource(module) {
   return `import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The ${module.title.toLowerCase()} module.
@@ -270,7 +270,7 @@ export const ${module.id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())}Module 
 
 function indexSource(module) {
   return `/**
- * @trustos/module-${module.id}
+ * @trustsystem/module-${module.id}
  *
  * ${module.summary}
  *
@@ -285,7 +285,7 @@ function nestSource(module) {
   const definitionName = `${module.id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())}Module`;
 
   return `import { DynamicModule, Module } from '@nestjs/common';
-import { moduleProviders, type ModuleHostBinding } from '@trustos/module-sdk/nest';
+import { moduleProviders, type ModuleHostBinding } from '@trustsystem/module-sdk/nest';
 import { ${definitionName} } from '../${module.id}.module';
 
 /**
@@ -310,7 +310,7 @@ export class ${module.className} {
 
 function nestIndex(module) {
   return `/**
- * @trustos/module-${module.id}/nest
+ * @trustsystem/module-${module.id}/nest
  *
  * NestJS bindings, behind a subpath so importing the module does not pull \`@nestjs/common\` into
  * a worker or a test.
@@ -322,8 +322,8 @@ export * from './${module.id}.nest-module';
 function nestStub(module) {
   return `${JSON.stringify(
     {
-      '//': `Subpath stub: keeps NestJS bindings out of consumers that import '@trustos/module-${module.id}'.`,
-      name: `@trustos/module-${module.id}-nest`,
+      '//': `Subpath stub: keeps NestJS bindings out of consumers that import '@trustsystem/module-${module.id}'.`,
+      name: `@trustsystem/module-${module.id}-nest`,
       private: true,
       main: '../dist/nest/index.js',
       types: '../dist/nest/index.d.ts',
@@ -334,7 +334,7 @@ function nestStub(module) {
 }
 
 function readme(module) {
-  return `# @trustos/module-${module.id}
+  return `# @trustsystem/module-${module.id}
 
 ${module.summary}
 
@@ -355,7 +355,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 \`\`\`ts
-import { ${module.className} } from '@trustos/module-${module.id}/nest';
+import { ${module.className} } from '@trustsystem/module-${module.id}/nest';
 
 @Module({ imports: [${module.className}.forRoot(binding)] })
 export class AppModule {}
@@ -369,7 +369,7 @@ short version: this phase ships the seam, not the integration.
 }
 
 function agents(module) {
-  return `# AGENTS.md — @trustos/module-${module.id}
+  return `# AGENTS.md — @trustsystem/module-${module.id}
 
 ${module.summary}
 

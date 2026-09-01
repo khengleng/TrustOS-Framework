@@ -209,14 +209,14 @@ async function main() {
     await mkdir(join(directory, 'src'), { recursive: true });
 
     const dependencies = Object.fromEntries(
-      [...entry.deps].sort().map((name) => [`@trustos/${name}`, '0.1.0']),
+      [...entry.deps].sort().map((name) => [`@trustsystem/${name}`, '0.1.0']),
     );
 
     await writeFile(
       join(directory, 'package.json'),
       `${JSON.stringify(
         {
-          name: `@trustos/${entry.name}`,
+          name: `@trustsystem/${entry.name}`,
           version: '0.1.0',
           private: true,
           description: entry.description,

@@ -7,8 +7,8 @@ Semantic versions, immutable artefacts, and the same build promoted from DEV to 
 `0.1.0` in the root `package.json`, and every workspace package carries `0.1.0` in lockstep.
 
 That is deliberate for a framework at this stage: 171 packages versioned independently is 171
-compatibility questions, and nobody consuming TrustOS today needs `@trustos/ledger` at a different
-version from `@trustos/wallet`. When somebody does, `@trustos/compatibility-engine` is the package
+compatibility questions, and nobody consuming TrustOS today needs `@trustsystem/ledger` at a different
+version from `@trustsystem/wallet`. When somebody does, `@trustsystem/compatibility-engine` is the package
 that will answer it.
 
 ## The tags

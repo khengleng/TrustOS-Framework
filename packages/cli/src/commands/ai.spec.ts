@@ -34,7 +34,7 @@ function application(options: { modules?: string[]; wired?: boolean } = {}): voi
   write('trustos.json', { name: 'test-app' });
   write('package.json', {
     name: 'test-app',
-    dependencies: Object.fromEntries(modules.map((id) => [`@trustos/module-${id}`, '0.1.0'])),
+    dependencies: Object.fromEntries(modules.map((id) => [`@trustsystem/module-${id}`, '0.1.0'])),
   });
 
   const imports =
@@ -43,7 +43,7 @@ function application(options: { modules?: string[]; wired?: boolean } = {}): voi
       : modules
           .map(
             (id) =>
-              `import { ${id[0]!.toUpperCase()}${id.slice(1)}Module } from '@trustos/module-${id}/nest';`,
+              `import { ${id[0]!.toUpperCase()}${id.slice(1)}Module } from '@trustsystem/module-${id}/nest';`,
           )
           .join('\n');
 
@@ -203,9 +203,9 @@ describe('ai doctor', () => {
     write('ai/agents.json', [agent({ requiresReview: true })]);
     write(
       'apps/api/src/app.module.ts',
-      "import { AiModule } from '@trustos/module-ai/nest';\n" +
-        "import { AgentModule } from '@trustos/module-agent/nest';\n" +
-        "import { ReviewService } from '@trustos/human-review';\n",
+      "import { AiModule } from '@trustsystem/module-ai/nest';\n" +
+        "import { AgentModule } from '@trustsystem/module-agent/nest';\n" +
+        "import { ReviewService } from '@trustsystem/human-review';\n",
     );
 
     const output = createCapturingOutput();
@@ -247,7 +247,7 @@ describe('ai doctor', () => {
     application({ modules: ['ai'] });
     write(
       'apps/api/src/app.module.ts',
-      "import { AiModule } from '@trustos/module-ai/nest';\n" +
+      "import { AiModule } from '@trustsystem/module-ai/nest';\n" +
         '@Module({ providers: [SomethingElse] })\nexport class AppModule {}\n',
     );
 
@@ -261,7 +261,7 @@ describe('ai doctor', () => {
     application({ modules: ['ai'] });
     write(
       'apps/api/src/app.module.ts',
-      "import { AiModule } from '@trustos/module-ai/nest';\n" +
+      "import { AiModule } from '@trustsystem/module-ai/nest';\n" +
         'const gateway = new AiGateway({ adapters: [new OpenAiAdapter(config)] });\n',
     );
 

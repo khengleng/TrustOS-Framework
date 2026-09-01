@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
 
-  // Nothing from @trustos/config is imported here: that package reads secrets, and a bundler
+  // Nothing from @trustsystem/config is imported here: that package reads secrets, and a bundler
   // that can see it can inline them. Only NEXT_PUBLIC_* reaches the browser.
   env: {},
 

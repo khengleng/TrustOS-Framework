@@ -1,7 +1,7 @@
 /**
- * @trustos/governance-tool-sdk
+ * @trustsystem/governance-tool-sdk
  *
- * The SDK an internal application is built against. Headless, for the reason `@trustos/template-sdk`
+ * The SDK an internal application is built against. Headless, for the reason `@trustsystem/template-sdk`
  * is: one deployment renders React and another does not.
  *
  * It enforces one habit: **the frontend holds no business logic.** A fee recomputed in a browser

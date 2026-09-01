@@ -1,5 +1,5 @@
 /**
- * @trustos/audit
+ * @trustsystem/audit
  *
  * Append-only audit logging. The trail is evidence: it is written for every
  * security-sensitive action, it is never edited, and it never contains

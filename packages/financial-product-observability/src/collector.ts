@@ -1,4 +1,4 @@
-import type { ProductMetricSink } from '@trustos/financial-product-core';
+import type { ProductMetricSink } from '@trustsystem/financial-product-core';
 import { assertLowCardinality } from './metrics';
 
 /**

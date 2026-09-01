@@ -4,7 +4,7 @@ The rules a codebase actually lives by are the ones a machine checks. Everything
 document people agree with and then violate, because the violation is invisible until somebody
 reads the whole tree — and nobody reads the whole tree.
 
-So these rules are **data**, in `@trustos/architecture-validator`, and every violation names a
+So these rules are **data**, in `@trustsystem/architecture-validator`, and every violation names a
 file, a line and a fix.
 
 ```bash
@@ -48,14 +48,14 @@ on its own, which is discovered by whoever installs it first.
 Tests are exempt: a spec that needs a fixture from another package is not a production dependency,
 and forcing it into `package.json` would put test-only packages into every consumer's install.
 
-**`no-cross-package-deep-import`** — import `@trustos/x`, never `@trustos/x/src/internal`. A deep
+**`no-cross-package-deep-import`** — import `@trustsystem/x`, never `@trustsystem/x/src/internal`. A deep
 import binds to a file layout that is not part of the contract and breaks on a refactor nobody
 thought was breaking.
 
 ### Generated code is not an import
 
 A package that writes files as template literals contains lines that look exactly like imports.
-The validator tracks template-literal state and skips them — otherwise `@trustos/code-generator`
+The validator tracks template-literal state and skips them — otherwise `@trustsystem/code-generator`
 appears to depend on everything it can generate for, which is both wrong and unfixable, since not
 importing them is the point.
 

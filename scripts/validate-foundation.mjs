@@ -30,9 +30,9 @@ if (!process.env.DATABASE_URL) {
 }
 
 const { PrismaClient } = await import('@prisma/client');
-const { CHANGE_REQUEST_APPROVAL } = await import('@trustos/workflow-definition');
-const { checkApproverEligibility } = await import('@trustos/workflow-approvals');
-const { scopedDelegate } = await import('@trustos/tenancy');
+const { CHANGE_REQUEST_APPROVAL } = await import('@trustsystem/workflow-definition');
+const { checkApproverEligibility } = await import('@trustsystem/workflow-approvals');
+const { scopedDelegate } = await import('@trustsystem/tenancy');
 
 const prisma = new PrismaClient();
 const results = [];
@@ -141,7 +141,7 @@ async function main() {
   });
 
   await check('tenancy: a membership in A does not resolve in B', async () => {
-    const { PrismaAccessResolver } = await import('@trustos/access-resolver');
+    const { PrismaAccessResolver } = await import('@trustsystem/access-resolver');
     const resolver = new PrismaAccessResolver({ prisma });
     const inOwn = await resolver.resolve(users.aMaker.externalId, orgA.id);
     const inOther = await resolver.resolve(users.aMaker.externalId, orgB.id);
@@ -152,7 +152,7 @@ async function main() {
   });
 
   await check('tenancy: the reverse direction also refuses', async () => {
-    const { PrismaAccessResolver } = await import('@trustos/access-resolver');
+    const { PrismaAccessResolver } = await import('@trustsystem/access-resolver');
     const resolver = new PrismaAccessResolver({ prisma });
     const crossed = await resolver.resolve(users.bMaker.externalId, orgA.id);
     return { pass: crossed === null, detail: crossed ? 'RESOLVED' : 'null' };
@@ -489,17 +489,17 @@ async function runAccessChangeRequest({ orgA, orgB, users, prisma, correlationId
   const out = { error: null };
 
   try {
-    const { createAuthorizer } = await import('@trustos/authorization');
-    const { AuditService, InMemoryAuditSink } = await import('@trustos/audit');
+    const { createAuthorizer } = await import('@trustsystem/authorization');
+    const { AuditService, InMemoryAuditSink } = await import('@trustsystem/audit');
     const { SecurityEventEmitter, InMemorySecurityEventSink } =
-      await import('@trustos/security-events');
-    const { securityPolicySchema } = await import('@trustos/security-policy');
-    const { HistoryRecorder } = await import('@trustos/workflow-history');
-    const { WORKFLOW_POLICIES } = await import('@trustos/workflow-policy');
-    const { CalendarRegistry, SlaService } = await import('@trustos/workflow-sla');
-    const { TaskService } = await import('@trustos/workflow-tasks');
-    const runtime = await import('@trustos/workflow-runtime');
-    const { hashDefinition } = await import('@trustos/workflow-definition');
+      await import('@trustsystem/security-events');
+    const { securityPolicySchema } = await import('@trustsystem/security-policy');
+    const { HistoryRecorder } = await import('@trustsystem/workflow-history');
+    const { WORKFLOW_POLICIES } = await import('@trustsystem/workflow-policy');
+    const { CalendarRegistry, SlaService } = await import('@trustsystem/workflow-sla');
+    const { TaskService } = await import('@trustsystem/workflow-tasks');
+    const runtime = await import('@trustsystem/workflow-runtime');
+    const { hashDefinition } = await import('@trustsystem/workflow-definition');
 
     const document = CHANGE_REQUEST_APPROVAL;
     const now = () => new Date();

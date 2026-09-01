@@ -4,7 +4,7 @@ import type {
   DatabaseRow,
   GroupedCount,
   WorkflowInstanceRecord,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 import type { CaseListQuery, CaseStore } from './service';
 
 /**

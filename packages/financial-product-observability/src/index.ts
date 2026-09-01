@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-observability
+ * @trustsystem/financial-product-observability
  *
  * The product metric catalog, the collector the runtime reports through, and the dashboard
  * descriptors the admin renders.

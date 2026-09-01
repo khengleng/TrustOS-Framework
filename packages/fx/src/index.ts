@@ -1,5 +1,5 @@
 /**
- * @trustos/fx
+ * @trustsystem/fx
  *
  * Exchange rates, conversion with spread, rate sources and historical lookup.
  *

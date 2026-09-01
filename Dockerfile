@@ -24,10 +24,10 @@
 # The first version of this file had a separate dependency stage copying only the root manifest
 # and `packages/database`, so a source change would not reinvalidate `node_modules`. That is the
 # standard optimization and it is **wrong for an npm workspace**: `npm ci` creates the
-# `node_modules/@trustos/*` symlinks from the workspace manifests, and with 170 of them missing it
+# `node_modules/@trustsystem/*` symlinks from the workspace manifests, and with 170 of them missing it
 # creates none. The build then fails at the first cross-package import —
 #
-#   error TS2307: Cannot find module '@trustos/module-sdk/nest'
+#   error TS2307: Cannot find module '@trustsystem/module-sdk/nest'
 #
 # — which looks like a broken import and is a broken install. Correct beats cached.
 FROM node:20.19.1-bookworm-slim AS build
@@ -37,8 +37,8 @@ WORKDIR /app
 
 # Fail here, with a sentence, rather than four lines later inside npm.
 #
-# An unset SERVICE reaches `npm run build -w "@trustos/"`, which reports
-# `No workspaces found: --workspace=@trustos/` — true, unhelpful, and several minutes into a build.
+# An unset SERVICE reaches `npm run build -w "@trustsystem/"`, which reports
+# `No workspaces found: --workspace=@trustsystem/` — true, unhelpful, and several minutes into a build.
 RUN test -n "$SERVICE" || { \
       echo "SERVICE build argument is empty."; \
       echo "Pass it: docker build --build-arg SERVICE=api-example ."; \
@@ -53,7 +53,7 @@ COPY . .
 RUN npm ci --ignore-scripts \
     && npm run db:generate \
     && npm run build:packages \
-    && npm run build -w "@trustos/${SERVICE}"
+    && npm run build -w "@trustsystem/${SERVICE}"
 
 # Development dependencies removed after the build rather than installed separately, so the build
 # and the runtime resolve identical versions from one lockfile.

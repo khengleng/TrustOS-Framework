@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import type { LoggerPort } from '@trustos/logging';
-import { AiError, type ModelSelection } from '@trustos/ai-sdk';
-import { type Model, type ModelRegistry } from '@trustos/model-registry';
-import type { AiPolicyEngine } from '@trustos/ai-policy';
+import type { LoggerPort } from '@trustsystem/logging';
+import { AiError, type ModelSelection } from '@trustsystem/ai-sdk';
+import { type Model, type ModelRegistry } from '@trustsystem/model-registry';
+import type { AiPolicyEngine } from '@trustsystem/ai-policy';
 
 /**
  * Model routing.

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
-import { RETRY_PRESETS, withRetry, type RetryPolicy } from '@trustos/retry';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
+import { RETRY_PRESETS, withRetry, type RetryPolicy } from '@trustsystem/retry';
 import {
   AiError,
   completionRequestSchema,
@@ -11,15 +11,15 @@ import {
   type CompletionRequest,
   type CompletionResult,
   type Usage,
-} from '@trustos/ai-sdk';
-import { computeCost, type Model, type ModelRegistry } from '@trustos/model-registry';
-import type { ModelRouter } from '@trustos/model-router';
-import type { AiPolicyEngine } from '@trustos/ai-policy';
-import type { CostMonitor } from '@trustos/cost-monitor';
-import { AiCache, promptFingerprint } from '@trustos/ai-cache';
-import { Guardrails } from '@trustos/guardrails';
-import { TokenMeter } from '@trustos/token-meter';
-import { detectPii } from '@trustos/content-filter';
+} from '@trustsystem/ai-sdk';
+import { computeCost, type Model, type ModelRegistry } from '@trustsystem/model-registry';
+import type { ModelRouter } from '@trustsystem/model-router';
+import type { AiPolicyEngine } from '@trustsystem/ai-policy';
+import type { CostMonitor } from '@trustsystem/cost-monitor';
+import { AiCache, promptFingerprint } from '@trustsystem/ai-cache';
+import { Guardrails } from '@trustsystem/guardrails';
+import { TokenMeter } from '@trustsystem/token-meter';
+import { detectPii } from '@trustsystem/content-filter';
 import { AI_METRICS } from './metrics';
 import { ProviderError, type AiProviderAdapter } from './provider';
 

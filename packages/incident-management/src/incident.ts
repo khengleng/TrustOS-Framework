@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { ServiceRegistry } from '@trustos/sre-core';
+import { ApiError } from '@trustsystem/errors';
+import type { ServiceRegistry } from '@trustsystem/sre-core';
 
 /**
  * Incidents.

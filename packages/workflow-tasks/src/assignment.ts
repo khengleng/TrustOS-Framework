@@ -1,6 +1,6 @@
-import { ApiError } from '@trustos/errors';
-import type { WorkflowActor } from '@trustos/workflow-core';
-import type { AssignmentStrategy, WorkflowAssignmentSpec } from '@trustos/workflow-definition';
+import { ApiError } from '@trustsystem/errors';
+import type { WorkflowActor } from '@trustsystem/workflow-core';
+import type { AssignmentStrategy, WorkflowAssignmentSpec } from '@trustsystem/workflow-definition';
 
 /**
  * Assignment.

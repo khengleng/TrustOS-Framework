@@ -1,5 +1,5 @@
 /**
- * @trustos/package-manager
+ * @trustsystem/package-manager
  *
  * Install, update, remove, rollback, dependency resolution, conflict detection and integrity
  * validation — offline.

@@ -4,27 +4,27 @@ import {
   DATA_CLASSIFICATION_LEVELS,
   obligationsFor,
   type DataClassificationLevel,
-} from '@trustos/data-classification';
-import { DataCatalog, catalogEntrySchema, type CatalogEntry } from '@trustos/data-catalog';
-import { LineageGraph, lineageEdgeSchema } from '@trustos/data-lineage';
-import { policyDocumentSchema, type PolicyDocument } from '@trustos/policy-registry';
+} from '@trustsystem/data-classification';
+import { DataCatalog, catalogEntrySchema, type CatalogEntry } from '@trustsystem/data-catalog';
+import { LineageGraph, lineageEdgeSchema } from '@trustsystem/data-lineage';
+import { policyDocumentSchema, type PolicyDocument } from '@trustsystem/policy-registry';
 import {
   analysePolicy,
   evaluatePolicy,
   explainDecision,
   runPolicyTests,
-} from '@trustos/policy-evaluator';
-import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustos/sre-core';
-import { sloSchema } from '@trustos/slo';
-import { ApiCatalog, apiDefinitionSchema } from '@trustos/api-catalog';
-import { analyseCompatibility } from '@trustos/api-versioning';
+} from '@trustsystem/policy-evaluator';
+import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustsystem/sre-core';
+import { sloSchema } from '@trustsystem/slo';
+import { ApiCatalog, apiDefinitionSchema } from '@trustsystem/api-catalog';
+import { analyseCompatibility } from '@trustsystem/api-versioning';
 import {
   BackupInventory,
   assuranceOf,
   backupRecordSchema,
   describeAssurance,
-} from '@trustos/backup';
-import { drPlanSchema, readinessOf, reviewPlans } from '@trustos/disaster-recovery';
+} from '@trustsystem/backup';
+import { drPlanSchema, readinessOf, reviewPlans } from '@trustsystem/disaster-recovery';
 import { style, type Output } from '../output';
 
 /**

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/financial-product-rules",
+  "name": "@trustsystem/financial-product-rules",
   "version": "0.1.0",
   "description": "The deterministic product rules engine: facts, evaluation order, conflict resolution and the explanation trace.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-core": "0.1.0",
-    "@trustos/financial-product-core": "0.1.0",
-    "@trustos/workflow-definition": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-core": "0.1.0",
+    "@trustsystem/financial-product-core": "0.1.0",
+    "@trustsystem/workflow-definition": "0.1.0",
     "zod": "^3.24.1"
   }
 }

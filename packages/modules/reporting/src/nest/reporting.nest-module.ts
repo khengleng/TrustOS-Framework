@@ -3,7 +3,7 @@ import {
   moduleProviders,
   moduleServiceProvider,
   type ModuleHostBinding,
-} from '@trustos/module-sdk/nest';
+} from '@trustsystem/module-sdk/nest';
 import { reportingModule, type ReportingInstance } from '../reporting.module';
 import { ReportingController } from './reporting.controller';
 import { REPORTING_SERVICE } from './tokens';

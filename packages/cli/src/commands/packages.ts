@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { MODULE_CATALOG } from '@trustos/module-registry';
+import { MODULE_CATALOG } from '@trustsystem/module-registry';
 import {
   applyPlan,
   emptyLockfile,
@@ -14,8 +14,8 @@ import {
   type AvailablePackage,
   type InstallPlan,
   type Lockfile,
-} from '@trustos/package-manager';
-import { describeExport, InMemoryTelemetrySink } from '@trustos/telemetry';
+} from '@trustsystem/package-manager';
+import { describeExport, InMemoryTelemetrySink } from '@trustsystem/telemetry';
 import type { Output } from '../output';
 import { formatRows, style } from '../output';
 

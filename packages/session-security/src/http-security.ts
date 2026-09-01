@@ -1,4 +1,4 @@
-import type { HttpPolicy } from '@trustos/security-policy';
+import type { HttpPolicy } from '@trustsystem/security-policy';
 
 /**
  * HTTP hardening.

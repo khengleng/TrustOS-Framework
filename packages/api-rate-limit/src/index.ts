@@ -1,5 +1,5 @@
 /**
- * @trustos/api-rate-limit
+ * @trustsystem/api-rate-limit
  *
  * How fast a caller may arrive, per second, minute, hour or day, with burst.
  *

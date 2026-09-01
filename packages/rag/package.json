@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/rag",
+  "name": "@trustsystem/rag",
   "version": "0.1.0",
   "description": "Loading, chunking, retrieval, ranking and citation over a vector store.",
   "license": "UNLICENSED",
@@ -17,13 +17,13 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/ai-sdk": "0.1.0",
-    "@trustos/embedding": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/knowledge": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/vector-store": "0.1.0",
+    "@trustsystem/ai-sdk": "0.1.0",
+    "@trustsystem/embedding": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/knowledge": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/vector-store": "0.1.0",
     "zod": "^3.24.1"
   }
 }

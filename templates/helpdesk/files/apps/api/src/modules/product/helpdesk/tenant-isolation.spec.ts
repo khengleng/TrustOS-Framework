@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
-import type { ApiError } from '@trustos/errors';
-import { FakeModelDelegate, runInTenantContext } from '@trustos/tenancy';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
+import type { ApiError } from '@trustsystem/errors';
+import { FakeModelDelegate, runInTenantContext } from '@trustsystem/tenancy';
 import { HelpdeskService } from './helpdesk.service';
 
 /**
@@ -10,7 +10,7 @@ import { HelpdeskService } from './helpdesk.service';
  * The quietest failure a generated application can have: a query that returns another
  * organization’s rows. It breaks nothing, fails no build, and is discovered by a customer.
  *
- * The fake delegate and the tenant context come from `@trustos/tenancy` rather than being
+ * The fake delegate and the tenant context come from `@trustsystem/tenancy` rather than being
  * rebuilt here. A hand-rolled fake that ignored the scope it was passed would make this suite
  * pass against a broken repository, which is worse than having no suite.
  */

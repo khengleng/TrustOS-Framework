@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   addMoney,
   moneyFromJson,
@@ -6,7 +6,7 @@ import {
   zeroMoney,
   type CurrencyRegistry,
   type Money,
-} from '@trustos/financial-core';
+} from '@trustsystem/financial-core';
 import type { AccountBalance, LedgerStore } from './ledger';
 import type { Journal } from './journal';
 import { contains, type AccountingPeriod, type PeriodStatus, type PeriodStore } from './closing';

@@ -2,21 +2,21 @@ import {
   checkCompatibility,
   summarize as summarizeCompatibility,
   type CompatibilityReport,
-} from '@trustos/compatibility-engine';
+} from '@trustsystem/compatibility-engine';
 import {
   analyzeDependencies,
   type AnalysisReport,
   type GraphModule,
-} from '@trustos/dependency-analyzer';
-import { assessHealth, type HealthReport } from '@trustos/framework-health';
+} from '@trustsystem/dependency-analyzer';
+import { assessHealth, type HealthReport } from '@trustsystem/framework-health';
 import {
   evaluateLicense,
   OPEN_SOURCE_LICENSE,
   type License,
   type LicenseStatus,
-} from '@trustos/license-manager';
-import { ReleaseManager, type Release } from '@trustos/release-manager';
-import { recommendUpgrade, type UpgradeRecommendation } from '@trustos/version-manager';
+} from '@trustsystem/license-manager';
+import { ReleaseManager, type Release } from '@trustsystem/release-manager';
+import { recommendUpgrade, type UpgradeRecommendation } from '@trustsystem/version-manager';
 
 /**
  * One view of the platform.

@@ -8,7 +8,7 @@ import type {
   ModuleMigration,
   ModulePermission,
   ModuleRoute,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 import { MODULE_CATALOG } from './catalog';
 import { ModuleRegistryError } from './errors';
 import type { ModuleCatalogEntry } from './schema';

@@ -1,5 +1,5 @@
 /**
- * @trustos/sli
+ * @trustsystem/sli
  *
  * Indicators as ratios of good events to valid events, aggregated from counts.
  *

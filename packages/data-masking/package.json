@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/data-masking",
+  "name": "@trustsystem/data-masking",
   "version": "0.1.0",
   "description": "Platform-wide masking, tokenization and pseudonymization policy, and the reveal ceremony at the data layer.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/data-classification": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/governance-pii-policy": "0.1.0",
+    "@trustsystem/data-classification": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/governance-pii-policy": "0.1.0",
     "zod": "^3.24.1"
   }
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { RETRY_PRESETS, withRetry, type RetryPolicy } from '@trustos/retry';
+import { ApiError } from '@trustsystem/errors';
+import { RETRY_PRESETS, withRetry, type RetryPolicy } from '@trustsystem/retry';
 
 /**
  * Embedding provider abstraction.

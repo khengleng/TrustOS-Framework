@@ -1,27 +1,31 @@
 import { DynamicModule, Global, Module, type Provider } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import { AuditService, PrismaAuditSink } from '@trustos/audit';
-import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
-import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
-import type { AppConfig } from '@trustos/config';
-import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustos/database';
-import { ObservabilityModule, databaseHealthIndicator } from '@trustos/observability';
-import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
-import type { AccessResolver, CredentialAuthenticator, IdentityProvider } from '@trustos/identity';
-import type { Logger } from '@trustos/logging';
-import { canGrantRole, PermissionsGuard } from '@trustos/rbac';
+import { AuditService, PrismaAuditSink } from '@trustsystem/audit';
+import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustsystem/authorization';
+import { PolicyAuthorizationGuard } from '@trustsystem/authorization/nest';
+import type { AppConfig } from '@trustsystem/config';
+import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustsystem/database';
+import { ObservabilityModule, databaseHealthIndicator } from '@trustsystem/observability';
+import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustsystem/identity/nest';
+import type {
+  AccessResolver,
+  CredentialAuthenticator,
+  IdentityProvider,
+} from '@trustsystem/identity';
+import type { Logger } from '@trustsystem/logging';
+import { canGrantRole, PermissionsGuard } from '@trustsystem/rbac';
 import {
   LoggerSecurityEventSink,
   PersistentSecurityEventSink,
   SecurityEventEmitter,
   type SecurityEventSink,
-} from '@trustos/security-events';
-import type { SecurityPolicy } from '@trustos/security-policy';
-import { TenantGuard } from '@trustos/tenancy';
-import { ServiceRegistry } from '@trustos/sre-core';
-import { SliRegistry } from '@trustos/sli';
-import { DependencyHealthBoard } from '@trustos/dependency-health';
-import { IncidentManager, InMemoryIncidentSink } from '@trustos/incident-management';
+} from '@trustsystem/security-events';
+import type { SecurityPolicy } from '@trustsystem/security-policy';
+import { TenantGuard } from '@trustsystem/tenancy';
+import { ServiceRegistry } from '@trustsystem/sre-core';
+import { SliRegistry } from '@trustsystem/sli';
+import { DependencyHealthBoard } from '@trustsystem/dependency-health';
+import { IncidentManager, InMemoryIncidentSink } from '@trustsystem/incident-management';
 import { OperationsController, type SreState } from './controllers/operations.controller';
 import {
   ACCESS_RESOLVER,

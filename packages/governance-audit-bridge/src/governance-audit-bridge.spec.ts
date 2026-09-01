@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
 import {
   AUDIT_ON_REFUSAL,
   GOVERNANCE_AUDIT_ACTIONS,

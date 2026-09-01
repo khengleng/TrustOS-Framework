@@ -3,7 +3,7 @@ import {
   moduleProviders,
   moduleServiceProvider,
   type ModuleHostBinding,
-} from '@trustos/module-sdk/nest';
+} from '@trustsystem/module-sdk/nest';
 import { featureFlagsModule, type FeatureFlagsInstance } from '../feature-flags.module';
 import { FeatureFlagsController } from './feature-flags.controller';
 import { FEATURE_FLAGS_SERVICE } from './tokens';

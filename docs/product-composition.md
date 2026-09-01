@@ -193,7 +193,7 @@ supposed to be a small change to.
 
 ## The visual designer
 
-The designer's _data_ is in `@trustos/financial-product-composer/designer`; its pixels are not.
+The designer's _data_ is in `@trustsystem/financial-product-composer/designer`; its pixels are not.
 The admin application renders a canvas, the CLI renders a tree, a comparison view renders a diff —
 three renderers over one description.
 
@@ -218,7 +218,7 @@ A product owner describes a product in words; a model proposes a composition; **
 data, and it is validated before it becomes anything.**
 
 The framework ships **no model call**. `buildCompositionBrief` produces the structured brief a
-deployment sends through `@trustos/ai-gateway` — where policy, guardrails, cost accounting and
+deployment sends through `@trustsystem/ai-gateway` — where policy, guardrails, cost accounting and
 audit are applied — and `draftFromProposal` takes whatever comes back. Calling a model from this
 package would be a call that went around the gateway.
 

@@ -1,5 +1,5 @@
 /**
- * @trustos/incident-management
+ * @trustsystem/incident-management
  *
  * Incidents with an append-only timeline and a closing gate.
  *

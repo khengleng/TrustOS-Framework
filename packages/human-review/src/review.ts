@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
 
 /**
  * Human review of AI output.
@@ -26,7 +26,7 @@ import type { LoggerPort } from '@trustos/logging';
  *     nothing at all — which means the same output comes back tomorrow.
  *
  * **SLA is a report, not a timer.** Nothing here escalates on a schedule; `overdue()` returns what
- * has breached and a job in `@trustos/scheduler` acts on it. A queue that quietly auto-approved on
+ * has breached and a job in `@trustsystem/scheduler` acts on it. A queue that quietly auto-approved on
  * timeout would be a queue that approves precisely the items nobody had time to look at.
  */
 

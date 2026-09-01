@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import type { ActorType } from '@trustos/shared-types';
+import type { ActorType } from '@trustsystem/shared-types';
 
 /**
  * The event envelope.

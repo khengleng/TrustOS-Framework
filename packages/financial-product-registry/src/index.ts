@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-registry
+ * @trustsystem/financial-product-registry
  *
  * The catalog: drafts, published versions, the active-version resolution every execution starts
  * from, and the tenant-scoped storage under all of it.

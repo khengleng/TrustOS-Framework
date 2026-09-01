@@ -95,7 +95,7 @@ only in the catalog.
 
 ## Maker-checker
 
-The approval **models** are `@trustos/workflow-approvals`' — six of them, all pure functions of
+The approval **models** are `@trustsystem/workflow-approvals`' — six of them, all pure functions of
 the decision trail. This layer does not restate any of them.
 
 Progress is **derived** from the decisions, never tracked alongside them. A counter that increments

@@ -1,12 +1,12 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { MODULE_CATALOG } from '@trustos/module-registry';
-import { migrationSchema, type Migration } from '@trustos/migration-tools';
-import { ReleaseManager } from '@trustos/release-manager';
-import { VersionHistory } from '@trustos/version-manager';
-import { planUpgrade, recommendTarget } from '@trustos/upgrade-manager';
-import type { GraphModule } from '@trustos/dependency-analyzer';
+import { MODULE_CATALOG } from '@trustsystem/module-registry';
+import { migrationSchema, type Migration } from '@trustsystem/migration-tools';
+import { ReleaseManager } from '@trustsystem/release-manager';
+import { VersionHistory } from '@trustsystem/version-manager';
+import { planUpgrade, recommendTarget } from '@trustsystem/upgrade-manager';
+import type { GraphModule } from '@trustsystem/dependency-analyzer';
 import type { Output } from '../output';
 import { formatRows, style } from '../output';
 
@@ -22,7 +22,7 @@ import { formatRows, style } from '../output';
  * produces the *whole* plan — which migrations run, which are destructive, whether a backup is
  * mandatory, what would break, what recovery would look like — and refuses when the plan says it
  * should not proceed. An operator then applies it through whatever change control they already
- * have, with `@trustos/upgrade-manager`'s `executeUpgrade` if they want it automated.
+ * have, with `@trustsystem/upgrade-manager`'s `executeUpgrade` if they want it automated.
  *
  * The reason to stop here rather than run it: the actions in an upgrade are the ones where a
  * mistake is expensive and irreversible, and a CLI that performs them is a CLI somebody runs in
@@ -252,7 +252,7 @@ export async function runUpgrade(options: UpgradeOptions, output: Output): Promi
   output.blank();
   output.detail('  This command plans; it does not execute. To apply it:');
   output.detail(
-    '    • wire an UpgradeExecutor and call executeUpgrade from @trustos/upgrade-manager, or',
+    '    • wire an UpgradeExecutor and call executeUpgrade from @trustsystem/upgrade-manager, or',
   );
   output.detail('    • run the migrations above through your own change control.');
   output.detail('  Either way, keep the report — it is what a change record wants.');

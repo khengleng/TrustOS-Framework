@@ -1,10 +1,10 @@
-import { AUDIT_ACTIONS, AUDIT_ENTITY, type AuditService } from '@trustos/audit';
-import type { AuthEvent, AuthEventSink } from '@trustos/auth';
+import { AUDIT_ACTIONS, AUDIT_ENTITY, type AuditService } from '@trustsystem/audit';
+import type { AuthEvent, AuthEventSink } from '@trustsystem/auth';
 
 /**
  * Turns authentication events into audit records.
  *
- * @trustos/auth deliberately does not know about @trustos/audit — it emits
+ * @trustsystem/auth deliberately does not know about @trustsystem/audit — it emits
  * events. This adapter is where the application decides that "a login is worth
  * recording", which is a policy question, not an authentication question.
  */

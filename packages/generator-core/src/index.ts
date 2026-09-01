@@ -1,5 +1,5 @@
 /**
- * @trustos/generator-core
+ * @trustsystem/generator-core
  *
  * Safe, deterministic, transactional generation from local templates.
  *

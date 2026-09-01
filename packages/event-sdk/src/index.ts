@@ -1,5 +1,5 @@
 /**
- * @trustos/event-sdk
+ * @trustsystem/event-sdk
  *
  * The event envelope, its metadata, name patterns and serialization. No transport, no registry,
  * no bus — so a package that only needs to *describe* an event does not depend on one that

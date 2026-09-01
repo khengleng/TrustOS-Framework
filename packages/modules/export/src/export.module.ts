@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The export module.
  *
  * Streaming export to CSV, JSON and NDJSON with keyset pagination and formula-injection escaping.
  *
- * A thin wrapper. The implementation is in `@trustos/export` — this
+ * A thin wrapper. The implementation is in `@trustsystem/export` — this
  * package contributes the declarations the platform needs (permissions, routes, audit events,
  * health) and the start/stop lifecycle.
  *

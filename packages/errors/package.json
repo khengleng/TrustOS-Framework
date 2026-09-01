@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/errors",
+  "name": "@trustsystem/errors",
   "version": "0.1.0",
   "description": "Standardized TrustOS API errors and the safe-by-default error response contract.",
   "license": "UNLICENSED",

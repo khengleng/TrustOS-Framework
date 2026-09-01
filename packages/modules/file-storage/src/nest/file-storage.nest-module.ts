@@ -3,7 +3,7 @@ import {
   moduleProviders,
   moduleServiceProvider,
   type ModuleHostBinding,
-} from '@trustos/module-sdk/nest';
+} from '@trustsystem/module-sdk/nest';
 import { fileStorageModule } from '../file-storage.module';
 import type { FileStorageInstance } from '../file-storage.module';
 import { FileStorageController } from './file-storage.controller';

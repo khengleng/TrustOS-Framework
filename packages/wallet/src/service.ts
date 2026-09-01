@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
 import {
   addMoney,
   compareMoney,
@@ -13,10 +13,10 @@ import {
   zeroMoney,
   type CurrencyRegistry,
   type Money,
-} from '@trustos/financial-core';
-import type { AccountService } from '@trustos/accounts';
-import { credit, debit, type Journal, type Ledger } from '@trustos/ledger';
-import type { LimitEngine } from '@trustos/limits';
+} from '@trustsystem/financial-core';
+import type { AccountService } from '@trustsystem/accounts';
+import { credit, debit, type Journal, type Ledger } from '@trustsystem/ledger';
+import type { LimitEngine } from '@trustsystem/limits';
 import {
   assertSufficient,
   canMove,
@@ -130,7 +130,7 @@ export class WalletService {
 
     const now = this.now();
 
-    // A customer wallet is a liability: money the business owes. See @trustos/accounts.
+    // A customer wallet is a liability: money the business owes. See @trustsystem/accounts.
     const account = await this.options.accounts.open({
       organizationId: input.organizationId,
       code: `customer.${input.ownerId}.${input.currency}`.toLowerCase(),
@@ -910,7 +910,7 @@ export class WalletService {
             path: 'amount',
             message:
               `This wallet holds ${wallet.currency} and the amount is ${amount.currency}. Convert ` +
-              'first and record the rate — see @trustos/fx.',
+              'first and record the rate — see @trustsystem/fx.',
           },
         ],
         'Currency mismatch with the wallet.',

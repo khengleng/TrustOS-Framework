@@ -1,15 +1,15 @@
 import { Body, Controller, Delete, Get, Inject, Param, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { ApiError } from '@trustos/errors';
-import { HumanActorsOnly } from '@trustos/identity/nest';
-import { PERMISSIONS, RequirePermissions } from '@trustos/rbac';
-import { SessionService, type SessionSummary } from '@trustos/session-security';
-import { OrganizationId } from '@trustos/tenancy';
-import type { ActorContext } from '@trustos/shared-types';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { ApiError } from '@trustsystem/errors';
+import { HumanActorsOnly } from '@trustsystem/identity/nest';
+import { PERMISSIONS, RequirePermissions } from '@trustsystem/rbac';
+import { SessionService, type SessionSummary } from '@trustsystem/session-security';
+import { OrganizationId } from '@trustsystem/tenancy';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
 import { SESSION_SERVICE } from '../tokens';
 
 /**

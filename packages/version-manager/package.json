@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/version-manager",
+  "name": "@trustsystem/version-manager",
   "version": "0.1.0",
   "description": "Semantic versioning, ranges, the framework compatibility matrix and upgrade recommendations.",
   "license": "UNLICENSED",
@@ -17,7 +17,7 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

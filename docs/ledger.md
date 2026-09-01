@@ -28,7 +28,7 @@ discrepancy names the account. Every other integrity check in this phase reduces
 ## Posting
 
 ```ts
-import { credit, debit } from '@trustos/ledger';
+import { credit, debit } from '@trustsystem/ledger';
 
 const journal = await ledger.post({
   organizationId,
@@ -103,7 +103,7 @@ on the account, and this is the part people get backwards.
 A system that models a customer balance as an asset reports its own obligations as its own money.
 Everything looks right until somebody asks how much the business actually has.
 
-`@trustos/accounts` handles the sign:
+`@trustsystem/accounts` handles the sign:
 
 ```ts
 const raw = await ledger.balances({ organizationId, accountIds: [wallet.accountId] });

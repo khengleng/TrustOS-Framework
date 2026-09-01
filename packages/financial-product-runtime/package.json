@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/financial-product-runtime",
+  "name": "@trustsystem/financial-product-runtime",
   "version": "0.1.0",
   "description": "The deterministic product runtime: block handlers, idempotency, rule evaluation, failure paths, events and audit.",
   "license": "UNLICENSED",
@@ -17,18 +17,18 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/connector-registry": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-block-registry": "0.1.0",
-    "@trustos/financial-core": "0.1.0",
-    "@trustos/financial-product-core": "0.1.0",
-    "@trustos/financial-product-registry": "0.1.0",
-    "@trustos/financial-product-rules": "0.1.0",
-    "@trustos/financial-product-state-machine": "0.1.0",
-    "@trustos/financial-product-versioning": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/retry": "0.1.0",
-    "@trustos/workflow-definition": "0.1.0",
+    "@trustsystem/connector-registry": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-block-registry": "0.1.0",
+    "@trustsystem/financial-core": "0.1.0",
+    "@trustsystem/financial-product-core": "0.1.0",
+    "@trustsystem/financial-product-registry": "0.1.0",
+    "@trustsystem/financial-product-rules": "0.1.0",
+    "@trustsystem/financial-product-state-machine": "0.1.0",
+    "@trustsystem/financial-product-versioning": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/retry": "0.1.0",
+    "@trustsystem/workflow-definition": "0.1.0",
     "zod": "^3.24.1"
   }
 }

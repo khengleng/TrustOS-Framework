@@ -1,14 +1,14 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { RequirePermissions } from '@trustos/rbac';
-import { FINANCIAL_PRODUCT_PERMISSIONS } from '@trustos/financial-product-core';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { RequirePermissions } from '@trustsystem/rbac';
+import { FINANCIAL_PRODUCT_PERMISSIONS } from '@trustsystem/financial-product-core';
 import {
   PRODUCT_DASHBOARDS,
   PRODUCT_METRIC_CATALOG,
   findDashboard,
   type MetricCollector,
-} from '@trustos/financial-product-observability';
+} from '@trustsystem/financial-product-observability';
 import { METRIC_COLLECTOR } from '../tokens';
 
 /**

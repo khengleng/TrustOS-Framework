@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { apiDefinitionSchema } from '@trustos/api-catalog';
+import { apiDefinitionSchema } from '@trustsystem/api-catalog';
 import {
   MINIMUM_DEPRECATION_DAYS,
   type CompatibilityAnalysis,

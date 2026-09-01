@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { assertValidScopes, scopesSatisfyAll } from '@trustos/api-keys';
+import { ApiError } from '@trustsystem/errors';
+import { assertValidScopes, scopesSatisfyAll } from '@trustsystem/api-keys';
 import {
   type ApiCatalog,
   type ApiDefinition,
   type ApiOperation,
   apiClassification,
   semverSchema,
-} from '@trustos/api-catalog';
+} from '@trustsystem/api-catalog';
 
 /**
  * API consumers.
  *
  * A consumer is *who is allowed to call what*, and it is deliberately not a credential. The
- * framework already has credentials: `@trustos/api-keys` generates, hashes and verifies them, and
+ * framework already has credentials: `@trustsystem/api-keys` generates, hashes and verifies them, and
  * this package does not reimplement any of that — it holds `credentialIds`, which are references,
  * and never a key or a hash.
  *
@@ -148,7 +148,7 @@ export const consumerSchema = z
     entitlements: z.array(entitlementSchema).default([]),
 
     /**
-     * References into `@trustos/api-keys`. Never a key, never a hash — this package holds no
+     * References into `@trustsystem/api-keys`. Never a key, never a hash — this package holds no
      * credential material and could not leak any.
      */
     credentialIds: z.array(z.string().min(1).max(64)).default([]),

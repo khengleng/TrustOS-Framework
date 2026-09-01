@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-tool-integration
+ * @trustsystem/governance-tool-integration
  *
  * The typed operations an internal application may call: a catalog, not a client.
  *

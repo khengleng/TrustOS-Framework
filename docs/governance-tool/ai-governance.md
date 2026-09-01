@@ -18,7 +18,7 @@ of them.
 
 This package holds **no provider client and imports no model SDK**.
 `buildCompositionBrief`-style construction produces the request; a deployment sends it through
-`@trustos/ai-gateway`, where policy, guardrails, cost accounting and audit are applied. A call
+`@trustsystem/ai-gateway`, where policy, guardrails, cost accounting and audit are applied. A call
 that went around the gateway is a call nobody can account for afterwards.
 
 `buildGatewayRequest` runs as the **actor**, not the application. Tool permissions are validated

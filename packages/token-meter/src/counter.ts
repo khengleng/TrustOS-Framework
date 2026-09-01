@@ -1,4 +1,4 @@
-import type { Message, ToolDefinition } from '@trustos/ai-sdk';
+import type { Message, ToolDefinition } from '@trustsystem/ai-sdk';
 
 /**
  * Token counting.

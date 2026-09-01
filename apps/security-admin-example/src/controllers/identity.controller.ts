@@ -1,12 +1,12 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { HumanActorsOnly, RequireAuthenticationLevel } from '@trustos/identity/nest';
-import type { IdentityProvider } from '@trustos/identity';
-import { PERMISSIONS, RequirePermissions } from '@trustos/rbac';
-import { securityPolicySummary, type SecurityPolicy } from '@trustos/security-policy';
-import type { ActorContext } from '@trustos/shared-types';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { HumanActorsOnly, RequireAuthenticationLevel } from '@trustsystem/identity/nest';
+import type { IdentityProvider } from '@trustsystem/identity';
+import { PERMISSIONS, RequirePermissions } from '@trustsystem/rbac';
+import { securityPolicySummary, type SecurityPolicy } from '@trustsystem/security-policy';
+import type { ActorContext } from '@trustsystem/shared-types';
 import { IDENTITY_PROVIDER, SECURITY_POLICY } from '../tokens';
 
 /**

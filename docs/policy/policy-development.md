@@ -39,7 +39,7 @@
 }
 ```
 
-The condition tree is `@trustos/workflow-definition`'s `conditionSchema`, reused rather than
+The condition tree is `@trustsystem/workflow-definition`'s `conditionSchema`, reused rather than
 reimplemented. One predicate language across workflows, products and policies means one thing to
 learn and one place where a comparison bug would live.
 

@@ -1,11 +1,11 @@
-# AGENTS.md — @trustos/module-ledger
+# AGENTS.md — @trustsystem/module-ledger
 
 Double-entry bookkeeping: journals, accounts, reversal, trial balance and reporting. Posted journals are immutable and every journal must balance.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/accounts`, `@trustos/financial-core`, `@trustos/financial-policy`, `@trustos/financial-reporting`, `@trustos/ledger` does the work.
+   wires; `@trustsystem/accounts`, `@trustsystem/financial-core`, `@trustsystem/financial-policy`, `@trustsystem/financial-reporting`, `@trustsystem/ledger` does the work.
 2. **Never modify a posted journal.** A correction is a reversal or an adjustment, both of which
    post a new journal and leave the original standing.
 3. **Never use floating-point arithmetic for money.** Every amount is a fixed-point decimal, and

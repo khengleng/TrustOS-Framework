@@ -75,7 +75,7 @@ export interface MenuEntry {
   updatedAt: IsoDateTime;
 }
 
-/** What a user has muted. Security notifications ignore this — see @trustos/template-sdk. */
+/** What a user has muted. Security notifications ignore this — see @trustsystem/template-sdk. */
 export interface MiniAppNotificationSetting {
   id: string;
   miniAppUserId: string;

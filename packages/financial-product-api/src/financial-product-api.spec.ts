@@ -4,17 +4,17 @@ import {
   collectingEventPublisher,
   type ProductActor,
   type ProductDefinition,
-} from '@trustos/financial-product-core';
-import { merchantWalletBasicTemplate } from '@trustos/financial-product-composer';
-import { publishVersion, type PublishedVersion } from '@trustos/financial-product-versioning';
-import { InMemoryProductStore, ProductRegistry } from '@trustos/financial-product-registry';
-import { BlockHandlerRegistry, ProductRuntime } from '@trustos/financial-product-runtime';
+} from '@trustsystem/financial-product-core';
+import { merchantWalletBasicTemplate } from '@trustsystem/financial-product-composer';
+import { publishVersion, type PublishedVersion } from '@trustsystem/financial-product-versioning';
+import { InMemoryProductStore, ProductRegistry } from '@trustsystem/financial-product-registry';
+import { BlockHandlerRegistry, ProductRuntime } from '@trustsystem/financial-product-runtime';
 import {
   bindSandboxConnectors,
   createSandboxState,
   sandboxConnectorRegistry,
   sandboxHandlers,
-} from '@trustos/financial-product-sandbox';
+} from '@trustsystem/financial-product-sandbox';
 import {
   API_PREFIX,
   InMemoryRateLimiter,

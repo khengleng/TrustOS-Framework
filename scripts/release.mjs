@@ -73,10 +73,10 @@ function collect() {
       dependencies: Object.keys({
         ...manifest.dependencies,
         ...manifest.peerDependencies,
-      }).filter((dependency) => dependency.startsWith('@trustos/')),
+      }).filter((dependency) => dependency.startsWith('@trustsystem/')),
       trustosRanges: Object.fromEntries(
         Object.entries({ ...manifest.dependencies, ...manifest.peerDependencies }).filter(
-          ([dependency]) => dependency.startsWith('@trustos/'),
+          ([dependency]) => dependency.startsWith('@trustsystem/'),
         ),
       ),
     });
@@ -125,7 +125,7 @@ function ordered(packages) {
  * Refuses to publish something that would not work once installed.
  *
  * These are the properties that make the publishable set closed. Each of them is
- * invisible in this repository — npm workspaces resolve every `@trustos/*` name
+ * invisible in this repository — npm workspaces resolve every `@trustsystem/*` name
  * locally whether or not it could ever be installed from a registry — and each of
  * them breaks only in the consuming repository, which is the worst place to find out.
  * Run as a gate (`npm run release`), they break here instead.

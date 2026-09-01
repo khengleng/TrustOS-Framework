@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { compareVersions, isBreakingChange, satisfies, versionChange } from './semver';
 
 /**
@@ -238,7 +238,7 @@ export function recommendUpgrade(options: {
  *
  * Downgrades are not supported and pretending otherwise is worse than refusing: migrations run
  * forward, and a schema migrated to 0.4 does not un-migrate by installing 0.3. Rollback is a
- * *restore*, which `@trustos/upgrade-manager` handles from a backup.
+ * *restore*, which `@trustsystem/upgrade-manager` handles from a backup.
  */
 export function assertForwardUpgrade(from: string, to: string): void {
   if (compareVersions(to, from) > 0) return;

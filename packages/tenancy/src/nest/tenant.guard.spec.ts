@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ExecutionContext } from '@nestjs/common';
-import type { ActorContext } from '@trustos/shared-types';
-import type { ApiError } from '@trustos/errors';
+import type { ActorContext } from '@trustsystem/shared-types';
+import type { ApiError } from '@trustsystem/errors';
 import { TENANT_METADATA, TenantGuard } from './tenant.guard';
 import { getTenantContext, tenantScopeMiddleware } from '../tenant-context';
 

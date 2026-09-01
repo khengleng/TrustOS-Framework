@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/template-sdk",
+  "name": "@trustsystem/template-sdk",
   "version": "0.1.0",
   "description": "Headless building blocks every TrustOS industry template shares: navigation, forms, tables, filters, search, pagination, dashboards, charts, CRUD, uploads and notifications.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/validation": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/validation": "0.1.0",
     "zod": "^3.24.1"
   }
 }

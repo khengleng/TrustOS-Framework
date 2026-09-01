@@ -1,4 +1,4 @@
-import { productError } from '@trustos/financial-product-core';
+import { productError } from '@trustsystem/financial-product-core';
 import { BLOCK_CATALOG } from './catalog';
 import {
   BLOCK_CATEGORIES,
@@ -93,7 +93,7 @@ export class BlockRegistry {
    * A draft block is not composable; a withdrawn one is not either. A **deprecated** one is —
    * deliberately. Refusing it would break every published product that contains it the moment
    * somebody deprecates a block, and the point of deprecation is to signal without breaking. The
-   * composer warns instead; see `@trustos/financial-product-composer`.
+   * composer warns instead; see `@trustsystem/financial-product-composer`.
    */
   requireComposable(blockId: string, version: string): BlockDefinition {
     const block = this.require(blockId, version);

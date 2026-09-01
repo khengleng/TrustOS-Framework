@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { ServiceRegistry } from '@trustos/sre-core';
+import { ApiError } from '@trustsystem/errors';
+import type { ServiceRegistry } from '@trustsystem/sre-core';
 
 /**
  * Service level indicators.
@@ -39,7 +39,7 @@ export type SliKind = (typeof SLI_KINDS)[number];
  * Whether a higher measured ratio is better.
  *
  * `error_rate` is the odd one: its ratio counts *bad* events, so an objective on it is an upper
- * bound. Encoding the direction here keeps every comparison in `@trustos/slo` from having to
+ * bound. Encoding the direction here keeps every comparison in `@trustsystem/slo` from having to
  * special-case it, which is where a sign error would hide.
  */
 export const SLI_DIRECTION: Record<SliKind, 'higher_is_better' | 'lower_is_better'> = {

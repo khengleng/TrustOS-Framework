@@ -1,10 +1,10 @@
-# @trustos/module-reconciliation
+# @trustsystem/module-reconciliation
 
 Internal and external reconciliation with tolerance rules, an exception queue and resolution history.
 
 ## What this package is
 
-A thin module wrapper. The implementation is in `@trustos/financial-core`, `@trustos/reconciliation`; this package contributes the declarations the platform needs — permissions,
+A thin module wrapper. The implementation is in `@trustsystem/financial-core`, `@trustsystem/reconciliation`; this package contributes the declarations the platform needs — permissions,
 audit events and a health indicator — and the start/stop lifecycle.
 
 ## Installing
@@ -17,7 +17,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 ```ts
-import { ReconciliationModule } from '@trustos/module-reconciliation/nest';
+import { ReconciliationModule } from '@trustsystem/module-reconciliation/nest';
 
 @Module({ imports: [ReconciliationModule.forRoot(binding)] })
 export class AppModule {}

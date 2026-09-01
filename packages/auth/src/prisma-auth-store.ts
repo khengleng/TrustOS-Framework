@@ -1,5 +1,5 @@
-import { MembershipStatus, type PrismaClient } from '@trustos/database';
-import { resolvePermissions } from '@trustos/rbac';
+import { MembershipStatus, type PrismaClient } from '@trustsystem/database';
+import { resolvePermissions } from '@trustsystem/rbac';
 import type {
   AuthUserRecord,
   AuthUserStore,

@@ -1,4 +1,4 @@
-import { compareVersions } from '@trustos/version-manager';
+import { compareVersions } from '@trustsystem/version-manager';
 import { industryManifests } from './industry';
 import { registrySchema, type TemplateManifest, type TemplateVariable } from './schema';
 
@@ -440,7 +440,7 @@ export function checkCompatibility(
 /**
  * Semantic-version comparison.
  *
- * Delegates to `@trustos/version-manager`, which is the framework's one complete implementation.
+ * Delegates to `@trustsystem/version-manager`, which is the framework's one complete implementation.
  *
  * This used to be a local copy that stripped everything after the patch, so `1.0.0-rc.1` and
  * `1.0.0` compared *equal* — and `isFrameworkCompatible` therefore accepted a release candidate
@@ -448,7 +448,7 @@ export function checkCompatibility(
  * it was the stable release, and nothing said otherwise.
  *
  * The reason the copy existed — keeping this package dependency-free for the CLI — did not
- * survive examination: `version-manager` depends only on `@trustos/errors`, which the CLI already
+ * survive examination: `version-manager` depends only on `@trustsystem/errors`, which the CLI already
  * installs. Three implementations of one thing is the duplication the framework refuses
  * everywhere else, and it was wrong in two of them.
  */

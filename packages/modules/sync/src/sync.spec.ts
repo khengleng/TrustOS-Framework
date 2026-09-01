@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createTestModuleContext } from '@trustos/module-sdk';
+import { createTestModuleContext } from '@trustsystem/module-sdk';
 import { createSync, syncConfigSchema, syncModule } from './sync.module';
 
 /*
- * `@trustos/module-sync` is a contract wrapper.
+ * `@trustsystem/module-sync` is a contract wrapper.
  *
  * The behaviour lives in the framework packages it fronts and is tested where it is
  * implemented; what this package owns is the declaration the platform reads and the

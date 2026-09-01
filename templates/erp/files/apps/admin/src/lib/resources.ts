@@ -5,7 +5,7 @@
  * than another near-identical page component.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { ERP_RESOURCES } from './resources-erp';
 
 export const RESOURCES: ResourceDefinition[] = [...ERP_RESOURCES];

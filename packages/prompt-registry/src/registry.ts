@@ -1,8 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
-import { message, type Message } from '@trustos/ai-sdk';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
+import { message, type Message } from '@trustsystem/ai-sdk';
 import { z } from 'zod';
 import {
   promptVariableSchema,
@@ -61,7 +61,7 @@ export const promptVersionSchema = z
     /** JSON Schema the output must match, when the prompt asks for structure. */
     outputSchema: z.record(z.unknown()).nullable().default(null),
 
-    /** The guardrail profile to apply. Resolved by `@trustos/guardrails`. */
+    /** The guardrail profile to apply. Resolved by `@trustsystem/guardrails`. */
     safetyPolicy: z.string().max(120).nullable().default(null),
 
     /** Suggested defaults. A caller may override; the model is chosen by the router. */

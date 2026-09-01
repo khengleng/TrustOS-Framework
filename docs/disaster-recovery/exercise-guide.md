@@ -16,7 +16,7 @@ All three are worth doing. Only `full` produces a number an RTO can be checked a
 **Announce it.** An exercise nobody was told about produces a real incident response, which is
 expensive and teaches the wrong lesson.
 
-**Do not run during an open incident.** `@trustos/resilience-testing` refuses experiments then, and
+**Do not run during an open incident.** `@trustsystem/resilience-testing` refuses experiments then, and
 the same applies here: a rehearsal during an incident is indistinguishable from the incident in the
 timeline afterwards.
 

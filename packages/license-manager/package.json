@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/license-manager",
+  "name": "@trustsystem/license-manager",
   "version": "0.1.0",
   "description": "Licence tiers, feature entitlements, validation and expiry.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/version-manager": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/version-manager": "0.1.0",
     "zod": "^3.24.1"
   }
 }

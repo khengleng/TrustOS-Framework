@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ProductExecutionContext, ProductRule } from '@trustos/financial-product-core';
-import { productRuleSchema } from '@trustos/financial-product-core';
+import type { ProductExecutionContext, ProductRule } from '@trustsystem/financial-product-core';
+import { productRuleSchema } from '@trustsystem/financial-product-core';
 import {
   buildFacts,
   evaluateRules,

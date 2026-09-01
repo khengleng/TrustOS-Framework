@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/authorization",
+  "name": "@trustsystem/authorization",
   "version": "0.1.0",
   "description": "Policy-based authorization over RBAC: default-deny decisions with a reason, a matched policy and a decision id.",
   "license": "UNLICENSED",
@@ -18,11 +18,11 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/rbac": "0.1.0",
-    "@trustos/security-events": "0.1.0",
-    "@trustos/security-policy": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/rbac": "0.1.0",
+    "@trustsystem/security-events": "0.1.0",
+    "@trustsystem/security-policy": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

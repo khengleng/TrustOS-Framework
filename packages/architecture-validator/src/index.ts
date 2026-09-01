@@ -1,5 +1,5 @@
 /**
- * @trustos/architecture-validator
+ * @trustsystem/architecture-validator
  *
  * Layering, naming, dependency direction, folder structure and security rules.
  *

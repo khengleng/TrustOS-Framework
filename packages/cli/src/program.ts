@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { isGeneratorError } from '@trustos/generator-core';
+import { isGeneratorError } from '@trustsystem/generator-core';
 import { CLI_VERSION } from './version';
 import { createOutput, formatRows, style, type Output } from './output';
 import { runNew } from './commands/new';
@@ -19,10 +19,10 @@ import {
   runTelemetryReview,
   runUpdate,
 } from './commands/packages';
-import { generateSlice, parseSlice, describeGeneration } from '@trustos/code-generator';
-import { generateCliDocs } from '@trustos/documentation-center';
-import { PluginRegistry } from '@trustos/plugin-framework';
-import { ReleaseManager } from '@trustos/release-manager';
+import { generateSlice, parseSlice, describeGeneration } from '@trustsystem/code-generator';
+import { generateCliDocs } from '@trustsystem/documentation-center';
+import { PluginRegistry } from '@trustsystem/plugin-framework';
+import { ReleaseManager } from '@trustsystem/release-manager';
 import { runTemplateDoctor, runUpdateTemplate } from './commands/template-doctor';
 import { runValidateTemplate } from './commands/validate-template';
 import { runWorkflowList, runWorkflowSimulate, runWorkflowValidate } from './commands/workflow';
@@ -146,7 +146,7 @@ export function buildProgram(options: BuildProgramOptions = {}): Command {
     .option('--templates-root <path>', 'override the templates directory')
     .option(
       '--framework-path <path>',
-      'link @trustos/* to a local framework checkout (needed until the packages are published)',
+      'link @trustsystem/* to a local framework checkout (needed until the packages are published)',
     )
     .option('--generated-at <iso>', 'fix the generation timestamp (for reproducible output)')
     .action(async (template: string, opts: Record<string, unknown>) => {

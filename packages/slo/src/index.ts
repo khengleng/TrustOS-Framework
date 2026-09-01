@@ -1,5 +1,5 @@
 /**
- * @trustos/slo
+ * @trustsystem/slo
  *
  * Objectives, error budgets and burn rates.
  *

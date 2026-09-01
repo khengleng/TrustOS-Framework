@@ -1,5 +1,5 @@
 /**
- * @trustos/module-feature-flags
+ * @trustsystem/module-feature-flags
  *
  * Boolean flags with percentage rollout, per-subject overrides, environment
  * scoping and expiry, over a REST API.

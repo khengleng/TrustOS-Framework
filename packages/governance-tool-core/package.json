@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/governance-tool-core",
+  "name": "@trustsystem/governance-tool-core",
   "version": "0.1.0",
   "description": "The Governance Tool vocabulary: internal application definitions, the data-access classes, the app catalog, permissions and the console templates.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/validation": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/validation": "0.1.0",
     "zod": "^3.24.1"
   }
 }

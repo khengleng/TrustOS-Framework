@@ -7,7 +7,7 @@ import {
   requireTemplate,
   resolveTemplateChain,
   type TemplateManifest,
-} from '@trustos/template-registry';
+} from '@trustsystem/template-registry';
 import { GeneratorError } from './errors';
 import {
   assertSafeValue,
@@ -51,7 +51,7 @@ export interface GenerationRequest {
    */
   generatedAt?: string;
   /**
-   * Rewrites `@trustos/*` dependencies to `file:` paths pointing at this
+   * Rewrites `@trustsystem/*` dependencies to `file:` paths pointing at this
    * framework checkout. Needed until the packages are published to npm.
    */
   frameworkPath?: string;
@@ -249,7 +249,7 @@ export async function prepareGeneration(
 }
 
 /**
- * Dependency specifiers for the `@trustos/*` packages.
+ * Dependency specifiers for the `@trustsystem/*` packages.
  *
  * Until the framework is published to npm, a generated project cannot resolve
  * `^0.1.0` from a registry. `--framework-path` rewrites them to `file:` links
@@ -274,7 +274,7 @@ export function buildFrameworkDependencies(
     const specifier = frameworkPath
       ? `file:${join(frameworkPath, 'packages', name)}`
       : `^${frameworkVersion}`;
-    return [`@trustos/${name}`, specifier] as const;
+    return [`@trustsystem/${name}`, specifier] as const;
   });
 
   return Object.fromEntries(entries);

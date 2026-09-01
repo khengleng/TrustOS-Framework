@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   DATA_CLASSIFICATION_LEVELS,
   obligationsFor,
   type DataClassificationLevel,
-} from '@trustos/data-classification';
+} from '@trustsystem/data-classification';
 
 /**
  * Retention, archival, legal hold and deletion.

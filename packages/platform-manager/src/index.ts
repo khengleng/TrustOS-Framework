@@ -1,5 +1,5 @@
 /**
- * @trustos/platform-manager
+ * @trustsystem/platform-manager
  *
  * One view of the platform: version, modules, health, licence, dependencies, compatibility and
  * upgrade status.

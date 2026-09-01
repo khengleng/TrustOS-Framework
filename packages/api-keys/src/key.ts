@@ -1,5 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * API key generation, hashing and format.
@@ -27,7 +27,7 @@ import { ApiError } from '@trustos/errors';
  *   **SHA-256, not bcrypt.** A key is 160 bits of server-generated randomness, so it
  *   is not brute-forcible and does not need a slow KDF — and API-key verification
  *   happens on every request, where bcrypt's cost would be a self-inflicted rate
- *   limit. A password is different, and `@trustos/identity` uses scrypt for those.
+ *   limit. A password is different, and `@trustsystem/identity` uses scrypt for those.
  */
 
 export const KEY_PREFIX = 'tos';

@@ -1,14 +1,14 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ApiError } from '@trustos/errors';
-import { ROUTE_METADATA } from '@trustos/rbac';
-import type { SecurityEventEmitter } from '@trustos/security-events';
-import type { ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import { ROUTE_METADATA } from '@trustsystem/rbac';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
+import type { ActorContext } from '@trustsystem/shared-types';
 
 /**
  * Blocks a service account from an interactive route.
  *
- * The complement of `@HumanActorsOnly()` in `@trustos/identity`, registered globally
+ * The complement of `@HumanActorsOnly()` in `@trustsystem/identity`, registered globally
  * so it covers the routes nobody remembered to decorate. Interactive paths are
  * matched by prefix — login, logout, password change, invitation acceptance, consent —
  * because those are the flows where a machine identity has no business, and because a

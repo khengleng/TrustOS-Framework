@@ -1,5 +1,5 @@
 /**
- * @trustos/workflow-policy
+ * @trustsystem/workflow-policy
  *
  * Workflow separation of duties, as policies on the phase 4 authorization engine.
  *

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { retryPolicySchema } from '@trustos/retry';
+import { retryPolicySchema } from '@trustsystem/retry';
 import {
   BaseProvider,
   type ProviderCapabilities,
   type ProviderContext,
   type ProviderHealth,
-} from '@trustos/provider-sdk';
+} from '@trustsystem/provider-sdk';
 import { ProviderRegistry } from './registry';
 
 const NO_RETRY = retryPolicySchema.parse({ maxAttempts: 0 });

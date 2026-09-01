@@ -1,5 +1,5 @@
-import { listTemplates, type TemplateManifest } from '@trustos/template-registry';
-import { validateTemplate, type ValidationReport } from '@trustos/generator-core';
+import { listTemplates, type TemplateManifest } from '@trustsystem/template-registry';
+import { validateTemplate, type ValidationReport } from '@trustsystem/generator-core';
 import type { Output } from '../output';
 import { style } from '../output';
 

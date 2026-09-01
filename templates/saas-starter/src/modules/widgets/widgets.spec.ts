@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
-import type { ApiError } from '@trustos/errors';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
+import type { ApiError } from '@trustsystem/errors';
 import { WidgetsRepository } from './widgets.repository';
 import { WidgetsService } from './widgets.service';
 

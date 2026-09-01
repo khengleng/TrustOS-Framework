@@ -4,7 +4,7 @@ import {
   averageRating,
   securityScore,
   scoreOf,
-} from '@trustos/module-registry';
+} from '@trustsystem/module-registry';
 import { Marketplace, summarize, type MarketplaceEntry } from './index';
 
 /**

@@ -1,5 +1,5 @@
 /**
- * @trustos/backup
+ * @trustsystem/backup
  *
  * What was backed up, where, encrypted, and how strongly that is known.
  *

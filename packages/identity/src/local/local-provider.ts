@@ -1,11 +1,11 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   correlationHash,
   type MfaPolicy,
   type PasswordPolicy,
   type TokenPolicy,
-} from '@trustos/security-policy';
-import type { SecurityEventEmitter } from '@trustos/security-events';
+} from '@trustsystem/security-policy';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
 import {
   deriveAuthentication,
   type AuthenticationRequestMeta,
@@ -30,10 +30,10 @@ import type { CompromisedPasswordChecker, PasswordHasher } from './password';
  * production unless a deployment says so explicitly, because an internal tool with
  * six users does not need Keycloak and should not be forced to run it.
  *
- * Written against ports rather than against `@trustos/auth`, so this package does
+ * Written against ports rather than against `@trustsystem/auth`, so this package does
  * not drag a Prisma client into a worker that only validates tokens. The
  * application supplies the four pieces below; `apps/security-admin-example` shows
- * the wiring, and `TokenService` and `AuthUserStore` from `@trustos/auth` satisfy
+ * the wiring, and `TokenService` and `AuthUserStore` from `@trustsystem/auth` satisfy
  * the two structural ports — asserted by a test in this package.
  *
  * The login sequence, and why it is in this order:
@@ -318,7 +318,7 @@ export class LocalIdentityProvider implements IdentityProvider {
   /**
    * Local logout.
    *
-   * Session and refresh-token revocation belong to `@trustos/session-security`,
+   * Session and refresh-token revocation belong to `@trustsystem/session-security`,
    * which owns the records. This provider does not duplicate them — it would be a
    * second place a session could be considered ended, and the two could disagree.
    */

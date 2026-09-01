@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ActorContext } from '@trustos/shared-types';
+import type { ActorContext } from '@trustsystem/shared-types';
 import {
   ALL_WORKFLOW_PERMISSION_KEYS,
   INCOMPATIBLE_GRANT_PAIRS,

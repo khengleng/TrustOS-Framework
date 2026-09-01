@@ -1,4 +1,4 @@
-import type { ProductDefinition } from '@trustos/financial-product-core';
+import type { ProductDefinition } from '@trustsystem/financial-product-core';
 import { API_PREFIX, productRoutes, type ProductRoute } from './routes';
 
 /**

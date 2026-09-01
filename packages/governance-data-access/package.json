@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/governance-data-access",
+  "name": "@trustsystem/governance-data-access",
   "version": "0.1.0",
   "description": "Enforces the three data-access classes: approved read-only, API-only mutation, and forbidden.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/governance-resource-policy": "0.1.0",
-    "@trustos/governance-tool-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/governance-resource-policy": "0.1.0",
+    "@trustsystem/governance-tool-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

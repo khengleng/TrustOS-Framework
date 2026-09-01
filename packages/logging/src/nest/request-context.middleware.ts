@@ -1,5 +1,5 @@
-import type { AppConfig } from '@trustos/config';
-import type { RequestContext } from '@trustos/shared-types';
+import type { AppConfig } from '@trustsystem/config';
+import type { RequestContext } from '@trustsystem/shared-types';
 import type { Logger } from '../logger';
 import { generateRequestId, getRequestContext, runWithRequestContext } from '../request-context';
 
@@ -19,7 +19,7 @@ export interface RequestContextMiddlewareOptions {
   logger: Logger;
   /**
    * Called once per finished request. This is the single hook
-   * @trustos/observability uses for timing and error metrics — there is no
+   * @trustsystem/observability uses for timing and error metrics — there is no
    * second `res.on('finish')` listener anywhere in the framework.
    */
   onComplete?: (completion: RequestCompletion) => void;

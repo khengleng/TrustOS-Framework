@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ReleaseManager } from '@trustos/release-manager';
+import { ReleaseManager } from '@trustsystem/release-manager';
 import { actionItems, describePlatform } from './index';
 
 const NOW = new Date('2026-07-01T00:00:00.000Z');

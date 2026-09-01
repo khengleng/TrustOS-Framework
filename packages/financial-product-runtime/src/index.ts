@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-runtime
+ * @trustsystem/financial-product-runtime
  *
  * The deterministic product runtime: block handlers, idempotency, rule evaluation, failure paths,
  * events and audit.
@@ -9,8 +9,8 @@
  * version, it never authorizes, and a refusal is not a failure.
  *
  * **The framework ships no handler for any block.** `handlers.ts` is the contract; a deployment
- * binds each approved block to `@trustos/wallet`, `@trustos/ledger`, `@trustos/fees` and the
- * rest, and `@trustos/financial-product-sandbox` binds every one of them to a mock. The seam is
+ * binds each approved block to `@trustsystem/wallet`, `@trustsystem/ledger`, `@trustsystem/fees` and the
+ * rest, and `@trustsystem/financial-product-sandbox` binds every one of them to a mock. The seam is
  * the deliverable.
  */
 export * from './handlers';

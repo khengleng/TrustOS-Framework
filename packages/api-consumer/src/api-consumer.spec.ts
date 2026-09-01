@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiCatalog, apiDefinitionSchema } from '@trustos/api-catalog';
+import { ApiCatalog, apiDefinitionSchema } from '@trustsystem/api-catalog';
 import {
   ConsumerRegistry,
   assertAccess,
@@ -195,7 +195,7 @@ describe('deciding a call', () => {
   });
 
   it('accepts a write scope for a read operation', () => {
-    // From @trustos/api-keys: a credential that may change something can necessarily observe it.
+    // From @trustsystem/api-keys: a credential that may change something can necessarily observe it.
     expect(
       decideAccess(
         call({
@@ -330,7 +330,7 @@ describe('the registry', () => {
   });
 
   it('refuses a wildcard scope', () => {
-    // Reused from @trustos/api-keys rather than restated: a wildcard is not something to ask for.
+    // Reused from @trustsystem/api-keys rather than restated: a wildcard is not something to ask for.
     expect(
       () => new ConsumerRegistry([consumer({ entitlements: [entitlement({ scopes: ['*'] })] })]),
     ).toThrow();

@@ -50,5 +50,5 @@ has to decide which applies before the system runs.
 `obligationsFor(level).defaultRetentionDays` is the starting point when no rule applies: 365 days
 for `PUBLIC` up to 3650 for `HIGHLY_RESTRICTED`.
 
-`@trustos/backup` reads the same number, which is why a backup retained for 30 days at
+`@trustsystem/backup` reads the same number, which is why a backup retained for 30 days at
 `HIGHLY_RESTRICTED` is reported as a finding rather than accepted.

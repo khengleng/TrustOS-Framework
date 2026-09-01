@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { LoggerPort } from '@trustos/logging';
-import type { Message } from '@trustos/ai-sdk';
+import { ApiError } from '@trustsystem/errors';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { Message } from '@trustsystem/ai-sdk';
 import {
   categoryPolicySchema,
   contentFilterPolicySchema,
@@ -11,12 +11,12 @@ import {
   type CategoryClassifier,
   type CategoryPolicy,
   type ContentFilterPolicy,
-} from '@trustos/content-filter';
+} from '@trustsystem/content-filter';
 import {
   injectionPolicySchema,
   scanVariables,
   type InjectionPolicy,
-} from '@trustos/prompt-security';
+} from '@trustsystem/prompt-security';
 
 /**
  * The guardrail pipeline.
@@ -31,7 +31,7 @@ import {
  *   * **Schema validation** — a structured output either matches its contract or it does not, and
  *     that is checkable.
  *   * **Groundedness checking** — for a RAG answer, whether its claims appear in the retrieved
- *     sources. See `@trustos/evaluation`. A partial signal, not a guarantee.
+ *     sources. See `@trustsystem/evaluation`. A partial signal, not a guarantee.
  *   * **Human review hooks** — the only thing that actually catches a plausible wrong answer, and
  *     the reason `needsReview` exists as a first-class outcome alongside `blocked`.
  *

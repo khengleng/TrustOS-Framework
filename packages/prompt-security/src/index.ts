@@ -1,5 +1,5 @@
 /**
- * @trustos/prompt-security
+ * @trustsystem/prompt-security
  *
  * Prompt-injection and jailbreak detection over untrusted input.
  *

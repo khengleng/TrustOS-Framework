@@ -1,5 +1,5 @@
 import { createHash, createVerify, timingSafeEqual, verify as verifyEd25519 } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * Integrity and signatures for anything installable.

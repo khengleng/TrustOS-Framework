@@ -1,5 +1,5 @@
 /**
- * @trustos/api-keys/nest
+ * @trustsystem/api-keys/nest
  *
  * NestJS bindings, behind a subpath.
  */

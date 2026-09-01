@@ -261,7 +261,7 @@ model Certificate {
 
 /// The AI tutor hook. Records the question, the answer and which model answered
 /// — and calls nothing. Wiring a provider is a deployment decision made through
-/// @trustos/ai-gateway.
+/// @trustsystem/ai-gateway.
 model TutorSession {
   id             String @id @default(cuid())
   organizationId String

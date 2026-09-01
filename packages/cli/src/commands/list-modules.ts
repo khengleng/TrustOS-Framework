@@ -1,4 +1,4 @@
-import { listModules, resolveInstallOrder, MODULE_CATALOG } from '@trustos/module-registry';
+import { listModules, resolveInstallOrder, MODULE_CATALOG } from '@trustsystem/module-registry';
 import { formatRows, style, type Output } from '../output';
 
 /**

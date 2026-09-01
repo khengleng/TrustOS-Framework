@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { authorize, permissionPolicy, type AuthorizationRequest } from '@trustos/authorization';
-import type { ActorContext } from '@trustos/shared-types';
-import { FINANCIAL_PRODUCT_PERMISSIONS } from '@trustos/financial-product-core';
+import { authorize, permissionPolicy, type AuthorizationRequest } from '@trustsystem/authorization';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { FINANCIAL_PRODUCT_PERMISSIONS } from '@trustsystem/financial-product-core';
 import {
   FINANCIAL_PRODUCT_POLICIES,
   PRODUCT_RESOURCE_TYPES,

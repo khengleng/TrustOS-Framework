@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ApiError } from '@trustos/errors';
-import { PrismaService } from '@trustos/database';
-import { requireOrganizationId, scopedDelegate } from '@trustos/tenancy';
-import type { BusinessObjectValidator } from '@trustos/workflow-runtime';
+import { ApiError } from '@trustsystem/errors';
+import { PrismaService } from '@trustsystem/database';
+import { requireOrganizationId, scopedDelegate } from '@trustsystem/tenancy';
+import type { BusinessObjectValidator } from '@trustsystem/workflow-runtime';
 import type { AppPrismaService } from '../../core/prisma.service';
 
 /**

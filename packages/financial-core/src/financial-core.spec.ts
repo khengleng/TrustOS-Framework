@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   add,
   allocate,
@@ -324,7 +324,7 @@ describe('money', () => {
   it('points at the FX package rather than just refusing', () => {
     expect(
       detailsOf(() => subtractMoney(money('1', 'USD', registry), money('1', 'EUR', registry))),
-    ).toMatch(/@trustos\/fx/);
+    ).toMatch(/@trustsystem\/fx/);
   });
 
   it('converts to and from minor units without going through a float', () => {

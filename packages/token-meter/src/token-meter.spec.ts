@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { message, type Message, type ToolDefinition } from '@trustos/ai-sdk';
+import { message, type Message, type ToolDefinition } from '@trustsystem/ai-sdk';
 import { HeuristicTokenizer, TokenMeter, estimateDrift } from './counter';
 
 const meter = new TokenMeter();

@@ -1,5 +1,5 @@
 /**
- * @trustos/module-marketplace
+ * @trustsystem/module-marketplace
  *
  * Browse, search, categorize, rate and verify modules.
  *

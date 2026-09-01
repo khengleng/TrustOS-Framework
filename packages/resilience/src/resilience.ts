@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { circuitBreakerPolicySchema, retryPolicySchema } from '@trustos/retry';
-import { DEPENDENCY_KINDS, type Service } from '@trustos/sre-core';
+import { ApiError } from '@trustsystem/errors';
+import { circuitBreakerPolicySchema, retryPolicySchema } from '@trustsystem/retry';
+import { DEPENDENCY_KINDS, type Service } from '@trustsystem/sre-core';
 
 /**
  * Resilience, declared.
  *
- * `@trustos/retry` already provides the mechanisms — backoff, jitter, circuit breakers. What it
+ * `@trustsystem/retry` already provides the mechanisms — backoff, jitter, circuit breakers. What it
  * cannot provide is the *decision*: for this dependency, in this service, what happens when it is
  * unavailable? That decision gets made during the outage otherwise, by whoever is on call, from
  * whatever they can reconstruct at the time.
@@ -239,7 +239,7 @@ export function worstCaseLatencyMs(declaration: DependencyResilience): number {
   if (!declaration.retry) return declaration.timeoutMs;
 
   /*
-   * `maxAttempts` in `@trustos/retry` counts retries *after* the first call, so three retries is
+   * `maxAttempts` in `@trustsystem/retry` counts retries *after* the first call, so three retries is
    * four calls and three waits. Getting this off by one is how a budget check passes and the
    * caller still times out.
    */

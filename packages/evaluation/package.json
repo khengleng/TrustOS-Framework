@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/evaluation",
+  "name": "@trustsystem/evaluation",
   "version": "0.1.0",
   "description": "Scoring AI output: groundedness, schema compliance, safety, cost and latency.",
   "license": "UNLICENSED",
@@ -17,11 +17,11 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/ai-sdk": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/rag": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/ai-sdk": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/rag": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

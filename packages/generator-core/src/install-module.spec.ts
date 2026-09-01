@@ -191,7 +191,7 @@ describe('installModules', () => {
 
     const wiring = await read('apps/api/src/modules/trustos-modules.ts');
     expect(wiring).toContain('FileStorageModule');
-    expect(wiring).toContain('@trustos/module-file-storage/nest');
+    expect(wiring).toContain('@trustsystem/module-file-storage/nest');
     expect(wiring).toContain('file-storage.file.write');
 
     const manifest = await loadApplicationManifest(app);
@@ -207,11 +207,11 @@ describe('installModules', () => {
 
     expect(parsed.name).toBe('demo');
     expect(parsed.dependencies.zod).toBe('^3.24.1');
-    expect(parsed.dependencies['@trustos/module-file-storage']).toMatch(/^file:/);
+    expect(parsed.dependencies['@trustsystem/module-file-storage']).toMatch(/^file:/);
     // Not a transitive assumption: npm links a `file:` dependency but does not
     // install that package's own unpublished requirements.
-    expect(parsed.dependencies['@trustos/module-sdk']).toMatch(/^file:/);
-    expect(parsed.dependencies['@trustos/module-registry']).toMatch(/^file:/);
+    expect(parsed.dependencies['@trustsystem/module-sdk']).toMatch(/^file:/);
+    expect(parsed.dependencies['@trustsystem/module-registry']).toMatch(/^file:/);
   });
 
   it('appends environment variable names, never values', async () => {
@@ -396,11 +396,11 @@ describe('resolveApplicationRoot', () => {
 describe('mergePackageJson', () => {
   it('sorts dependencies so the file does not churn', () => {
     const merged = mergePackageJson('{"dependencies":{"zod":"^3"}}', {
-      '@trustos/module-search': 'file:x',
+      '@trustsystem/module-search': 'file:x',
     });
     const parsed = JSON.parse(merged) as { dependencies: Record<string, string> };
 
-    expect(Object.keys(parsed.dependencies)).toEqual(['@trustos/module-search', 'zod']);
+    expect(Object.keys(parsed.dependencies)).toEqual(['@trustsystem/module-search', 'zod']);
   });
 
   it('reports invalid JSON rather than replacing the file', () => {

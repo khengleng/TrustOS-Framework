@@ -44,7 +44,7 @@ decisions gets made by whoever is nearest.
 
 ## Why a write scope may read
 
-`@trustos/api-keys`' rule, reused rather than restated: a credential that may change something can
+`@trustsystem/api-keys`' rule, reused rather than restated: a credential that may change something can
 necessarily observe it.
 
 The pilot's first version of this test asserted the opposite and was wrong. Requiring both scopes on

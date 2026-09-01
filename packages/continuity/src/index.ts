@@ -1,5 +1,5 @@
 /**
- * @trustos/continuity
+ * @trustsystem/continuity
  *
  * Critical business processes, their RTO and RPO, and the gap between what is promised and what
  * has been demonstrated.

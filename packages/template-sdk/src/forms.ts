@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { emailSchema, idSchema, slugSchema } from '@trustos/validation';
+import { emailSchema, idSchema, slugSchema } from '@trustsystem/validation';
 
 /**
  * Forms, and the validation derived from them.
@@ -137,7 +137,7 @@ function baseSchemaFor(field: FormField): z.ZodTypeAny {
        *
        * Phase 8's rule reaching the form layer: a monetary value that becomes a JavaScript
        * number on the way through a browser has already lost precision before any validation
-       * runs. `@trustos/financial-core` parses this string into an exact decimal.
+       * runs. `@trustsystem/financial-core` parses this string into an exact decimal.
        */
       return z
         .string()

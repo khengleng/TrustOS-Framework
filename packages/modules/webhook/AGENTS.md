@@ -1,11 +1,11 @@
-# AGENTS.md — @trustos/module-webhook
+# AGENTS.md — @trustsystem/module-webhook
 
 Outbound webhooks with HMAC signatures, overlapping secret rotation, replay protection and delivery history.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/webhooks`, `@trustos/webhook-runtime` does the work. Logic added
+   wires; `@trustsystem/webhooks`, `@trustsystem/webhook-runtime` does the work. Logic added
    here is logic no other consumer of that package gets.
 2. **Never widen a permission key.** Keys are permanent. Add one; never rename or repurpose.
 3. **Always validate the tenant.** Every store call takes `organizationId` explicitly, and a

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-jobs",
+  "name": "@trustsystem/module-jobs",
   "version": "0.1.0",
   "description": "TrustOS Background Jobs module. A durable job queue in the database: leased execution, retry with backoff, priority, progress and history.",
   "license": "UNLICENSED",
@@ -21,13 +21,13 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/job-runtime": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/module-sdk": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/job-runtime": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/module-sdk": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

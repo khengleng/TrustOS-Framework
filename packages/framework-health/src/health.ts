@@ -1,11 +1,11 @@
-import type { AnalysisReport } from '@trustos/dependency-analyzer';
-import type { QualityReport } from '@trustos/quality-gates';
-import { compareVersions } from '@trustos/version-manager';
+import type { AnalysisReport } from '@trustsystem/dependency-analyzer';
+import type { QualityReport } from '@trustsystem/quality-gates';
+import { compareVersions } from '@trustsystem/version-manager';
 
 /**
  * The health of the framework itself.
  *
- * Distinct from `@trustos/observability`, which answers "is this process up". This answers "is
+ * Distinct from `@trustsystem/observability`, which answers "is this process up". This answers "is
  * this platform in a state somebody can keep operating", and the two go wrong at completely
  * different speeds: a process is unhealthy for minutes, a platform is unhealthy for quarters.
  *

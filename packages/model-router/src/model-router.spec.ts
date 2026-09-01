@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AiPolicyEngine } from '@trustos/ai-policy';
-import { ModelRegistry } from '@trustos/model-registry';
+import { AiPolicyEngine } from '@trustsystem/ai-policy';
+import { ModelRegistry } from '@trustsystem/model-registry';
 import { ModelRouter } from './router';
 
 const pricing = (input: number) => ({

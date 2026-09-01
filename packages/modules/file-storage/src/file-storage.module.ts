@@ -1,11 +1,11 @@
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 import { fileStorageConfigSchema, type FileStorageConfig } from './config';
 import { FileStorageService } from './file-storage.service';
 import { LocalStorageProvider, type StorageProvider } from './provider';
@@ -14,7 +14,7 @@ import { PrismaStoredObjectStore, type StoredObjectStore } from './store';
 /**
  * The file-storage module.
  *
- * Declarations come from `@trustos/module-registry` rather than being restated
+ * Declarations come from `@trustsystem/module-registry` rather than being restated
  * here; see the header of that package for why the catalog owns them.
  */
 

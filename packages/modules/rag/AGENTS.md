@@ -1,12 +1,12 @@
-# AGENTS.md — @trustos/module-rag
+# AGENTS.md — @trustsystem/module-rag
 
 Answering from documents: chunking, embedding, a vector-store interface, hybrid search, citation checking and per-collection access control.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/embedding`, `@trustos/knowledge`, `@trustos/rag`, `@trustos/vector-store` does the work.
-2. **Never bypass the gateway.** Every model call goes through `@trustos/ai-gateway`, which is
+   wires; `@trustsystem/embedding`, `@trustsystem/knowledge`, `@trustsystem/rag`, `@trustsystem/vector-store` does the work.
+2. **Never bypass the gateway.** Every model call goes through `@trustsystem/ai-gateway`, which is
    where policy, guardrails, cost accounting and audit are applied.
 3. **Never bypass guardrails**, and never add a flag that does. A caller who needs different
    thresholds configures a guardrail profile.

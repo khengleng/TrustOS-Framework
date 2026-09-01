@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/api-management",
+  "name": "@trustsystem/api-management",
   "version": "0.1.0",
   "description": "The API management surface: catalog, lifecycle, consumers, quotas, limits and analytics, in one place.",
   "license": "UNLICENSED",
@@ -17,15 +17,15 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/api-catalog": "0.1.0",
-    "@trustos/api-consumer": "0.1.0",
-    "@trustos/api-policy": "0.1.0",
-    "@trustos/api-quota": "0.1.0",
-    "@trustos/api-rate-limit": "0.1.0",
-    "@trustos/api-versioning": "0.1.0",
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/policy-registry": "0.1.0",
+    "@trustsystem/api-catalog": "0.1.0",
+    "@trustsystem/api-consumer": "0.1.0",
+    "@trustsystem/api-policy": "0.1.0",
+    "@trustsystem/api-quota": "0.1.0",
+    "@trustsystem/api-rate-limit": "0.1.0",
+    "@trustsystem/api-versioning": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/policy-registry": "0.1.0",
     "zod": "^3.24.1"
   }
 }

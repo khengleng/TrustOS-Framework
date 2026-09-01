@@ -3,21 +3,21 @@ import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustos/config';
-import { AllExceptionsFilter } from '@trustos/errors/nest';
-import { RECORDED_APPLICATION_EVIDENCE } from '@trustos/governance-tool-core';
+import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustsystem/config';
+import { AllExceptionsFilter } from '@trustsystem/errors/nest';
+import { RECORDED_APPLICATION_EVIDENCE } from '@trustsystem/governance-tool-core';
 import { resourceRegistrationsFor, resourceRegistryFor } from './resource-registrations';
-import { OidcIdentityProvider, type IdentityProvider } from '@trustos/identity';
-import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
-import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
+import { OidcIdentityProvider, type IdentityProvider } from '@trustsystem/identity';
+import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustsystem/logging';
+import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustsystem/observability';
 import {
   SecurityPolicyError,
   loadSecurityPolicy,
   securityPolicySummary,
   type SecurityPolicy,
-} from '@trustos/security-policy';
-import { securityHeadersMiddleware } from '@trustos/session-security';
-import { tenantScopeMiddleware } from '@trustos/tenancy';
+} from '@trustsystem/security-policy';
+import { securityHeadersMiddleware } from '@trustsystem/session-security';
+import { tenantScopeMiddleware } from '@trustsystem/tenancy';
 import { GovernanceToolModule } from './governance-tool.module';
 
 /**

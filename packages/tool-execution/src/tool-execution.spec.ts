@@ -8,7 +8,7 @@ import {
   toToolDefinition,
   toToolMessage,
   type FunctionDefinition,
-} from '@trustos/function-calling';
+} from '@trustsystem/function-calling';
 import { ToolRegistry } from './executor';
 
 const searchOrders: FunctionDefinition<{ query: string; limit?: number }, unknown> = {

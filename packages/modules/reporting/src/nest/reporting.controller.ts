@@ -1,11 +1,11 @@
 import { Body, Controller, Delete, Get, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import { OrganizationId } from '@trustos/tenancy';
-import type { ActorContext, Paginated } from '@trustos/shared-types';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import { OrganizationId } from '@trustsystem/tenancy';
+import type { ActorContext, Paginated } from '@trustsystem/shared-types';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
 import { EXPORT_FORMATS } from '../export';
 import type { ReportSummary } from '../report';
 import { FREQUENCIES, type ReportScheduleRow } from '../schedule';

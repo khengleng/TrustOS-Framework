@@ -144,7 +144,7 @@ export function workflowFragment(schema) {
 const BASE_HEADER = `// =============================================================================
 // Framework schema — TrustOS foundation models.
 //
-// GENERATED FROM @trustos/database by scripts/sync-schema-fragments.mjs.
+// GENERATED FROM @trustsystem/database by scripts/sync-schema-fragments.mjs.
 // Do not edit by hand: schema-fragments.spec.ts fails the build when this file
 // differs from what that script produces.
 //
@@ -166,7 +166,7 @@ const BASE_HEADER = `// ========================================================
 const WORKFLOW_HEADER = `// =============================================================================
 // Workflow schema — TrustOS phase 5 models.
 //
-// GENERATED FROM @trustos/database by scripts/sync-schema-fragments.mjs.
+// GENERATED FROM @trustsystem/database by scripts/sync-schema-fragments.mjs.
 // Do not edit by hand: schema-fragments.spec.ts fails the build when this file
 // differs from what that script produces.
 //

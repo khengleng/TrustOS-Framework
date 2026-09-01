@@ -1,26 +1,31 @@
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
-import { classificationRank, obligationsFor } from '@trustos/data-classification';
-import { DataCatalog, catalogEntrySchema } from '@trustos/data-catalog';
-import { PolicyRegistry, policyDocumentSchema } from '@trustos/policy-registry';
-import { InMemoryPolicyDecisionSink, PolicyDecisionLog } from '@trustos/policy-decision-log';
-import { PolicyEngine } from '@trustos/policy-engine';
-import { ApiCatalog, apiDefinitionSchema } from '@trustos/api-catalog';
-import { ConsumerRegistry, consumerSchema, decideAccess } from '@trustos/api-consumer';
-import { InMemoryQuotaUsageStore, consumeQuota, quotaSchema, type Quota } from '@trustos/api-quota';
-import { InMemoryRateCounterStore, checkRate, rateLimitSchema } from '@trustos/api-rate-limit';
-import { ApiGateway, InMemoryAnalyticsSink } from '@trustos/api-management';
+import { classificationRank, obligationsFor } from '@trustsystem/data-classification';
+import { DataCatalog, catalogEntrySchema } from '@trustsystem/data-catalog';
+import { PolicyRegistry, policyDocumentSchema } from '@trustsystem/policy-registry';
+import { InMemoryPolicyDecisionSink, PolicyDecisionLog } from '@trustsystem/policy-decision-log';
+import { PolicyEngine } from '@trustsystem/policy-engine';
+import { ApiCatalog, apiDefinitionSchema } from '@trustsystem/api-catalog';
+import { ConsumerRegistry, consumerSchema, decideAccess } from '@trustsystem/api-consumer';
+import {
+  InMemoryQuotaUsageStore,
+  consumeQuota,
+  quotaSchema,
+  type Quota,
+} from '@trustsystem/api-quota';
+import { InMemoryRateCounterStore, checkRate, rateLimitSchema } from '@trustsystem/api-rate-limit';
+import { ApiGateway, InMemoryAnalyticsSink } from '@trustsystem/api-management';
 import {
   BackupInventory,
   assertFullyValidated,
   assuranceOf,
   backupRecordSchema,
-} from '@trustos/backup';
+} from '@trustsystem/backup';
 import {
   AI_FORBIDDEN_ACTIONS,
   AI_ASSIST_FEATURES,
   isProposalOnly,
-} from '@trustos/governance-ai-bridge';
+} from '@trustsystem/governance-ai-bridge';
 import { ENTERPRISE_PERMISSIONS, segregationViolations } from './permissions';
 
 /**

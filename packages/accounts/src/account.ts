@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { formatMoney, negateMoney, type Money } from '@trustos/financial-core';
-import type { AccountBalance } from '@trustos/ledger';
+import { ApiError } from '@trustsystem/errors';
+import { formatMoney, negateMoney, type Money } from '@trustsystem/financial-core';
+import type { AccountBalance } from '@trustsystem/ledger';
 
 /**
  * The account tree.
@@ -49,7 +49,7 @@ export const ACCOUNT_TYPES = {
    * account, and you owe it to the counterparty until it leaves.
    *
    * The platform instructs rather than moves cash itself, so payable is the accurate model — and
-   * the settlement journals in `@trustos/settlement` are written to match. Changing this class
+   * the settlement journals in `@trustsystem/settlement` are written to match. Changing this class
    * without changing those journals reports every in-transit balance with the wrong sign.
    */
   settlement: {

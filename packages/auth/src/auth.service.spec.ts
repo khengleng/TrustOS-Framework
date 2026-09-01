@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadConfig, type AppConfig } from '@trustos/config';
-import type { ApiError } from '@trustos/errors';
+import { loadConfig, type AppConfig } from '@trustsystem/config';
+import type { ApiError } from '@trustsystem/errors';
 import { AuthService } from './auth.service';
 import { TokenService, hashRefreshToken } from './tokens';
 import { hashPassword } from './password';

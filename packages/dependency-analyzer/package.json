@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/dependency-analyzer",
+  "name": "@trustsystem/dependency-analyzer",
   "version": "0.1.0",
   "description": "Cycles, unused modules, missing dependencies, version conflicts and breaking changes across the module graph.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/version-manager": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/version-manager": "0.1.0",
     "zod": "^3.24.1"
   }
 }

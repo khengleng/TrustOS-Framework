@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import { satisfies } from '@trustos/version-manager';
+import { ApiError } from '@trustsystem/errors';
+import { satisfies } from '@trustsystem/version-manager';
 import {
   assertCompatible,
   assertPermissionsAllowed,

@@ -3,7 +3,7 @@ import { toErrorResponse } from '../error-response';
 
 /**
  * Minimal logger surface so this leaf package stays dependency-free.
- * @trustos/logging's logger satisfies it structurally.
+ * @trustsystem/logging's logger satisfies it structurally.
  */
 export interface ErrorFilterLogger {
   error(payload: Record<string, unknown>, message: string): void;

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { consoleCatalogFor, type InternalApplication } from '@trustos/governance-tool-core';
-import type { PrismaService } from '@trustos/database';
-import type { LoggerPort } from '@trustos/logging';
+import { consoleCatalogFor, type InternalApplication } from '@trustsystem/governance-tool-core';
+import type { PrismaService } from '@trustsystem/database';
+import type { LoggerPort } from '@trustsystem/logging';
 import { PersistentAppCatalog } from './persistent-app-catalog';
 
 /**

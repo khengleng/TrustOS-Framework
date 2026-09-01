@@ -114,26 +114,26 @@ All of these run in CI on every pull request (`.github/workflows/ci.yml`).
 
 ### Packages
 
-| Package                  | Responsibility                                                                                                                          |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `@trustos/shared-types`  | Types shared by server and browser. No runtime dependencies.                                                                            |
-| `@trustos/errors`        | Seven error codes, `ApiError`, and the `{ error, message, requestId }` contract. Browser-safe; NestJS filter at `@trustos/errors/nest`. |
-| `@trustos/validation`    | Shared Zod schemas and the single path from untrusted input to a typed value.                                                           |
-| `@trustos/config`        | Fail-fast environment validation. The only package that reads `process.env`.                                                            |
-| `@trustos/logging`       | Pino with request correlation and two layers of secret redaction.                                                                       |
-| `@trustos/database`      | Prisma schema, client lifecycle, soft-delete helpers, migrations, seed.                                                                 |
-| `@trustos/auth`          | Email/password, bcrypt, JWT, refresh-token rotation with reuse detection.                                                               |
-| `@trustos/rbac`          | Permission catalog, five system roles, deny-by-default route guard.                                                                     |
-| `@trustos/tenancy`       | Organization scope: request context, query scoping, tenant guard.                                                                       |
-| `@trustos/audit`         | Append-only audit trail with actor, organization, before/after and request metadata.                                                    |
-| `@trustos/observability` | `/health`, `/ready`, request timing, metrics and OpenTelemetry-ready seams.                                                             |
+| Package                      | Responsibility                                                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@trustsystem/shared-types`  | Types shared by server and browser. No runtime dependencies.                                                                                |
+| `@trustsystem/errors`        | Seven error codes, `ApiError`, and the `{ error, message, requestId }` contract. Browser-safe; NestJS filter at `@trustsystem/errors/nest`. |
+| `@trustsystem/validation`    | Shared Zod schemas and the single path from untrusted input to a typed value.                                                               |
+| `@trustsystem/config`        | Fail-fast environment validation. The only package that reads `process.env`.                                                                |
+| `@trustsystem/logging`       | Pino with request correlation and two layers of secret redaction.                                                                           |
+| `@trustsystem/database`      | Prisma schema, client lifecycle, soft-delete helpers, migrations, seed.                                                                     |
+| `@trustsystem/auth`          | Email/password, bcrypt, JWT, refresh-token rotation with reuse detection.                                                                   |
+| `@trustsystem/rbac`          | Permission catalog, five system roles, deny-by-default route guard.                                                                         |
+| `@trustsystem/tenancy`       | Organization scope: request context, query scoping, tenant guard.                                                                           |
+| `@trustsystem/audit`         | Append-only audit trail with actor, organization, before/after and request metadata.                                                        |
+| `@trustsystem/observability` | `/health`, `/ready`, request timing, metrics and OpenTelemetry-ready seams.                                                                 |
 
 ### The module system
 
-| Package                    | Responsibility                                                                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `@trustos/module-sdk`      | The contract every module implements: metadata, lifecycle, configuration, permissions, audit, health, tenant-scoped persistence |
-| `@trustos/module-registry` | The approved module catalog, and the in-memory registry applications discover modules through                                   |
+| Package                        | Responsibility                                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `@trustsystem/module-sdk`      | The contract every module implements: metadata, lifecycle, configuration, permissions, audit, health, tenant-scoped persistence |
+| `@trustsystem/module-registry` | The approved module catalog, and the in-memory registry applications discover modules through                                   |
 
 ### Modules
 
@@ -185,7 +185,7 @@ Rather than copying the starter by hand, use the CLI:
 
 ```bash
 npm run build:packages
-npm link -w @trustos/cli          # or: node packages/cli/bin/trustos.js
+npm link -w @trustsystem/cli          # or: node packages/cli/bin/trustos.js
 
 trustos doctor                    # check this machine
 trustos list-templates --verbose  # see what is available
@@ -205,7 +205,7 @@ global guards, audit logging, health probes — plus its own domain models,
 migrations, tenant-isolation tests, `AGENTS.md` for AI agents, `trustos.json`
 recording exactly what produced it, and Railway configuration.
 
-`--framework-path` is needed only until the `@trustos/*` packages are published
+`--framework-path` is needed only until the `@trustsystem/*` packages are published
 to npm; it rewrites the generated dependencies to local `file:` links.
 
 The generator will not write outside the project directory, will not create a
@@ -214,11 +214,11 @@ behind if it fails. See [`docs/generator-security.md`](docs/generator-security.m
 
 ### CLI packages
 
-| Package                      | Responsibility                                                         |
-| ---------------------------- | ---------------------------------------------------------------------- |
-| `@trustos/cli`               | The `trustos` command: parsing, prompts, output                        |
-| `@trustos/generator-core`    | Path containment, rendering, transactional writes, template validation |
-| `@trustos/template-registry` | The typed, validated catalog of approved templates                     |
+| Package                          | Responsibility                                                         |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| `@trustsystem/cli`               | The `trustos` command: parsing, prompts, output                        |
+| `@trustsystem/generator-core`    | Path containment, rendering, transactional writes, template validation |
+| `@trustsystem/template-registry` | The typed, validated catalog of approved templates                     |
 
 ---
 
@@ -283,7 +283,7 @@ Details: [`docs/security-standards.md`](docs/security-standards.md).
 | [`docs/data-governance/lineage.md`](docs/data-governance/lineage.md)                             | Declared lineage, the eight relations, and the one that may declassify                                                                                    |
 | [`docs/data-governance/retention.md`](docs/data-governance/retention.md)                         | Longest minimum, gentlest action, and why legal hold has no override                                                                                      |
 | [`docs/data-governance/masking.md`](docs/data-governance/masking.md)                             | Masking, tokenization and pseudonymization — three different things with different reversibility                                                          |
-| [`docs/policy/architecture.md`](docs/policy/architecture.md)                                     | Policy-as-code: the split with @trustos/authorization, and why a document can only refuse                                                                 |
+| [`docs/policy/architecture.md`](docs/policy/architecture.md)                                     | Policy-as-code: the split with @trustsystem/authorization, and why a document can only refuse                                                             |
 | [`docs/policy/policy-development.md`](docs/policy/policy-development.md)                         | Writing, testing and simulating a policy; what static analysis catches                                                                                    |
 | [`docs/policy/governance.md`](docs/policy/governance.md)                                         | The lifecycle, why the author cannot activate, and what the decision log stores                                                                           |
 | [`docs/sre/slo.md`](docs/sre/slo.md)                                                             | Indicators as ratios, error budgets, burn rate, and why an unobserved window is null                                                                      |

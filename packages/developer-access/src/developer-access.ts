@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { apiClassification, type ApiCatalog, type ApiDefinition } from '@trustos/api-catalog';
-import { KIND_CEILINGS, type Consumer } from '@trustos/api-consumer';
-import { classificationRank } from '@trustos/data-classification';
+import { ApiError } from '@trustsystem/errors';
+import { apiClassification, type ApiCatalog, type ApiDefinition } from '@trustsystem/api-catalog';
+import { KIND_CEILINGS, type Consumer } from '@trustsystem/api-consumer';
+import { classificationRank } from '@trustsystem/data-classification';
 
 /**
  * Developer portal access.
@@ -18,7 +18,7 @@ import { classificationRank } from '@trustos/data-classification';
  * access goes through the consumer registry with a named approver.
  *
  * **The portal never shows a key twice.** It shows it once, at issue, and thereafter shows a
- * prefix. This is `@trustos/api-keys`' rule, and repeating it here matters because the portal is
+ * prefix. This is `@trustsystem/api-keys`' rule, and repeating it here matters because the portal is
  * exactly where somebody would add a convenient "show key" button.
  *
  * **A developer sees the APIs they may call, and the existence of nothing else.** Not a greyed-out
@@ -257,7 +257,7 @@ export function assertSandboxOnly(input: {
 /**
  * What the portal may return about an issued credential.
  *
- * `@trustos/api-keys` already guarantees the key is unrecoverable — it is hashed and never stored.
+ * `@trustsystem/api-keys` already guarantees the key is unrecoverable — it is hashed and never stored.
  * This function exists because the portal is precisely where somebody adds a "show key" button and
  * discovers the hash prevents it, and the safe answer should be one call away.
  */

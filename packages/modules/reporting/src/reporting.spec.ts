@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { ApiError } from '@trustos/errors';
-import { createTestModuleContext, type RecordingAuditPort } from '@trustos/module-sdk';
-import { FakeModelDelegate, runInTenantContext } from '@trustos/tenancy';
+import type { ApiError } from '@trustsystem/errors';
+import { createTestModuleContext, type RecordingAuditPort } from '@trustsystem/module-sdk';
+import { FakeModelDelegate, runInTenantContext } from '@trustsystem/tenancy';
 import { reportingConfigSchema } from './config';
 import { escapeCsvCell, exportFilename, toCsv, UnavailablePdfRenderer } from './export';
 import { createStaticReportDataSource, resolveFilters, type ReportDefinition } from './report';

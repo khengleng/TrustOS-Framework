@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { retryPolicySchema } from '@trustos/retry';
+import { retryPolicySchema } from '@trustsystem/retry';
 import { SYNC_FAILURE_THRESHOLD, SyncService, type SyncConnector, type SyncRecord } from './sync';
 import { InMemorySyncStore } from './testing';
 

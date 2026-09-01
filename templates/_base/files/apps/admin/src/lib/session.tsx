@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import type { AuthResponse, OrganizationSummary, UserSummary } from '@trustos/shared-types';
+import type { AuthResponse, OrganizationSummary, UserSummary } from '@trustsystem/shared-types';
 import { ApiClientError, apiRequest } from './api';
 
 /**

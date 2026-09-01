@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-reporting
+ * @trustsystem/financial-reporting
  *
  * General ledger, trial balance, balance sheet and statements, with CSV export.
  *

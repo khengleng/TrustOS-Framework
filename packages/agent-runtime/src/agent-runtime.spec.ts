@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { CompletionRequest, CompletionResult } from '@trustos/ai-sdk';
-import { AgentRegistry } from '@trustos/agent-framework';
-import { AiPolicyEngine } from '@trustos/ai-policy';
-import { InMemoryMemoryStore, MemoryService, memoryPolicySchema } from '@trustos/agent-memory';
-import { ConversationService, InMemoryConversationStore } from '@trustos/conversation';
-import { ToolRegistry, type FunctionDefinition } from '@trustos/tool-execution';
+import { ApiError } from '@trustsystem/errors';
+import type { CompletionRequest, CompletionResult } from '@trustsystem/ai-sdk';
+import { AgentRegistry } from '@trustsystem/agent-framework';
+import { AiPolicyEngine } from '@trustsystem/ai-policy';
+import { InMemoryMemoryStore, MemoryService, memoryPolicySchema } from '@trustsystem/agent-memory';
+import { ConversationService, InMemoryConversationStore } from '@trustsystem/conversation';
+import { ToolRegistry, type FunctionDefinition } from '@trustsystem/tool-execution';
 import { AgentRuntime, type AgentRunResult } from './runtime';
 
 /**

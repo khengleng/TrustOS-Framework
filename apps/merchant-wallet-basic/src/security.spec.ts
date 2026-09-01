@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { money } from '@trustos/financial-core';
-import { scopeSatisfies } from '@trustos/api-keys';
+import { money } from '@trustsystem/financial-core';
+import { scopeSatisfies } from '@trustsystem/api-keys';
 import {
   MERCHANT_ROLES,
   ROLE_CAPABILITIES,
@@ -607,7 +607,7 @@ describe('sensitive data', () => {
 
 describe('credential scope', () => {
   it('does not let a read scope satisfy a write requirement', () => {
-    // From @trustos/api-keys, reused rather than restated: write covers read, and never the reverse.
+    // From @trustsystem/api-keys, reused rather than restated: write covers read, and never the reverse.
     expect(scopeSatisfies(['payments:read'], 'payments:write')).toBe(false);
     expect(scopeSatisfies(['payments:write'], 'payments:read')).toBe(true);
   });

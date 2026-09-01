@@ -1,14 +1,14 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { PrismaService } from '@trustos/database';
-import { HumanActorsOnly } from '@trustos/identity/nest';
-import { PERMISSIONS, RequirePermissions } from '@trustos/rbac';
-import { SECURITY_EVENT_TYPES, type SecuritySeverity } from '@trustos/security-events';
-import { redactSecrets } from '@trustos/security-policy';
-import { OrganizationId } from '@trustos/tenancy';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { PrismaService } from '@trustsystem/database';
+import { HumanActorsOnly } from '@trustsystem/identity/nest';
+import { PERMISSIONS, RequirePermissions } from '@trustsystem/rbac';
+import { SECURITY_EVENT_TYPES, type SecuritySeverity } from '@trustsystem/security-events';
+import { redactSecrets } from '@trustsystem/security-policy';
+import { OrganizationId } from '@trustsystem/tenancy';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
 
 const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

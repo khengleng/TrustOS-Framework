@@ -9,7 +9,7 @@
  * with another template layered beneath this one.
  */
 
-import { definePermission, type PermissionDefinition } from '@trustos/template-sdk';
+import { definePermission, type PermissionDefinition } from '@trustsystem/template-sdk';
 
 export const DIGITAL_BANK_PERMISSIONS = {
   BANK_CUSTOMER_READ: definePermission('digitalbank.bank-customer.read', 'View customers.'),

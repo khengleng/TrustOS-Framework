@@ -66,7 +66,7 @@ export interface AccountStatement {
 }
 
 /** Which channels a customer has muted. Security notifications ignore this — see the `optional` */
-/** flag in @trustos/template-sdk. */
+/** flag in @trustsystem/template-sdk. */
 export interface CustomerNotificationPreference {
   id: string;
   customerId: string;

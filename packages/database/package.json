@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/database",
+  "name": "@trustsystem/database",
   "version": "0.1.0",
   "description": "Prisma schema, client lifecycle and tenant-safe query helpers.",
   "license": "UNLICENSED",
@@ -35,12 +35,12 @@
   "dependencies": {
     "@nestjs/common": "^11.1.28",
     "@prisma/client": "^6.19.3",
-    "@trustos/config": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/rbac": "0.1.0"
+    "@trustsystem/config": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/rbac": "0.1.0"
   },
   "devDependencies": {
-    "@trustos/rbac": "0.1.0",
+    "@trustsystem/rbac": "0.1.0",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^2.4.3",
     "prisma": "^6.19.3",

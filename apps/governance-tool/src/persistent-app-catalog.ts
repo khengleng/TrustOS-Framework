@@ -1,12 +1,12 @@
-import { PrismaService } from '@trustos/database';
+import { PrismaService } from '@trustsystem/database';
 import {
   InternalAppCatalog,
   parseInternalApplication,
   type Environment,
   type InternalApplication,
-} from '@trustos/governance-tool-core';
-import { ApiError } from '@trustos/errors';
-import type { LoggerPort } from '@trustos/logging';
+} from '@trustsystem/governance-tool-core';
+import { ApiError } from '@trustsystem/errors';
+import type { LoggerPort } from '@trustsystem/logging';
 
 /**
  * The internal application catalog, made durable.

@@ -86,16 +86,16 @@ the validator's warnings and in the version comparison's control-weakening bucke
 
 Self-approval is one rule in a family. The framework implements these:
 
-| Rule                                              | Enforced by                           |
-| ------------------------------------------------- | ------------------------------------- |
-| The requester cannot approve                      | `selfApprovalPolicy`                  |
-| One actor approves a step once                    | `duplicateApprovalPolicy`             |
-| The definition's author cannot approve it         | `definitionGovernancePolicy`          |
-| The approver cannot publish it                    | `definitionGovernancePolicy`          |
-| A delegate must be independently eligible         | `TaskService.delegate`                |
-| A task's holder is the only one who may act on it | `taskOwnershipPolicy`                 |
-| A role cannot be granted above the granter's own  | `roleGrantPolicy` (phase 4)           |
-| A service account is never platform staff         | `@trustos/service-accounts` (phase 4) |
+| Rule                                              | Enforced by                               |
+| ------------------------------------------------- | ----------------------------------------- |
+| The requester cannot approve                      | `selfApprovalPolicy`                      |
+| One actor approves a step once                    | `duplicateApprovalPolicy`                 |
+| The definition's author cannot approve it         | `definitionGovernancePolicy`              |
+| The approver cannot publish it                    | `definitionGovernancePolicy`              |
+| A delegate must be independently eligible         | `TaskService.delegate`                    |
+| A task's holder is the only one who may act on it | `taskOwnershipPolicy`                     |
+| A role cannot be granted above the granter's own  | `roleGrantPolicy` (phase 4)               |
+| A service account is never platform staff         | `@trustsystem/service-accounts` (phase 4) |
 
 `duplicateApprovalPolicy` is worth distinguishing from self-approval: that actor _is_ a
 legitimate approver who has already voted. It matters for threshold models, where counting one

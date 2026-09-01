@@ -1,4 +1,4 @@
-import { ModuleRepository, type ModuleContext } from '@trustos/module-sdk';
+import { ModuleRepository, type ModuleContext } from '@trustsystem/module-sdk';
 import { z } from 'zod';
 import type { ReportingConfig } from './config';
 import { EXPORT_FORMATS, type ExportFormat } from './export';

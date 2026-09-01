@@ -1,5 +1,5 @@
 /**
- * @trustos/module-sdk
+ * @trustsystem/module-sdk
  *
  * The contract every TrustOS module implements.
  *

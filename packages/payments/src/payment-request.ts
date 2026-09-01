@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
 import {
   formatMoney,
   moneyFromJson,
@@ -11,8 +11,8 @@ import {
   newReference,
   type CurrencyRegistry,
   type Money,
-} from '@trustos/financial-core';
-import type { TransactionService } from '@trustos/transactions';
+} from '@trustsystem/financial-core';
+import type { TransactionService } from '@trustsystem/transactions';
 
 /**
  * Payment requests.
@@ -88,7 +88,7 @@ export const paymentRequestSchema = z
      * Where to notify when the status changes.
      *
      * A URL the application calls; the framework does not call it. Delivery, retry and signing
-     * are `@trustos/webhooks`, which already does all three properly.
+     * are `@trustsystem/webhooks`, which already does all three properly.
      */
     callbackUrl: z.string().max(2000).nullable().default(null),
 
@@ -520,7 +520,7 @@ export class PaymentService {
          * A callback failure must not undo the payment.
          *
          * The money moved. Failing here would leave the caller believing it did not, and the
-         * retry would be a second payment. Delivery is `@trustos/webhooks`, which retries
+         * retry would be a second payment. Delivery is `@trustsystem/webhooks`, which retries
          * properly.
          */
         this.options.logger?.error(

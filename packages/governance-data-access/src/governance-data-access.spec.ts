@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { ResourceRegistry, resourceRegistrationSchema } from '@trustos/governance-resource-policy';
+import {
+  ResourceRegistry,
+  resourceRegistrationSchema,
+} from '@trustsystem/governance-resource-policy';
 import { DataAccessGuard, MAX_ROWS_CEILING, assertApiOnlyMutation, summarizeAccess } from './index';
 
 function resource(overrides: Record<string, unknown> = {}) {

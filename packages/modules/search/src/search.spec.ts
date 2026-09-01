@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { ApiError } from '@trustos/errors';
-import { createTestModuleContext, type RecordingAuditPort } from '@trustos/module-sdk';
-import { runInTenantContext } from '@trustos/tenancy';
+import type { ApiError } from '@trustsystem/errors';
+import { createTestModuleContext, type RecordingAuditPort } from '@trustsystem/module-sdk';
+import { runInTenantContext } from '@trustsystem/tenancy';
 import { createStaticSearchAdapter, type SearchAdapter, type SearchHit } from './adapter';
 import { searchConfigSchema } from './config';
 import { sourceOrderRanker, weightedRanker } from './ranking';

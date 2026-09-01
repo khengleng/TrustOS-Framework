@@ -67,7 +67,7 @@ function application(
   write('trustos.json', { name: 'test-app' });
   write('package.json', {
     name: 'test-app',
-    dependencies: Object.fromEntries(modules.map((id) => [`@trustos/module-${id}`, '0.1.0'])),
+    dependencies: Object.fromEntries(modules.map((id) => [`@trustsystem/module-${id}`, '0.1.0'])),
   });
 
   const className = (id: string) =>
@@ -80,12 +80,12 @@ function application(
     options.wired === false
       ? ''
       : modules
-          .map((id) => `import { ${className(id)}Module } from '@trustos/module-${id}/nest';`)
+          .map((id) => `import { ${className(id)}Module } from '@trustsystem/module-${id}/nest';`)
           .join('\n');
 
   write(
     'apps/api/src/app.module.ts',
-    `${imports}\nimport { LimitEngine } from '@trustos/limits';\n@Module({})\nexport class AppModule {}\n`,
+    `${imports}\nimport { LimitEngine } from '@trustsystem/limits';\n@Module({})\nexport class AppModule {}\n`,
   );
 
   const models = modules.flatMap((id) => MODELS[id] ?? []);
@@ -354,8 +354,8 @@ describe('limits', () => {
     application({ modules: ['ledger', 'wallet'] });
     write(
       'apps/api/src/app.module.ts',
-      "import { LedgerModule } from '@trustos/module-ledger/nest';\n" +
-        "import { WalletModule } from '@trustos/module-wallet/nest';\n",
+      "import { LedgerModule } from '@trustsystem/module-ledger/nest';\n" +
+        "import { WalletModule } from '@trustsystem/module-wallet/nest';\n",
     );
 
     const output = createCapturingOutput();

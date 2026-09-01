@@ -1,5 +1,5 @@
 /**
- * @trustos/dependency-analyzer
+ * @trustsystem/dependency-analyzer
  *
  * Cycles, missing dependencies, version conflicts, unused modules, breaking changes and layering
  * violations across the module graph.

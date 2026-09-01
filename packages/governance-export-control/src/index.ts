@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-export-control
+ * @trustsystem/governance-export-control
  *
  * An export is the one operation that produces data **outside every control that produced it**. A
  * masked field on a screen is masked; the same field in a CSV on a laptop is a file with no

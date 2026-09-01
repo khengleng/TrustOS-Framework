@@ -13,7 +13,7 @@
         "packages/identity"
       ],
       "interface": [
-        "@trustos/identity"
+        "@trustsystem/identity"
       ],
       "testCoverage": {
         "tests": 70,
@@ -34,7 +34,7 @@
         "packages/tenancy"
       ],
       "interface": [
-        "@trustos/tenancy"
+        "@trustsystem/tenancy"
       ],
       "testCoverage": {
         "tests": 34,
@@ -55,7 +55,7 @@
         "packages/rbac"
       ],
       "interface": [
-        "@trustos/rbac"
+        "@trustsystem/rbac"
       ],
       "testCoverage": {
         "tests": 26,
@@ -76,7 +76,7 @@
         "packages/authorization"
       ],
       "interface": [
-        "@trustos/authorization"
+        "@trustsystem/authorization"
       ],
       "testCoverage": {
         "tests": 30,
@@ -97,7 +97,7 @@
         "packages/audit"
       ],
       "interface": [
-        "@trustos/audit"
+        "@trustsystem/audit"
       ],
       "testCoverage": {
         "tests": 16,
@@ -121,10 +121,10 @@
         "packages/workflow-tasks"
       ],
       "interface": [
-        "@trustos/workflow-core",
-        "@trustos/workflow-runtime",
-        "@trustos/workflow-definition",
-        "@trustos/workflow-tasks"
+        "@trustsystem/workflow-core",
+        "@trustsystem/workflow-runtime",
+        "@trustsystem/workflow-definition",
+        "@trustsystem/workflow-tasks"
       ],
       "testCoverage": {
         "tests": 165,
@@ -146,8 +146,8 @@
         "packages/workflow-policy"
       ],
       "interface": [
-        "@trustos/workflow-approvals",
-        "@trustos/workflow-policy"
+        "@trustsystem/workflow-approvals",
+        "@trustsystem/workflow-policy"
       ],
       "testCoverage": {
         "tests": 64,
@@ -170,9 +170,9 @@
         "packages/policy-evaluator"
       ],
       "interface": [
-        "@trustos/policy-engine",
-        "@trustos/policy-registry",
-        "@trustos/policy-evaluator"
+        "@trustsystem/policy-engine",
+        "@trustsystem/policy-registry",
+        "@trustsystem/policy-evaluator"
       ],
       "testCoverage": {
         "tests": 48,
@@ -193,7 +193,7 @@
         "packages/case-management"
       ],
       "interface": [
-        "@trustos/case-management"
+        "@trustsystem/case-management"
       ],
       "testCoverage": {
         "tests": 33,
@@ -216,9 +216,9 @@
         "packages/guardrails"
       ],
       "interface": [
-        "@trustos/ai-gateway",
-        "@trustos/ai-policy",
-        "@trustos/guardrails"
+        "@trustsystem/ai-gateway",
+        "@trustsystem/ai-policy",
+        "@trustsystem/guardrails"
       ],
       "testCoverage": {
         "tests": 115,
@@ -242,10 +242,10 @@
         "packages/limits"
       ],
       "interface": [
-        "@trustos/financial-core",
-        "@trustos/ledger",
-        "@trustos/wallet",
-        "@trustos/limits"
+        "@trustsystem/financial-core",
+        "@trustsystem/ledger",
+        "@trustsystem/wallet",
+        "@trustsystem/limits"
       ],
       "testCoverage": {
         "tests": 184,
@@ -268,9 +268,9 @@
         "packages/financial-product-simulator"
       ],
       "interface": [
-        "@trustos/financial-product-composer",
-        "@trustos/financial-product-runtime",
-        "@trustos/financial-product-simulator"
+        "@trustsystem/financial-product-composer",
+        "@trustsystem/financial-product-runtime",
+        "@trustsystem/financial-product-simulator"
       ],
       "testCoverage": {
         "tests": 83,
@@ -294,10 +294,10 @@
         "packages/api-quota"
       ],
       "interface": [
-        "@trustos/api-catalog",
-        "@trustos/api-versioning",
-        "@trustos/api-rate-limit",
-        "@trustos/api-quota"
+        "@trustsystem/api-catalog",
+        "@trustsystem/api-versioning",
+        "@trustsystem/api-rate-limit",
+        "@trustsystem/api-quota"
       ],
       "testCoverage": {
         "tests": 86,
@@ -321,10 +321,10 @@
         "packages/data-retention"
       ],
       "interface": [
-        "@trustos/data-classification",
-        "@trustos/data-masking",
-        "@trustos/data-access-policy",
-        "@trustos/data-retention"
+        "@trustsystem/data-classification",
+        "@trustsystem/data-masking",
+        "@trustsystem/data-access-policy",
+        "@trustsystem/data-retention"
       ],
       "testCoverage": {
         "tests": 71,
@@ -345,7 +345,7 @@
         "packages/observability"
       ],
       "interface": [
-        "@trustos/observability"
+        "@trustsystem/observability"
       ],
       "testCoverage": {
         "tests": 18,
@@ -368,9 +368,9 @@
         "packages/security-events"
       ],
       "interface": [
-        "@trustos/session-security",
-        "@trustos/security-policy",
-        "@trustos/security-events"
+        "@trustsystem/session-security",
+        "@trustsystem/security-policy",
+        "@trustsystem/security-events"
       ],
       "testCoverage": {
         "tests": 100,
@@ -391,7 +391,7 @@
         "packages/backup"
       ],
       "interface": [
-        "@trustos/backup"
+        "@trustsystem/backup"
       ],
       "testCoverage": {
         "tests": 20,
@@ -412,7 +412,7 @@
         "packages/recovery"
       ],
       "interface": [
-        "@trustos/recovery"
+        "@trustsystem/recovery"
       ],
       "testCoverage": {
         "tests": 20,
@@ -433,7 +433,7 @@
         "packages/governance-tool-core"
       ],
       "interface": [
-        "@trustos/governance-tool-core"
+        "@trustsystem/governance-tool-core"
       ],
       "testCoverage": {
         "tests": 49,
@@ -455,8 +455,8 @@
         "packages/generator-core"
       ],
       "interface": [
-        "@trustos/cli",
-        "@trustos/generator-core"
+        "@trustsystem/cli",
+        "@trustsystem/generator-core"
       ],
       "testCoverage": {
         "tests": 408,

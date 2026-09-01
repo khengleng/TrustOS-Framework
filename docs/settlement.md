@@ -276,7 +276,7 @@ formats is worse than four small writers.
 
 ```ts
 const report = await settlement.report({ id: batch.id, organizationId });
-const rows = settlementReportRows(report); // from @trustos/financial-reporting
+const rows = settlementReportRows(report); // from @trustsystem/financial-reporting
 // …then write whatever the bank asked for.
 ```
 

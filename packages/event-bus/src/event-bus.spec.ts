@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { EventRegistry, type EventSchemaDefinition } from '@trustos/event-registry';
-import { buildEvent, type EventActor, type EventEnvelope } from '@trustos/event-sdk';
-import { RETRY_PRESETS, retryPolicySchema } from '@trustos/retry';
+import { EventRegistry, type EventSchemaDefinition } from '@trustsystem/event-registry';
+import { buildEvent, type EventActor, type EventEnvelope } from '@trustsystem/event-sdk';
+import { RETRY_PRESETS, retryPolicySchema } from '@trustsystem/retry';
 import { InMemoryEventBus, isInScope } from './in-memory-bus';
 import { InMemoryDeadLetterStore, InMemoryDeliveryLedger } from './stores';
 import { DeadLetterReplayService } from './replay';

@@ -3,9 +3,9 @@
 Four packages, one rule that shapes all of them: **a policy document can refuse, and can never
 grant.**
 
-## The split with `@trustos/authorization`
+## The split with `@trustsystem/authorization`
 
-The framework already has an authorization engine. `@trustos/authorization` decides _who may call
+The framework already has an authorization engine. `@trustsystem/authorization` decides _who may call
 what_ — it is code, it is the same on every deployment, and it is where the default-deny structure
 lives.
 
@@ -29,7 +29,7 @@ writing an over-broad document. Code decides first; if code says no, no document
 
 ## The four packages
 
-**`@trustos/policy-registry`** holds versioned, immutable documents. `defaultEffect` is
+**`@trustsystem/policy-registry`** holds versioned, immutable documents. `defaultEffect` is
 `z.literal('deny')` — the schema refuses anything else, because a policy whose default is allow
 permits everything it did not think of, and the things a policy did not think of are exactly the
 interesting ones.
@@ -37,15 +37,15 @@ interesting ones.
 Test cases are required, and at least one for each outcome the policy can produce. A policy that
 denies everything passes any set of deny-only tests.
 
-**`@trustos/policy-evaluator`** evaluates. Deterministic: no clock, no I/O, no randomness. Given
+**`@trustsystem/policy-evaluator`** evaluates. Deterministic: no clock, no I/O, no randomness. Given
 the same version and the same attributes it returns the same decision on any machine in any year,
 which is what makes a logged decision **re-derivable** rather than merely believed.
 
-**`@trustos/policy-decision-log`** records. Every decision, allow and deny — a decision point that
+**`@trustsystem/policy-decision-log`** records. Every decision, allow and deny — a decision point that
 logged only denials answers "what did we refuse" and not "what did we permit", and the second is
 the question an auditor asks about a breach.
 
-**`@trustos/policy-engine`** is the three together plus enforcement.
+**`@trustsystem/policy-engine`** is the three together plus enforcement.
 
 ## First match wins, by priority then by id
 
@@ -87,5 +87,5 @@ decision.missingAttributes; // ['consumerKind']
 ```
 
 A rule reading an attribute nobody supplied never fires — and in a review, a rule that never fires
-looks exactly like a rule that never needed to. `@trustos/api-policy` goes further and refuses a
+looks exactly like a rule that never needed to. `@trustsystem/api-policy` goes further and refuses a
 policy that reads an attribute the API layer never supplies, at load time.

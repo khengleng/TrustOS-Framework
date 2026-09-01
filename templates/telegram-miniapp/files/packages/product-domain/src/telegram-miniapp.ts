@@ -9,7 +9,7 @@
  * with another template layered beneath this one.
  */
 
-import { definePermission, type PermissionDefinition } from '@trustos/template-sdk';
+import { definePermission, type PermissionDefinition } from '@trustsystem/template-sdk';
 
 export const TELEGRAM_MINIAPP_PERMISSIONS = {
   MINI_APP_USER_READ: definePermission('telegramminiapp.mini-app-user.read', 'View users.'),

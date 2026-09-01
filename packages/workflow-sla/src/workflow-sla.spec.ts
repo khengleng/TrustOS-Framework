@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { WorkflowSlaRecord } from '@trustos/workflow-core';
+import type { WorkflowSlaRecord } from '@trustsystem/workflow-core';
 import {
   buildSlaRecord,
   CalendarRegistry,

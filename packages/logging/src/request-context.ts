@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
-import type { ActorContext, RequestContext } from '@trustos/shared-types';
+import type { ActorContext, RequestContext } from '@trustsystem/shared-types';
 
 /**
  * Request-scoped logging context.
@@ -8,7 +8,7 @@ import type { ActorContext, RequestContext } from '@trustos/shared-types';
  * Carried in AsyncLocalStorage so a service five layers deep can emit a log
  * line correlated to the request without every function signature growing a
  * `ctx` parameter. This store is for *observability*; authorization decisions
- * must never read from it (see @trustos/tenancy for why).
+ * must never read from it (see @trustsystem/tenancy for why).
  */
 const storage = new AsyncLocalStorage<RequestContext>();
 

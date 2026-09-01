@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import { assertTenantMatch, scopedDelegate } from '@trustos/tenancy';
+import { ApiError } from '@trustsystem/errors';
+import { assertTenantMatch, scopedDelegate } from '@trustsystem/tenancy';
 import type { PrismaLike } from './context';
 
 /**
@@ -14,7 +14,7 @@ import type { PrismaLike } from './context';
  * product code. Both exist on purpose: an application has the class without
  * installing the module SDK, and a module has it without importing generated
  * application code. Neither reimplements the isolation itself — both delegate to
- * `@trustos/tenancy`, which is the single implementation.
+ * `@trustsystem/tenancy`, which is the single implementation.
  */
 
 export interface ModuleRow {

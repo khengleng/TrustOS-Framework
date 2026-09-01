@@ -1,4 +1,4 @@
-# @trustos/module-notification
+# @trustsystem/module-notification
 
 **Notification** · v0.1.0 · experimental · owned by TrustOS Platform Engineering
 
@@ -165,7 +165,7 @@ npx vitest run packages/modules/notification
 
 Unit, tenant isolation, RBAC where this module makes its own authorization decisions,
 configuration validation and lifecycle. Isolation tests drive the Prisma store over
-`FakeModelDelegate`, so they exercise `@trustos/tenancy` rather than a test double.
+`FakeModelDelegate`, so they exercise `@trustsystem/tenancy` rather than a test double.
 
 ## Changes
 

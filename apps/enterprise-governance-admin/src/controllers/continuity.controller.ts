@@ -1,21 +1,21 @@
 import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
-import type { AuditService } from '@trustos/audit';
-import { assuranceOf, describeAssurance, type BackupInventory } from '@trustos/backup';
-import { assertTestValidates, restoreTestSchema, type RestoreTest } from '@trustos/recovery';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
+import type { AuditService } from '@trustsystem/audit';
+import { assuranceOf, describeAssurance, type BackupInventory } from '@trustsystem/backup';
+import { assertTestValidates, restoreTestSchema, type RestoreTest } from '@trustsystem/recovery';
 import {
   assertActivatable,
   capabilityStatement,
   readinessOf,
   reviewPlans,
   type DrPlan,
-} from '@trustos/disaster-recovery';
-import { continuityStatus, gapAnalysis, type BusinessProcess } from '@trustos/continuity';
+} from '@trustsystem/disaster-recovery';
+import { continuityStatus, gapAnalysis, type BusinessProcess } from '@trustsystem/continuity';
 import { AUDIT_SERVICE, BACKUP_INVENTORY, CONTINUITY_STATE } from '../tokens';
 import { ENTERPRISE_PERMISSIONS } from '../permissions';
 

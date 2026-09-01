@@ -1,8 +1,8 @@
 import { createHmac } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
-import type { ApiError } from '@trustos/errors';
-import { FakeModelDelegate, runInTenantContext } from '@trustos/tenancy';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
+import type { ApiError } from '@trustsystem/errors';
+import { FakeModelDelegate, runInTenantContext } from '@trustsystem/tenancy';
 import { ProductService } from './product.service';
 import { validateInitData } from './telegram-init-data';
 

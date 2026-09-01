@@ -1,7 +1,7 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
-import type { AppConfig } from '@trustos/config';
-import type { Logger } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
+import type { AppConfig } from '@trustsystem/config';
+import type { Logger } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
 import { APP_CONFIG_TOKEN, APP_LOGGER, APP_METRICS } from '../tokens';
 
 /**

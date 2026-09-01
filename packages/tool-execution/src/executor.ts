@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
-import type { ToolCall, ToolDefinition } from '@trustos/ai-sdk';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
+import type { ToolCall, ToolDefinition } from '@trustsystem/ai-sdk';
 import {
   parseArguments,
   resolveCall,
@@ -12,7 +12,7 @@ import {
   type FunctionCallContext,
   type FunctionDefinition,
   type FunctionResult,
-} from '@trustos/function-calling';
+} from '@trustsystem/function-calling';
 
 /**
  * The tool registry and executor.

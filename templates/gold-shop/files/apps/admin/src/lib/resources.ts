@@ -5,7 +5,7 @@
  * than another near-identical page component.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { GOLD_SHOP_RESOURCES } from './resources-gold-shop';
 
 export const RESOURCES: ResourceDefinition[] = [...GOLD_SHOP_RESOURCES];

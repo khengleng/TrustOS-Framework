@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/vector-store",
+  "name": "@trustsystem/vector-store",
   "version": "0.1.0",
   "description": "Vector storage abstraction: upsert, search, filter, delete. In-memory default.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/ai-sdk": "0.1.0",
-    "@trustos/embedding": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/ai-sdk": "0.1.0",
+    "@trustsystem/embedding": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

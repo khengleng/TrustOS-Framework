@@ -10,8 +10,8 @@ import {
   type ProductTransition,
   type ProductType,
   type ProviderRequirement,
-} from '@trustos/financial-product-core';
-import { APPROVED_BLOCKS, type BlockRegistry } from '@trustos/financial-block-registry';
+} from '@trustsystem/financial-product-core';
+import { APPROVED_BLOCKS, type BlockRegistry } from '@trustsystem/financial-block-registry';
 import { validateProduct, type ValidateProductOptions, type ValidationResult } from './validate';
 
 /**

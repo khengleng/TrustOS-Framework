@@ -4,7 +4,7 @@ How an internal application reaches a TrustOS API, and why it cannot reach anyth
 
 ## The catalog, not a client
 
-`@trustos/governance-tool-integration` is a **catalog**: every gateway path that exists, the
+`@trustsystem/governance-tool-integration` is a **catalog**: every gateway path that exists, the
 TrustOS resource it touches, the kind of operation it is, and the API permission it needs.
 
 A catalog rather than a set of functions because the gateway has to answer, for a request it has
@@ -43,7 +43,7 @@ asks; TrustOS decides, through maker-checker.
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `publishProduct`, `activateProduct` | The Studio composes and submits. Publishing from a low-code console is what this layer exists not to be |
 | Any `/journals` or `/postings` path | Direct ledger posting from a console is prohibited. `requestAdjustment` replaces it                     |
-| Any API-key reveal                  | `@trustos/api-keys` stores a prefix and a hash; there is nothing to reveal                              |
+| Any API-key reveal                  | `@trustsystem/api-keys` stores a prefix and a hash; there is nothing to reveal                          |
 | Any business logic                  | Every entry is a mapping. A helper computing a fee would be a second implementation of the fee          |
 
 Tests assert each of these absences, and a further one asserts that **every path the ten console

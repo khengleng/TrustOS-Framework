@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createTestModuleContext } from '@trustos/module-sdk';
+import { createTestModuleContext } from '@trustsystem/module-sdk';
 import { createWebhook, webhookConfigSchema, webhookModule } from './webhook.module';
 
 /*
- * `@trustos/module-webhook` is a contract wrapper.
+ * `@trustsystem/module-webhook` is a contract wrapper.
  *
  * The behaviour lives in the framework packages it fronts and is tested where it is
  * implemented; what this package owns is the declaration the platform reads and the

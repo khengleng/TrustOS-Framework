@@ -1,28 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { DataCatalog, catalogEntrySchema } from '@trustos/data-catalog';
-import { classificationRank, obligationsFor } from '@trustos/data-classification';
-import { PolicyRegistry, policyDocumentSchema } from '@trustos/policy-registry';
-import { evaluatePolicy, runPolicyTests } from '@trustos/policy-evaluator';
-import { InMemoryPolicyDecisionSink, PolicyDecisionLog } from '@trustos/policy-decision-log';
-import { PolicyEngine } from '@trustos/policy-engine';
-import { ApiCatalog, apiClassification, apiDefinitionSchema } from '@trustos/api-catalog';
-import { ConsumerRegistry, consumerSchema } from '@trustos/api-consumer';
-import { ApiGateway, InMemoryAnalyticsSink, summariseAnalytics } from '@trustos/api-management';
-import { InMemoryQuotaUsageStore, quotaSchema } from '@trustos/api-quota';
-import { InMemoryRateCounterStore, rateLimitSchema } from '@trustos/api-rate-limit';
+import { DataCatalog, catalogEntrySchema } from '@trustsystem/data-catalog';
+import { classificationRank, obligationsFor } from '@trustsystem/data-classification';
+import { PolicyRegistry, policyDocumentSchema } from '@trustsystem/policy-registry';
+import { evaluatePolicy, runPolicyTests } from '@trustsystem/policy-evaluator';
+import { InMemoryPolicyDecisionSink, PolicyDecisionLog } from '@trustsystem/policy-decision-log';
+import { PolicyEngine } from '@trustsystem/policy-engine';
+import { ApiCatalog, apiClassification, apiDefinitionSchema } from '@trustsystem/api-catalog';
+import { ConsumerRegistry, consumerSchema } from '@trustsystem/api-consumer';
+import { ApiGateway, InMemoryAnalyticsSink, summariseAnalytics } from '@trustsystem/api-management';
+import { InMemoryQuotaUsageStore, quotaSchema } from '@trustsystem/api-quota';
+import { InMemoryRateCounterStore, rateLimitSchema } from '@trustsystem/api-rate-limit';
 import {
   aggregate,
   sliDefinitionSchema,
   sliMeasurementSchema,
   sufficientToJudge,
-} from '@trustos/sli';
-import { burnAlert, burnRate, errorBudget, evaluateSlo, sloSchema } from '@trustos/slo';
-import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustos/sre-core';
+} from '@trustsystem/sli';
+import { burnAlert, burnRate, errorBudget, evaluateSlo, sloSchema } from '@trustsystem/slo';
+import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustsystem/sre-core';
 import {
   AI_FORBIDDEN_ACTIONS,
   PERMITTED_INPUTS,
   requiresHumanReview,
-} from '@trustos/governance-ai-bridge';
+} from '@trustsystem/governance-ai-bridge';
 
 /**
  * §11 and §15–§20 of the pilot specification: the enterprise layer applied to the pilot.
@@ -513,7 +513,7 @@ describe('API management', () => {
 
   it('lets a write scope read, and not the reverse', async () => {
     /*
-     * `@trustos/api-keys`' rule, reused rather than restated: a credential that may change
+     * `@trustsystem/api-keys`' rule, reused rather than restated: a credential that may change
      * something can necessarily observe it. The pilot's first version of this test asserted the
      * opposite and was wrong — requiring both scopes on every credential is how every credential
      * eventually gets a wildcard.

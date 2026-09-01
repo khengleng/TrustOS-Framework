@@ -1,33 +1,33 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
 import {
   type ApiCatalog,
   type ApiDefinition,
   type ApiOperation,
   apiClassification,
-} from '@trustos/api-catalog';
+} from '@trustsystem/api-catalog';
 import {
   type Consumer,
   type ConsumerRegistry,
   type Entitlement,
   decideAccess,
-} from '@trustos/api-consumer';
+} from '@trustsystem/api-consumer';
 import {
   type Quota,
   type QuotaUsageStore,
   consumeQuota,
   quotaHeaders,
   readQuota,
-} from '@trustos/api-quota';
+} from '@trustsystem/api-quota';
 import {
   type RateCounterStore,
   type RateLimit,
   checkRate,
   rateHeaders,
-} from '@trustos/api-rate-limit';
-import { assertApiPolicy, type ApiPolicyContext } from '@trustos/api-policy';
-import type { PolicyDocument } from '@trustos/policy-registry';
+} from '@trustsystem/api-rate-limit';
+import { assertApiPolicy, type ApiPolicyContext } from '@trustsystem/api-policy';
+import type { PolicyDocument } from '@trustsystem/policy-registry';
 
 /**
  * The API management surface.

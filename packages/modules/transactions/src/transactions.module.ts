@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The transactions module.
  *
  * The transaction lifecycle with idempotency, fees, limits, risk hooks and payment requests.
  *
- * A thin wrapper. The implementation is in `@trustos/fees`, `@trustos/financial-core`, `@trustos/financial-risk`, `@trustos/fx`, `@trustos/limits`, `@trustos/payments`, `@trustos/transactions` —
+ * A thin wrapper. The implementation is in `@trustsystem/fees`, `@trustsystem/financial-core`, `@trustsystem/financial-risk`, `@trustsystem/fx`, `@trustsystem/limits`, `@trustsystem/payments`, `@trustsystem/transactions` —
  * this package contributes the declarations the platform needs (permissions, audit events,
  * health) and the start/stop lifecycle.
  *

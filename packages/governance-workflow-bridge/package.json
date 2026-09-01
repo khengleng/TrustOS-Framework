@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/governance-workflow-bridge",
+  "name": "@trustsystem/governance-workflow-bridge",
   "version": "0.1.0",
   "description": "The approval and case experience over the TrustOS workflow framework. Authoritative state stays in the workflow engine.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/governance-tool-core": "0.1.0",
-    "@trustos/workflow-approvals": "0.1.0",
-    "@trustos/workflow-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/governance-tool-core": "0.1.0",
+    "@trustsystem/workflow-approvals": "0.1.0",
+    "@trustsystem/workflow-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

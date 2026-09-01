@@ -1,5 +1,5 @@
 /**
- * @trustos/knowledge
+ * @trustsystem/knowledge
  *
  * Knowledge collections and documents with versions, access policy and expiry.
  *

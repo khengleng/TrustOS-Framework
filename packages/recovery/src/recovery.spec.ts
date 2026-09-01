@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BackupInventory, assuranceOf, backupRecordSchema } from '@trustos/backup';
+import { BackupInventory, assuranceOf, backupRecordSchema } from '@trustsystem/backup';
 import {
   RESTORE_CHECKS,
   assertTestValidates,

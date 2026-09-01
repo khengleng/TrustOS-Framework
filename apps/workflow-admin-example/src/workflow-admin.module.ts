@@ -1,24 +1,28 @@
 import { DynamicModule, Global, Module, type Provider } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import { AuditService, PrismaAuditSink } from '@trustos/audit';
-import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
-import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
-import { CaseService, PrismaCaseStore } from '@trustos/case-management';
-import type { AppConfig } from '@trustos/config';
-import { DatabaseModule, PrismaService } from '@trustos/database';
-import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
-import type { AccessResolver, CredentialAuthenticator, IdentityProvider } from '@trustos/identity';
-import type { Logger } from '@trustos/logging';
-import { InMemoryMetricsRecorder, type MetricsRecorder } from '@trustos/observability';
-import { canGrantRole, PermissionsGuard } from '@trustos/rbac';
+import { AuditService, PrismaAuditSink } from '@trustsystem/audit';
+import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustsystem/authorization';
+import { PolicyAuthorizationGuard } from '@trustsystem/authorization/nest';
+import { CaseService, PrismaCaseStore } from '@trustsystem/case-management';
+import type { AppConfig } from '@trustsystem/config';
+import { DatabaseModule, PrismaService } from '@trustsystem/database';
+import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustsystem/identity/nest';
+import type {
+  AccessResolver,
+  CredentialAuthenticator,
+  IdentityProvider,
+} from '@trustsystem/identity';
+import type { Logger } from '@trustsystem/logging';
+import { InMemoryMetricsRecorder, type MetricsRecorder } from '@trustsystem/observability';
+import { canGrantRole, PermissionsGuard } from '@trustsystem/rbac';
 import {
   LoggerSecurityEventSink,
   PersistentSecurityEventSink,
   SecurityEventEmitter,
   type SecurityEventSink,
-} from '@trustos/security-events';
-import type { SecurityPolicy } from '@trustos/security-policy';
-import { TenantGuard } from '@trustos/tenancy';
+} from '@trustsystem/security-events';
+import type { SecurityPolicy } from '@trustsystem/security-policy';
+import { TenantGuard } from '@trustsystem/tenancy';
 import {
   AttachmentService,
   CommentService,
@@ -27,11 +31,11 @@ import {
   PrismaCommentStore,
   PrismaHistoryStore,
   type DocumentPort,
-} from '@trustos/workflow-history';
-import { WORKFLOW_POLICIES } from '@trustos/workflow-policy';
-import { CalendarRegistry, SlaService } from '@trustos/workflow-sla';
-import { EscalationService, LoggingEscalationNotifier } from '@trustos/workflow-escalation';
-import { PrismaTaskStore, TaskService, type MemberDirectory } from '@trustos/workflow-tasks';
+} from '@trustsystem/workflow-history';
+import { WORKFLOW_POLICIES } from '@trustsystem/workflow-policy';
+import { CalendarRegistry, SlaService } from '@trustsystem/workflow-sla';
+import { EscalationService, LoggingEscalationNotifier } from '@trustsystem/workflow-escalation';
+import { PrismaTaskStore, TaskService, type MemberDirectory } from '@trustsystem/workflow-tasks';
 import {
   CompiledWorkflowCache,
   PrismaDecisionStore,
@@ -45,9 +49,9 @@ import {
   WorkflowDefinitionService,
   WorkflowEngine,
   type BusinessObjectValidator,
-} from '@trustos/workflow-runtime';
-import { ALL_WORKFLOW_PERMISSION_KEYS } from '@trustos/workflow-core';
-import { ALL_PERMISSION_KEYS } from '@trustos/rbac';
+} from '@trustsystem/workflow-runtime';
+import { ALL_WORKFLOW_PERMISSION_KEYS } from '@trustsystem/workflow-core';
+import { ALL_PERMISSION_KEYS } from '@trustsystem/rbac';
 import { CaseController } from './controllers/case.controller';
 import { DefinitionController } from './controllers/definition.controller';
 import { InstanceController } from './controllers/instance.controller';

@@ -1,10 +1,10 @@
-# @trustos/module-ai
+# @trustsystem/module-ai
 
 The AI gateway and everything a model call has to pass through: model registry, prompt registry, guardrails, tenant policy, routing, cost accounting and caching.
 
 ## What this package is
 
-A thin module wrapper. The implementation is in `@trustos/ai-cache`, `@trustos/ai-gateway`, `@trustos/ai-observability`, `@trustos/ai-policy`, `@trustos/ai-sdk`, `@trustos/content-filter`, `@trustos/cost-monitor`, `@trustos/guardrails`, `@trustos/model-registry`, `@trustos/model-router`, `@trustos/prompt-registry`, `@trustos/prompt-security`, `@trustos/token-meter`; this package contributes the declarations the platform needs — permissions,
+A thin module wrapper. The implementation is in `@trustsystem/ai-cache`, `@trustsystem/ai-gateway`, `@trustsystem/ai-observability`, `@trustsystem/ai-policy`, `@trustsystem/ai-sdk`, `@trustsystem/content-filter`, `@trustsystem/cost-monitor`, `@trustsystem/guardrails`, `@trustsystem/model-registry`, `@trustsystem/model-router`, `@trustsystem/prompt-registry`, `@trustsystem/prompt-security`, `@trustsystem/token-meter`; this package contributes the declarations the platform needs — permissions,
 audit events and a health indicator — and the start/stop lifecycle.
 
 ## Installing
@@ -17,7 +17,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 ```ts
-import { AiModule } from '@trustos/module-ai/nest';
+import { AiModule } from '@trustsystem/module-ai/nest';
 
 @Module({ imports: [AiModule.forRoot(binding)] })
 export class AppModule {}

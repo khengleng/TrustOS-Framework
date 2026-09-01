@@ -1,26 +1,30 @@
 import { DynamicModule, Global, Module, type Provider } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import { AuditService, PrismaAuditSink } from '@trustos/audit';
-import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
-import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
-import type { AppConfig } from '@trustos/config';
-import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustos/database';
-import { ObservabilityModule, databaseHealthIndicator } from '@trustos/observability';
-import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
-import type { AccessResolver, CredentialAuthenticator, IdentityProvider } from '@trustos/identity';
-import type { Logger } from '@trustos/logging';
-import { canGrantRole, PermissionsGuard } from '@trustos/rbac';
+import { AuditService, PrismaAuditSink } from '@trustsystem/audit';
+import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustsystem/authorization';
+import { PolicyAuthorizationGuard } from '@trustsystem/authorization/nest';
+import type { AppConfig } from '@trustsystem/config';
+import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustsystem/database';
+import { ObservabilityModule, databaseHealthIndicator } from '@trustsystem/observability';
+import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustsystem/identity/nest';
+import type {
+  AccessResolver,
+  CredentialAuthenticator,
+  IdentityProvider,
+} from '@trustsystem/identity';
+import type { Logger } from '@trustsystem/logging';
+import { canGrantRole, PermissionsGuard } from '@trustsystem/rbac';
 import {
   LoggerSecurityEventSink,
   PersistentSecurityEventSink,
   SecurityEventEmitter,
   type SecurityEventSink,
-} from '@trustos/security-events';
-import type { SecurityPolicy } from '@trustos/security-policy';
-import { TenantGuard } from '@trustos/tenancy';
-import { ApiCatalog } from '@trustos/api-catalog';
-import { ConsumerRegistry } from '@trustos/api-consumer';
-import { InMemoryQuotaUsageStore, type QuotaUsageStore } from '@trustos/api-quota';
+} from '@trustsystem/security-events';
+import type { SecurityPolicy } from '@trustsystem/security-policy';
+import { TenantGuard } from '@trustsystem/tenancy';
+import { ApiCatalog } from '@trustsystem/api-catalog';
+import { ConsumerRegistry } from '@trustsystem/api-consumer';
+import { InMemoryQuotaUsageStore, type QuotaUsageStore } from '@trustsystem/api-quota';
 import { PortalController, type PortalState } from './controllers/portal.controller';
 import {
   ACCESS_RESOLVER,
@@ -66,7 +70,7 @@ export interface ApiDeveloperPortalOptions {
     consumers: ConsumerRegistry;
     state: PortalState;
     quotaStore: QuotaUsageStore;
-    /** Reads credential metadata from `@trustos/api-keys`. Never returns a key. */
+    /** Reads credential metadata from `@trustsystem/api-keys`. Never returns a key. */
     keyMetadata: (credentialId: string) => {
       keyPrefix: string;
       name: string;

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { LoggerPort } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
-import type { EventRegistry } from '@trustos/event-registry';
+import { ApiError } from '@trustsystem/errors';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
+import type { EventRegistry } from '@trustsystem/event-registry';
 import {
   assertValidPattern,
   deduplicationKey,
@@ -10,14 +10,14 @@ import {
   orderingKey,
   redactEnvelope,
   type EventEnvelope,
-} from '@trustos/event-sdk';
+} from '@trustsystem/event-sdk';
 import {
   RETRY_PRESETS,
   RetryExhaustedError,
   RetryTimeoutError,
   withRetry,
   type RetryPolicy,
-} from '@trustos/retry';
+} from '@trustsystem/retry';
 import type {
   DeadLetterStore,
   DeliveryLedger,

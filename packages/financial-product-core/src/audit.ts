@@ -61,7 +61,7 @@ export type ProductAuditAction = (typeof PRODUCT_AUDIT_ACTIONS)[keyof typeof PRO
 /**
  * The event catalog.
  *
- * Every name a product execution can emit. Registered with `@trustos/event-registry` by the
+ * Every name a product execution can emit. Registered with `@trustsystem/event-registry` by the
  * deployment — an event whose schema is not registered is never published, and this list is what
  * the registration is built from.
  */

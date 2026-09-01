@@ -7,7 +7,7 @@ import {
   providerRequirementSchema,
   riskPolicySchema,
   settlementPolicySchema,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 
 /**
  * Product variants.

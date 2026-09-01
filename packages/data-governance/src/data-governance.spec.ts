@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DataCatalog, catalogEntrySchema } from '@trustos/data-catalog';
-import { retentionRuleSchema } from '@trustos/data-retention';
+import { DataCatalog, catalogEntrySchema } from '@trustsystem/data-catalog';
+import { retentionRuleSchema } from '@trustsystem/data-retention';
 import { assertGoverned, assess, residencyPolicySchema, validatePlacement } from './index';
 
 const NOW = new Date('2026-06-01T00:00:00.000Z');

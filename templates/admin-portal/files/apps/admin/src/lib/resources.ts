@@ -5,7 +5,7 @@
  * than another near-identical page component.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { ADMIN_PORTAL_RESOURCES } from './resources-admin-portal';
 
 export const RESOURCES: ResourceDefinition[] = [...ADMIN_PORTAL_RESOURCES];

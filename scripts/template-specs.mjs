@@ -347,7 +347,7 @@ export const TEMPLATE_SPECS = [
     owner: 'TrustOS Financial Team',
     description:
       'Customer wallets over the framework ledger: wallet profiles, transfers, transfer limits ' +
-      'and history. Balances come from @trustos/wallet — this template stores no balance column.',
+      'and history. Balances come from @trustsystem/wallet — this template stores no balance column.',
     modules: [...SDK, ...MONEY],
     outOfScope: [
       'payment providers',
@@ -358,7 +358,7 @@ export const TEMPLATE_SPECS = [
     ],
     migrationNotes:
       'Initial release. There is deliberately no balance column anywhere in this schema: ' +
-      '@trustos/wallet computes it from the ledger, and a cached copy is the one thing that ' +
+      '@trustsystem/wallet computes it from the ledger, and a cached copy is the one thing that ' +
       'makes two sources of truth. WalletProfile is the *product* record; the money lives in the ' +
       'framework.',
     entities: [
@@ -368,7 +368,7 @@ export const TEMPLATE_SPECS = [
         singular: 'Wallet',
         description:
           'The product-side record of a wallet. `walletId` points at the framework wallet that ' +
-          'owns the money; everything financial is read through @trustos/wallet.',
+          'owns the money; everything financial is read through @trustsystem/wallet.',
         fields: [
           { name: 'walletId', type: 'text', label: 'Wallet id', required: true, unique: true, immutable: true },
           { name: 'ownerName', type: 'text', label: 'Owner', required: true, search: true },
@@ -387,7 +387,7 @@ export const TEMPLATE_SPECS = [
         label: 'Transfers',
         singular: 'Transfer',
         description:
-          'A movement between two wallets. The journal is written by @trustos/ledger; this row ' +
+          'A movement between two wallets. The journal is written by @trustsystem/ledger; this row ' +
           'is the product-level record of *why*, and `journalId` is the link between them.',
         fields: [
           { name: 'reference', type: 'text', label: 'Reference', required: true, unique: true, immutable: true, search: true, prefix: true },
@@ -407,7 +407,7 @@ export const TEMPLATE_SPECS = [
         singular: 'Limit profile',
         description:
           'Which framework limit keys apply to a wallet tier. The ceilings themselves live in ' +
-          '@trustos/limits — this maps tiers onto them so a tier change is one row, not a ' +
+          '@trustsystem/limits — this maps tiers onto them so a tier change is one row, not a ' +
           'migration.',
         fields: [
           { name: 'tier', type: 'enum:WalletTier', label: 'Tier', required: true, unique: true },
@@ -504,7 +504,7 @@ export const TEMPLATE_SPECS = [
         singular: 'Preference',
         description:
           'Which channels a customer has muted. Security notifications ignore this — see the ' +
-          '`optional` flag in @trustos/template-sdk.',
+          '`optional` flag in @trustsystem/template-sdk.',
         fields: [
           { name: 'customerId', type: 'ref:BankCustomer', label: 'Customer', required: true },
           { name: 'channel', type: 'enum:NotificationChannelName', label: 'Channel', required: true },
@@ -533,7 +533,7 @@ export const TEMPLATE_SPECS = [
       'regulatory reporting',
     ],
     migrationNotes:
-      'Initial release. The approval path is a @trustos/workflow-definition document in ' +
+      'Initial release. The approval path is a @trustsystem/workflow-definition document in ' +
       'workflows/ — edit it there and validate with `trustos workflow validate`, rather than ' +
       'adding status columns here. The repayment schedule is generated once at disbursement and ' +
       'never recomputed; a restructure writes a new schedule and supersedes the old one.',
@@ -1133,7 +1133,7 @@ export const TEMPLATE_SPECS = [
       'customer satisfaction surveys',
     ],
     migrationNotes:
-      'Initial release. SLA timing is computed by @trustos/workflow-sla rather than stored as a ' +
+      'Initial release. SLA timing is computed by @trustsystem/workflow-sla rather than stored as a ' +
       'deadline column: a deadline written at creation is wrong the moment the calendar or the ' +
       'priority changes, and the ticket that silently missed its SLA is the one nobody can ' +
       'explain afterwards.',
@@ -1167,7 +1167,7 @@ export const TEMPLATE_SPECS = [
         label: 'SLA policies',
         singular: 'SLA policy',
         description:
-          'Response and resolution targets per priority. Read by @trustos/workflow-sla; this ' +
+          'Response and resolution targets per priority. Read by @trustsystem/workflow-sla; this ' +
           'template stores the numbers, not the clock.',
         fields: [
           { name: 'name', type: 'text', label: 'Policy', required: true },
@@ -1241,7 +1241,7 @@ export const TEMPLATE_SPECS = [
     migrationNotes:
       'Initial release. The AI tutor is a *hook*, not an integration: TutorSession records what ' +
       'was asked and what was answered, and the answering is done by whatever the deployment ' +
-      'wires into @trustos/ai-gateway. Nothing here calls a model, and nothing here should.',
+      'wires into @trustsystem/ai-gateway. Nothing here calls a model, and nothing here should.',
     entities: [
       {
         name: 'Teacher',
@@ -1398,7 +1398,7 @@ export const TEMPLATE_SPECS = [
         description:
           'The AI tutor hook. Records the question, the answer and which model answered — and ' +
           'calls nothing. Wiring a provider is a deployment decision made through ' +
-          '@trustos/ai-gateway.',
+          '@trustsystem/ai-gateway.',
         fields: [
           { name: 'studentId', type: 'ref:Student', label: 'Student', required: true },
           { name: 'courseId', type: 'ref:Course', label: 'Course' },
@@ -1730,7 +1730,7 @@ export const TEMPLATE_SPECS = [
     migrationNotes:
       'Initial release. Beneficiary identity is the sensitive part of this domain: names and ' +
       'contact details sit behind their own PII permission, and a report exported for a donor ' +
-      'must not carry them. The export path in @trustos/export is where that filtering belongs.',
+      'must not carry them. The export path in @trustsystem/export is where that filtering belongs.',
     entities: [
       {
         name: 'Programme',
@@ -1846,7 +1846,7 @@ export const TEMPLATE_SPECS = [
     migrationNotes:
       'Initial release. Deliberately generic: there is no national ID validation, no ministry ' +
       'taxonomy and no country-specific form. An application is routed by a ' +
-      '@trustos/workflow-definition document the deployment writes, which is the seam that lets ' +
+      '@trustsystem/workflow-definition document the deployment writes, which is the seam that lets ' +
       'one template serve agencies whose processes have nothing in common.',
     entities: [
       {
@@ -2034,7 +2034,7 @@ export const TEMPLATE_SPECS = [
         label: 'Notification settings',
         singular: 'Notification setting',
         description:
-          'What a user has muted. Security notifications ignore this — see @trustos/template-sdk.',
+          'What a user has muted. Security notifications ignore this — see @trustsystem/template-sdk.',
         fields: [
           { name: 'miniAppUserId', type: 'ref:MiniAppUser', label: 'User', required: true },
           { name: 'notificationKey', type: 'text', label: 'Notification', required: true },
@@ -2226,7 +2226,7 @@ export const TEMPLATE_SPECS = [
         singular: 'Document',
         description:
           'A file made available to a customer. `storageKey` is opaque and never a filename the ' +
-          'customer supplied — see the upload guidance in @trustos/template-sdk.',
+          'customer supplied — see the upload guidance in @trustsystem/template-sdk.',
         fields: [
           { name: 'ownerUserId', type: 'text', label: 'Owner', required: true },
           { name: 'title', type: 'text', label: 'Document', required: true, search: true },
@@ -2290,7 +2290,7 @@ export const TEMPLATE_SPECS = [
       'document management systems',
     ],
     migrationNotes:
-      'Initial release. Approvals are not stored here: @trustos/workflow-approvals owns them, ' +
+      'Initial release. Approvals are not stored here: @trustsystem/workflow-approvals owns them, ' +
       'and this template holds only the *view* — which saved search a person uses, which report ' +
       'they run. A portal that copied approval state would be a second source of truth for ' +
       'whether something was approved.',
@@ -2380,7 +2380,7 @@ export const TEMPLATE_SPECS = [
       'external status page services',
     ],
     migrationNotes:
-      'Initial release. Keys are issued and verified by @trustos/api-keys — this template stores ' +
+      'Initial release. Keys are issued and verified by @trustsystem/api-keys — this template stores ' +
       'the *record* of a key (its prefix, its owner, when it was last used) and never the key ' +
       'itself. A portal that could show a key again after issuing it would be a portal that ' +
       'stores it in a readable form, which defeats the whole design.',
@@ -2408,7 +2408,7 @@ export const TEMPLATE_SPECS = [
         label: 'API keys',
         singular: 'API key',
         description:
-          'The record of a key issued by @trustos/api-keys. Holds the prefix so a developer can ' +
+          'The record of a key issued by @trustsystem/api-keys. Holds the prefix so a developer can ' +
           'recognize it and never the secret — see the migration note.',
         fields: [
           { name: 'applicationId', type: 'ref:ApiApplication', label: 'Application', required: true },

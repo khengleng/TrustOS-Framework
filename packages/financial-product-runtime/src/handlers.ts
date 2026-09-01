@@ -2,8 +2,8 @@ import {
   productError,
   type ProductBlock,
   type ProductExecutionContext,
-} from '@trustos/financial-product-core';
-import type { ConnectorDefinition } from '@trustos/connector-registry';
+} from '@trustsystem/financial-product-core';
+import type { ConnectorDefinition } from '@trustsystem/connector-registry';
 
 /**
  * The block handler contract.
@@ -11,8 +11,8 @@ import type { ConnectorDefinition } from '@trustos/connector-registry';
  * **The framework ships no handler for any block.** Not one, and that is the deliverable rather
  * than an omission. The catalog knows what a debit *means* — that it moves money, that it needs a
  * preceding limit, that it is undone by a reversal — and it deliberately does not know which
- * account it lands in. A deployment binds `wallet.debit` to `@trustos/wallet`, `ledger.*` to
- * `@trustos/ledger`, `fee.*` to `@trustos/fees`; the sandbox binds every one of them to a mock.
+ * account it lands in. A deployment binds `wallet.debit` to `@trustsystem/wallet`, `ledger.*` to
+ * `@trustsystem/ledger`, `fee.*` to `@trustsystem/fees`; the sandbox binds every one of them to a mock.
  *
  * A handler receives an already-authorized actor, an already-validated definition and an
  * already-consumed limit. It does not authorize, does not re-validate and does not decide whether
@@ -52,7 +52,7 @@ export interface BlockExecutionInput {
    *
    * Metadata only — the timeout, the retry policy, the operation name. The adapter that actually
    * calls the external system belongs to the deployment and is reached through
-   * `@trustos/adapter-framework`. Nothing here carries a credential.
+   * `@trustsystem/adapter-framework`. Nothing here carries a credential.
    */
   connector: ConnectorDefinition | null;
   /** Outputs of every block that has already run in this execution, keyed by block key. */

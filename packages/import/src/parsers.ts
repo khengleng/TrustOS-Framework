@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * Parsing uploaded files.
@@ -14,7 +14,7 @@ import { ApiError } from '@trustos/errors';
  *
  *   1. **A cell that begins with `=`, `+`, `-` or `@` is a formula to a spreadsheet.** If that
  *      value is later exported and opened in Excel, it executes. This is CSV injection, and it is
- *      the reason `@trustos/export` prefixes such values on the way out — see `escapeCsvCell`
+ *      the reason `@trustsystem/export` prefixes such values on the way out — see `escapeCsvCell`
  *      there. On the way *in*, the raw value is preserved and flagged, so a validator can decide.
  *   2. **A file is bounded.** Row count, cell size, column count. An import is a request an
  *      authenticated user makes, and an unbounded parse is an out-of-memory crash they can

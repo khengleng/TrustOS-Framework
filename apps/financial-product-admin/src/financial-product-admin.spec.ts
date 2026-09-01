@@ -2,13 +2,13 @@ import 'reflect-metadata';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import { afterEach, describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
-import { loadConfig } from '@trustos/config';
-import { PrismaService } from '@trustos/database';
-import { createLogger } from '@trustos/logging';
-import { InMemorySecurityEventSink } from '@trustos/security-events';
-import { securityPolicySchema } from '@trustos/security-policy';
-import { FINANCIAL_PRODUCT_PERMISSIONS } from '@trustos/financial-product-core';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
+import { loadConfig } from '@trustsystem/config';
+import { PrismaService } from '@trustsystem/database';
+import { createLogger } from '@trustsystem/logging';
+import { InMemorySecurityEventSink } from '@trustsystem/security-events';
+import { securityPolicySchema } from '@trustsystem/security-policy';
+import { FINANCIAL_PRODUCT_PERMISSIONS } from '@trustsystem/financial-product-core';
 import { FinancialProductAdminModule } from './financial-product-admin.module';
 import { BLOCK_REGISTRY, GUARD_ORDER, PRODUCT_REGISTRY, PRODUCT_RUNTIME } from './tokens';
 
@@ -206,7 +206,7 @@ describe('booting the Financial Product Designer', () => {
 
     /*
      * This is an administration surface. Executing a transaction goes through the product's own
-     * exposed API and `@trustos/financial-product-api`'s dispatcher, which applies the
+     * exposed API and `@trustsystem/financial-product-api`'s dispatcher, which applies the
      * idempotency and rate-limit checks an admin route would not.
      *
      * A "run this product" button here would be a way to create a real transaction from a

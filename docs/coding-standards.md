@@ -69,7 +69,7 @@ well-meaning refactor.
 - Use the **parsed output**, never the raw input. Zod strips unknown keys, which
   is what stops a caller smuggling `organizationId` or `isSuperAdmin` into a DTO
   that later gets spread into a write.
-- Compose the shared primitives in `@trustos/validation` rather than restating
+- Compose the shared primitives in `@trustsystem/validation` rather than restating
   what a valid email or password is.
 
 ## 6. Database access

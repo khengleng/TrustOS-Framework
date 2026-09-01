@@ -1,6 +1,6 @@
 import { randomBytes, scrypt, timingSafeEqual, type ScryptOptions } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { PasswordPolicy } from '@trustos/security-policy';
+import { ApiError } from '@trustsystem/errors';
+import type { PasswordPolicy } from '@trustsystem/security-policy';
 
 /**
  * `scrypt` with options, promisified by hand.

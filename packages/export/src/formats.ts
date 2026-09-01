@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * Export formats.
@@ -108,7 +108,7 @@ export class CsvFormatter implements ExportFormatter {
      * Excel on Windows reads a CSV as the system code page unless it sees one, so a file with
      * Khmer or accented characters opens as mojibake. The BOM is three bytes that make the
      * difference between a usable export and a support ticket, and the import parser in
-     * `@trustos/import` strips it.
+     * `@trustsystem/import` strips it.
      */
     return (
       '\uFEFF' +

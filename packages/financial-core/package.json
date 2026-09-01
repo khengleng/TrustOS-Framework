@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/financial-core",
+  "name": "@trustsystem/financial-core",
   "version": "0.1.0",
   "description": "Money, currency, fixed-point decimals, rounding, allocation and financial identifiers. No floating point.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

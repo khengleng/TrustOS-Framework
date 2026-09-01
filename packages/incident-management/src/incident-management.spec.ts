@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustos/sre-core';
+import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustsystem/sre-core';
 import {
   IncidentManager,
   InMemoryIncidentSink,

@@ -1,5 +1,5 @@
-import type { SecurityEventEmitter } from '@trustos/security-events';
-import type { MfaPolicy } from '@trustos/security-policy';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
+import type { MfaPolicy } from '@trustsystem/security-policy';
 import {
   authorize,
   authorizationDenied,

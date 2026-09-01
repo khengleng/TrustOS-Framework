@@ -1,8 +1,8 @@
 /**
  * Workflow permissions.
  *
- * Declared here rather than in `@trustos/rbac` because they are workflow's
- * vocabulary, and `@trustos/rbac` should not have to know that a workflow engine
+ * Declared here rather than in `@trustsystem/rbac` because they are workflow's
+ * vocabulary, and `@trustsystem/rbac` should not have to know that a workflow engine
  * exists. `registerWorkflowPermissions` merges them into an application's catalog —
  * the same pattern a product uses for its own permissions.
  *

@@ -1,15 +1,15 @@
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { ApiError } from '@trustos/errors';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
-import type { AuditService } from '@trustos/audit';
-import { classificationRank, obligationsFor } from '@trustos/data-classification';
-import type { DataCatalog } from '@trustos/data-catalog';
-import type { LineageGraph } from '@trustos/data-lineage';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { ApiError } from '@trustsystem/errors';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
+import type { AuditService } from '@trustsystem/audit';
+import { classificationRank, obligationsFor } from '@trustsystem/data-classification';
+import type { DataCatalog } from '@trustsystem/data-catalog';
+import type { LineageGraph } from '@trustsystem/data-lineage';
 import { AUDIT_SERVICE, DATA_CATALOG, LINEAGE_GRAPH } from '../tokens';
 import { ENTERPRISE_PERMISSIONS } from '../permissions';
 

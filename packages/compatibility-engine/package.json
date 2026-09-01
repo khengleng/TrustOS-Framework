@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/compatibility-engine",
+  "name": "@trustsystem/compatibility-engine",
   "version": "0.1.0",
   "description": "Whether a framework version, module, database, CLI, template and API can run together.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/template-registry": "0.1.0",
-    "@trustos/version-manager": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/template-registry": "0.1.0",
+    "@trustsystem/version-manager": "0.1.0",
     "zod": "^3.24.1"
   }
 }

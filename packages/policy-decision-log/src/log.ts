@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { PolicyDecision } from '@trustos/policy-evaluator';
+import { ApiError } from '@trustsystem/errors';
+import type { PolicyDecision } from '@trustsystem/policy-evaluator';
 
 /**
  * The decision log.
@@ -65,7 +65,7 @@ export type PolicyDecisionRecord = z.infer<typeof policyDecisionRecordSchema>;
 /**
  * Where decisions go.
  *
- * A port, with **no update and no delete** — the same shape `@trustos/audit`'s sink has, and for
+ * A port, with **no update and no delete** — the same shape `@trustsystem/audit`'s sink has, and for
  * the same reason: the append-only rule is structural rather than a convention, so no amount of
  * autocomplete leads somebody to a method that rewrites a decision.
  */
@@ -120,7 +120,7 @@ export class InMemoryPolicyDecisionSink implements PolicyDecisionSink {
  * Unsalted, and that is a real limitation stated rather than hidden: a hash of a low-entropy
  * value — a status, a country code, a boolean — is trivially reversible. **Only hash things with
  * enough entropy to be worth hashing.** For a customer identifier, use the pseudonym from
- * `@trustos/data-masking`, which is keyed.
+ * `@trustsystem/data-masking`, which is keyed.
  */
 export function hashAttribute(value: string | number | boolean | null): string {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -150,7 +150,7 @@ export class PolicyDecisionLog {
   /**
    * Records a decision.
    *
-   * Awaited and **not** swallowed, unlike `@trustos/audit`. The trade is the opposite one and it
+   * Awaited and **not** swallowed, unlike `@trustsystem/audit`. The trade is the opposite one and it
    * is deliberate: an audit trail records what happened and degrades acceptably under an outage,
    * whereas a decision log is the evidence that an authorization decision was made correctly.
    * A permission granted with no record of why is worse than a permission refused.

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/integration-health",
+  "name": "@trustsystem/integration-health",
   "version": "0.1.0",
   "description": "Health checks across the event bus, scheduler, jobs, webhooks, providers and sync.",
   "license": "UNLICENSED",
@@ -18,10 +18,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/provider-sdk": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/provider-sdk": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

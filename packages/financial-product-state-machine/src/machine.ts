@@ -1,11 +1,11 @@
-import { productError } from '@trustos/financial-product-core';
+import { productError } from '@trustsystem/financial-product-core';
 
 /**
  * A declared state machine.
  *
  * Pure: given a table, a state and an action it returns the same answer every time, with no clock
  * and no database. That is what makes "is this transition legal" testable without a transaction,
- * and it is the same split `@trustos/workflow-runtime` draws between `machine.ts` and
+ * and it is the same split `@trustsystem/workflow-runtime` draws between `machine.ts` and
  * `engine.ts` — for the same reason, and deliberately not by reusing that one.
  *
  * The reason it is not `workflow-runtime`'s machine: that machine resolves transitions against a

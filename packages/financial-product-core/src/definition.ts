@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { conditionSchema } from '@trustos/workflow-definition';
+import { conditionSchema } from '@trustsystem/workflow-definition';
 import { productContentHash } from './ids';
 import { PRODUCT_LIFECYCLE_STATUSES } from './lifecycle';
 import { productRuleSchema } from './rules';
@@ -19,7 +19,7 @@ import { productRuleSchema } from './rules';
  * **Money is a string of minor units plus a currency code.** Never a JSON number. A number goes
  * through an IEEE double on the way in and on the way out, and a fee cap of `1000.10` becomes
  * `1000.0999999999999` — which agrees with every test and disagrees with the counterparty. See
- * the header of `@trustos/financial-core`'s `decimal.ts`.
+ * the header of `@trustsystem/financial-core`'s `decimal.ts`.
  *
  * **Rates are integers of hundredths of a basis point.** `0.5%` is `"5000"`. The same reason,
  * plus one more: a percentage written as `0.005` is read as half a percent by half the people

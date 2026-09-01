@@ -1,5 +1,5 @@
 /**
- * @trustos/policy-decision-log
+ * @trustsystem/policy-decision-log
  *
  * Every policy decision, recorded — with the **policy version**, which is the field that makes
  * the log worth keeping. Without it a record says "we denied this in March", which is

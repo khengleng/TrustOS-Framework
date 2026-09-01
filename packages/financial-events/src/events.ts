@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { buildEvent, type EventActor, type EventEnvelope } from '@trustos/event-sdk';
-import { formatMoney, moneySchema, moneyToJson, type Money } from '@trustos/financial-core';
+import { buildEvent, type EventActor, type EventEnvelope } from '@trustsystem/event-sdk';
+import { formatMoney, moneySchema, moneyToJson, type Money } from '@trustsystem/financial-core';
 
 /**
  * The financial event catalog.
  *
  * Every event a financial system publishes, with a payload schema for each. Registered with
- * `@trustos/event-registry` at start-up, which is what makes a renamed field fail at the publisher
+ * `@trustsystem/event-registry` at start-up, which is what makes a renamed field fail at the publisher
  * rather than at three consumers.
  *
  * **Amounts travel as strings, never as numbers.** A JSON number goes through a double on the way
@@ -198,7 +198,7 @@ export const paymentRequestEventSchema = z
  * The catalog, ready to register.
  *
  * Every event with its schema and a one-line description of when it fires. `register` in
- * `@trustos/event-registry` takes this shape, so the whole phase's contract is one call.
+ * `@trustsystem/event-registry` takes this shape, so the whole phase's contract is one call.
  */
 export const FINANCIAL_EVENT_DEFINITIONS = [
   {

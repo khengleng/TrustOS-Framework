@@ -6,8 +6,8 @@ import {
   explainIncomparable,
   score,
   type EmbeddingProvider,
-} from '@trustos/embedding';
-import { InMemoryVectorStore } from '@trustos/vector-store';
+} from '@trustsystem/embedding';
+import { InMemoryVectorStore } from '@trustsystem/vector-store';
 import { assessChunking, chunkText, chunkingStrategySchema } from './chunking';
 import { Retriever, checkCitations, formatContext, retrievalOptionsSchema } from './retrieval';
 

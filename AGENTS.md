@@ -93,7 +93,7 @@ rejection and leaves the thief's session alive.
 A test that a valid token works proves nothing about a tampered one. Every credential
 path needs tests that the wrong input is refused — and refused _identically_, so the
 error does not distinguish "no such account" from "wrong password" from "locked".
-`SECURITY_TEST_CATEGORIES` in `@trustos/security-testing` lists the categories a new
+`SECURITY_TEST_CATEGORIES` in `@trustsystem/security-testing` lists the categories a new
 credential type is expected to cover.
 
 ### 11. Document new permissions and scopes
@@ -400,7 +400,7 @@ by a counterparty six months later, and by then it is in ten thousand transactio
 
 2. **Never use floating-point arithmetic for money.** No `parseFloat`, no `Number(amount)`, no
    `Float` column, no arithmetic on a JSON number that came from an amount. Use `Decimal` and
-   `Money` from `@trustos/financial-core`. The single `unsafeToNumber` is named to be uncomfortable
+   `Money` from `@trustsystem/financial-core`. The single `unsafeToNumber` is named to be uncomfortable
    and belongs only in a display layer that never feeds a calculation.
 
 3. **Always validate balancing.** Debits equal credits, per currency, before anything posts. Never
@@ -461,7 +461,7 @@ The industry template library. Thirty templates, one SDK, one registry. Fourteen
 everything above.
 
 1. **Always reuse framework packages.** Auth, RBAC, tenancy, audit, workflow, ledger, limits and
-   `@trustos/template-sdk` already exist. A template that writes its own permission check has
+   `@trustsystem/template-sdk` already exist. A template that writes its own permission check has
    written a second, worse one, and the two will disagree.
 
 2. **Never duplicate a module.** If two templates need the same thing, it belongs in `_base` or in
@@ -634,7 +634,7 @@ unmodified test suite, and silently removes a control**.
 
 9. **Never widen the rule vocabulary casually.** The facts are a closed list of twenty-three, the
    outcomes a closed union of eight, and the condition language is
-   `@trustos/workflow-definition`'s predicate tree imported whole. A rule that could read the
+   `@trustsystem/workflow-definition`'s predicate tree imported whole. A rule that could read the
    execution context could price by customer id; a rule that could call something would be the
    runtime.
 
@@ -658,7 +658,7 @@ unmodified test suite, and silently removes a control**.
     order authorize the same money twice.
 
 14. **AI may propose and may never publish.** No model call in this layer — the brief goes through
-    `@trustos/ai-gateway`. The proposal schema has no field for ownership, approvals or lifecycle
+    `@trustsystem/ai-gateway`. The proposal schema has no field for ownership, approvals or lifecycle
     status, `build()` always emits `draft`, and everything the framework overrode is reported to
     the reviewer.
 
@@ -865,8 +865,8 @@ deployed to one platform, and about not weakening anything to make a deploy succ
    deployment need seems to require an architectural change, it is a sign the packaging is wrong.
 
 2. **Do not turn a package into a service.** 168 of 171 packages are libraries.
-   `@trustos/job-runtime`, `@trustos/scheduler`, `@trustos/workflow-runtime` and
-   `@trustos/ai-gateway` are libraries whose names suggest otherwise — a deployment hosts them
+   `@trustsystem/job-runtime`, `@trustsystem/scheduler`, `@trustsystem/workflow-runtime` and
+   `@trustsystem/ai-gateway` are libraries whose names suggest otherwise — a deployment hosts them
    inside its own process, and none ships a `main`.
 
 3. **Do not add infrastructure that nothing requires.** No Redis, no broker, no object storage.
@@ -933,7 +933,7 @@ npm run lint
 npm run format:check
 npm run build:packages
 npm test
-npm run migrate:drift -w @trustos/database   # needs a database
+npm run migrate:drift -w @trustsystem/database   # needs a database
 npx trustos validate-template --all          # after any template change
 npx trustos architecture-check               # layering, naming, dependencies, security rules
 npm run test:coverage                        # every package must have a spec file

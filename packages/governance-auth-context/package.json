@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/governance-auth-context",
+  "name": "@trustsystem/governance-auth-context",
   "version": "0.1.0",
   "description": "Normalizes an authenticated enterprise identity into a TrustOS actor context. Never trusts a client-supplied role or organization.",
   "license": "UNLICENSED",
@@ -17,11 +17,11 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/governance-tool-core": "0.1.0",
-    "@trustos/identity": "0.1.0",
-    "@trustos/rbac": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/governance-tool-core": "0.1.0",
+    "@trustsystem/identity": "0.1.0",
+    "@trustsystem/rbac": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

@@ -1,5 +1,5 @@
 /**
- * @trustos/module-workflow
+ * @trustsystem/module-workflow
  *
  * Approval workflows with task assignment, append-only history, SLA tracking and
  * escalation hooks.

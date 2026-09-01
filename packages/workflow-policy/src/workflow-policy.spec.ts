@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { authorize, type AuthorizationRequest } from '@trustos/authorization';
-import type { ActorContext } from '@trustos/shared-types';
-import type { WorkflowDecisionRecord } from '@trustos/workflow-core';
+import { authorize, type AuthorizationRequest } from '@trustsystem/authorization';
+import type { ActorContext } from '@trustsystem/shared-types';
+import type { WorkflowDecisionRecord } from '@trustsystem/workflow-core';
 import {
   explainDenial,
   isRegisteredApprovalAction,

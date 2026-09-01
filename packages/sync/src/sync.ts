@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
-import { RETRY_PRESETS, withRetry, type RetryPolicy } from '@trustos/retry';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
+import { RETRY_PRESETS, withRetry, type RetryPolicy } from '@trustsystem/retry';
 
 /**
  * Synchronization.

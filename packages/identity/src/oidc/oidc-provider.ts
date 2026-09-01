@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { MfaPolicy, TokenPolicy } from '@trustos/security-policy';
+import { ApiError } from '@trustsystem/errors';
+import type { MfaPolicy, TokenPolicy } from '@trustsystem/security-policy';
 import { createRemoteJWKSet, jwtVerify, type JWTPayload, type JWTVerifyGetKey } from 'jose';
 import {
   deriveAuthentication,

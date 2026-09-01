@@ -1,23 +1,23 @@
 import { randomBytes } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { AUDIT_ACTIONS, AUDIT_ENTITY, type AuditService } from '@trustos/audit';
-import { MembershipStatus, PrismaService } from '@trustos/database';
-import { ApiError } from '@trustos/errors';
+import { AUDIT_ACTIONS, AUDIT_ENTITY, type AuditService } from '@trustsystem/audit';
+import { MembershipStatus, PrismaService } from '@trustsystem/database';
+import { ApiError } from '@trustsystem/errors';
 import {
   DEFAULT_MEMBER_ROLE,
   ORGANIZATION_CREATOR_ROLE,
   SYSTEM_ROLES,
   canGrantRole,
   isSystemRoleName,
-} from '@trustos/rbac';
-import { assertTenantMatch } from '@trustos/tenancy';
+} from '@trustsystem/rbac';
+import { assertTenantMatch } from '@trustsystem/tenancy';
 import type {
   ActorContext,
   OrganizationMemberSummary,
   OrganizationSummary,
   RoleSummary,
-} from '@trustos/shared-types';
-import { slugify } from '@trustos/validation';
+} from '@trustsystem/shared-types';
+import { slugify } from '@trustsystem/validation';
 import { AUDIT_SERVICE } from '../../tokens';
 
 const MEMBER_INCLUDE = {

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/shared-types",
+  "name": "@trustsystem/shared-types",
   "version": "0.1.0",
   "description": "Framework-wide types and contracts shared between server and browser code.",
   "license": "UNLICENSED",

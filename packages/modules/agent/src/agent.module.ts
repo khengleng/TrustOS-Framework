@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The agent framework module.
  *
  * Agents that take actions: declarative agent definitions, the tool loop with per-actor permission checks, memory, conversation state, stop conditions and human review.
  *
- * A thin wrapper. The implementation is in `@trustos/agent-framework`, `@trustos/agent-memory`, `@trustos/agent-runtime`, `@trustos/conversation`, `@trustos/function-calling`, `@trustos/human-review`, `@trustos/tool-execution` — this
+ * A thin wrapper. The implementation is in `@trustsystem/agent-framework`, `@trustsystem/agent-memory`, `@trustsystem/agent-runtime`, `@trustsystem/conversation`, `@trustsystem/function-calling`, `@trustsystem/human-review`, `@trustsystem/tool-execution` — this
  * package contributes the declarations the platform needs (permissions, audit events, health)
  * and the start/stop lifecycle.
  *

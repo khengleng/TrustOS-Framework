@@ -1,5 +1,5 @@
 /**
- * @trustos/agent-runtime
+ * @trustsystem/agent-runtime
  *
  * Runs an agent: the tool loop, the stop conditions, the execution history.
  *

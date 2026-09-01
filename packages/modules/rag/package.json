@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-rag",
+  "name": "@trustsystem/module-rag",
   "version": "0.1.0",
   "description": "TrustOS Retrieval-Augmented Generation module. Answering from documents: chunking, embedding, a vector-store interface, hybrid search, citation checking and per-collection access control.",
   "license": "UNLICENSED",
@@ -21,17 +21,17 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/embedding": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/knowledge": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/module-ai": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/module-sdk": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/rag": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/vector-store": "0.1.0"
+    "@trustsystem/embedding": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/knowledge": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/module-ai": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/module-sdk": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/rag": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/vector-store": "0.1.0"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",

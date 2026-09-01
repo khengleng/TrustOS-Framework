@@ -9,7 +9,7 @@
  * with another template layered beneath this one.
  */
 
-import { definePermission, type PermissionDefinition } from '@trustos/template-sdk';
+import { definePermission, type PermissionDefinition } from '@trustsystem/template-sdk';
 
 export const INSURANCE_PERMISSIONS = {
   POLICY_HOLDER_READ: definePermission('insurance.policy-holder.read', 'View policyholders.'),

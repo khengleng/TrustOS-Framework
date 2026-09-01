@@ -1,7 +1,7 @@
 /**
- * @trustos/module-sdk/nest
+ * @trustsystem/module-sdk/nest
  *
- * NestJS bindings, behind a subpath so importing `@trustos/module-sdk` does not
+ * NestJS bindings, behind a subpath so importing `@trustsystem/module-sdk` does not
  * pull `@nestjs/common` into code that has no container — a worker, a test, a
  * script.
  */

@@ -55,7 +55,7 @@ each was added is worth stating:
   around it.
 
 The catalog is **local data**. There is no remote fetch and no plugin resolution, for the same
-reason `@trustos/module-registry` has none: a block is a capability a product may use without
+reason `@trustsystem/module-registry` has none: a block is a capability a product may use without
 further review, and a capability that can arrive over the network at runtime has not been
 reviewed.
 

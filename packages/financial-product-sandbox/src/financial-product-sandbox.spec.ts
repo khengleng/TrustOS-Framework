@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { fromMinorUnits } from '@trustos/financial-core';
-import { productErrorCode } from '@trustos/financial-product-core';
-import { merchantWalletBasicTemplate } from '@trustos/financial-product-composer';
-import { publishVersion, type PublishedVersion } from '@trustos/financial-product-versioning';
+import { fromMinorUnits } from '@trustsystem/financial-core';
+import { productErrorCode } from '@trustsystem/financial-product-core';
+import { merchantWalletBasicTemplate } from '@trustsystem/financial-product-composer';
+import { publishVersion, type PublishedVersion } from '@trustsystem/financial-product-versioning';
 import {
   SANDBOX_CURRENCIES,
   SANDBOX_EPOCH,

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { join } from 'node:path';
-import { TEMPLATES } from '@trustos/template-registry';
+import { TEMPLATES } from '@trustsystem/template-registry';
 import { validateTemplate } from './validate-template';
 
 /**

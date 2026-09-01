@@ -1,5 +1,5 @@
 /**
- * @trustos/accounts
+ * @trustsystem/accounts
  *
  * The account tree: customer, merchant, system, settlement, suspense, fee and reserve accounts.
  *

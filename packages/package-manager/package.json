@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/package-manager",
+  "name": "@trustsystem/package-manager",
   "version": "0.1.0",
   "description": "Install, update, rollback, dependency resolution, conflict detection and integrity validation. Offline by design.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/dependency-analyzer": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/version-manager": "0.1.0",
+    "@trustsystem/dependency-analyzer": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/version-manager": "0.1.0",
     "zod": "^3.24.1"
   }
 }

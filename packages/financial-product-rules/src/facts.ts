@@ -3,7 +3,7 @@ import {
   isRuleFact,
   type ProductExecutionContext,
   type RuleFact,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 
 /**
  * Building the fact map.

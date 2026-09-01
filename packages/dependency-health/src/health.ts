@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { DEPENDENCY_KINDS, type DependencyKind, type ServiceRegistry } from '@trustos/sre-core';
+import { ApiError } from '@trustsystem/errors';
+import { DEPENDENCY_KINDS, type DependencyKind, type ServiceRegistry } from '@trustsystem/sre-core';
 
 /**
  * Dependency health.

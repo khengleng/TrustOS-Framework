@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { serviceSchema, runbookSchema, ServiceRegistry } from '@trustos/sre-core';
+import { serviceSchema, runbookSchema, ServiceRegistry } from '@trustsystem/sre-core';
 import {
   assertPostureSound,
   degradationPlan,
@@ -159,7 +159,7 @@ describe('worst case latency', () => {
 
   it('counts the first call as well as the retries', () => {
     /*
-     * `maxAttempts: 3` in @trustos/retry is three retries — four calls and three waits. The
+     * `maxAttempts: 3` in @trustsystem/retry is three retries — four calls and three waits. The
      * off-by-one is how a budget check passes while the caller still times out.
      */
     const withRetry = declaration({

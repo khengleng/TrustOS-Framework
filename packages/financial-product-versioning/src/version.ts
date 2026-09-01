@@ -4,7 +4,7 @@ import {
   isBreakingChange,
   isNewer,
   versionChange,
-} from '@trustos/version-manager';
+} from '@trustsystem/version-manager';
 import {
   EDITABLE_STATUSES,
   definitionContentHash,
@@ -12,7 +12,7 @@ import {
   productError,
   type ProductDefinition,
   type ProductLifecycleStatus,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 
 /**
  * Published product versions.

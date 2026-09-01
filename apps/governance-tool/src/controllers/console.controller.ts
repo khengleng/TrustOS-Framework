@@ -1,20 +1,20 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { CrossOrganization, OrganizationId } from '@trustos/tenancy';
-import { DEFAULT_MASK_RULES, type MaskRule } from '@trustos/governance-pii-policy';
-import { DEFAULT_EXPORT_POLICIES } from '@trustos/governance-export-control';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { CrossOrganization, OrganizationId } from '@trustsystem/tenancy';
+import { DEFAULT_MASK_RULES, type MaskRule } from '@trustsystem/governance-pii-policy';
+import { DEFAULT_EXPORT_POLICIES } from '@trustsystem/governance-export-control';
 import {
   GOVERNANCE_PERMISSIONS,
   GOVERNANCE_ROLES,
   type Environment,
   type InternalAppCatalog,
-} from '@trustos/governance-tool-core';
-import { GATEWAY_OPERATIONS } from '@trustos/governance-tool-integration';
-import type { GovernanceToolRuntime } from '@trustos/governance-tool-runtime';
+} from '@trustsystem/governance-tool-core';
+import { GATEWAY_OPERATIONS } from '@trustsystem/governance-tool-integration';
+import type { GovernanceToolRuntime } from '@trustsystem/governance-tool-runtime';
 import { APP_CATALOG, GATEWAY_ENVIRONMENT, GOVERNANCE_RUNTIME } from '../tokens';
 
 /**

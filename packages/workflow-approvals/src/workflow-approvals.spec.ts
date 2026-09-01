@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { WorkflowActor, WorkflowDecisionRecord } from '@trustos/workflow-core';
-import type { WorkflowApprovalSpec } from '@trustos/workflow-definition';
+import type { WorkflowActor, WorkflowDecisionRecord } from '@trustsystem/workflow-core';
+import type { WorkflowApprovalSpec } from '@trustsystem/workflow-definition';
 import {
   checkApproverEligibility,
   decisionRequiresReason,

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/incident-management",
+  "name": "@trustsystem/incident-management",
   "version": "0.1.0",
   "description": "Incidents, severity, timeline, mitigation, postmortem and corrective actions.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/sre-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/sre-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

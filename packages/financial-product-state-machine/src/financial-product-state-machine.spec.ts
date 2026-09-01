@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PRODUCT_LIFECYCLE_STATUSES, productErrorCode } from '@trustos/financial-product-core';
+import { PRODUCT_LIFECYCLE_STATUSES, productErrorCode } from '@trustsystem/financial-product-core';
 import {
   EXECUTION_MACHINE,
   PRODUCT_LIFECYCLE_MACHINE,

@@ -27,7 +27,7 @@ violated, so a module that breaks one never reaches an application.
 
 | Guarantee                          | Enforced by                                                                                                              |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Organization-scoped                | `tenantScoped` must be `true`; all persistence goes through `ModuleRepository`, which wraps `@trustos/tenancy`           |
+| Organization-scoped                | `tenantScoped` must be `true`; all persistence goes through `ModuleRepository`, which wraps `@trustsystem/tenancy`       |
 | Every route carries a permission   | A route must name a permission the module declares, and there is no "public" option                                      |
 | Permissions cannot collide         | Every key must start with the module id; the registry refuses two modules claiming one key                               |
 | Audit actions cannot collide       | Same namespacing rule, same refusal                                                                                      |
@@ -168,7 +168,7 @@ that makes it for every vertical is a framework that has to be worked around.
 
 ## Running a linked application
 
-A generated application installed with `--framework-path` links the `@trustos/*`
+A generated application installed with `--framework-path` links the `@trustsystem/*`
 packages with `file:` specifiers. Node resolves a symlinked package's own
 dependencies from the _framework's_ `node_modules`, so a linked application shares
 the framework's copy of `@nestjs/core`. Nest's `Reflector` is then a different class
@@ -176,9 +176,9 @@ in the framework's packages than in the application, and dependency injection
 cannot resolve.
 
 The consequence, stated plainly: a linked application **builds, typechecks and
-tests, but does not boot**. Running one requires the `@trustos/*` packages to be
+tests, but does not boot**. Running one requires the `@trustsystem/*` packages to be
 installed as ordinary packages — published to a registry, or installed from
-tarballs. `@trustos/database` additionally needs to ship its generated Prisma
+tarballs. `@trustsystem/database` additionally needs to ship its generated Prisma
 client for that to typecheck, which it does not yet.
 
 The module wiring itself is verified inside this repository, where there is one copy

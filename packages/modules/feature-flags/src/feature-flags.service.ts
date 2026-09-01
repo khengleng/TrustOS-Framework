@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import type { ModuleContext } from '@trustos/module-sdk';
+import { ApiError } from '@trustsystem/errors';
+import type { ModuleContext } from '@trustsystem/module-sdk';
 import type { FeatureFlagsConfig } from './config';
 import { evaluateFlag, type Evaluation } from './evaluate';
 import type { FeatureFlagOverrideRow, FeatureFlagRow, FeatureFlagStore } from './store';

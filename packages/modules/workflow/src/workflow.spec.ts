@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { ApiError } from '@trustos/errors';
+import type { ApiError } from '@trustsystem/errors';
 import {
   createTestModuleContext,
   createTestClock,
   type RecordingAuditPort,
-} from '@trustos/module-sdk';
-import { FakeModelDelegate, runInTenantContext } from '@trustos/tenancy';
+} from '@trustsystem/module-sdk';
+import { FakeModelDelegate, runInTenantContext } from '@trustsystem/tenancy';
 import { workflowConfigSchema } from './config';
 import {
   assertStepsWellFormed,

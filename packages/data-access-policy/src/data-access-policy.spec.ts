@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DataCatalog, catalogEntrySchema } from '@trustos/data-catalog';
+import { DataCatalog, catalogEntrySchema } from '@trustsystem/data-catalog';
 import {
   MAX_GRANT_DAYS,
   accessGrantSchema,

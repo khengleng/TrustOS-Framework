@@ -1,5 +1,5 @@
 /**
- * @trustos/release-manager
+ * @trustsystem/release-manager
  *
  * Release channels, the support lifecycle from development to end-of-life, and release notes.
  *

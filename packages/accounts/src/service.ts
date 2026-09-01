@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
-import { money, zeroMoney, type CurrencyRegistry, type Money } from '@trustos/financial-core';
-import type { Ledger } from '@trustos/ledger';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
+import { money, zeroMoney, type CurrencyRegistry, type Money } from '@trustsystem/financial-core';
+import type { Ledger } from '@trustsystem/ledger';
 import {
   accountSchema,
   canPost,

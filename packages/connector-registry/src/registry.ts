@@ -1,4 +1,4 @@
-import { productError } from '@trustos/financial-product-core';
+import { productError } from '@trustsystem/financial-product-core';
 import { connectorDefinitionSchema, type ConnectorDefinition } from './schema';
 import {
   FRAMEWORK_FORBIDDEN_PROVIDER_NAMES,

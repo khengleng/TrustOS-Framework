@@ -1,5 +1,5 @@
 /**
- * @trustos/migration-tools
+ * @trustsystem/migration-tools
  *
  * Database, configuration, template, module and framework migrations, with dry run and rollback.
  *

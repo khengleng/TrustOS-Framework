@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/governance-audit-bridge",
+  "name": "@trustsystem/governance-audit-bridge",
   "version": "0.1.0",
   "description": "Forwards Governance Tool actions into the TrustOS audit trail, enriched with the internal application that caused them.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/governance-tool-core": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/governance-tool-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

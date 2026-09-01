@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { ApiError } from '@trustos/errors';
-import { FakeModelDelegate, runInTenantContext } from '@trustos/tenancy';
+import type { ApiError } from '@trustsystem/errors';
+import { FakeModelDelegate, runInTenantContext } from '@trustsystem/tenancy';
 import { ModuleRepository } from './repository';
 
 /**

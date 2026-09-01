@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CurrencyRegistry, money } from '@trustos/financial-core';
+import { CurrencyRegistry, money } from '@trustsystem/financial-core';
 import {
   FINANCIAL_EVENTS,
   FINANCIAL_EVENT_DEFINITIONS,

@@ -5,7 +5,7 @@
  * screen would filter this array, never edit the parent file.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { EDUCATION_RESOURCES } from './resources-education';
 import { SCHOOL_RESOURCES } from './resources-school';
 

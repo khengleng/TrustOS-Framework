@@ -75,7 +75,7 @@ A pattern scan across `packages/`, `apps/` and `templates/` for assignments of k
 password- or token-shaped names to literals of sixteen characters or more found **no hardcoded
 secrets**. The three matches are variable assignments from function calls, not literals.
 
-The framework's own controls are stronger than this scan: `@trustos/config` refuses to start
+The framework's own controls are stronger than this scan: `@trustsystem/config` refuses to start
 without required secrets, `redactSecrets` covers every logged configuration, and the audit trail
 redacts before writing.
 

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/architecture-validator",
+  "name": "@trustsystem/architecture-validator",
   "version": "0.1.0",
   "description": "Layering, naming, dependency direction, folder structure, domain boundaries and security rules.",
   "license": "UNLICENSED",
@@ -17,7 +17,7 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

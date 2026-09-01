@@ -1,5 +1,5 @@
 import { isAbsolute, normalize, relative, resolve, sep } from 'node:path';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * Storage keys and filesystem containment.

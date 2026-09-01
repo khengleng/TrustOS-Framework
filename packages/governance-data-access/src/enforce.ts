@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   accessRefused,
   forbiddenFields,
@@ -7,13 +7,13 @@ import {
   type AccessDecision,
   type Environment,
   type ResourceOperation,
-} from '@trustos/governance-tool-core';
-import type { ResourceRegistry } from '@trustos/governance-resource-policy';
+} from '@trustsystem/governance-tool-core';
+import type { ResourceRegistry } from '@trustsystem/governance-resource-policy';
 
 /**
  * Enforcing the three access classes.
  *
- * `@trustos/governance-tool-core` declares the classes and `@trustos/governance-resource-policy`
+ * `@trustsystem/governance-tool-core` declares the classes and `@trustsystem/governance-resource-policy`
  * classifies each resource. This package is the **choke point**: every read and every write an
  * internal application performs goes through `DataAccessGuard`, and there is no second path.
  *

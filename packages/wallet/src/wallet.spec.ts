@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '@trustos/errors';
-import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
-import { AccountService, InMemoryAccountStore } from '@trustos/accounts';
-import { InMemoryLedgerStore, Ledger } from '@trustos/ledger';
-import { InMemoryLimitStore, LimitEngine, limitSchema } from '@trustos/limits';
+import { ApiError } from '@trustsystem/errors';
+import { CurrencyRegistry, formatMoney, money } from '@trustsystem/financial-core';
+import { AccountService, InMemoryAccountStore } from '@trustsystem/accounts';
+import { InMemoryLedgerStore, Ledger } from '@trustsystem/ledger';
+import { InMemoryLimitStore, LimitEngine, limitSchema } from '@trustsystem/limits';
 import { WalletService } from './service';
 import { holdSchema } from './wallet';
 import { InMemoryHoldStore, InMemoryWalletStore } from './testing';

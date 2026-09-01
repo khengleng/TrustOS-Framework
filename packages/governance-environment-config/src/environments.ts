@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { ENVIRONMENTS, type Environment } from '@trustos/governance-tool-core';
+import { ApiError } from '@trustsystem/errors';
+import { ENVIRONMENTS, type Environment } from '@trustsystem/governance-tool-core';
 
 /**
  * Environments, and the promotion between them.

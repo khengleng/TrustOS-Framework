@@ -65,7 +65,7 @@ model SupportAgent {
   @@index([deletedAt])
 }
 
-/// Response and resolution targets per priority. Read by @trustos/workflow-sla;
+/// Response and resolution targets per priority. Read by @trustsystem/workflow-sla;
 /// this template stores the numbers, not the clock.
 model SlaPolicy {
   id             String @id @default(cuid())

@@ -61,7 +61,7 @@ export const GOVERNANCE_PERMISSIONS = {
    * Reveal a masked value.
    *
    * The most consequential permission here, and the one whose *use* matters more than its grant:
-   * every reveal carries a reason, is audited, and expires. See `@trustos/governance-pii-policy`.
+   * every reveal carries a reason, is audited, and expires. See `@trustsystem/governance-pii-policy`.
    */
   PII_REVEAL: define(
     'governance.pii.reveal',

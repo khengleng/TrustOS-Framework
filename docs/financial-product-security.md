@@ -136,7 +136,7 @@ Rules are part of the definition, so they are hashed with it and immutable once 
 change is `financial.product.rule.update` and needs RISK approval.
 
 The rule **language** is a structured predicate tree, not an expression string — imported whole
-from `@trustos/workflow-definition`, whose header explains at length why every convenient
+from `@trustsystem/workflow-definition`, whose header explains at length why every convenient
 alternative (`eval`, a general expression library, a template language) is a code-execution
 primitive. The field pattern excludes `$` and brackets; `__proto__`, `constructor` and `prototype`
 are refused by name; and `readField` accesses own properties only. Two independent defences,
@@ -157,7 +157,7 @@ ships to production and it works, because staging answers.
 ## AI-generated configuration
 
 The framework ships **no model call**. `buildCompositionBrief` produces the brief a deployment
-sends through `@trustos/ai-gateway` — where policy, guardrails, cost accounting and audit are
+sends through `@trustsystem/ai-gateway` — where policy, guardrails, cost accounting and audit are
 applied — and `draftFromProposal` takes whatever comes back.
 
 The proposal is **parsed, not trusted**:
@@ -192,7 +192,7 @@ the boot test asserts it.
 
 Stated plainly, because a control somebody assumes exists is worse than one that does not.
 
-**A compromised handler.** A handler binds a block to `@trustos/wallet`; if the deployment's
+**A compromised handler.** A handler binds a block to `@trustsystem/wallet`; if the deployment's
 handler moves money to the wrong account, nothing here notices. The ledger's own controls apply,
 and they are phase 8's.
 

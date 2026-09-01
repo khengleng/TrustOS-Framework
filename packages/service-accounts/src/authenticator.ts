@@ -2,8 +2,8 @@ import {
   readAuthorizationCredential,
   type CredentialAuthenticator,
   type CredentialRequest,
-} from '@trustos/identity';
-import type { ActorContext } from '@trustos/shared-types';
+} from '@trustsystem/identity';
+import type { ActorContext } from '@trustsystem/shared-types';
 import { CREDENTIAL_PREFIX, type ServiceAccountService } from './service';
 
 /**
@@ -16,7 +16,7 @@ import { CREDENTIAL_PREFIX, type ServiceAccountService } from './service';
  * log can tell an integration's own identity from a key somebody minted for it.
  *
  * In the OIDC mode this authenticator is not used at all: the provider issues a token
- * by the client-credentials grant, `@trustos/identity` verifies it, and
+ * by the client-credentials grant, `@trustsystem/identity` verifies it, and
  * `resolveOidcClient` maps the client id onto the local record.
  */
 export class ServiceAccountAuthenticator implements CredentialAuthenticator {

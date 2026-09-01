@@ -4,7 +4,7 @@ const nextConfig = {
 
   /**
    * Only NEXT_PUBLIC_* variables reach the browser, and only the API base URL
-   * is one. Nothing from @trustos/config is imported here: that package reads
+   * is one. Nothing from @trustsystem/config is imported here: that package reads
    * secrets, and a bundler that can see it can inline them.
    */
   env: {},

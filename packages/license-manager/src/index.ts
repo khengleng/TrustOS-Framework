@@ -1,5 +1,5 @@
 /**
- * @trustos/license-manager
+ * @trustsystem/license-manager
  *
  * Licence tiers, feature entitlements, validation and expiry.
  *

@@ -99,7 +99,7 @@ what keeps the sandbox complete as the catalog grows. A sandbox missing a handle
 somebody just added is a sandbox that reports a product as broken when it is the sandbox that is.
 
 **The providers are mocked; the money is not.** Balances, limits and fees are computed with
-`@trustos/financial-core`'s `Money`, not with numbers, because the sandbox's job is to tell a
+`@trustsystem/financial-core`'s `Money`, not with numbers, because the sandbox's job is to tell a
 product owner what their configuration produces — and a sandbox that used floats would tell them
 something that disagrees with production once in ten thousand transactions.
 
@@ -112,7 +112,7 @@ Concretely, the mocks:
 - mint deterministic references so two runs agree.
 
 They deliberately do **not** read the product's fee schedule. Pricing a fee from a schedule is
-`@trustos/fees`' job, and a second implementation here would be a second set of rounding
+`@trustsystem/fees`' job, and a second implementation here would be a second set of rounding
 decisions. What the sandbox demonstrates is that the plumbing carries a fee through to the ledger —
 which is the thing a composition can get wrong.
 

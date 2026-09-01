@@ -1,5 +1,5 @@
-import type { ProductDefinition, ProductType } from '@trustos/financial-product-core';
-import { governanceEntry } from '@trustos/financial-product-governance';
+import type { ProductDefinition, ProductType } from '@trustsystem/financial-product-core';
+import { governanceEntry } from '@trustsystem/financial-product-governance';
 import type { ProductRecord } from './store';
 import { effectiveStatus } from './store';
 

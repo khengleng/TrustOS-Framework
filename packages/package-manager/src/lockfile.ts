@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { isValidVersion } from '@trustos/version-manager';
+import { ApiError } from '@trustsystem/errors';
+import { isValidVersion } from '@trustsystem/version-manager';
 
 /**
  * The lockfile.

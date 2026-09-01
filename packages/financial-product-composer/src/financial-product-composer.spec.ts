@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { productErrorCode, structuralReferenceData } from '@trustos/financial-product-core';
-import { ConnectorRegistry } from '@trustos/connector-registry';
+import { productErrorCode, structuralReferenceData } from '@trustsystem/financial-product-core';
+import { ConnectorRegistry } from '@trustsystem/connector-registry';
 import {
   DESIGNER_NAVIGATION,
   PRODUCT_TEMPLATES,

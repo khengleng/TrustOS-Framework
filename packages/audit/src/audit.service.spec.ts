@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { runWithRequestContext } from '@trustos/logging';
-import type { RequestContext } from '@trustos/shared-types';
+import { runWithRequestContext } from '@trustsystem/logging';
+import type { RequestContext } from '@trustsystem/shared-types';
 import { AUDIT_ACTIONS, AUDIT_ENTITY } from './actions';
 import { AuditService, diffEntities } from './audit.service';
 import { FailingAuditSink, InMemoryAuditSink } from './testing/in-memory-sink';

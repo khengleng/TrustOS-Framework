@@ -1,5 +1,5 @@
-import { deepRedact, getRequestContext, type LoggerPort } from '@trustos/logging';
-import { createNullLogger } from '@trustos/logging';
+import { deepRedact, getRequestContext, type LoggerPort } from '@trustsystem/logging';
+import { createNullLogger } from '@trustsystem/logging';
 import type {
   AuditQuery,
   AuditQueryResult,

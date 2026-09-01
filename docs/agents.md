@@ -18,7 +18,7 @@ stop condition. The answer to "what can this agent do" is a document somebody ca
 ## Defining an agent
 
 ```ts
-import { agentDefinitionSchema } from '@trustos/agent-framework';
+import { agentDefinitionSchema } from '@trustsystem/agent-framework';
 
 export const supportAgent = agentDefinitionSchema.parse({
   id: 'support-agent',
@@ -77,7 +77,7 @@ found later is a message from deep inside the tool executor on the first custome
 
 ## The example agents
 
-`@trustos/agent-framework` ships nine: product owner, business analyst, architect, developer, QA,
+`@trustsystem/agent-framework` ships nine: product owner, business analyst, architect, developer, QA,
 security reviewer, documentation writer, translator, support agent.
 
 They are examples in the strict sense — **not registered by default**, and every one declares no
@@ -88,7 +88,7 @@ They are deliberately engineering roles rather than business ones. A loan office
 a framework is a product decision made for every deployment.
 
 ```ts
-import { EXAMPLE_AGENTS, SUPPORT_AGENT } from '@trustos/agent-framework';
+import { EXAMPLE_AGENTS, SUPPORT_AGENT } from '@trustsystem/agent-framework';
 
 registry.registerAll([SUPPORT_AGENT]); // opt in, one at a time
 ```

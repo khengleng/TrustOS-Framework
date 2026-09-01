@@ -1,11 +1,11 @@
-# AGENTS.md — @trustos/module-events
+# AGENTS.md — @trustsystem/module-events
 
 Typed, versioned domain events with a schema registry, ordering per aggregate, retry, dead letters and replay.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/event-bus`, `@trustos/event-registry`, `@trustos/event-sdk` does the work. Logic added
+   wires; `@trustsystem/event-bus`, `@trustsystem/event-registry`, `@trustsystem/event-sdk` does the work. Logic added
    here is logic no other consumer of that package gets.
 2. **Never widen a permission key.** Keys are permanent. Add one; never rename or repurpose.
 3. **Always validate the tenant.** Every store call takes `organizationId` explicitly, and a

@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { ServiceRegistry } from '@trustos/sre-core';
-import { type RecoveryProcedure, type RestoreTest } from '@trustos/recovery';
+import { ApiError } from '@trustsystem/errors';
+import type { ServiceRegistry } from '@trustsystem/sre-core';
+import { type RecoveryProcedure, type RestoreTest } from '@trustsystem/recovery';
 
 /**
  * Disaster recovery plans.
@@ -127,7 +127,7 @@ export const drPlanSchema = z
       )
       .min(1),
 
-    /** Restore procedures this plan depends on, from @trustos/recovery. */
+    /** Restore procedures this plan depends on, from @trustsystem/recovery. */
     recoveryProcedureIds: z.array(z.string().min(3).max(64)).default([]),
 
     /**

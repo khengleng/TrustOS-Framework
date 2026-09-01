@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustos/security-events';
-import { securityPolicySchema } from '@trustos/security-policy';
-import { assertNoLeakedValues } from '@trustos/security-testing';
+import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustsystem/security-events';
+import { securityPolicySchema } from '@trustsystem/security-policy';
+import { assertNoLeakedValues } from '@trustsystem/security-testing';
 import { InMemoryServiceAccountStore } from './in-memory-store';
 import {
   ServiceAccountService,

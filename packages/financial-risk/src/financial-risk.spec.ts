@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CurrencyRegistry, money } from '@trustos/financial-core';
+import { CurrencyRegistry, money } from '@trustsystem/financial-core';
 import { RiskAssessor, combine, describeAssessment, type RiskProvider } from './risk';
 import { KYC_LEVELS, describeCoverage, kycSatisfies, kycStatusSchema } from './compliance';
 

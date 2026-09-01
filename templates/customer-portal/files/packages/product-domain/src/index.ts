@@ -5,7 +5,7 @@
  * its own rather than copying anything out of it.
  */
 
-import type { PermissionDefinition } from '@trustos/template-sdk';
+import type { PermissionDefinition } from '@trustsystem/template-sdk';
 import {
   CUSTOMER_PORTAL_PERMISSIONS_LIST,
   CUSTOMER_PORTAL_PERMISSIONS_ROLES,

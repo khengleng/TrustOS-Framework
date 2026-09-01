@@ -1,9 +1,9 @@
-import type { AccessResolver } from '@trustos/identity';
+import type { AccessResolver } from '@trustsystem/identity';
 
 /**
  * The minimum this needs from Prisma, so the package does not depend on the client.
  *
- * Structural rather than nominal: `@trustos/database` owns the generated client, and a
+ * Structural rather than nominal: `@trustsystem/database` owns the generated client, and a
  * resolver that imported it would drag the whole schema into every consumer. A caller
  * passes `prisma` and the shapes line up.
  */

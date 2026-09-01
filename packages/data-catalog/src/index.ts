@@ -1,5 +1,5 @@
 /**
- * @trustos/data-catalog
+ * @trustsystem/data-catalog
  *
  * What governed data exists, what it means, who owns it and how sensitive it is.
  *

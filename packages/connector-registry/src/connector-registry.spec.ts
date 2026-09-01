@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { productErrorCode } from '@trustos/financial-product-core';
+import { productErrorCode } from '@trustsystem/financial-product-core';
 import {
   ConnectorRegistry,
   FRAMEWORK_CONNECTORS,

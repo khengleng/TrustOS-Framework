@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { buildEvent, type EventActor } from '@trustos/event-sdk';
+import { buildEvent, type EventActor } from '@trustsystem/event-sdk';
 import { EventRegistry, findSchemaConflicts, type EventSchemaDefinition } from './registry';
 import { STANDARD_EVENTS, STANDARD_EVENT_NAMES } from './standard-events';
 

@@ -1,5 +1,5 @@
 /**
- * @trustos/module-notification
+ * @trustsystem/module-notification
  *
  * Templated messages over email, Telegram and webhooks.
  *

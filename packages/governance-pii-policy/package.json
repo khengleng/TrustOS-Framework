@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/governance-pii-policy",
+  "name": "@trustsystem/governance-pii-policy",
   "version": "0.1.0",
   "description": "Centralized masking, and controlled reveal: permission, reason, audit, expiry and optional maker-checker.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/governance-tool-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/governance-tool-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

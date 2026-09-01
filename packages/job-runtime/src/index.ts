@@ -1,5 +1,5 @@
 /**
- * @trustos/job-runtime
+ * @trustsystem/job-runtime
  *
  * Background jobs: a durable queue in the database, a handler registry, and a worker that leases
  * what it runs. No queue broker — the database is already there and already backed up.

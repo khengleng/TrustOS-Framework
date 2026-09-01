@@ -6,8 +6,8 @@ import {
   resolveApplicationRoot,
   resolveFrameworkPath,
   type InstallModulePlan,
-} from '@trustos/generator-core';
-import { listModules } from '@trustos/module-registry';
+} from '@trustsystem/generator-core';
+import { listModules } from '@trustsystem/module-registry';
 import { formatRows, style, type Output } from '../output';
 
 /**

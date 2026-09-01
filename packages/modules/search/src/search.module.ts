@@ -1,11 +1,11 @@
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 import { searchConfigSchema, type SearchConfig } from './config';
 import type { Ranker } from './ranking';
 import { SearchService } from './search.service';

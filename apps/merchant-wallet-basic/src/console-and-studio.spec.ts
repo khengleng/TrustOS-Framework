@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { classifyStandardResource } from '@trustos/governance-resource-policy';
-import { merchantWalletBasicTemplate, validateProduct } from '@trustos/financial-product-composer';
-import { assessGovernance, classifyChange } from '@trustos/financial-product-governance';
-import { publishVersion } from '@trustos/financial-product-versioning';
-import { SANDBOX_EPOCH } from '@trustos/financial-product-sandbox';
-import { APPROVED_BLOCKS } from '@trustos/financial-block-registry';
+import { classifyStandardResource } from '@trustsystem/governance-resource-policy';
+import {
+  merchantWalletBasicTemplate,
+  validateProduct,
+} from '@trustsystem/financial-product-composer';
+import { assessGovernance, classifyChange } from '@trustsystem/financial-product-governance';
+import { publishVersion } from '@trustsystem/financial-product-versioning';
+import { SANDBOX_EPOCH } from '@trustsystem/financial-product-sandbox';
+import { APPROVED_BLOCKS } from '@trustsystem/financial-block-registry';
 import { merchantOperationsConsole } from './console';
 
 /**

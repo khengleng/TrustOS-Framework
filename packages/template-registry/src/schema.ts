@@ -108,7 +108,7 @@ export type IncludedApp = z.infer<typeof includedAppSchema>;
 
 /**
  * Framework capabilities a template wires in. These name existing
- * `@trustos/*` packages — a template never reimplements one.
+ * `@trustsystem/*` packages — a template never reimplements one.
  */
 export const includedModuleSchema = z.enum([
   'auth',

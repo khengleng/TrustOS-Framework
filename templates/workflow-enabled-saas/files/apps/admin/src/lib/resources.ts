@@ -1,4 +1,4 @@
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 
 /**
  * Screens for this product.

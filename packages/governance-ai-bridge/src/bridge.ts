@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { Environment } from '@trustos/governance-tool-core';
+import { ApiError } from '@trustsystem/errors';
+import type { Environment } from '@trustsystem/governance-tool-core';
 
 /**
  * AI assistance for internal tools.

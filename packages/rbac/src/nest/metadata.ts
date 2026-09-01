@@ -1,8 +1,8 @@
 /**
  * Route metadata keys.
  *
- * Centralized so the guards in @trustos/rbac and the decorators in
- * @trustos/auth agree on the strings without either package guessing.
+ * Centralized so the guards in @trustsystem/rbac and the decorators in
+ * @trustsystem/auth agree on the strings without either package guessing.
  */
 export const ROUTE_METADATA = {
   /** Route requires no authentication at all. Set by `@Public()`. */

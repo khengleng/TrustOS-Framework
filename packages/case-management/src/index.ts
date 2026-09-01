@@ -1,5 +1,5 @@
 /**
- * @trustos/case-management
+ * @trustsystem/case-management
  *
  * Cases: the container a workflow runs inside.
  *

@@ -1,11 +1,11 @@
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuditService } from '@trustos/audit';
-import { PERMISSIONS, RequirePermissions } from '@trustos/rbac';
-import { OrganizationId } from '@trustos/tenancy';
-import { buildPageMeta, type AuditLogEntry, type Paginated } from '@trustos/shared-types';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
+import { AuditService } from '@trustsystem/audit';
+import { PERMISSIONS, RequirePermissions } from '@trustsystem/rbac';
+import { OrganizationId } from '@trustsystem/tenancy';
+import { buildPageMeta, type AuditLogEntry, type Paginated } from '@trustsystem/shared-types';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
 import { AUDIT_SERVICE } from '../../tokens';
 
 const auditQuerySchema = z.object({

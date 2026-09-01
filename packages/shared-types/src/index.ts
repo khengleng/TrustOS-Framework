@@ -1,5 +1,5 @@
 /**
- * @trustos/shared-types
+ * @trustsystem/shared-types
  *
  * The only package that both server and browser code may depend on for domain
  * shapes. It is intentionally runtime-free: no dependencies, no side effects,

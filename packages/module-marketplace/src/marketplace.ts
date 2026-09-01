@@ -1,12 +1,12 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   averageRating,
   qualityScore,
   securityScore,
   type ModuleCatalogEntry,
   type ModuleProvenance,
-} from '@trustos/module-registry';
-import { compareVersions, satisfies } from '@trustos/version-manager';
+} from '@trustsystem/module-registry';
+import { compareVersions, satisfies } from '@trustsystem/version-manager';
 
 /**
  * The marketplace.

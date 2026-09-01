@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DataCatalog, catalogEntrySchema } from '@trustos/data-catalog';
+import { DataCatalog, catalogEntrySchema } from '@trustsystem/data-catalog';
 import { LineageGraph, importScanned, lineageEdgeSchema } from './index';
 
 const NOW = '2026-06-01T00:00:00.000Z';

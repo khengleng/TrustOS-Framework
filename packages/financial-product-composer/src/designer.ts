@@ -1,16 +1,16 @@
-import { END_NODES, START_NODE, type ProductDefinition } from '@trustos/financial-product-core';
+import { END_NODES, START_NODE, type ProductDefinition } from '@trustsystem/financial-product-core';
 import {
   APPROVED_BLOCKS,
   BLOCK_CATEGORIES,
   type BlockRegistry,
-} from '@trustos/financial-block-registry';
+} from '@trustsystem/financial-block-registry';
 import { validateProduct, type ValidationFinding } from './validate';
 
 /**
  * The visual designer, as descriptors.
  *
  * The designer's *data* lives here and its pixels do not, for the same reason
- * `@trustos/template-sdk` is headless: the admin application renders a canvas, the CLI renders a
+ * `@trustsystem/template-sdk` is headless: the admin application renders a canvas, the CLI renders a
  * tree, and a comparison view renders a diff — three renderers over one description. A designer
  * that owned its own model would be a designer whose products the CLI could not validate, and the
  * two would disagree on the first field either of them added.

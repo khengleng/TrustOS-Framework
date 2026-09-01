@@ -105,7 +105,7 @@ written.** Do not add path templating.
 **1. Reuse the framework. Never reimplement it.**
 A template that ships its own logger, error shape, permission check or tenant
 filter is a bug, not a variation. `validate-template` fails a template that
-imports a `@trustos/*` package it did not declare, and code review catches the
+imports a `@trustsystem/*` package it did not declare, and code review catches the
 rest.
 
 **2. Every route declares a permission.**
@@ -165,25 +165,25 @@ braces are genuinely wanted, such as Railway's `${{VAR}}` syntax.)
 rather than loose JSON. An invalid manifest fails at module load, so it cannot
 reach a caller.
 
-| Field                        | Purpose                                                      |
-| ---------------------------- | ------------------------------------------------------------ |
-| `id`                         | Directory name and CLI argument                              |
-| `displayName`, `description` | Shown by `list-templates`                                    |
-| `version`                    | Exact semver. Ranges are rejected.                           |
-| `minimumFrameworkVersion`    | `trustos new` refuses an older framework                     |
-| `includedApps`               | `api`, `admin`, `miniapp`                                    |
-| `includedModules`            | The `@trustos/*` packages it wires — checked against imports |
-| `requiredVariables`          | Every placeholder a template may reference                   |
-| `deploymentTargets`          | `railway`, `local`                                           |
-| `entities`                   | Domain models, for `--verbose`                               |
-| `migrationNotes`             | What a maintainer must know when moving versions             |
-| `owner`                      | The team accountable. Not decorative — see below.            |
-| `outOfScope`                 | Deliberate exclusions, echoed into the generated project     |
-| `category`                   | One of nine groups, for `trustos templates`                  |
-| `status`                     | `experimental`, `stable` or `deprecated`                     |
-| `extends`                    | The template this one is layered on                          |
-| `supersededBy`               | Required when deprecated, refused otherwise                  |
-| `documentation`              | A page that must exist, checked by the validator             |
+| Field                        | Purpose                                                          |
+| ---------------------------- | ---------------------------------------------------------------- |
+| `id`                         | Directory name and CLI argument                                  |
+| `displayName`, `description` | Shown by `list-templates`                                        |
+| `version`                    | Exact semver. Ranges are rejected.                               |
+| `minimumFrameworkVersion`    | `trustos new` refuses an older framework                         |
+| `includedApps`               | `api`, `admin`, `miniapp`                                        |
+| `includedModules`            | The `@trustsystem/*` packages it wires — checked against imports |
+| `requiredVariables`          | Every placeholder a template may reference                       |
+| `deploymentTargets`          | `railway`, `local`                                               |
+| `entities`                   | Domain models, for `--verbose`                                   |
+| `migrationNotes`             | What a maintainer must know when moving versions                 |
+| `owner`                      | The team accountable. Not decorative — see below.                |
+| `outOfScope`                 | Deliberate exclusions, echoed into the generated project         |
+| `category`                   | One of nine groups, for `trustos templates`                      |
+| `status`                     | `experimental`, `stable` or `deprecated`                         |
+| `extends`                    | The template this one is layered on                              |
+| `supersededBy`               | Required when deprecated, refused otherwise                      |
+| `documentation`              | A page that must exist, checked by the validator                 |
 
 `requiredVariables` is load-bearing: `validate-template` fails on any
 placeholder not declared there, which is what stops a template rendering an

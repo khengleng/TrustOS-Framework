@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-core
+ * @trustsystem/financial-core
  *
  * Money, currency, fixed-point decimals, rounding, allocation and financial identifiers.
  *

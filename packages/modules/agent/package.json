@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-agent",
+  "name": "@trustsystem/module-agent",
   "version": "0.1.0",
   "description": "TrustOS Agent Framework module. Agents that take actions: declarative agent definitions, the tool loop with per-actor permission checks, memory, conversation state, stop conditions and human review.",
   "license": "UNLICENSED",
@@ -21,20 +21,20 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/agent-framework": "0.1.0",
-    "@trustos/agent-memory": "0.1.0",
-    "@trustos/agent-runtime": "0.1.0",
-    "@trustos/conversation": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/function-calling": "0.1.0",
-    "@trustos/human-review": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/module-ai": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/module-sdk": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/tool-execution": "0.1.0"
+    "@trustsystem/agent-framework": "0.1.0",
+    "@trustsystem/agent-memory": "0.1.0",
+    "@trustsystem/agent-runtime": "0.1.0",
+    "@trustsystem/conversation": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/function-calling": "0.1.0",
+    "@trustsystem/human-review": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/module-ai": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/module-sdk": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/tool-execution": "0.1.0"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",

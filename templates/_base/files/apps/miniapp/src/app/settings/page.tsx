@@ -7,7 +7,7 @@ import { API_BASE_URL } from '../../lib/api';
  * Notification settings.
  *
  * A notification the product declares as non-optional has no switch here — see the `optional`
- * flag in @trustos/template-sdk. A password change or a large withdrawal that could be silenced
+ * flag in @trustsystem/template-sdk. A password change or a large withdrawal that could be silenced
  * is one an attacker silences first, so the control is simply absent rather than present and
  * refused.
  */

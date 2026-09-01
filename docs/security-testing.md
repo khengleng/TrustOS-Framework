@@ -40,7 +40,7 @@ identical bytes and still verifies. `omitSubject` exists because of that.
 
 ## The toolkit
 
-`@trustos/security-testing` exists so that these tests are cheap enough to actually
+`@trustsystem/security-testing` exists so that these tests are cheap enough to actually
 write.
 
 **Token forgery.** `createTestIdentityKeys` generates an RSA pair and a JWKS.
@@ -150,7 +150,7 @@ npx vitest run apps/security-admin-example   # the boot test
 npm run lint
 npm run format:check
 npm run build:packages
-npm run migrate:drift -w @trustos/database    # needs a database + shadow database
+npm run migrate:drift -w @trustsystem/database    # needs a database + shadow database
 ```
 
 The boot test deserves a mention. A package can pass every one of its own tests and

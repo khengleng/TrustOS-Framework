@@ -1,11 +1,11 @@
-# AGENTS.md — @trustos/module-jobs
+# AGENTS.md — @trustsystem/module-jobs
 
 A durable job queue in the database: leased execution, retry with backoff, priority, progress and history.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/job-runtime` does the work. Logic added
+   wires; `@trustsystem/job-runtime` does the work. Logic added
    here is logic no other consumer of that package gets.
 2. **Never widen a permission key.** Keys are permanent. Add one; never rename or repurpose.
 3. **Always validate the tenant.** Every store call takes `organizationId` explicitly, and a

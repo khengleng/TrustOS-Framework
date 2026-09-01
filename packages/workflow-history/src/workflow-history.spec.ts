@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
 import type {
   WorkflowActor,
   WorkflowAttachmentRecord,
   WorkflowCommentAmendmentRecord,
   WorkflowCommentRecord,
   WorkflowEventRecord,
-} from '@trustos/workflow-core';
-import { WORKFLOW_PERMISSIONS } from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
+import { WORKFLOW_PERMISSIONS } from '@trustsystem/workflow-core';
 import {
   AttachmentService,
   AUDITABLE_WORKFLOW_EVENTS,

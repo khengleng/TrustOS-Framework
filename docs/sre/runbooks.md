@@ -2,7 +2,7 @@
 
 ## A service with no owner does not register
 
-That is the single structural rule in `@trustos/sre-core`, and everything else follows from it. An
+That is the single structural rule in `@trustsystem/sre-core`, and everything else follows from it. An
 unowned service is one whose alerts route nowhere; it is better for that to fail at registration,
 in daylight, than during the incident.
 

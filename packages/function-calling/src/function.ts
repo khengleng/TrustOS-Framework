@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { ToolCall, ToolDefinition } from '@trustos/ai-sdk';
+import { ApiError } from '@trustsystem/errors';
+import type { ToolCall, ToolDefinition } from '@trustsystem/ai-sdk';
 
 /**
  * Typed function definitions and argument parsing.

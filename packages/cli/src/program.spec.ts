@@ -3,13 +3,13 @@ import { existsSync } from 'node:fs';
 import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { BUILT_IN_MODULE_IDS } from '@trustos/module-registry';
+import { BUILT_IN_MODULE_IDS } from '@trustsystem/module-registry';
 import { readFile } from 'node:fs/promises';
 import { run } from './program';
 import { createCapturingOutput } from './output';
 import { CLI_VERSION } from './version';
 import { resolveAnswersFromFlags, defaultDisplayName, defaultPackageName } from './prompts';
-import { requireTemplate } from '@trustos/template-registry';
+import { requireTemplate } from '@trustsystem/template-registry';
 
 /**
  * CLI tests.

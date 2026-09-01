@@ -1,5 +1,5 @@
 /**
- * @trustos/ai-policy
+ * @trustsystem/ai-policy
  *
  * Per-tenant policy: allowed models, tools, knowledge bases, budgets, runtime and approval rules.
  *

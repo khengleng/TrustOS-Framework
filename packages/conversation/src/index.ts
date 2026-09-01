@@ -1,5 +1,5 @@
 /**
- * @trustos/conversation
+ * @trustsystem/conversation
  *
  * Conversation state, context-window fitting and summarisation.
  *

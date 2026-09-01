@@ -8,13 +8,13 @@ import {
   type ModuleMetadata,
   type OnApplicationShutdown,
 } from '@nestjs/common';
-import type { LoggerPort } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
 import {
   EventRegistry,
   STANDARD_EVENTS,
   type EventSchemaDefinition,
-} from '@trustos/event-registry';
+} from '@trustsystem/event-registry';
 import type { DeadLetterStore, DeliveryLedger, EventBus } from '../contracts';
 import { InMemoryEventBus } from '../in-memory-bus';
 import { DeadLetterReplayService } from '../replay';

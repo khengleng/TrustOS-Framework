@@ -1,17 +1,17 @@
 import { Body, Controller, Inject, Param, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { HumanActorsOnly } from '@trustos/identity/nest';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { HumanActorsOnly } from '@trustsystem/identity/nest';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
 import {
   FINANCIAL_PRODUCT_PERMISSIONS,
   parseProductDefinition,
-} from '@trustos/financial-product-core';
-import { parseVariant } from '@trustos/financial-product-variants';
-import type { ProductRegistry, RegistryActor } from '@trustos/financial-product-registry';
+} from '@trustsystem/financial-product-core';
+import { parseVariant } from '@trustsystem/financial-product-variants';
+import type { ProductRegistry, RegistryActor } from '@trustsystem/financial-product-registry';
 import { PRODUCT_REGISTRY } from '../tokens';
 
 /**

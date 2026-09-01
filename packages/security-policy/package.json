@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/security-policy",
+  "name": "@trustsystem/security-policy",
   "version": "0.1.0",
   "description": "Typed security policy: token lifetimes, session limits, lockout, API key lifetime, MFA requirements, trusted issuers \u2014 validated at start-up.",
   "license": "UNLICENSED",
@@ -18,7 +18,7 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {
@@ -36,6 +36,6 @@
   "devDependencies": {
     "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.1.28",
-    "@trustos/security-testing": "0.1.0"
+    "@trustsystem/security-testing": "0.1.0"
   }
 }

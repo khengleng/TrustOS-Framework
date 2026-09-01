@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { EventRegistry, type EventSchemaDefinition } from '@trustos/event-registry';
-import { buildEvent, type EventActor } from '@trustos/event-sdk';
-import { retryPolicySchema } from '@trustos/retry';
+import { EventRegistry, type EventSchemaDefinition } from '@trustsystem/event-registry';
+import { buildEvent, type EventActor } from '@trustsystem/event-sdk';
+import { retryPolicySchema } from '@trustsystem/retry';
 import {
   PlaintextSecretCipher,
   SIGNATURE_HEADER,
   WebhookService,
   createInMemoryWebhookStores,
   verifySignature,
-} from '@trustos/webhooks';
+} from '@trustsystem/webhooks';
 import { WebhookDispatcher } from './dispatcher';
 import { WebhookWorker } from './worker';
 

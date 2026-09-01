@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   add,
   allocate,
@@ -289,7 +289,7 @@ export function assertSameCurrency(left: Money, right: Money, operation = 'this 
           path: 'currency',
           message:
             `Cannot perform ${operation} on ${left.currency} and ${right.currency}. Converting ` +
-            'between them needs an exchange rate, a timestamp and a spread — see @trustos/fx.',
+            'between them needs an exchange rate, a timestamp and a spread — see @trustsystem/fx.',
         },
       ],
       'Currency mismatch.',

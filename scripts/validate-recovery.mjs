@@ -36,18 +36,18 @@ if (!process.env.DATABASE_URL) {
 }
 
 const { PrismaClient } = await import('@prisma/client');
-const { CHANGE_REQUEST_APPROVAL, hashDefinition } = await import('@trustos/workflow-definition');
-const { ApprovalWorkbenchService } = await import('@trustos/approval-workbench');
-const { OidcIdentityProvider } = await import('@trustos/identity');
-const { createAuthorizer } = await import('@trustos/authorization');
-const { AuditService, PrismaAuditSink } = await import('@trustos/audit');
-const { SecurityEventEmitter, InMemorySecurityEventSink } = await import('@trustos/security-events');
-const { securityPolicySchema } = await import('@trustos/security-policy');
-const { HistoryRecorder } = await import('@trustos/workflow-history');
-const { WORKFLOW_POLICIES } = await import('@trustos/workflow-policy');
-const { CalendarRegistry, SlaService } = await import('@trustos/workflow-sla');
-const { TaskService, PrismaTaskStore } = await import('@trustos/workflow-tasks');
-const runtime = await import('@trustos/workflow-runtime');
+const { CHANGE_REQUEST_APPROVAL, hashDefinition } = await import('@trustsystem/workflow-definition');
+const { ApprovalWorkbenchService } = await import('@trustsystem/approval-workbench');
+const { OidcIdentityProvider } = await import('@trustsystem/identity');
+const { createAuthorizer } = await import('@trustsystem/authorization');
+const { AuditService, PrismaAuditSink } = await import('@trustsystem/audit');
+const { SecurityEventEmitter, InMemorySecurityEventSink } = await import('@trustsystem/security-events');
+const { securityPolicySchema } = await import('@trustsystem/security-policy');
+const { HistoryRecorder } = await import('@trustsystem/workflow-history');
+const { WORKFLOW_POLICIES } = await import('@trustsystem/workflow-policy');
+const { CalendarRegistry, SlaService } = await import('@trustsystem/workflow-sla');
+const { TaskService, PrismaTaskStore } = await import('@trustsystem/workflow-tasks');
+const runtime = await import('@trustsystem/workflow-runtime');
 
 const prisma = new PrismaClient();
 const results = [];
@@ -454,7 +454,7 @@ async function main() {
      * was the DoS fix behaving correctly: a malformed token is not evidence about the
      * provider, which is exactly the distinction it exists to draw.
      */
-    const { createTestIdentityKeys, signTestToken } = await import('@trustos/security-testing');
+    const { createTestIdentityKeys, signTestToken } = await import('@trustsystem/security-testing');
     const keys = await createTestIdentityKeys();
     const timeout = Object.assign(new Error('Timeout reached'), { code: 'ERR_JWKS_TIMEOUT' });
 
@@ -493,7 +493,7 @@ async function main() {
 
   await check('identity: invalid caller tokens do not degrade readiness', async () => {
     const { createTestIdentityKeys, algNoneToken, expiredToken, signedByAnotherKey } =
-      await import('@trustos/security-testing');
+      await import('@trustsystem/security-testing');
     const keys = await createTestIdentityKeys();
     const provider = new OidcIdentityProvider(
       { issuerUrl: 'https://idp.test/realms/x', clientId: 'trustos-api', fetchJwks: keys.jwks },

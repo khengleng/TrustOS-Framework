@@ -1,9 +1,9 @@
-import { isApiErrorBody, type ApiErrorBody, type ErrorCode } from '@trustos/errors';
+import { isApiErrorBody, type ApiErrorBody, type ErrorCode } from '@trustsystem/errors';
 
 /**
  * Browser API client.
  *
- * It imports @trustos/errors — which is browser-safe by design — so the admin
+ * It imports @trustsystem/errors — which is browser-safe by design — so the admin
  * app parses exactly the error contract the API produces, rather than
  * re-deriving it from response shapes.
  */

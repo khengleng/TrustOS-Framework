@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   compareMoney,
   formatMoney,
   money,
   type CurrencyRegistry,
   type Money,
-} from '@trustos/financial-core';
+} from '@trustsystem/financial-core';
 
 /**
  * Financial policy.
@@ -14,7 +14,7 @@ import {
  * What a tenant is allowed to do with money: which currencies, whether a balance may go negative,
  * how long a settlement window is, above what value a transaction needs approval.
  *
- * Two decisions inherited from `@trustos/ai-policy`, for the same reasons:
+ * Two decisions inherited from `@trustsystem/ai-policy`, for the same reasons:
  *
  *   1. **Policies are never merged.** The most specific one applies whole. Merging two produces a
  *      policy nobody wrote, and "why was this allowed" stops having an answer.

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/workflow-approvals",
+  "name": "@trustsystem/workflow-approvals",
   "version": "0.1.0",
   "description": "Approval models: single, sequential, parallel, unanimous, threshold and conditional.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/workflow-core": "0.1.0",
-    "@trustos/workflow-definition": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/workflow-core": "0.1.0",
+    "@trustsystem/workflow-definition": "0.1.0",
     "zod": "^3.24.1"
   }
 }

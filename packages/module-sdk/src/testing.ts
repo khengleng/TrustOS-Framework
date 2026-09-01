@@ -1,4 +1,4 @@
-import { createNullLogger, type LoggerPort } from '@trustos/logging';
+import { createNullLogger, type LoggerPort } from '@trustsystem/logging';
 import {
   createModuleContext,
   InMemoryTenantSettingsStore,

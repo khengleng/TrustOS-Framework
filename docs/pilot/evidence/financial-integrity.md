@@ -2,13 +2,13 @@
 
 ## The invariants
 
-| Invariant                            | How it is held                                                 | Test                                                      |
-| ------------------------------------ | -------------------------------------------------------------- | --------------------------------------------------------- |
-| The wallet balance equals the ledger | Balance is _derived_ from the account's journals, never stored | `keeps the wallet balance equal to what the journals say` |
-| No journal for a refused payment     | The posting is the last step; a refusal returns before it      | `posts no journal for a refused payment`                  |
-| Every journal balances               | `@trustos/ledger` refuses an unbalanced one                    | `refuses an unbalanced journal`                           |
-| A posted journal is immutable        | There is no `update` and no `delete` on the ledger             | `offers no way to update a posted journal`                |
-| No float on the payment path         | Amounts are strings; arithmetic is `@trustos/financial-core`   | `never floats the money`                                  |
+| Invariant                            | How it is held                                                   | Test                                                      |
+| ------------------------------------ | ---------------------------------------------------------------- | --------------------------------------------------------- |
+| The wallet balance equals the ledger | Balance is _derived_ from the account's journals, never stored   | `keeps the wallet balance equal to what the journals say` |
+| No journal for a refused payment     | The posting is the last step; a refusal returns before it        | `posts no journal for a refused payment`                  |
+| Every journal balances               | `@trustsystem/ledger` refuses an unbalanced one                  | `refuses an unbalanced journal`                           |
+| A posted journal is immutable        | There is no `update` and no `delete` on the ledger               | `offers no way to update a posted journal`                |
+| No float on the payment path         | Amounts are strings; arithmetic is `@trustsystem/financial-core` | `never floats the money`                                  |
 
 ## The measurement
 
@@ -44,7 +44,7 @@ finding 3.
 
 ## The fee
 
-From `@trustos/fees`, priced by a schedule that lives in configuration.
+From `@trustsystem/fees`, priced by a schedule that lives in configuration.
 
 | Amount   | Fee  | Why                                    |
 | -------- | ---- | -------------------------------------- |

@@ -1,5 +1,5 @@
 /**
- * @trustos/tool-execution
+ * @trustsystem/tool-execution
  *
  * The tool registry and executor: permissions, timeouts, audit and concurrency.
  *

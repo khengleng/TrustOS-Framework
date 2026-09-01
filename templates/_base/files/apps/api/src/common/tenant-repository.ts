@@ -1,4 +1,4 @@
-import { assertTenantMatch, scopedDelegate } from '@trustos/tenancy';
+import { assertTenantMatch, scopedDelegate } from '@trustsystem/tenancy';
 
 /**
  * The shape this repository needs from a Prisma client: a model delegate,

@@ -7,10 +7,10 @@ import type {
   WorkflowVersionRecord,
   WorkflowDefinitionRecord,
   WorkflowEscalationRecord,
-} from '@trustos/workflow-core';
-import type { SlaStore } from '@trustos/workflow-sla';
-import type { EscalationStore } from '@trustos/workflow-escalation';
-import type { RoundRobinCursor } from '@trustos/workflow-tasks';
+} from '@trustsystem/workflow-core';
+import type { SlaStore } from '@trustsystem/workflow-sla';
+import type { EscalationStore } from '@trustsystem/workflow-escalation';
+import type { RoundRobinCursor } from '@trustsystem/workflow-tasks';
 import type { DecisionStore, InstanceStore, VersionStore } from './engine';
 import type { DefinitionStore, DefinitionVersionStore } from './definition-service';
 import type { IdempotencyStore } from './idempotency';
@@ -55,7 +55,7 @@ export interface GenericDelegate<TRow> {
  *
  * `DatabaseRow` widens every narrowed union to `string` and every Json column to `unknown`,
  * because that is what a generated Prisma client produces. The header of `DatabaseRow` in
- * `@trustos/workflow-core` explains why a port that named the narrowed type would be
+ * `@trustsystem/workflow-core` explains why a port that named the narrowed type would be
  * unusable with the client it exists to accept.
  */
 type InstanceRow = DatabaseRow<WorkflowInstanceRecord>;

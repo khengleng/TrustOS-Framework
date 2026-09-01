@@ -1,5 +1,5 @@
 /**
- * @trustos/workflow-runtime
+ * @trustsystem/workflow-runtime
  *
  * The deterministic state machine, and the engine that drives it.
  *

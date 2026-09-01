@@ -1,7 +1,7 @@
 import { PrismaClient, Prisma } from '@prisma/client';
-import type { AppConfig } from '@trustos/config';
+import type { AppConfig } from '@trustsystem/config';
 
-/** Minimal logger surface; @trustos/logging's Logger satisfies it. */
+/** Minimal logger surface; @trustsystem/logging's Logger satisfies it. */
 export interface DatabaseLogger {
   debug(payload: Record<string, unknown>, message: string): void;
   warn(payload: Record<string, unknown>, message: string): void;

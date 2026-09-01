@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-scheduler",
+  "name": "@trustsystem/module-scheduler",
   "version": "0.1.0",
   "description": "TrustOS Scheduler module. Cron, interval and one-time schedules with IANA timezone support and explicit daylight-saving handling.",
   "license": "UNLICENSED",
@@ -21,13 +21,13 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/module-sdk": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/scheduler": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/module-sdk": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/scheduler": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

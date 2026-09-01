@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/case-management",
+  "name": "@trustsystem/case-management",
   "version": "0.1.0",
   "description": "Lightweight case records linking workflow instances, tasks, comments and attachments to a subject.",
   "license": "UNLICENSED",
@@ -18,12 +18,12 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/security-events": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/workflow-core": "0.1.0",
-    "@trustos/workflow-history": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/security-events": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/workflow-core": "0.1.0",
+    "@trustsystem/workflow-history": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

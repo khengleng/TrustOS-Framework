@@ -9,7 +9,7 @@
  * with another template layered beneath this one.
  */
 
-import { definePermission, type PermissionDefinition } from '@trustos/template-sdk';
+import { definePermission, type PermissionDefinition } from '@trustsystem/template-sdk';
 
 export const HOSPITAL_PERMISSIONS = {
   HOSPITAL_DEPARTMENT_READ: definePermission(

@@ -1,5 +1,5 @@
 /**
- * @trustos/quality-gates
+ * @trustsystem/quality-gates
  *
  * The eleven gates a change clears before it ships.
  *

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/data-catalog",
+  "name": "@trustsystem/data-catalog",
   "version": "0.1.0",
   "description": "A searchable catalog of governed data: databases, tables, columns, API fields, events, reports, AI sources.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/data-classification": "0.1.0",
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/data-classification": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

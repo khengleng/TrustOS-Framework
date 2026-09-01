@@ -5,7 +5,7 @@
  * than another near-identical page component.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { CRM_RESOURCES } from './resources-crm';
 
 export const RESOURCES: ResourceDefinition[] = [...CRM_RESOURCES];

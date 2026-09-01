@@ -119,7 +119,7 @@ model AccountStatement {
 }
 
 /// Which channels a customer has muted. Security notifications ignore this —
-/// see the `optional` flag in @trustos/template-sdk.
+/// see the `optional` flag in @trustsystem/template-sdk.
 model CustomerNotificationPreference {
   id             String @id @default(cuid())
   organizationId String

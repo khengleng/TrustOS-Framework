@@ -185,7 +185,7 @@ Schema identical (82 tables), row counts identical, migration history intact (9 
 `finished_at`), append-only trigger still enforcing.
 
 **What this does not establish:** that _Railway's_ managed backup and restore works. It has not been
-exercised. The 188ms says nothing about a production estate — `@trustos/recovery`'s rule is that the
+exercised. The 188ms says nothing about a production estate — `@trustsystem/recovery`'s rule is that the
 measured time is the slowest successful run, and this is one run on 244 KB.
 
 ### 17. Smoke tests — PASS

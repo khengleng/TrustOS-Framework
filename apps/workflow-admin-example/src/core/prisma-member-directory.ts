@@ -1,5 +1,5 @@
-import type { PrismaService } from '@trustos/database';
-import type { MemberDirectory } from '@trustos/workflow-tasks';
+import type { PrismaService } from '@trustsystem/database';
+import type { MemberDirectory } from '@trustsystem/workflow-tasks';
 
 /**
  * The framework's membership tables, as a member directory.

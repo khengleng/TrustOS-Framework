@@ -16,18 +16,18 @@ your first change in a session.
 
 Before writing anything, check whether the capability already exists:
 
-| Need                             | Use                                          |
-| -------------------------------- | -------------------------------------------- |
-| Read an environment variable     | `@trustos/config` — never `process.env`      |
-| Log anything                     | `@trustos/logging` — never `console.*`       |
-| Throw an API error               | `@trustos/errors` — `ApiError.*`             |
-| Validate input                   | `@trustos/validation` — Zod + `parseOrThrow` |
-| Hash a password, issue a token   | `@trustos/auth`                              |
-| Check a permission               | `@trustos/rbac`                              |
-| Scope a query to an organization | `@trustos/tenancy`                           |
-| Record a sensitive action        | `@trustos/audit`                             |
-| Add a health check or metric     | `@trustos/observability`                     |
-| Share a type with the browser    | `@trustos/shared-types`                      |
+| Need                             | Use                                              |
+| -------------------------------- | ------------------------------------------------ |
+| Read an environment variable     | `@trustsystem/config` — never `process.env`      |
+| Log anything                     | `@trustsystem/logging` — never `console.*`       |
+| Throw an API error               | `@trustsystem/errors` — `ApiError.*`             |
+| Validate input                   | `@trustsystem/validation` — Zod + `parseOrThrow` |
+| Hash a password, issue a token   | `@trustsystem/auth`                              |
+| Check a permission               | `@trustsystem/rbac`                              |
+| Scope a query to an organization | `@trustsystem/tenancy`                           |
+| Record a sensitive action        | `@trustsystem/audit`                             |
+| Add a health check or metric     | `@trustsystem/observability`                     |
+| Share a type with the browser    | `@trustsystem/shared-types`                      |
 
 ### 2. Do not duplicate shared functionality
 

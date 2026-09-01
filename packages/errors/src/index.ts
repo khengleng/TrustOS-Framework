@@ -1,8 +1,8 @@
 /**
- * @trustos/errors
+ * @trustsystem/errors
  *
  * Browser-safe by design: no NestJS, no Node built-ins. The NestJS exception
- * filter lives behind the '@trustos/errors/nest' subpath so importing this
+ * filter lives behind the '@trustsystem/errors/nest' subpath so importing this
  * package from a frontend never pulls a server framework into the bundle.
  */
 export * from './error-codes';

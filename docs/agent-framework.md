@@ -18,7 +18,7 @@ A tool is the only way an agent changes anything, so the declaration carries mor
 
 ```ts
 import { z } from 'zod';
-import type { FunctionDefinition } from '@trustos/function-calling';
+import type { FunctionDefinition } from '@trustsystem/function-calling';
 
 export const refundOrder: FunctionDefinition<{ orderId: string; amountCents: number }, Refund> = {
   name: 'refund_order',

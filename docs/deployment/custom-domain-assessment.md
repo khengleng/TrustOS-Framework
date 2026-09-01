@@ -71,19 +71,19 @@ through `GovernanceToolModule.forRoot`.
 
 Read from `packages/config/src/env-schema.ts` and the live services.
 
-| Concern        | State                                                                                                                                                   |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Port           | `PORT=8080`, bound `0.0.0.0` — correct for Railway                                                                                                      |
-| Health         | `GET /health` → 200, excluded from the global prefix                                                                                                    |
-| Readiness      | `GET /ready` → 200 with a real database check                                                                                                           |
-| Health payload | service, version, environment, uptime, checks. No secrets, no topology, no credentials.                                                                 |
-| TLS            | terminated by Railway (`server: railway-hikari`), valid certificate                                                                                     |
-| HSTS           | `max-age=31536000; includeSubDomains`                                                                                                                   |
-| Other headers  | `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, a restrictive CSP                                                                   |
-| `TRUST_PROXY`  | `true`                                                                                                                                                  |
-| Cookies        | none. Authentication is bearer-token; no service calls `res.cookie`.                                                                                    |
-| Redirects      | none. No application performs an HTTP redirect.                                                                                                         |
-| OIDC           | present in `@trustos/identity` but not wired into any deployed service — every service still carries `SECURITY_ALLOW_LOCAL_IDENTITY_IN_PRODUCTION=true` |
+| Concern        | State                                                                                                                                                       |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Port           | `PORT=8080`, bound `0.0.0.0` — correct for Railway                                                                                                          |
+| Health         | `GET /health` → 200, excluded from the global prefix                                                                                                        |
+| Readiness      | `GET /ready` → 200 with a real database check                                                                                                               |
+| Health payload | service, version, environment, uptime, checks. No secrets, no topology, no credentials.                                                                     |
+| TLS            | terminated by Railway (`server: railway-hikari`), valid certificate                                                                                         |
+| HSTS           | `max-age=31536000; includeSubDomains`                                                                                                                       |
+| Other headers  | `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, a restrictive CSP                                                                       |
+| `TRUST_PROXY`  | `true`                                                                                                                                                      |
+| Cookies        | none. Authentication is bearer-token; no service calls `res.cookie`.                                                                                        |
+| Redirects      | none. No application performs an HTTP redirect.                                                                                                             |
+| OIDC           | present in `@trustsystem/identity` but not wired into any deployed service — every service still carries `SECURITY_ALLOW_LOCAL_IDENTITY_IN_PRODUCTION=true` |
 
 ### Base URL
 

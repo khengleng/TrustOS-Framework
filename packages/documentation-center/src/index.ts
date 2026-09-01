@@ -1,5 +1,5 @@
 /**
- * @trustos/documentation-center
+ * @trustsystem/documentation-center
  *
  * Generates module, API, CLI and dependency documentation, plus the changelog.
  *

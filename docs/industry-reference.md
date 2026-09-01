@@ -112,21 +112,21 @@ trustos new merchant --name my-app
 
 ### `wallet` — TrustOS Wallet
 
-Customer wallets over the framework ledger: wallet profiles, transfers, transfer limits and history. Balances come from @trustos/wallet — this template stores no balance column.
+Customer wallets over the framework ledger: wallet profiles, transfers, transfer limits and history. Balances come from @trustsystem/wallet — this template stores no balance column.
 
 ```
 trustos new wallet --name my-app
 ```
 
-| Entity                 | What it holds                                                                                                                                                                |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `WalletProfile`        | The product-side record of a wallet. `walletId` points at the framework wallet that owns the money; everything financial is read through @trustos/wallet.                    |
-| `WalletTransfer`       | A movement between two wallets. The journal is written by @trustos/ledger; this row is the product-level record of _why_, and `journalId` is the link between them.          |
-| `TransferLimitProfile` | Which framework limit keys apply to a wallet tier. The ceilings themselves live in @trustos/limits — this maps tiers onto them so a tier change is one row, not a migration. |
+| Entity                 | What it holds                                                                                                                                                                    |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WalletProfile`        | The product-side record of a wallet. `walletId` points at the framework wallet that owns the money; everything financial is read through @trustsystem/wallet.                    |
+| `WalletTransfer`       | A movement between two wallets. The journal is written by @trustsystem/ledger; this row is the product-level record of _why_, and `journalId` is the link between them.          |
+| `TransferLimitProfile` | Which framework limit keys apply to a wallet tier. The ceilings themselves live in @trustsystem/limits — this maps tiers onto them so a tier change is one row, not a migration. |
 
 **Out of scope.** payment providers, card issuing, cash-in and cash-out networks, FX execution, interest and rewards.
 
-**Notes.** There is deliberately no balance column anywhere in this schema: @trustos/wallet computes it from the ledger, and a cached copy is the one thing that makes two sources of truth. WalletProfile is the _product_ record; the money lives in the framework.
+**Notes.** There is deliberately no balance column anywhere in this schema: @trustsystem/wallet computes it from the ledger, and a cached copy is the one thing that makes two sources of truth. WalletProfile is the _product_ record; the money lives in the framework.
 
 ### `digital-bank` — TrustOS Digital Bank
 
@@ -143,7 +143,7 @@ trustos new digital-bank --name my-app
 | `BankCustomer`                   | A person or business the bank holds a relationship with.                                                                                                              |
 | `BankAccount`                    | A customer-facing account. The money is in the framework wallet named by `profileId`; this row carries the account number and the product terms.                      |
 | `AccountStatement`               | A generated statement for a window. Half-open `[from, to)`, the same convention the ledger uses for accounting periods — an inclusive end double-counts the boundary. |
-| `CustomerNotificationPreference` | Which channels a customer has muted. Security notifications ignore this — see the `optional` flag in @trustos/template-sdk.                                           |
+| `CustomerNotificationPreference` | Which channels a customer has muted. Security notifications ignore this — see the `optional` flag in @trustsystem/template-sdk.                                       |
 
 **Out of scope.** core banking, card issuing, clearing and settlement rails, credit scoring, regulatory reporting.
 
@@ -168,7 +168,7 @@ trustos new microloan --name my-app
 
 **Out of scope.** credit bureau integration, credit scoring models, payment providers, collections field operations, regulatory reporting.
 
-**Notes.** The approval path is a @trustos/workflow-definition document in workflows/ — edit it there and validate with `trustos workflow validate`, rather than adding status columns here. The repayment schedule is generated once at disbursement and never recomputed; a restructure writes a new schedule and supersedes the old one.
+**Notes.** The approval path is a @trustsystem/workflow-definition document in workflows/ — edit it there and validate with `trustos workflow validate`, rather than adding status columns here. The repayment schedule is generated once at disbursement and never recomputed; a restructure writes a new schedule and supersedes the old one.
 
 ### `collection` — TrustOS Collections
 
@@ -278,13 +278,13 @@ trustos new helpdesk --name my-app
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TicketQueue`   | Where tickets land before somebody picks them up.                                                                                                                          |
 | `SupportAgent`  | Somebody who works tickets.                                                                                                                                                |
-| `SlaPolicy`     | Response and resolution targets per priority. Read by @trustos/workflow-sla; this template stores the numbers, not the clock.                                              |
+| `SlaPolicy`     | Response and resolution targets per priority. Read by @trustsystem/workflow-sla; this template stores the numbers, not the clock.                                          |
 | `Ticket`        | A request for help.                                                                                                                                                        |
 | `TicketComment` | A message on a ticket. `isInternal` keeps a note away from the requester — and the API must filter on it, because a comment hidden only in the UI is still in the payload. |
 
 **Out of scope.** email ingestion, live chat, telephony, knowledge base search, customer satisfaction surveys.
 
-**Notes.** SLA timing is computed by @trustos/workflow-sla rather than stored as a deadline column: a deadline written at creation is wrong the moment the calendar or the priority changes, and the ticket that silently missed its SLA is the one nobody can explain afterwards.
+**Notes.** SLA timing is computed by @trustsystem/workflow-sla rather than stored as a deadline column: a deadline written at creation is wrong the moment the calendar or the priority changes, and the ticket that silently missed its SLA is the one nobody can explain afterwards.
 
 ## Education
 
@@ -296,23 +296,23 @@ A learning platform: courses, lessons, quizzes, assignments, enrolments, teacher
 trustos new education --name my-app
 ```
 
-| Entity                 | What it holds                                                                                                                                                                  |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Teacher`              | Somebody who teaches. `userId` is the framework identity.                                                                                                                      |
-| `Student`              | Somebody who learns.                                                                                                                                                           |
-| `Course`               | A body of material a student can enrol in.                                                                                                                                     |
-| `Lesson`               | One unit of a course.                                                                                                                                                          |
-| `Quiz`                 | A set of questions attached to a lesson or a course.                                                                                                                           |
-| `QuizQuestion`         | One question. `correctOption` is never returned to a student — the service strips it, and there is a test that proves it.                                                      |
-| `Enrollment`           | A student on a course.                                                                                                                                                         |
-| `Assignment`           | Work a student submits and a teacher marks.                                                                                                                                    |
-| `AssignmentSubmission` | A student handing work in.                                                                                                                                                     |
-| `Certificate`          | Proof a student finished a course. `serial` is what a third party verifies against, so it is immutable and unique.                                                             |
-| `TutorSession`         | The AI tutor hook. Records the question, the answer and which model answered — and calls nothing. Wiring a provider is a deployment decision made through @trustos/ai-gateway. |
+| Entity                 | What it holds                                                                                                                                                                      |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Teacher`              | Somebody who teaches. `userId` is the framework identity.                                                                                                                          |
+| `Student`              | Somebody who learns.                                                                                                                                                               |
+| `Course`               | A body of material a student can enrol in.                                                                                                                                         |
+| `Lesson`               | One unit of a course.                                                                                                                                                              |
+| `Quiz`                 | A set of questions attached to a lesson or a course.                                                                                                                               |
+| `QuizQuestion`         | One question. `correctOption` is never returned to a student — the service strips it, and there is a test that proves it.                                                          |
+| `Enrollment`           | A student on a course.                                                                                                                                                             |
+| `Assignment`           | Work a student submits and a teacher marks.                                                                                                                                        |
+| `AssignmentSubmission` | A student handing work in.                                                                                                                                                         |
+| `Certificate`          | Proof a student finished a course. `serial` is what a third party verifies against, so it is immutable and unique.                                                                 |
+| `TutorSession`         | The AI tutor hook. Records the question, the answer and which model answered — and calls nothing. Wiring a provider is a deployment decision made through @trustsystem/ai-gateway. |
 
 **Out of scope.** external AI providers, video hosting and streaming, payment providers, proctoring, SCORM and xAPI.
 
-**Notes.** The AI tutor is a _hook_, not an integration: TutorSession records what was asked and what was answered, and the answering is done by whatever the deployment wires into @trustos/ai-gateway. Nothing here calls a model, and nothing here should.
+**Notes.** The AI tutor is a _hook_, not an integration: TutorSession records what was asked and what was answered, and the answering is done by whatever the deployment wires into @trustsystem/ai-gateway. Nothing here calls a model, and nothing here should.
 
 ### `school` — TrustOS School
 
@@ -412,7 +412,7 @@ trustos new ngo --name my-app
 
 **Out of scope.** payment providers, donor CRM automation, grant management portals, accounting systems, donor-specific reporting formats.
 
-**Notes.** Beneficiary identity is the sensitive part of this domain: names and contact details sit behind their own PII permission, and a report exported for a donor must not carry them. The export path in @trustos/export is where that filtering belongs.
+**Notes.** Beneficiary identity is the sensitive part of this domain: names and contact details sit behind their own PII permission, and a report exported for a donor must not carry them. The export path in @trustsystem/export is where that filtering belongs.
 
 ### `government` — TrustOS Government Services
 
@@ -432,7 +432,7 @@ trustos new government --name my-app
 
 **Out of scope.** national ID system integration, government payment rails, e-signature providers, inter-agency data exchange, country-specific legal workflows.
 
-**Notes.** Deliberately generic: there is no national ID validation, no ministry taxonomy and no country-specific form. An application is routed by a @trustos/workflow-definition document the deployment writes, which is the seam that lets one template serve agencies whose processes have nothing in common.
+**Notes.** Deliberately generic: there is no national ID validation, no ministry taxonomy and no country-specific form. An application is routed by a @trustsystem/workflow-definition document the deployment writes, which is the seam that lets one template serve agencies whose processes have nothing in common.
 
 ## Messaging mini apps
 
@@ -450,7 +450,7 @@ trustos new telegram-miniapp --name my-app
 | `MiniAppSession`             | A verified sign-in. Short-lived by design: a mini app session that outlives the chat it was opened from is a session nobody can revoke from the app.                                                     |
 | `DeepLink`                   | A named entry point. The `target` is resolved against a whitelist rather than redirected to — an open redirect inside a messaging client is a phishing primitive with the platform’s branding on it.     |
 | `MenuEntry`                  | One item in the mini app menu. Filtered by permission before it is sent.                                                                                                                                 |
-| `MiniAppNotificationSetting` | What a user has muted. Security notifications ignore this — see @trustos/template-sdk.                                                                                                                   |
+| `MiniAppNotificationSetting` | What a user has muted. Security notifications ignore this — see @trustsystem/template-sdk.                                                                                                               |
 
 **Out of scope.** Telegram Bot API calls, Meta Graph API calls, payment providers, push notification services, chatbot conversation design.
 
@@ -531,12 +531,12 @@ A self-service portal: profile, notifications, documents, settings and support r
 trustos new customer-portal --name my-app
 ```
 
-| Entity               | What it holds                                                                                                                                              |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PortalProfile`      | What a customer can see and edit about themselves.                                                                                                         |
-| `PortalDocument`     | A file made available to a customer. `storageKey` is opaque and never a filename the customer supplied — see the upload guidance in @trustos/template-sdk. |
-| `PortalNotification` | Something the customer should see when they next log in.                                                                                                   |
-| `SupportRequest`     | A customer asking for help.                                                                                                                                |
+| Entity               | What it holds                                                                                                                                                  |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PortalProfile`      | What a customer can see and edit about themselves.                                                                                                             |
+| `PortalDocument`     | A file made available to a customer. `storageKey` is opaque and never a filename the customer supplied — see the upload guidance in @trustsystem/template-sdk. |
+| `PortalNotification` | Something the customer should see when they next log in.                                                                                                       |
+| `SupportRequest`     | A customer asking for help.                                                                                                                                    |
 
 **Out of scope.** payment providers, live chat, document e-signing, identity verification providers, cloud storage backends.
 
@@ -559,7 +559,7 @@ trustos new staff-portal --name my-app
 
 **Out of scope.** HR systems, payroll, calendar integration, business intelligence tools, document management systems.
 
-**Notes.** Approvals are not stored here: @trustos/workflow-approvals owns them, and this template holds only the _view_ — which saved search a person uses, which report they run. A portal that copied approval state would be a second source of truth for whether something was approved.
+**Notes.** Approvals are not stored here: @trustsystem/workflow-approvals owns them, and this template holds only the _view_ — which saved search a person uses, which report they run. A portal that copied approval state would be a second source of truth for whether something was approved.
 
 ### `developer-portal` — TrustOS Developer Portal
 
@@ -572,14 +572,14 @@ trustos new developer-portal --name my-app
 | Entity           | What it holds                                                                                                                                                                                    |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `ApiApplication` | A consumer of the API. Keys belong to an application, not to a person.                                                                                                                           |
-| `ApiKeyRecord`   | The record of a key issued by @trustos/api-keys. Holds the prefix so a developer can recognize it and never the secret — see the migration note.                                                 |
+| `ApiKeyRecord`   | The record of a key issued by @trustsystem/api-keys. Holds the prefix so a developer can recognize it and never the secret — see the migration note.                                             |
 | `ApiUsageRecord` | Calls per application per day. A daily roll-up rather than a row per request: a portal that stored every call would need a retention policy and a bigger database than the product it documents. |
 | `CodeExample`    | A worked example shown alongside the API documentation.                                                                                                                                          |
 | `SdkRelease`     | A published client library. `checksum` is what a developer verifies the download against, so a release without one is worse than no release.                                                     |
 
 **Out of scope.** API gateway implementation, billing and metering providers, OAuth authorization server, package registry hosting, external status page services.
 
-**Notes.** Keys are issued and verified by @trustos/api-keys — this template stores the _record_ of a key (its prefix, its owner, when it was last used) and never the key itself. A portal that could show a key again after issuing it would be a portal that stores it in a readable form, which defeats the whole design.
+**Notes.** Keys are issued and verified by @trustsystem/api-keys — this template stores the _record_ of a key (its prefix, its owner, when it was last used) and never the key itself. A portal that could show a key again after issuing it would be a portal that stores it in a readable form, which defeats the whole design.
 
 ## Choosing between neighbours
 

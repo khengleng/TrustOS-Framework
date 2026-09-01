@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/auth",
+  "name": "@trustsystem/auth",
   "version": "0.1.0",
   "description": "Email/password authentication, JWT issuance and refresh-token rotation.",
   "license": "UNLICENSED",
@@ -19,12 +19,12 @@
   "dependencies": {
     "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.1.28",
-    "@trustos/config": "0.1.0",
-    "@trustos/database": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/rbac": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/validation": "0.1.0",
+    "@trustsystem/config": "0.1.0",
+    "@trustsystem/database": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/rbac": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/validation": "0.1.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2"
   },

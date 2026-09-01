@@ -1,6 +1,6 @@
 # AGENTS.md — Notification
 
-Instructions for an AI coding agent working on `@trustos/module-notification`.
+Instructions for an AI coding agent working on `@trustsystem/module-notification`.
 
 Read `docs/ai-agent-instructions.md` at the framework root first, then
 `docs/module-development.md`. This file adds what is specific to this module.
@@ -8,8 +8,8 @@ Read `docs/ai-agent-instructions.md` at the framework root first, then
 ## Rules
 
 1. **Never duplicate framework functionality.** Tenant scoping is
-   `@trustos/tenancy`, reached through `ModuleRepository`. Audit is the audit port on
-   `ModuleContext`. Validation is Zod via `@trustos/validation`. Errors are
+   `@trustsystem/tenancy`, reached through `ModuleRepository`. Audit is the audit port on
+   `ModuleContext`. Validation is Zod via `@trustsystem/validation`. Errors are
    `ApiError`. Health is `HealthIndicator`. Writing a second implementation of any of
    these is the failure mode this file exists to prevent.
 2. **Reuse the SDK.** `ModuleRepository`, `createModuleContext`,

@@ -1,5 +1,5 @@
 /**
- * @trustos/settlement
+ * @trustsystem/settlement
  *
  * Settlement batches, instructions, windows and adjustments. Asynchronous by construction.
  *

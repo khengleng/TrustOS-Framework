@@ -1,5 +1,5 @@
 /**
- * @trustos/policy-evaluator
+ * @trustsystem/policy-evaluator
  *
  * Deterministic evaluation: no clock, no I/O, no randomness. The same policy version and the same
  * attributes give the same decision on any machine in any year — which is what makes a decision

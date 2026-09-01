@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ApiError } from '@trustos/errors';
-import { assertNoLeakedValues, assertSecretFieldsRedacted } from '@trustos/security-testing';
+import type { ApiError } from '@trustsystem/errors';
+import { assertNoLeakedValues, assertSecretFieldsRedacted } from '@trustsystem/security-testing';
 import {
   InMemoryRateLimiter,
   enforceRateLimit,

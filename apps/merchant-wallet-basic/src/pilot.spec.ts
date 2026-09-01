@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMoney, money } from '@trustos/financial-core';
+import { formatMoney, money } from '@trustsystem/financial-core';
 import { PILOT_CURRENCY, buildPilot, pilotFeeSchedule, pilotLimits, type Pilot } from './pilot';
 import { paymentRequestSchema } from './domain/payment';
 import { merchantSchema, type Merchant } from './domain/merchant';
@@ -357,7 +357,7 @@ describe('accepting a payment', () => {
   it('never floats the money', async () => {
     /*
      * 0.1 + 0.2 in a float is 0.30000000000000004. Every amount in and out of this flow is a
-     * string, and the arithmetic is @trustos/financial-core's.
+     * string, and the arithmetic is @trustsystem/financial-core's.
      */
     const harness = await pilot();
     await approvedMerchant(harness);

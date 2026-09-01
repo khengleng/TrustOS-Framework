@@ -501,7 +501,7 @@ const registry = {
             : 'IMPLEMENTED',
       securityClassification: definition?.classification ?? 'internal',
       dependencies: definition?.paths ?? [],
-      interface: (definition?.paths ?? []).map((path) => `@trustos/${path.split('/').pop()}`),
+      interface: (definition?.paths ?? []).map((path) => `@trustsystem/${path.split('/').pop()}`),
       testCoverage: { tests: capability.tests.passed, specFiles: capability.specFiles },
       documentation: 'docs/validation/framework-current-state.md',
       deploymentRequirement: definition?.deployed ?? 'in-process library, no deployed service',

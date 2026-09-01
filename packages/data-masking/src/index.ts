@@ -1,9 +1,9 @@
 /**
- * @trustos/data-masking
+ * @trustsystem/data-masking
  *
  * Platform-wide masking, tokenization and pseudonymization.
  *
- * The display strategies and the reveal ceremony are `@trustos/governance-pii-policy`'s and are
+ * The display strategies and the reveal ceremony are `@trustsystem/governance-pii-policy`'s and are
  * **reused rather than restated** — a second `mask()` here would be a second set of rules about
  * how many digits of an account number a person sees, and the two would diverge.
  *

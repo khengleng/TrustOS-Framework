@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/dependency-health",
+  "name": "@trustsystem/dependency-health",
   "version": "0.1.0",
   "description": "The dependency map and its health states, including the one that means \"we do not know\".",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/sre-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/sre-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

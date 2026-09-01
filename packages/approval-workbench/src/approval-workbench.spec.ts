@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ApiError } from '@trustos/errors';
-import type { WorkflowActor } from '@trustos/workflow-core';
+import { ApiError } from '@trustsystem/errors';
+import type { WorkflowActor } from '@trustsystem/workflow-core';
 import { ApprovalWorkbenchService } from './service';
 import { approvalQueueQuerySchema, decisionRequestSchema } from './models';
 import type { AuditPort, DecisionPort, EnginePort, TaskQueryPort } from './ports';

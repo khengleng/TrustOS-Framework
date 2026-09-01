@@ -1,9 +1,9 @@
-import { AccountService, InMemoryAccountStore } from '@trustos/accounts';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
-import { InMemoryLedgerStore, Ledger } from '@trustos/ledger';
-import { InMemoryLimitStore, LimitEngine, limitSchema, type Limit } from '@trustos/limits';
-import { feeScheduleSchema, type FeeSchedule } from '@trustos/fees';
-import { InMemoryHoldStore, InMemoryWalletStore, WalletService } from '@trustos/wallet';
+import { AccountService, InMemoryAccountStore } from '@trustsystem/accounts';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
+import { InMemoryLedgerStore, Ledger } from '@trustsystem/ledger';
+import { InMemoryLimitStore, LimitEngine, limitSchema, type Limit } from '@trustsystem/limits';
+import { feeScheduleSchema, type FeeSchedule } from '@trustsystem/fees';
+import { InMemoryHoldStore, InMemoryWalletStore, WalletService } from '@trustsystem/wallet';
 import { MerchantOnboarding } from './domain/onboarding';
 import { PaymentEngine, type MockPaymentProvider, type RiskRule } from './domain/payment';
 
@@ -112,7 +112,7 @@ export interface PilotOptions {
   /**
    * The organization the limits belong to.
    *
-   * Limits are tenant-scoped in `@trustos/limits` — `applicable` matches on `organizationId`, so a
+   * Limits are tenant-scoped in `@trustsystem/limits` — `applicable` matches on `organizationId`, so a
    * limit registered against `null` does not apply to a payment made by `org_a`. That is correct
    * and it is the sort of thing a pilot finds: a platform-wide limit and a tenant limit are
    * different objects, and configuring one while expecting the other means no limit applies at all.

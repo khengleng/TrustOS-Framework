@@ -1,11 +1,11 @@
 /**
- * @trustos/policy-engine
+ * @trustsystem/policy-engine
  *
  * The centralized decision point: registry, evaluator and decision log, defaulting to deny and
  * recording everything.
  *
  * Two policy systems in one platform is usually a mistake, so the split is explicit.
- * `@trustos/authorization` decides **who may call what** — code policies, part of the platform's
+ * `@trustsystem/authorization` decides **who may call what** — code policies, part of the platform's
  * structure, changed with a release. This decides **what the rules currently are** — documents a
  * deployment changes without a release, versioned, approved, and logged so a decision can be
  * re-derived.

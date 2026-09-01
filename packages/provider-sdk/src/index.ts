@@ -1,5 +1,5 @@
 /**
- * @trustos/provider-sdk
+ * @trustsystem/provider-sdk
  *
  * The contract every external-system adapter implements: initialize, health, capabilities,
  * configuration, shutdown.

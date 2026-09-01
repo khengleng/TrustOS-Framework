@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { buildEvent, type EventActor, type EventEnvelope } from '@trustos/event-sdk';
-import type { LoggerPort } from '@trustos/logging';
-import type { ReviewPriority, ReviewService } from '@trustos/human-review';
+import { ApiError } from '@trustsystem/errors';
+import { buildEvent, type EventActor, type EventEnvelope } from '@trustsystem/event-sdk';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { ReviewPriority, ReviewService } from '@trustsystem/human-review';
 
 /**
  * AI in workflows.
@@ -209,7 +209,7 @@ export class AiWorkflowStep {
       throw ApiError.internal(
         `The step "${input.stepId}" produced output that requires human review, but no review ` +
           'service is configured. Returning it unreviewed would silently drop the control this ' +
-          'step exists for. Wire @trustos/human-review, or do not require review here.',
+          'step exists for. Wire @trustsystem/human-review, or do not require review here.',
         { reason: 'review_service_missing', stepId: input.stepId },
       );
     }
@@ -367,7 +367,7 @@ export class AiWorkflowStep {
   /**
    * Announces an evaluation regression.
    *
-   * Per case, matching what `@trustos/evaluation` reports — an event carrying only a changed
+   * Per case, matching what `@trustsystem/evaluation` reports — an event carrying only a changed
    * average tells a subscriber that something moved and nothing about what.
    */
   async evaluationRegressed(input: {

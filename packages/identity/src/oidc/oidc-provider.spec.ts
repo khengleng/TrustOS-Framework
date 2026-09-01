@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { ApiError } from '@trustos/errors';
-import { securityPolicySchema } from '@trustos/security-policy';
+import type { ApiError } from '@trustsystem/errors';
+import { securityPolicySchema } from '@trustsystem/security-policy';
 import {
   algNoneToken,
   createTestIdentityKeys,
@@ -12,7 +12,7 @@ import {
   wrongAudience,
   wrongIssuer,
   type TestIdentityProviderKeys,
-} from '@trustos/security-testing';
+} from '@trustsystem/security-testing';
 import { OidcIdentityProvider } from './oidc-provider';
 
 /**

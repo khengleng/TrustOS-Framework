@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-risk
+ * @trustsystem/financial-risk
  *
  * Risk and compliance extension points: AML, fraud, velocity, sanctions, PEP, KYC, travel rule.
  *

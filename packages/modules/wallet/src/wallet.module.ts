@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The wallets module.
  *
  * Ledger-backed customer wallets: available, held and reserved balances, holds, freeze and history.
  *
- * A thin wrapper. The implementation is in `@trustos/financial-core`, `@trustos/limits`, `@trustos/wallet` —
+ * A thin wrapper. The implementation is in `@trustsystem/financial-core`, `@trustsystem/limits`, `@trustsystem/wallet` —
  * this package contributes the declarations the platform needs (permissions, audit events,
  * health) and the start/stop lifecycle.
  *

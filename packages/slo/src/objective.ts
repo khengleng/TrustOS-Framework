@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { SLI_DIRECTION, type SliDefinition, type SliValue } from '@trustos/sli';
-import { TIER_EXPECTATIONS, type ServiceTier } from '@trustos/sre-core';
+import { ApiError } from '@trustsystem/errors';
+import { SLI_DIRECTION, type SliDefinition, type SliValue } from '@trustsystem/sli';
+import { TIER_EXPECTATIONS, type ServiceTier } from '@trustsystem/sre-core';
 
 /**
  * Objectives and error budgets.

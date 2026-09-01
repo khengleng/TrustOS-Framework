@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/logging",
+  "name": "@trustsystem/logging",
   "version": "0.1.0",
   "description": "Structured Pino logging with request correlation and mandatory secret redaction.",
   "license": "UNLICENSED",
@@ -18,8 +18,8 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.1.28",
-    "@trustos/config": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/config": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "pino": "^9.5.0"
   },
   "devDependencies": {

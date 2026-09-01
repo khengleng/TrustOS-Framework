@@ -14,7 +14,7 @@ import {
  * of them should not have to relearn the shape:
  *
  *   1. **Authentication** is configured once, on the client, not passed per call.
- *   2. **Retry** with exponential backoff and jitter, on the same rules as `@trustos/retry`:
+ *   2. **Retry** with exponential backoff and jitter, on the same rules as `@trustsystem/retry`:
  *      5xx and 429 are retried, 4xx is not.
  *   3. **Errors are typed.** An `ApiError` carrying status, code and details, rather than a
  *      generic exception that forces string-matching on a message.

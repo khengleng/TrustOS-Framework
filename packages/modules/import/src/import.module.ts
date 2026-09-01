@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The import module.
  *
  * Bulk import with CSV and JSON parsing, per-row validation, preview, dry run, apply and rollback.
  *
- * A thin wrapper. The implementation is in `@trustos/import` — this
+ * A thin wrapper. The implementation is in `@trustsystem/import` — this
  * package contributes the declarations the platform needs (permissions, routes, audit events,
  * health) and the start/stop lifecycle.
  *

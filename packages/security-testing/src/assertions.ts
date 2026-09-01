@@ -1,4 +1,4 @@
-import { isSecretFieldName } from '@trustos/security-policy';
+import { isSecretFieldName } from '@trustsystem/security-policy';
 
 /**
  * Assertions a security suite needs, expressed so a failure says what went wrong.

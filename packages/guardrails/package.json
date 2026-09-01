@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/guardrails",
+  "name": "@trustsystem/guardrails",
   "version": "0.1.0",
   "description": "The safety pipeline: input checks, output validation and human-review hooks.",
   "license": "UNLICENSED",
@@ -17,12 +17,12 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/ai-sdk": "0.1.0",
-    "@trustos/content-filter": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/prompt-security": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/ai-sdk": "0.1.0",
+    "@trustsystem/content-filter": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/prompt-security": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

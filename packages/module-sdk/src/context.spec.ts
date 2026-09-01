@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createNullLogger } from '@trustos/logging';
-import { isApiError } from '@trustos/errors';
+import { createNullLogger } from '@trustsystem/logging';
+import { isApiError } from '@trustsystem/errors';
 import { z } from 'zod';
 import { createModuleContext, InMemoryTenantSettingsStore, parseModuleConfig } from './context';
 import { RecordingAuditPort } from './testing';

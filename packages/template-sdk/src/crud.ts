@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import type { FormDefinition } from './forms';
 import type { FilterDefinition, AppliedFilter } from './filters';
 import { parseFilters, toPrismaWhere } from './filters';

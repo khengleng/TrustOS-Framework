@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import type { LoggerPort } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
-import { RETRY_PRESETS, backoffDelay, type RetryPolicy } from '@trustos/retry';
-import type { WebhookDelivery, WebhookDeliveryStore, WebhookService } from '@trustos/webhooks';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
+import { RETRY_PRESETS, backoffDelay, type RetryPolicy } from '@trustsystem/retry';
+import type { WebhookDelivery, WebhookDeliveryStore, WebhookService } from '@trustsystem/webhooks';
 import { deliverWebhook, type DeliveryOutcome } from './delivery';
 import type { DestinationPolicy } from './destination';
 import { WEBHOOK_METRICS } from './metrics';

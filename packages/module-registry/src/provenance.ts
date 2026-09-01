@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { moduleIdSchema } from '@trustos/module-sdk';
+import { moduleIdSchema } from '@trustsystem/module-sdk';
 
 /**
  * Who made a module, under what licence, and how good it is.

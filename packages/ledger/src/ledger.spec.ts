@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '@trustos/errors';
-import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
+import { ApiError } from '@trustsystem/errors';
+import { CurrencyRegistry, formatMoney, money } from '@trustsystem/financial-core';
 import { checkBalance, credit, debit, isBalanced, mirrorEntries } from './journal';
 import { Ledger, contentHashOf } from './ledger';
 import { InMemoryLedgerStore, InMemoryPeriodStore } from './testing';
@@ -445,7 +445,7 @@ describe('balances and the trial balance', () => {
 
     expect(formatMoney(cash.balance)).toBe('150.00 USD');
     // Negative for revenue: `debits − credits` is raw arithmetic, and the account's normal side
-    // is what makes it a positive balance. That interpretation lives in @trustos/accounts.
+    // is what makes it a positive balance. That interpretation lives in @trustsystem/accounts.
     expect(formatMoney(revenue.balance)).toBe('-150.00 USD');
   });
 

@@ -1,5 +1,5 @@
 /**
- * @trustos/security-policy
+ * @trustsystem/security-policy
  *
  * The security decisions an operator is allowed to make, as one typed object
  * validated before a port is bound.

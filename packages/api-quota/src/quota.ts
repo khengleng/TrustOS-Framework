@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * Quotas.
  *
- * A quota is a commercial boundary, not a capacity one — see `@trustos/api-rate-limit` for the
+ * A quota is a commercial boundary, not a capacity one — see `@trustsystem/api-rate-limit` for the
  * other half and why they are separate.
  *
  * Two decisions shape this package, and both come from the same observation: a quota that refuses

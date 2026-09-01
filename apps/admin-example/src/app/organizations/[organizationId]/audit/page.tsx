@@ -2,7 +2,7 @@
 
 import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { AuditLogEntry, Paginated } from '@trustos/shared-types';
+import type { AuditLogEntry, Paginated } from '@trustsystem/shared-types';
 import { useSession } from '@/lib/session';
 import { EmptyState, ErrorBanner, Loading } from '@/components/states';
 import { OrgTabs } from '@/components/org-tabs';
