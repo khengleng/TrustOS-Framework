@@ -1,8 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { MembershipStatus, PrismaService } from '@trustos/database';
-import { PERMISSIONS, RequirePermissions } from '@trustos/rbac';
-import { OrganizationId, requireOrganizationId } from '@trustos/tenancy';
+import { MembershipStatus, PrismaService } from '@trustsystem/database';
+import { PERMISSIONS, RequirePermissions } from '@trustsystem/rbac';
+import { OrganizationId, requireOrganizationId } from '@trustsystem/tenancy';
 
 /**
  * A protected, tenant-scoped endpoint.

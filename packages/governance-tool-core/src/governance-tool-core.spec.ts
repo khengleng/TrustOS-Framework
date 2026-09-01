@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   ACCESS_CLASSES,
   CONSOLE_TEMPLATES,
+  templatesWithheldFrom,
+  consoleCatalogFor,
   FORBIDDEN_FIELD_PATTERNS,
   GOVERNANCE_PERMISSIONS,
   GOVERNANCE_ROLES,
@@ -476,5 +478,53 @@ describe('the enterprise governance console', () => {
     // It shows the classification of every table in the estate and the health of every service.
     expect(app.dataClassification).toBe('restricted');
     expect(app.riskClassification).toBe('high');
+  });
+});
+
+describe('the console seed invents no governance facts', () => {
+  it('records no security review date for any environment', () => {
+    for (const env of ['dev', 'uat', 'prod'] as const) {
+      for (const app of consoleCatalogFor(env).list(env)) {
+        expect(app.lastSecurityReview).toBeNull();
+      }
+    }
+  });
+
+  it('withholds a production console whose classification demands a review', () => {
+    const withheld = templatesWithheldFrom('prod');
+
+    expect(withheld.length).toBeGreaterThan(0);
+    // The classification is the reason, so every withheld one must carry it.
+    for (const appId of withheld) {
+      const template = CONSOLE_TEMPLATES.find((entry) => entry.build().appId === appId);
+      expect(template?.build().dataClassification).toBe('highly_restricted');
+    }
+  });
+
+  it('withholds nothing below production', () => {
+    expect(templatesWithheldFrom('dev')).toEqual([]);
+    expect(templatesWithheldFrom('uat')).toEqual([]);
+  });
+
+  it('does not serve a withheld console — an unregistered application does not exist', () => {
+    const catalog = consoleCatalogFor('prod');
+
+    for (const appId of templatesWithheldFrom('prod')) {
+      expect(catalog.find('prod', appId)).toBeUndefined();
+      expect(() => catalog.require('prod', appId)).toThrow();
+    }
+  });
+
+  it('still registers every console that needs no review', () => {
+    const withheld = new Set(templatesWithheldFrom('prod'));
+    const registered = consoleCatalogFor('prod')
+      .list('prod')
+      .map((app) => app.appId);
+
+    for (const template of CONSOLE_TEMPLATES) {
+      const appId = template.build().appId;
+      if (withheld.has(appId)) continue;
+      expect(registered).toContain(appId);
+    }
   });
 });

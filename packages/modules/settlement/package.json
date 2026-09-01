@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-settlement",
+  "name": "@trustsystem/module-settlement",
   "version": "0.1.0",
   "description": "TrustOS Settlement module. Settlement batches, instructions and windows, with partial confirmation and returns. Asynchronous by construction.",
   "license": "UNLICENSED",
@@ -21,15 +21,15 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-core": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/module-ledger": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/module-sdk": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/settlement": "0.1.0",
-    "@trustos/shared-types": "0.1.0"
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-core": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/module-ledger": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/module-sdk": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/settlement": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",

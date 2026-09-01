@@ -1,6 +1,6 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { z } from 'zod';
-import { eventNameSchema, type EventEnvelope } from '@trustos/event-sdk';
+import { eventNameSchema, type EventEnvelope } from '@trustsystem/event-sdk';
 
 /**
  * The event schema registry.

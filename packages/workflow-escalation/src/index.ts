@@ -1,5 +1,5 @@
 /**
- * @trustos/workflow-escalation
+ * @trustsystem/workflow-escalation
  *
  * What happens when an SLA runs out.
  *

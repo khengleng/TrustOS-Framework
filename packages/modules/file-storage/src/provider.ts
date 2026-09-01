@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { constants, existsSync } from 'node:fs';
 import { access, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { assertValidKey, resolveWithinRoot } from './keys';
 
 /**

@@ -58,7 +58,7 @@ the irreversible act. It does not execute migrations, take backups, publish rele
 plugins into a running process, or send telemetry. Those are ports a deployment supplies.
 
 This is why `trustos upgrade` produces a plan rather than performing one, and why
-`@trustos/upgrade-manager` takes an `UpgradeExecutor`. The actions where a mistake is expensive
+`@trustsystem/upgrade-manager` takes an `UpgradeExecutor`. The actions where a mistake is expensive
 are the actions that belong in a deployment's own change control.
 
 ### Security is never a licensed feature
@@ -114,7 +114,7 @@ planned against it.
 └────────────────────────────────────────────────────┘
 ```
 
-Every arrow points downward. `version-manager` depends on nothing but `@trustos/errors`, and
+Every arrow points downward. `version-manager` depends on nothing but `@trustsystem/errors`, and
 `platform-manager` depends on almost everything — which is the correct shape for an aggregator
 that decides nothing.
 

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/governance-ai-bridge",
+  "name": "@trustsystem/governance-ai-bridge",
   "version": "0.1.0",
   "description": "AI assistance for internal tools, through the TrustOS AI Gateway. AI may propose; it may not execute an irreversible action.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/governance-tool-core": "0.1.0",
-    "@trustos/human-review": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/governance-tool-core": "0.1.0",
+    "@trustsystem/human-review": "0.1.0",
     "zod": "^3.24.1"
   }
 }

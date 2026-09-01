@@ -1,6 +1,6 @@
 {
-  "//": "Subpath stub: keeps NestJS bindings out of consumers that import '@trustos/module-adapter'.",
-  "name": "@trustos/module-adapter-nest",
+  "//": "Subpath stub: keeps NestJS bindings out of consumers that import '@trustsystem/module-adapter'.",
+  "name": "@trustsystem/module-adapter-nest",
   "private": true,
   "main": "../dist/nest/index.js",
   "types": "../dist/nest/index.d.ts"

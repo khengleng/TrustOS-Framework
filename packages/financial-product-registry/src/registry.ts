@@ -8,17 +8,17 @@ import {
   type ProductClock,
   type ProductDefinition,
   type ProductLifecycleStatus,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 import {
   validateProduct,
   type ValidateProductOptions,
   type ValidationResult,
-} from '@trustos/financial-product-composer';
+} from '@trustsystem/financial-product-composer';
 import {
   applyLifecycleTransition,
   checkLifecycleTransition,
   type LifecycleCheck,
-} from '@trustos/financial-product-state-machine';
+} from '@trustsystem/financial-product-state-machine';
 import {
   assertApprovalComplete,
   auditGovernanceAction,
@@ -27,7 +27,7 @@ import {
   recordDecision,
   type ApprovalState,
   type ChangeClassification,
-} from '@trustos/financial-product-governance';
+} from '@trustsystem/financial-product-governance';
 import {
   applyRollback,
   assertSufficientBump,
@@ -37,8 +37,8 @@ import {
   verifyContentHash,
   type PublishedVersion,
   type RollbackPlan,
-} from '@trustos/financial-product-versioning';
-import { resolveVariant, type ProductVariant } from '@trustos/financial-product-variants';
+} from '@trustsystem/financial-product-versioning';
+import { resolveVariant, type ProductVariant } from '@trustsystem/financial-product-variants';
 import { InMemoryProductStore, type ProductRecord, type ProductStore } from './store';
 
 /**
@@ -63,7 +63,7 @@ import { InMemoryProductStore, type ProductRecord, type ProductStore } from './s
  *
  * The registry does not authorize. It receives an actor whose permissions were resolved
  * server-side and checks them against the transition; the policy engine
- * (`@trustos/financial-product-policy`) covers every route independently. Two enforcement points
+ * (`@trustsystem/financial-product-policy`) covers every route independently. Two enforcement points
  * for the same rule is deliberate — the registry covers the registry, and the policies cover the
  * endpoint somebody adds next year.
  */
@@ -501,7 +501,7 @@ export class ProductRegistry {
      * publishing at all. The two are deliberately different strengths: the versioning package
      * guards the data structure and cannot know who else was involved, and the registry knows.
      *
-     * `@trustos/financial-product-policy` enforces the same rule on every route. Two enforcement
+     * `@trustsystem/financial-product-policy` enforces the same rule on every route. Two enforcement
      * points for one rule is not redundancy — the registry covers the registry, and the policy
      * covers the endpoint somebody adds next year.
      */

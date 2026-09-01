@@ -1,5 +1,5 @@
 /**
- * @trustos/cli
+ * @trustsystem/cli
  *
  * The `trustos` command. Generates TrustOS applications from the approved,
  * version-controlled templates in this repository — there is no remote

@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { LoggerPort } from '@trustos/logging';
-import type { EmbeddingService } from '@trustos/embedding';
-import type { VectorRecord, VectorSearchHit, VectorStore } from '@trustos/vector-store';
+import { ApiError } from '@trustsystem/errors';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { EmbeddingService } from '@trustsystem/embedding';
+import type { VectorRecord, VectorSearchHit, VectorStore } from '@trustsystem/vector-store';
 import { chunkText, chunkingStrategySchema, type ChunkingStrategy } from './chunking';
 
 /**
@@ -451,7 +451,7 @@ function dedupeSources(passages: RetrievedPassage[]): Array<{
  *
  * A model citing `[7]` when six passages were supplied has fabricated a source, and that is
  * mechanically detectable — one of the few things about a generated answer that is. Feeds the
- * `citationCoverage` metric in `@trustos/evaluation`.
+ * `citationCoverage` metric in `@trustsystem/evaluation`.
  */
 export function checkCitations(
   answer: string,

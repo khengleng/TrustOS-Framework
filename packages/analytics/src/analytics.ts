@@ -1,4 +1,4 @@
-import type { TelemetryCategory, TelemetryEvent } from '@trustos/telemetry';
+import type { TelemetryCategory, TelemetryEvent } from '@trustsystem/telemetry';
 
 /**
  * Summaries over collected telemetry.

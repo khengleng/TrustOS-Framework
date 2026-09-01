@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { AuditService } from '@trustos/audit';
-import { PrismaService } from '@trustos/database';
+import type { AuditService } from '@trustsystem/audit';
+import { PrismaService } from '@trustsystem/database';
 import type { AppPrismaService } from '../../../core/prisma.service';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { AUDIT_SERVICE } from '../../../tokens';
 import { TenantRepository } from '../../../common/tenant-repository';
 

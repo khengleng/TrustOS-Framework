@@ -1,5 +1,5 @@
 /**
- * @trustos/ai-cache
+ * @trustsystem/ai-cache
  *
  * Prompt, completion and embedding caches with TTL, invalidation and metrics.
  *

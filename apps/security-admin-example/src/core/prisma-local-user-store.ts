@@ -1,5 +1,5 @@
-import type { PrismaService } from '@trustos/database';
-import type { LocalUserPort, LocalUserRecord } from '@trustos/identity';
+import type { PrismaService } from '@trustsystem/database';
+import type { LocalUserPort, LocalUserRecord } from '@trustsystem/identity';
 
 /**
  * The local provider's view of the framework's `User` table.

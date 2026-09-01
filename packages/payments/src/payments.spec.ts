@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
-import { AccountService, InMemoryAccountStore } from '@trustos/accounts';
-import { InMemoryLedgerStore, Ledger } from '@trustos/ledger';
-import { InMemoryLimitStore, LimitEngine } from '@trustos/limits';
-import { InMemoryHoldStore, InMemoryWalletStore, WalletService } from '@trustos/wallet';
-import { InMemoryTransactionStore, TransactionService } from '@trustos/transactions';
+import { CurrencyRegistry, formatMoney, money } from '@trustsystem/financial-core';
+import { AccountService, InMemoryAccountStore } from '@trustsystem/accounts';
+import { InMemoryLedgerStore, Ledger } from '@trustsystem/ledger';
+import { InMemoryLimitStore, LimitEngine } from '@trustsystem/limits';
+import { InMemoryHoldStore, InMemoryWalletStore, WalletService } from '@trustsystem/wallet';
+import { InMemoryTransactionStore, TransactionService } from '@trustsystem/transactions';
 import { PaymentService, paymentRequestSchema } from './payment-request';
 import { InMemoryPaymentRequestStore } from './testing';
 

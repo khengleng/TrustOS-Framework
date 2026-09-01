@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STANDARD_RESOURCE_IDS } from '@trustos/governance-tool-core';
+import { STANDARD_RESOURCE_IDS } from '@trustsystem/governance-tool-core';
 import {
   ResourceRegistry,
   STANDARD_RESOURCE_CLASSES,

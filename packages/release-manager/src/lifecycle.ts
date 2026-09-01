@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   compareVersions,
   isPrerelease,
   isValidVersion,
   parseVersion,
-} from '@trustos/version-manager';
+} from '@trustsystem/version-manager';
 
 /**
  * Release channels and the support lifecycle.

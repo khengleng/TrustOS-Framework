@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import type { LoggerPort } from '@trustos/logging';
-import type { Message } from '@trustos/ai-sdk';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { Message } from '@trustsystem/ai-sdk';
 
 /**
  * AI caching.

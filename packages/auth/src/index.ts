@@ -1,5 +1,5 @@
 /**
- * @trustos/auth
+ * @trustsystem/auth
  *
  * Email and password only, on purpose. Google, Apple, passkeys and Keycloak
  * are deliberately absent from this phase — see docs/architecture.md.

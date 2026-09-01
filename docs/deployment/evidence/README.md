@@ -20,7 +20,7 @@ npm run db:deploy
 NODE_ENV=development npm run db:seed
 
 # The service, in production mode.
-npm run build -w @trustos/api-example
+npm run build -w @trustsystem/api-example
 NODE_ENV=production TRUSTOS_ENVIRONMENT=uat PORT=3000 \
   JWT_SECRET="$(openssl rand -base64 48 | tr -d '\n')" \
   JWT_REFRESH_SECRET="$(openssl rand -base64 48 | tr -d '\n')" \

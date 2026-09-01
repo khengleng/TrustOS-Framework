@@ -19,14 +19,14 @@ import { blockDefinitionSchema, type BlockDefinition, type BlockCategory } from 
  *     channel has to reach around it.
  *
  * The catalog is data and it is local. There is no remote fetch and no plugin resolution, for
- * the same reason `@trustos/module-registry` has none: a block is a capability a product may use
+ * the same reason `@trustsystem/module-registry` has none: a block is a capability a product may use
  * without further review, and a capability that can arrive over the network at runtime has not
  * been reviewed.
  *
  * **Every block here is a contract, not an implementation.** The framework ships no handler for
- * any of them. `@trustos/financial-product-runtime` defines the handler interface, a deployment
- * binds each block to `@trustos/wallet`, `@trustos/ledger`, `@trustos/fees` and the rest, and
- * `@trustos/financial-product-sandbox` binds them to mocks. That seam is deliberate: the
+ * any of them. `@trustsystem/financial-product-runtime` defines the handler interface, a deployment
+ * binds each block to `@trustsystem/wallet`, `@trustsystem/ledger`, `@trustsystem/fees` and the rest, and
+ * `@trustsystem/financial-product-sandbox` binds them to mocks. That seam is deliberate: the
  * framework knows what a debit *means* and stays out of deciding which account it lands in.
  */
 

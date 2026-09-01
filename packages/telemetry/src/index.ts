@@ -1,5 +1,5 @@
 /**
- * @trustos/telemetry
+ * @trustsystem/telemetry
  *
  * Local-first usage, performance and error signals.
  *

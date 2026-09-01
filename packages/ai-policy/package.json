@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/ai-policy",
+  "name": "@trustsystem/ai-policy",
   "version": "0.1.0",
   "description": "Per-tenant policy: allowed models, tools, budgets, runtime and approval rules.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/ai-sdk": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/model-registry": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/ai-sdk": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/model-registry": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

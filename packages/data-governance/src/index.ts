@@ -1,5 +1,5 @@
 /**
- * @trustos/data-governance
+ * @trustsystem/data-governance
  *
  * Ownership, residency, and the assessment that reports what is not in good standing.
  *

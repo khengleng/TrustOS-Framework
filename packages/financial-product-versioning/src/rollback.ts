@@ -1,5 +1,5 @@
-import { compareVersions } from '@trustos/version-manager';
-import { productError } from '@trustos/financial-product-core';
+import { compareVersions } from '@trustsystem/version-manager';
+import { productError } from '@trustsystem/financial-product-core';
 import type { PublishedVersion } from './version';
 
 /**

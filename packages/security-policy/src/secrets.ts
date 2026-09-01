@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * Where secrets come from.
@@ -36,7 +36,7 @@ export interface SecretSource {
  *
  * The only implementation the framework ships, and the reason it is so thin:
  * `process.env` is read in exactly one place in this repository
- * (`@trustos/config`), and this class exists so a *different* source can be
+ * (`@trustsystem/config`), and this class exists so a *different* source can be
  * substituted without every caller learning where secrets live.
  */
 export class EnvironmentSecretSource implements SecretSource {
@@ -116,7 +116,7 @@ export async function requireSecret(
  * Field names whose values must never appear in a log, an error or an event.
  *
  * Matched case-insensitively as a substring, so `X-Api-Key`, `apiKeyHash` and
- * `refresh_token` are all caught by three entries. `@trustos/logging` has its own
+ * `refresh_token` are all caught by three entries. `@trustsystem/logging` has its own
  * redaction list for Pino; this one is for the security packages, which redact
  * before a value ever reaches a logger.
  */

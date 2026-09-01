@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { WalletService } from '@trustos/wallet';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { WalletService } from '@trustsystem/wallet';
 import {
   assertApprovable,
   assertTransition,
@@ -55,7 +55,7 @@ export const limitChangeRequestSchema = z
     requestId: z.string().min(3).max(64),
     merchantId: z.string().min(3).max(64),
     organizationId: z.string().min(1).max(64),
-    /** Which limit, by its key in `@trustos/limits`. */
+    /** Which limit, by its key in `@trustsystem/limits`. */
     limitKey: z.string().min(3).max(64),
     /** Minor-unit string. Money never floats. */
     currentValue: z.string().regex(/^\d{1,18}$/),

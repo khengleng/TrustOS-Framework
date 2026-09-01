@@ -1,4 +1,4 @@
-import type { ActorContext } from '@trustos/shared-types';
+import type { ActorContext } from '@trustsystem/shared-types';
 
 /**
  * Credential authenticators.
@@ -8,9 +8,9 @@ import type { ActorContext } from '@trustos/shared-types';
  * otherwise a module, a guard or an audit record has to know which kind of caller
  * it is dealing with, and that knowledge spreads.
  *
- * This is the port that makes that possible. `@trustos/identity` implements the
- * bearer-token authenticator; `@trustos/api-keys` and
- * `@trustos/service-accounts` implement their own and depend on *this* package
+ * This is the port that makes that possible. `@trustsystem/identity` implements the
+ * bearer-token authenticator; `@trustsystem/api-keys` and
+ * `@trustsystem/service-accounts` implement their own and depend on *this* package
  * rather than the other way round, so identity never learns what an API key is.
  *
  * Order matters and is the application's choice. The guard tries each in turn and

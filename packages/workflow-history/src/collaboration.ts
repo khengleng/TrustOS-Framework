@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   crossTenant,
   type AttachmentClassification,
@@ -7,7 +7,7 @@ import {
   type WorkflowAttachmentRecord,
   type WorkflowCommentAmendmentRecord,
   type WorkflowCommentRecord,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 
 /**
  * Comments and attachments.
@@ -394,7 +394,7 @@ export class CommentService {
 /**
  * The document module, as this package needs it.
  *
- * Four methods. Deliberately not a dependency on `@trustos/module-document`: that
+ * Four methods. Deliberately not a dependency on `@trustsystem/module-document`: that
  * module is an optional install, and a workflow engine that could not accept evidence
  * without it would be unusable in most deployments. The module satisfies this
  * interface.

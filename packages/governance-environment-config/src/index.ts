@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-environment-config
+ * @trustsystem/governance-environment-config
  *
  * DEV, UAT and PROD as separate configurations with separate credentials, and the governed
  * promotion between them.

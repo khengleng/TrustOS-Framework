@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/policy-registry",
+  "name": "@trustsystem/policy-registry",
   "version": "0.1.0",
   "description": "Versioned, immutable policy documents with their own lifecycle and test cases.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/version-manager": "0.1.0",
-    "@trustos/workflow-definition": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/version-manager": "0.1.0",
+    "@trustsystem/workflow-definition": "0.1.0",
     "zod": "^3.24.1"
   }
 }

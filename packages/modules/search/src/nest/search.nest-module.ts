@@ -3,7 +3,7 @@ import {
   moduleProviders,
   moduleServiceProvider,
   type ModuleHostBinding,
-} from '@trustos/module-sdk/nest';
+} from '@trustsystem/module-sdk/nest';
 import { searchModule, type SearchInstance } from '../search.module';
 import { SearchController } from './search.controller';
 import { SEARCH_SERVICE } from './tokens';

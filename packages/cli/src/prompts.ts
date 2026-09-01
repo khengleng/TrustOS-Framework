@@ -6,9 +6,9 @@ import {
   assertValidPackageName,
   assertValidPort,
   parseRoleList,
-} from '@trustos/generator-core';
+} from '@trustsystem/generator-core';
 import { SYSTEM_ROLE_SUGGESTIONS } from './roles';
-import type { TemplateManifest } from '@trustos/template-registry';
+import type { TemplateManifest } from '@trustsystem/template-registry';
 
 /**
  * Interactive answers.

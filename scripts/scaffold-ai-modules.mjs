@@ -35,19 +35,19 @@ const MODULES = [
     summary:
       'The AI gateway and everything a model call has to pass through: model registry, prompt registry, guardrails, tenant policy, routing, cost accounting and caching.',
     framework: [
-      '@trustos/ai-cache',
-      '@trustos/ai-gateway',
-      '@trustos/ai-observability',
-      '@trustos/ai-policy',
-      '@trustos/ai-sdk',
-      '@trustos/content-filter',
-      '@trustos/cost-monitor',
-      '@trustos/guardrails',
-      '@trustos/model-registry',
-      '@trustos/model-router',
-      '@trustos/prompt-registry',
-      '@trustos/prompt-security',
-      '@trustos/token-meter',
+      '@trustsystem/ai-cache',
+      '@trustsystem/ai-gateway',
+      '@trustsystem/ai-observability',
+      '@trustsystem/ai-policy',
+      '@trustsystem/ai-sdk',
+      '@trustsystem/content-filter',
+      '@trustsystem/cost-monitor',
+      '@trustsystem/guardrails',
+      '@trustsystem/model-registry',
+      '@trustsystem/model-router',
+      '@trustsystem/prompt-registry',
+      '@trustsystem/prompt-security',
+      '@trustsystem/token-meter',
     ],
     healthDetail: 'The gateway is configured with at least one provider adapter and one model.',
     note:
@@ -61,10 +61,10 @@ const MODULES = [
     summary:
       'Answering from documents: chunking, embedding, a vector-store interface, hybrid search, citation checking and per-collection access control.',
     framework: [
-      '@trustos/embedding',
-      '@trustos/knowledge',
-      '@trustos/rag',
-      '@trustos/vector-store',
+      '@trustsystem/embedding',
+      '@trustsystem/knowledge',
+      '@trustsystem/rag',
+      '@trustsystem/vector-store',
     ],
     healthDetail: 'The vector store is reachable and at least one collection is populated.',
     note:
@@ -78,13 +78,13 @@ const MODULES = [
     summary:
       'Agents that take actions: declarative agent definitions, the tool loop with per-actor permission checks, memory, conversation state, stop conditions and human review.',
     framework: [
-      '@trustos/agent-framework',
-      '@trustos/agent-memory',
-      '@trustos/agent-runtime',
-      '@trustos/conversation',
-      '@trustos/function-calling',
-      '@trustos/human-review',
-      '@trustos/tool-execution',
+      '@trustsystem/agent-framework',
+      '@trustsystem/agent-memory',
+      '@trustsystem/agent-runtime',
+      '@trustsystem/conversation',
+      '@trustsystem/function-calling',
+      '@trustsystem/human-review',
+      '@trustsystem/tool-execution',
     ],
     healthDetail: 'The registered agents validate against the tools and prompts that exist.',
     note:
@@ -93,19 +93,19 @@ const MODULES = [
 ];
 
 const SHARED_DEPENDENCIES = [
-  '@trustos/errors',
-  '@trustos/logging',
-  '@trustos/module-registry',
-  '@trustos/module-sdk',
-  '@trustos/observability',
-  '@trustos/shared-types',
+  '@trustsystem/errors',
+  '@trustsystem/logging',
+  '@trustsystem/module-registry',
+  '@trustsystem/module-sdk',
+  '@trustsystem/observability',
+  '@trustsystem/shared-types',
 ];
 
 /** `rag` and `agent` cannot work without the gateway. */
 const MODULE_DEPENDENCIES = {
   ai: [],
-  rag: ['@trustos/module-ai'],
-  agent: ['@trustos/module-ai'],
+  rag: ['@trustsystem/module-ai'],
+  agent: ['@trustsystem/module-ai'],
 };
 
 const camel = (id) => id.replace(/-([a-z])/g, (_, character) => character.toUpperCase());
@@ -122,7 +122,7 @@ function packageJson(module) {
 
   return `${JSON.stringify(
     {
-      name: `@trustos/module-${module.id}`,
+      name: `@trustsystem/module-${module.id}`,
       version: '0.1.0',
       private: true,
       description: `TrustOS ${module.title} module. ${module.summary}`,
@@ -146,9 +146,9 @@ function packageJson(module) {
 
 function tsconfig(module) {
   const references = [
-    ...SHARED_DEPENDENCIES.map((name) => `../../${name.replace('@trustos/', '')}`),
-    ...module.framework.map((name) => `../../${name.replace('@trustos/', '')}`),
-    ...MODULE_DEPENDENCIES[module.id].map((name) => `../${name.replace('@trustos/module-', '')}`),
+    ...SHARED_DEPENDENCIES.map((name) => `../../${name.replace('@trustsystem/', '')}`),
+    ...module.framework.map((name) => `../../${name.replace('@trustsystem/', '')}`),
+    ...MODULE_DEPENDENCIES[module.id].map((name) => `../${name.replace('@trustsystem/module-', '')}`),
   ]
     .sort()
     .map((path) => ({ path }));
@@ -172,14 +172,14 @@ function tsconfig(module) {
 
 function moduleSource(module) {
   return `import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The ${module.title.toLowerCase()} module.
@@ -259,7 +259,7 @@ export const ${camel(module.id)}Module = defineModule<${module.pascal}Config>({
 
 function indexSource(module) {
   return `/**
- * @trustos/module-${module.id}
+ * @trustsystem/module-${module.id}
  *
  * ${module.summary}
  *
@@ -274,7 +274,7 @@ function nestSource(module) {
   const definitionName = `${camel(module.id)}Module`;
 
   return `import { DynamicModule, Module } from '@nestjs/common';
-import { moduleProviders, type ModuleHostBinding } from '@trustos/module-sdk/nest';
+import { moduleProviders, type ModuleHostBinding } from '@trustsystem/module-sdk/nest';
 import { ${definitionName} } from '../${module.id}.module';
 
 /**
@@ -299,7 +299,7 @@ export class ${module.className} {
 
 function nestIndex(module) {
   return `/**
- * @trustos/module-${module.id}/nest
+ * @trustsystem/module-${module.id}/nest
  *
  * NestJS bindings, behind a subpath so importing the module does not pull \`@nestjs/common\` into
  * a worker or a test.
@@ -311,8 +311,8 @@ export * from './${module.id}.nest-module';
 function nestStub(module) {
   return `${JSON.stringify(
     {
-      '//': `Subpath stub: keeps NestJS bindings out of consumers that import '@trustos/module-${module.id}'.`,
-      name: `@trustos/module-${module.id}-nest`,
+      '//': `Subpath stub: keeps NestJS bindings out of consumers that import '@trustsystem/module-${module.id}'.`,
+      name: `@trustsystem/module-${module.id}-nest`,
       private: true,
       main: '../dist/nest/index.js',
       types: '../dist/nest/index.d.ts',
@@ -323,7 +323,7 @@ function nestStub(module) {
 }
 
 function readme(module) {
-  return `# @trustos/module-${module.id}
+  return `# @trustsystem/module-${module.id}
 
 ${module.summary}
 
@@ -344,7 +344,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 \`\`\`ts
-import { ${module.className} } from '@trustos/module-${module.id}/nest';
+import { ${module.className} } from '@trustsystem/module-${module.id}/nest';
 
 @Module({ imports: [${module.className}.forRoot(binding)] })
 export class AppModule {}
@@ -361,7 +361,7 @@ provider credentials.
 }
 
 function agents(module) {
-  return `# AGENTS.md — @trustos/module-${module.id}
+  return `# AGENTS.md — @trustsystem/module-${module.id}
 
 ${module.summary}
 
@@ -369,7 +369,7 @@ ${module.summary}
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
    wires; ${module.framework.map((name) => `\`${name}\``).join(', ')} does the work.
-2. **Never bypass the gateway.** Every model call goes through \`@trustos/ai-gateway\`, which is
+2. **Never bypass the gateway.** Every model call goes through \`@trustsystem/ai-gateway\`, which is
    where policy, guardrails, cost accounting and audit are applied.
 3. **Never bypass guardrails**, and never add a flag that does. A caller who needs different
    thresholds configures a guardrail profile.

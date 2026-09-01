@@ -1,4 +1,4 @@
-import type { MemberDirectory } from '@trustos/workflow-tasks';
+import type { MemberDirectory } from '@trustsystem/workflow-tasks';
 import type { AppPrismaService } from './prisma.service';
 
 /**

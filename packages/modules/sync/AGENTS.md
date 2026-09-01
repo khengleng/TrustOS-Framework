@@ -1,11 +1,11 @@
-# AGENTS.md — @trustos/module-sync
+# AGENTS.md — @trustsystem/module-sync
 
 Pull, push and bidirectional synchronization with incremental watermarks and conflict policies.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/sync` does the work. Logic added
+   wires; `@trustsystem/sync` does the work. Logic added
    here is logic no other consumer of that package gets.
 2. **Never widen a permission key.** Keys are permanent. Add one; never rename or repurpose.
 3. **Always validate the tenant.** Every store call takes `organizationId` explicitly, and a

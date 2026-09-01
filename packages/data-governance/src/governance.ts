@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   classificationRank,
   obligationsFor,
   type DataClassificationLevel,
-} from '@trustos/data-classification';
-import type { DataCatalog, CatalogEntry } from '@trustos/data-catalog';
-import type { RetentionRule } from '@trustos/data-retention';
+} from '@trustsystem/data-classification';
+import type { DataCatalog, CatalogEntry } from '@trustsystem/data-catalog';
+import type { RetentionRule } from '@trustsystem/data-retention';
 
 /**
  * Data governance: ownership, residency, and whether any of it is in good standing.

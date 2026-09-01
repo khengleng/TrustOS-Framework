@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { ApiError } from '@trustos/errors';
-import { createTestModuleContext, type RecordingAuditPort } from '@trustos/module-sdk';
-import { InMemoryStorageProvider, checksumOf } from '@trustos/module-file-storage';
-import { FakeModelDelegate, runInTenantContext } from '@trustos/tenancy';
+import type { ApiError } from '@trustsystem/errors';
+import { createTestModuleContext, type RecordingAuditPort } from '@trustsystem/module-sdk';
+import { InMemoryStorageProvider, checksumOf } from '@trustsystem/module-file-storage';
+import { FakeModelDelegate, runInTenantContext } from '@trustsystem/tenancy';
 import { documentConfigSchema } from './config';
 import { createDocument, documentModule } from './document.module';
 import type { DocumentService } from './document.service';

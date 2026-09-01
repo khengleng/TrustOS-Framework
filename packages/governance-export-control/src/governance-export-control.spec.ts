@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MaskPolicy } from '@trustos/governance-pii-policy';
+import { MaskPolicy } from '@trustsystem/governance-pii-policy';
 import {
   DEFAULT_EXPORT_POLICIES,
   applyExportPolicy,

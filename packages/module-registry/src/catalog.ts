@@ -31,9 +31,9 @@ const WRITE_ROLES = ['organization_owner', 'administrator'];
 /** Reduces the repetition of `packaging` without hiding what it contains. */
 function packaging(id: string, className: string) {
   return {
-    packageName: `@trustos/module-${id}`,
+    packageName: `@trustsystem/module-${id}`,
     directory: `packages/modules/${id}`,
-    nestModule: { className, importPath: `@trustos/module-${id}/nest` },
+    nestModule: { className, importPath: `@trustsystem/module-${id}/nest` },
   };
 }
 

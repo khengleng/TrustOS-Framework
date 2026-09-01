@@ -1,10 +1,14 @@
-import { illegalTransition, type WorkflowAction, type WorkflowState } from '@trustos/workflow-core';
+import {
+  illegalTransition,
+  type WorkflowAction,
+  type WorkflowState,
+} from '@trustsystem/workflow-core';
 import {
   evaluateCondition,
   type WorkflowDefinitionDocument,
   type WorkflowStepSpec,
   type WorkflowTransitionSpec,
-} from '@trustos/workflow-definition';
+} from '@trustsystem/workflow-definition';
 
 /**
  * The state machine.
@@ -19,7 +23,7 @@ import {
  * them in the same function that writes rows is how a state machine becomes untestable.
  *
  * Authorization is *not* here. Whether the actor may take a legal transition is a
- * separate question answered by `@trustos/workflow-policy`, and keeping the two apart
+ * separate question answered by `@trustsystem/workflow-policy`, and keeping the two apart
  * means "legal" and "permitted" cannot be confused: a transition can be legal and
  * refused, and a state machine that returned "not allowed" for both would make the
  * distinction invisible.

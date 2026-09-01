@@ -2,7 +2,7 @@
 
 Three different things, often conflated, with different reversibility.
 
-`@trustos/data-masking` reuses `@trustos/governance-pii-policy` for the masking rules themselves
+`@trustsystem/data-masking` reuses `@trustsystem/governance-pii-policy` for the masking rules themselves
 rather than restating them — one definition of what a masked card number looks like, in one place.
 What this package adds is the two operations that are not masking.
 
@@ -54,5 +54,5 @@ re-identifies against any other table that has the same hashing.
 ## Where masking is decided
 
 The masking obligation comes from the classification, but the _decision_ to reveal is
-`@trustos/data-access-policy` — see [`../enterprise-governance/operating-model.md`](../enterprise-governance/operating-model.md)
+`@trustsystem/data-access-policy` — see [`../enterprise-governance/operating-model.md`](../enterprise-governance/operating-model.md)
 for why the request and the approval are different permissions.

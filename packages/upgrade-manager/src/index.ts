@@ -1,5 +1,5 @@
 /**
- * @trustos/upgrade-manager
+ * @trustsystem/upgrade-manager
  *
  * The upgrade: preflight, backup, migration, validation, rollback and a report.
  *

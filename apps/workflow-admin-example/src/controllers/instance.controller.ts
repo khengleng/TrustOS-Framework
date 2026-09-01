@@ -1,14 +1,14 @@
 import { Body, Controller, Get, Headers, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import type { ActorContext } from '@trustos/shared-types';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
-import { toWorkflowActor, WORKFLOW_PERMISSIONS } from '@trustos/workflow-core';
-import { describeEvent, type HistoryRecorder } from '@trustos/workflow-history';
-import type { WorkflowEngine } from '@trustos/workflow-runtime';
-import { RequirePermissions } from '@trustos/rbac';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
+import { toWorkflowActor, WORKFLOW_PERMISSIONS } from '@trustsystem/workflow-core';
+import { describeEvent, type HistoryRecorder } from '@trustsystem/workflow-history';
+import type { WorkflowEngine } from '@trustsystem/workflow-runtime';
+import { RequirePermissions } from '@trustsystem/rbac';
 import { HISTORY_RECORDER, WORKFLOW_ENGINE } from '../tokens';
 
 /*

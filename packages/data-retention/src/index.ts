@@ -1,5 +1,5 @@
 /**
- * @trustos/data-retention
+ * @trustsystem/data-retention
  *
  * Retention, archival, legal hold and deletion.
  *

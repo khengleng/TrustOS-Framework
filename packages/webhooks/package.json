@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/webhooks",
+  "name": "@trustsystem/webhooks",
   "version": "0.1.0",
   "description": "Webhook endpoints, subscriptions, secrets and HMAC signatures.",
   "license": "UNLICENSED",
@@ -17,12 +17,12 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/event-registry": "0.1.0",
-    "@trustos/event-sdk": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/event-registry": "0.1.0",
+    "@trustsystem/event-sdk": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

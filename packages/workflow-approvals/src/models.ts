@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   duplicateApproval,
   isSameActor,
@@ -6,8 +6,8 @@ import {
   type WorkflowActor,
   type WorkflowDecisionOutcome,
   type WorkflowDecisionRecord,
-} from '@trustos/workflow-core';
-import { evaluateCondition, type WorkflowApprovalSpec } from '@trustos/workflow-definition';
+} from '@trustsystem/workflow-core';
+import { evaluateCondition, type WorkflowApprovalSpec } from '@trustsystem/workflow-definition';
 
 /**
  * Approval models.
@@ -459,7 +459,7 @@ export function checkApproverEligibility(input: CheckEligibilityInput): Approver
  * Asserts eligibility, throwing the right error for each refusal.
  *
  * Self-approval and duplicate approval get their own errors from
- * `@trustos/workflow-core`, because those two are the ones a client has to handle
+ * `@trustsystem/workflow-core`, because those two are the ones a client has to handle
  * differently: the first is permanent for this actor, the second means somebody
  * clicked twice.
  */

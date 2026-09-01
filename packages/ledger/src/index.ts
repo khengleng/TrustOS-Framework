@@ -1,5 +1,5 @@
 /**
- * @trustos/ledger
+ * @trustsystem/ledger
  *
  * Double-entry bookkeeping: journals, postings, reversal, adjustment and the trial balance.
  *

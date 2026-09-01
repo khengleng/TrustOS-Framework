@@ -1,10 +1,10 @@
-# @trustos/module-events
+# @trustsystem/module-events
 
 Typed, versioned domain events with a schema registry, ordering per aggregate, retry, dead letters and replay.
 
 ## What this package is
 
-A thin module wrapper. The implementation is in `@trustos/event-bus`, `@trustos/event-registry`, `@trustos/event-sdk`; this package contributes the declarations the platform needs — permissions,
+A thin module wrapper. The implementation is in `@trustsystem/event-bus`, `@trustsystem/event-registry`, `@trustsystem/event-sdk`; this package contributes the declarations the platform needs — permissions,
 routes, audit events, migrations and a health indicator — and the start/stop lifecycle.
 
 ## Installing
@@ -17,7 +17,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 ```ts
-import { EventsModule } from '@trustos/module-events/nest';
+import { EventsModule } from '@trustsystem/module-events/nest';
 
 @Module({ imports: [EventsModule.forRoot(binding)] })
 export class AppModule {}

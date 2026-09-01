@@ -5,7 +5,7 @@
  * its own rather than copying anything out of it.
  */
 
-import type { PermissionDefinition } from '@trustos/template-sdk';
+import type { PermissionDefinition } from '@trustsystem/template-sdk';
 import { CLINIC_PERMISSIONS_LIST, CLINIC_PERMISSIONS_ROLES } from './clinic';
 
 export * from './clinic';

@@ -12,7 +12,7 @@
  * backdoor, not a convenience.
  */
 import { PrismaClient } from '@prisma/client';
-import { ALL_PERMISSIONS, SYSTEM_ROLE_LIST } from '@trustos/rbac';
+import { ALL_PERMISSIONS, SYSTEM_ROLE_LIST } from '@trustsystem/rbac';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();

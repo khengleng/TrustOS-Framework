@@ -1,14 +1,14 @@
 import { Body, Controller, Delete, Get, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiKeyService, type ApiKeyMetadata } from '@trustos/api-keys';
-import { Authorize } from '@trustos/authorization/nest';
-import { HumanActorsOnly } from '@trustos/identity/nest';
-import { PERMISSIONS, RequirePermissions } from '@trustos/rbac';
-import { CurrentUser } from '@trustos/auth';
-import { OrganizationId } from '@trustos/tenancy';
-import type { ActorContext } from '@trustos/shared-types';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
+import { ApiKeyService, type ApiKeyMetadata } from '@trustsystem/api-keys';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { HumanActorsOnly } from '@trustsystem/identity/nest';
+import { PERMISSIONS, RequirePermissions } from '@trustsystem/rbac';
+import { CurrentUser } from '@trustsystem/auth';
+import { OrganizationId } from '@trustsystem/tenancy';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
 import { API_KEY_SERVICE } from '../tokens';
 
 const createSchema = z.object({

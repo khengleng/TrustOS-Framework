@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { AgentRegistry, agentDefinitionSchema } from './agent';
 import { EXAMPLE_AGENTS, SECURITY_REVIEWER_AGENT, SUPPORT_AGENT } from './examples';
 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { STANDARD_RESOURCE_IDS, type ResourceOperation } from '@trustos/governance-tool-core';
+import { ApiError } from '@trustsystem/errors';
+import { STANDARD_RESOURCE_IDS, type ResourceOperation } from '@trustsystem/governance-tool-core';
 
 /**
  * The typed operations an internal application may call.

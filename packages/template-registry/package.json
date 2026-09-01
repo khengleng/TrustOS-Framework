@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/template-registry",
+  "name": "@trustsystem/template-registry",
   "version": "0.1.0",
   "description": "Typed, validated catalog of the approved TrustOS application templates.",
   "license": "UNLICENSED",
@@ -17,7 +17,7 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/version-manager": "0.1.0",
+    "@trustsystem/version-manager": "0.1.0",
     "zod": "^3.24.1"
   }
 }

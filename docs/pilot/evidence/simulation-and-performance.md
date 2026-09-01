@@ -62,7 +62,7 @@ benchmark that gets quoted as a production figure:
 > measures the product's internal logic and is not a reliability estimate.
 
 > Fees are computed by the sandbox's placeholder rate, not by the product's fee schedule. Use
-> `@trustos/fees` for a priced figure.
+> `@trustsystem/fees` for a priced figure.
 
 The last one matters for reading the fee totals above: they are the sandbox's rate, not the pilot's
 0.50% schedule. The pilot's own fee arithmetic is verified in

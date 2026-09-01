@@ -1,4 +1,4 @@
-import type { ActorType } from '@trustos/shared-types';
+import type { ActorType } from '@trustsystem/shared-types';
 
 /**
  * The workflow domain, as types.

@@ -34,7 +34,7 @@ export interface PortalProfile {
 }
 
 /** A file made available to a customer. `storageKey` is opaque and never a filename the customer */
-/** supplied — see the upload guidance in @trustos/template-sdk. */
+/** supplied — see the upload guidance in @trustsystem/template-sdk. */
 export interface PortalDocument {
   id: string;
   ownerUserId: string;

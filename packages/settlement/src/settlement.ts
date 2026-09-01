@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
 import {
   addMoney,
   formatMoney,
@@ -14,9 +14,9 @@ import {
   zeroMoney,
   type CurrencyRegistry,
   type Money,
-} from '@trustos/financial-core';
-import type { AccountService } from '@trustos/accounts';
-import { credit, debit, type Journal, type Ledger } from '@trustos/ledger';
+} from '@trustsystem/financial-core';
+import type { AccountService } from '@trustsystem/accounts';
+import { credit, debit, type Journal, type Ledger } from '@trustsystem/ledger';
 
 /**
  * Settlement.

@@ -4,10 +4,10 @@ Copy this folder to start a new TrustOS product on the framework.
 
 ```bash
 cp -r templates/saas-starter apps/my-product
-# edit apps/my-product/package.json: name -> @trustos/my-product
+# edit apps/my-product/package.json: name -> @trustsystem/my-product
 npm install
 npm run build:packages
-npm run dev -w @trustos/my-product
+npm run dev -w @trustsystem/my-product
 ```
 
 ## What you get, already wired

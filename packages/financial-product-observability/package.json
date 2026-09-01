@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/financial-product-observability",
+  "name": "@trustsystem/financial-product-observability",
   "version": "0.1.0",
   "description": "The product metric catalog, the collector the runtime reports through and the dashboard descriptors the admin renders.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-product-core": "0.1.0",
-    "@trustos/observability": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-product-core": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
     "zod": "^3.24.1"
   }
 }

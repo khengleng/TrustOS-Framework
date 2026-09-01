@@ -1,11 +1,11 @@
-import { ApiError } from '@trustos/errors';
-import type { Policy, AuthorizationRequest, PolicyResult } from '@trustos/authorization';
+import { ApiError } from '@trustsystem/errors';
+import type { Policy, AuthorizationRequest, PolicyResult } from '@trustsystem/authorization';
 import {
   ACTIVE_POLICY_STATUSES,
   PolicyRegistry,
   type PolicyCategory,
   type PolicyDocument,
-} from '@trustos/policy-registry';
+} from '@trustsystem/policy-registry';
 import {
   analysePolicy,
   assertObligationsUnderstood,
@@ -14,8 +14,8 @@ import {
   runPolicyTests,
   type PolicyAttributes,
   type PolicyDecision,
-} from '@trustos/policy-evaluator';
-import { PolicyDecisionLog, type PolicyDecisionRecord } from '@trustos/policy-decision-log';
+} from '@trustsystem/policy-evaluator';
+import { PolicyDecisionLog, type PolicyDecisionRecord } from '@trustsystem/policy-decision-log';
 
 /**
  * The centralized policy decision point.
@@ -24,10 +24,10 @@ import { PolicyDecisionLog, type PolicyDecisionRecord } from '@trustos/policy-de
  * none of the three does alone: **default to deny across the whole set**, and **record every
  * decision**.
  *
- * The relationship to `@trustos/authorization` is the question worth answering first, because two
+ * The relationship to `@trustsystem/authorization` is the question worth answering first, because two
  * policy systems in one platform is usually a mistake.
  *
- * `@trustos/authorization` decides **who may call what**. Its policies are code, they are part of
+ * `@trustsystem/authorization` decides **who may call what**. Its policies are code, they are part of
  * the platform's structure, they change with a release, and they are evaluated on every request
  * by a guard. That is correct for "may this actor invoke this route".
  *

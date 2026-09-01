@@ -1,16 +1,16 @@
-import { conditionFields, describeCondition } from '@trustos/workflow-definition';
+import { conditionFields, describeCondition } from '@trustsystem/workflow-definition';
 import {
   NON_ORDERABLE_FACTS,
   RULE_FACTS,
   isRuleFact,
   productRuleSchema,
   type ProductRule,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 
 /**
  * Rule-set validation.
  *
- * The schema in `@trustos/financial-product-core` checks that a rule is *well-formed*. This
+ * The schema in `@trustsystem/financial-product-core` checks that a rule is *well-formed*. This
  * checks that a rule set is *sane*, which is a different and harder question — every problem
  * below produces a rule set that parses, validates, deploys and silently does the wrong thing.
  *

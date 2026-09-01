@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { JobQueue, JobRegistry, InMemoryJobStore } from '@trustos/job-runtime';
+import { JobQueue, JobRegistry, InMemoryJobStore } from '@trustsystem/job-runtime';
 import { MISFIRE_THRESHOLD_MS, SCHEDULE_FAILURE_THRESHOLD } from './entities';
 import { Scheduler } from './scheduler';
 import { InMemoryScheduleStore } from './testing';

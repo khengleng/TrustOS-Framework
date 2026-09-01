@@ -1,5 +1,5 @@
 /**
- * @trustos/module-registry
+ * @trustsystem/module-registry
  *
  * Two things, both about discovery:
  *

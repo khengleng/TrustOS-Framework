@@ -1,4 +1,4 @@
-# @trustos/cli
+# @trustsystem/cli
 
 The `trustos` command. Generates production-ready TrustOS applications from the
 approved templates in this repository.
@@ -39,12 +39,12 @@ The framework packages are not published yet, so the CLI runs from a checkout:
 ```bash
 npm install
 npm run build:packages
-npm link -w @trustos/cli     # or: node packages/cli/bin/trustos.js
+npm link -w @trustsystem/cli     # or: node packages/cli/bin/trustos.js
 
 trustos new merchant --framework-path /path/to/trustos-framework
 ```
 
-`--framework-path` rewrites the generated `@trustos/*` dependencies to `file:`
+`--framework-path` rewrites the generated `@trustsystem/*` dependencies to `file:`
 links so the new project installs and builds immediately. It becomes
 unnecessary once the packages are published.
 

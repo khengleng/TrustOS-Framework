@@ -2,8 +2,11 @@ import {
   hashesEqual,
   productError,
   type ProductLifecycleStatus,
-} from '@trustos/financial-product-core';
-import { EXECUTABLE_STATUSES, SANDBOX_EXECUTABLE_STATUSES } from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
+import {
+  EXECUTABLE_STATUSES,
+  SANDBOX_EXECUTABLE_STATUSES,
+} from '@trustsystem/financial-product-core';
 import { verifyContentHash, type PublishedVersion } from './version';
 
 /**

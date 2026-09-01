@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
-import { AuditService, PrismaAuditSink } from '@trustos/audit';
-import { PrismaService } from '@trustos/database';
-import type { Logger } from '@trustos/logging';
+import { AuditService, PrismaAuditSink } from '@trustsystem/audit';
+import { PrismaService } from '@trustsystem/database';
+import type { Logger } from '@trustsystem/logging';
 import { APP_LOGGER, AUDIT_SERVICE } from '../../tokens';
 import { AuditController } from './audit.controller';
 

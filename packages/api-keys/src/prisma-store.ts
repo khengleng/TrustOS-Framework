@@ -8,7 +8,7 @@ import type { ApiKeyRecord, ApiKeyStore } from './service';
  * are produced from different schemas and are not structurally assignable, so naming
  * the capability keeps this usable with either.
  *
- * Not tenant-scoped through `@trustos/tenancy`, and that is deliberate:
+ * Not tenant-scoped through `@trustsystem/tenancy`, and that is deliberate:
  * `findByHash` runs *before* an actor exists, so there is no tenant context to scope
  * to. Every other method takes an `organizationId` and filters on it explicitly, and
  * the tests assert that a key from another organization is not returned.

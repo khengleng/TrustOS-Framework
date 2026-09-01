@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ApiError } from '@trustos/errors';
-import { ROUTE_METADATA } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import { ROUTE_METADATA } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
 import { TokenService } from '../tokens';
 
 /**
@@ -71,8 +71,8 @@ export class JwtAuthGuard implements CanActivate {
 
     const actor: ActorContext = {
       // A token minted by the local provider always represents a person. Machine
-      // callers arrive through @trustos/api-keys or @trustos/service-accounts,
-      // which set their own actor type — see @trustos/identity.
+      // callers arrive through @trustsystem/api-keys or @trustsystem/service-accounts,
+      // which set their own actor type — see @trustsystem/identity.
       actorType: 'user',
       userId: claims.sub,
       email: claims.email,

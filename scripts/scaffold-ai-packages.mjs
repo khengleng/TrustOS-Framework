@@ -232,14 +232,14 @@ const NO_ZOD = new Set();
 function packageJson(entry) {
   const dependencies = Object.fromEntries(
     entry.deps
-      .map((dep) => [`@trustos/${dep}`, '0.1.0'])
+      .map((dep) => [`@trustsystem/${dep}`, '0.1.0'])
       .concat(NO_ZOD.has(entry.name) ? [] : [['zod', '^3.24.1']])
       .sort(([a], [b]) => a.localeCompare(b)),
   );
 
   return `${JSON.stringify(
     {
-      name: `@trustos/${entry.name}`,
+      name: `@trustsystem/${entry.name}`,
       version: '0.1.0',
       private: true,
       description: entry.description,
@@ -291,8 +291,8 @@ for (const entry of PACKAGES) {
       join(base, 'nest/package.json'),
       `${JSON.stringify(
         {
-          '//': `Subpath stub: keeps NestJS bindings out of consumers that import '@trustos/${entry.name}'.`,
-          name: `@trustos/${entry.name}-nest`,
+          '//': `Subpath stub: keeps NestJS bindings out of consumers that import '@trustsystem/${entry.name}'.`,
+          name: `@trustsystem/${entry.name}-nest`,
           private: true,
           main: '../dist/nest/index.js',
           types: '../dist/nest/index.d.ts',
@@ -319,16 +319,16 @@ writeFileSync(buildConfigPath, `${JSON.stringify(buildConfig, null, 2)}\n`);
 
 // --- vitest aliases --------------------------------------------------------
 //
-// Without an alias, a test importing `@trustos/ai-sdk` resolves the built `dist` rather than the
+// Without an alias, a test importing `@trustsystem/ai-sdk` resolves the built `dist` rather than the
 // source — so a change is invisible to the test until a rebuild, which is exactly the feedback
 // loop nobody notices is broken.
 
 const vitestPath = join(root, 'vitest.config.ts');
 let vitest = readFileSync(vitestPath, 'utf8');
-const missing = PACKAGES.filter((entry) => !vitest.includes(`'@trustos/${entry.name}':`));
+const missing = PACKAGES.filter((entry) => !vitest.includes(`'@trustsystem/${entry.name}':`));
 
 if (missing.length > 0) {
-  const marker = "      '@trustos/integration-monitor': pkg('integration-monitor'),";
+  const marker = "      '@trustsystem/integration-monitor': pkg('integration-monitor'),";
   if (!vitest.includes(marker)) {
     throw new Error(
       'Could not find the alias insertion point in vitest.config.ts. Update this script if the ' +
@@ -337,7 +337,7 @@ if (missing.length > 0) {
   }
 
   const additions = missing
-    .map((entry) => `      '@trustos/${entry.name}': pkg('${entry.name}'),`)
+    .map((entry) => `      '@trustsystem/${entry.name}': pkg('${entry.name}'),`)
     .join('\n');
 
   vitest = vitest.replace(marker, `${marker}\n\n      // Phase 7 — the AI platform.\n${additions}`);

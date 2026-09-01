@@ -1,13 +1,13 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { conditionSchema } from '@trustos/workflow-definition';
-import { compareVersions, isNewer } from '@trustos/version-manager';
+import { ApiError } from '@trustsystem/errors';
+import { conditionSchema } from '@trustsystem/workflow-definition';
+import { compareVersions, isNewer } from '@trustsystem/version-manager';
 
 /**
  * The policy registry.
  *
  * Policies as versioned, immutable documents with their own lifecycle. The framework already has
- * an authorization engine (`@trustos/authorization`) whose policies are **code** — TypeScript
+ * an authorization engine (`@trustsystem/authorization`) whose policies are **code** — TypeScript
  * objects with an `evaluate` method — and that is the right shape for the fifteen or so decisions
  * that are part of the platform's own structure.
  *
@@ -17,7 +17,7 @@ import { compareVersions, isNewer } from '@trustos/version-manager';
  * consequences, and configuration with consequences needs versions, approval and a decision log —
  * which is what this part adds and what code policies cannot have.
  *
- * The condition language is `@trustos/workflow-definition`'s predicate tree, imported whole. Its
+ * The condition language is `@trustsystem/workflow-definition`'s predicate tree, imported whole. Its
  * header explains at length why a condition is a tree rather than an expression string; all of it
  * applies here, and a third condition language in this repository would be a third place to get
  * it wrong.

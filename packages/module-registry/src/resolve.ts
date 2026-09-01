@@ -1,4 +1,4 @@
-import { satisfiesMinimum, satisfiesVersionRange } from '@trustos/module-sdk';
+import { satisfiesMinimum, satisfiesVersionRange } from '@trustsystem/module-sdk';
 import { ModuleRegistryError } from './errors';
 import type { ModuleCatalogEntry } from './schema';
 

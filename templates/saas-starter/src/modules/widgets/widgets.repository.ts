@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { assertTenantMatch } from '@trustos/tenancy';
+import { assertTenantMatch } from '@trustsystem/tenancy';
 
 export interface Widget {
   id: string;
@@ -21,7 +21,7 @@ export interface Widget {
  *   2. Inject `PrismaService` here.
  *   3. Replace the array filtering with a tenant-scoped delegate:
  *
- *        import { scopedDelegate } from '@trustos/tenancy';
+ *        import { scopedDelegate } from '@trustsystem/tenancy';
  *
  *        private get widgets() {
  *          return scopedDelegate(this.prisma.widget, { model: 'widget' });

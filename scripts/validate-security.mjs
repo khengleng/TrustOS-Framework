@@ -193,7 +193,7 @@ async function serviceChecks() {
   }
 
   const { PrismaClient } = await import('@prisma/client');
-  const { ApprovalWorkbenchService } = await import('@trustos/approval-workbench');
+  const { ApprovalWorkbenchService } = await import('@trustsystem/approval-workbench');
   const prisma = new PrismaClient();
 
   const suffix = randomUUID().slice(0, 8);

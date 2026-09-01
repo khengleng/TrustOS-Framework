@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-ai-bridge
+ * @trustsystem/governance-ai-bridge
  *
  * AI assistance for internal tools: summarize, explain, draft. **None of them acts.**
  *

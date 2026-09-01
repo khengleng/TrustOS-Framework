@@ -4,26 +4,26 @@ import {
   APPROVED_BLOCKS,
   blockCatalogSummary,
   type BlockCategory,
-} from '@trustos/financial-block-registry';
+} from '@trustsystem/financial-block-registry';
 import {
   PROVIDER_INTERFACES,
   PROVIDER_INTERFACE_NAMES,
   connectorDefinitionSchema,
-} from '@trustos/connector-registry';
+} from '@trustsystem/connector-registry';
 import {
   PRODUCT_TEMPLATES,
   findTemplate,
   validateProduct,
   type ValidationFinding,
-} from '@trustos/financial-product-composer';
-import { classifyChange, assessGovernance } from '@trustos/financial-product-governance';
+} from '@trustsystem/financial-product-composer';
+import { classifyChange, assessGovernance } from '@trustsystem/financial-product-governance';
 import {
   parseProductDefinition,
   structuralReferenceData,
   type ProductDefinition,
-} from '@trustos/financial-product-core';
-import { publishVersion } from '@trustos/financial-product-versioning';
-import { formatReport, simulate } from '@trustos/financial-product-simulator';
+} from '@trustsystem/financial-product-core';
+import { publishVersion } from '@trustsystem/financial-product-versioning';
+import { formatReport, simulate } from '@trustsystem/financial-product-simulator';
 import { style, type Output } from '../output';
 
 /** Pretty JSON, for `--json`. One helper so every command's machine output looks the same. */

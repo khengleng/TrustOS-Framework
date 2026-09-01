@@ -7,7 +7,7 @@ import {
   upgradeAdoption,
   within,
 } from './index';
-import type { TelemetryEvent } from '@trustos/telemetry';
+import type { TelemetryEvent } from '@trustsystem/telemetry';
 
 const event = (name: string, overrides: Partial<TelemetryEvent> = {}): TelemetryEvent => ({
   category: 'cli',

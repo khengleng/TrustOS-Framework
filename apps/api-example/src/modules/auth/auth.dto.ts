@@ -6,7 +6,7 @@ import {
   organizationNameSchema,
   passwordSchema,
   z,
-} from '@trustos/validation';
+} from '@trustsystem/validation';
 
 /**
  * Request contracts.

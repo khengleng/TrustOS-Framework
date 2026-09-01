@@ -1,5 +1,5 @@
 /**
- * @trustos/model-registry
+ * @trustsystem/model-registry
  *
  * The catalog of models: capabilities, context windows, pricing, availability.
  *

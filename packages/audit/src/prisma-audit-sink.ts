@@ -1,5 +1,5 @@
-import { Prisma, type PrismaClient } from '@trustos/database';
-import type { ActorType } from '@trustos/shared-types';
+import { Prisma, type PrismaClient } from '@trustsystem/database';
+import type { ActorType } from '@trustsystem/shared-types';
 import type { AuditQuery, AuditQueryResult, AuditRecord, AuditSink } from './audit-record';
 
 /**

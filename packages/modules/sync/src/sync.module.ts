@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The synchronization module.
  *
  * Pull, push and bidirectional synchronization with incremental watermarks and conflict policies.
  *
- * A thin wrapper. The implementation is in `@trustos/sync` — this
+ * A thin wrapper. The implementation is in `@trustsystem/sync` — this
  * package contributes the declarations the platform needs (permissions, routes, audit events,
  * health) and the start/stop lifecycle.
  *

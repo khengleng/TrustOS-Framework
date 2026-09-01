@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-ledger",
+  "name": "@trustsystem/module-ledger",
   "version": "0.1.0",
   "description": "TrustOS Ledger module. Double-entry bookkeeping: journals, accounts, reversal, trial balance and reporting. Posted journals are immutable and every journal must balance.",
   "license": "UNLICENSED",
@@ -21,17 +21,17 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/accounts": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-core": "0.1.0",
-    "@trustos/financial-policy": "0.1.0",
-    "@trustos/financial-reporting": "0.1.0",
-    "@trustos/ledger": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/module-sdk": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/shared-types": "0.1.0"
+    "@trustsystem/accounts": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-core": "0.1.0",
+    "@trustsystem/financial-policy": "0.1.0",
+    "@trustsystem/financial-reporting": "0.1.0",
+    "@trustsystem/ledger": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/module-sdk": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",

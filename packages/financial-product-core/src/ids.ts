@@ -29,7 +29,7 @@ export type ProductEntity = keyof typeof PRODUCT_ID_PREFIXES;
 /**
  * A new identifier.
  *
- * A UUID rather than a sequence, for the reason `@trustos/financial-core` gives: a sequential id
+ * A UUID rather than a sequence, for the reason `@trustsystem/financial-core` gives: a sequential id
  * leaks volume. It matters more here than there, because a product id appears in a public API
  * path and a competitor counting them learns how many products a bank launched last quarter.
  */

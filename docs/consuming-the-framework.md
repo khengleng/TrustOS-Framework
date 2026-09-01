@@ -7,17 +7,17 @@ SME OS, or anything after it — needs in order to install and build against it.
 
 All 193 packages are publish-shaped and were audited to confirm it:
 
-|                                                                      |                                 |
-| -------------------------------------------------------------------- | ------------------------------- |
-| Packages with `main` and `types`                                     | 193 of 193                      |
-| Declared entry points that exist on disk                             | 193 of 193                      |
-| `@trustos/*` dependencies pointing at something unpublishable        | 0                               |
-| Packages depending on an application                                 | 0                               |
-| Packages using `workspace:` or `file:` for a `@trustos/*` dependency | 0                               |
-| Version drift                                                        | none — every package is `0.1.0` |
+|                                                                          |                                 |
+| ------------------------------------------------------------------------ | ------------------------------- |
+| Packages with `main` and `types`                                         | 193 of 193                      |
+| Declared entry points that exist on disk                                 | 193 of 193                      |
+| `@trustsystem/*` dependencies pointing at something unpublishable        | 0                               |
+| Packages depending on an application                                     | 0                               |
+| Packages using `workspace:` or `file:` for a `@trustsystem/*` dependency | 0                               |
+| Version drift                                                            | none — every package is `0.1.0` |
 
 The last two matter most. Inter-package dependencies are written as exact versions
-(`"@trustos/config": "0.1.0"`) rather than `workspace:*`, so a package installed from a
+(`"@trustsystem/config": "0.1.0"`) rather than `workspace:*`, so a package installed from a
 registry resolves its siblings from that registry with no rewriting at publish time. And
 because nothing in `packages/` depends on anything in `apps/`, the publishable set is closed:
 installing it never pulls in a deployable application.
@@ -32,18 +32,44 @@ installing it never pulls in a deployable application.
 `UNLICENSED`, so the release script refuses to run without `--registry`, and every package
 carries `publishConfig.access: restricted` as a second line of defence.
 
-Two workable options:
+**Decided on 1 September 2026: GitHub Packages, under the `trustsystem` organisation.**
 
-- **GitHub Packages** (`https://npm.pkg.github.com`). Free for private packages and the code
-  already lives on GitHub. One constraint decides whether it is viable: **GitHub Packages
-  requires the package scope to match the repository owner.** The scope here is `@trustos`
-  and the owner is `khengleng`, so this needs a GitHub organisation named `trustos` — or the
-  packages renamed, which is 193 manifests and every import in the repository. Creating the
-  organisation is much the cheaper of the two.
-- **npm with a private org.** Owning the `@trustos` scope on npmjs.com works without
-  renaming anything, and costs per seat.
+The constraint that drove it: **GitHub Packages requires the package scope to match the
+repository owner.** The scope was `@trustos` and no such owner was available — `trustos` on
+GitHub is a personal account registered in 2015 by an unrelated user, and GitHub shares one
+namespace between users and organisations, so it can never be claimed for this project.
+
+So the organisation `trustsystem` was created and the scope renamed to match it:
+`@trustos/*` became `@trustsystem/*` across 241 manifests and 1,433 source files — 7,485
+occurrences, verified by the full suite. Four forms of the token needed separate treatment,
+and one of them must never be touched:
+
+| Form             | Where                                                                    | Action         |
+| ---------------- | ------------------------------------------------------------------------ | -------------- |
+| `@trustos/`      | package names, dependencies, imports                                     | renamed        |
+| `@trustos\/`     | inside regex literals, in the architecture validator and module registry | renamed        |
+| `@trustos:`      | the `.npmrc` scope directive                                             | renamed        |
+| `'@trustos'`     | a path segment joined into `node_modules/…`                              | renamed        |
+| `@trustos.local` | an email default sender in the notification module                       | **left alone** |
+
+The regex-escaped form is the one that matters. A plain search for `@trustos/` does not match
+`@trustos\/`, so a naive rename leaves the validator and the registry silently failing to
+recognise their own packages — passing tests, wrong behaviour.
+
+**Renaming was cheapest now and never gets cheaper.** It was free today because no consumer
+existed. Once SME OS installs anything, the same change is a breaking change for a consumer.
+
+The rejected alternative was **npm with a private org**, which would have kept `@trustos`
+intact with no rename at all, at a per-seat cost. Reasonable, and available if GitHub Packages
+later proves awkward — the scope would have to change again.
 
 ## Publishing
+
+**One prerequisite is outstanding:** the repository is still `khengleng/TrustOS-Framework`.
+GitHub Packages resolves the scope from the _repository owner_, so publishing `@trustsystem/*`
+requires this repository to live under the `trustsystem` organisation. Transfer it, or push a
+mirror there and publish from that — until then the scope and the owner disagree and the
+publish is refused.
 
 ```bash
 npm run build:packages          # publish refuses if dist/ is missing
@@ -62,17 +88,17 @@ reports what already exists rather than failing on it.
 `.npmrc` in the consuming repository, pointing the scope at the registry:
 
 ```
-@trustos:registry=https://npm.pkg.github.com
+@trustsystem:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
 ```
 
 Then generate the application with the CLI and let it write the dependencies:
 
 ```bash
-npx @trustos/cli new erp --name smeos --package-name smeos
+npx @trustsystem/cli new erp --name smeos --package-name smeos
 ```
 
-Without `--framework-path`, the generator writes `"@trustos/config": "^0.1.0"` and the rest as
+Without `--framework-path`, the generator writes `"@trustsystem/config": "^0.1.0"` and the rest as
 ordinary registry dependencies. **Do not pass `--framework-path` for a separate repository** —
 it writes `file:` specifiers containing an absolute path to a framework checkout, which works
 on the machine that ran it and nowhere else, CI included. That flag exists for generating

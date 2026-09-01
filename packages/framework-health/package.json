@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/framework-health",
+  "name": "@trustsystem/framework-health",
   "version": "0.1.0",
   "description": "Whether the framework itself is healthy, and what is degrading it.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/dependency-analyzer": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/quality-gates": "0.1.0",
-    "@trustos/version-manager": "0.1.0",
+    "@trustsystem/dependency-analyzer": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/quality-gates": "0.1.0",
+    "@trustsystem/version-manager": "0.1.0",
     "zod": "^3.24.1"
   }
 }

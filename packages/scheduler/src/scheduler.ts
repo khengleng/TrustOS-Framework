@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
-import type { JobQueue } from '@trustos/job-runtime';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
+import type { JobQueue } from '@trustsystem/job-runtime';
 import {
   MISFIRE_THRESHOLD_MS,
   SCHEDULE_FAILURE_THRESHOLD,

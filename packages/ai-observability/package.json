@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/ai-observability",
+  "name": "@trustsystem/ai-observability",
   "version": "0.1.0",
   "description": "The AI dashboard: requests, latency, tokens, cost, cache and agent usage.",
   "license": "UNLICENSED",
@@ -17,11 +17,11 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/ai-sdk": "0.1.0",
-    "@trustos/cost-monitor": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/ai-sdk": "0.1.0",
+    "@trustsystem/cost-monitor": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

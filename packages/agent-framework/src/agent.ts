@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * Agent definitions.
@@ -115,7 +115,7 @@ export const agentDefinitionSchema = z
     /** For `tool_success`: which tool ends the run. */
     stopAfterTool: z.string().max(120).nullable().default(null),
 
-    /** Memory scopes this agent may write. See `@trustos/agent-memory`. */
+    /** Memory scopes this agent may write. See `@trustsystem/agent-memory`. */
     memoryScopes: z.array(z.string().max(40)).max(10).default(['conversation']),
 
     /**

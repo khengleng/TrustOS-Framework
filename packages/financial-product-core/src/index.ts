@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-core
+ * @trustsystem/financial-product-core
  *
  * The vocabulary of the financial product composition layer: the definition document, the
  * lifecycle, the centrally governed reference data, the permission catalog, the rule shape and

@@ -5,7 +5,7 @@ import {
   templateChildren,
   type TemplateCategory,
   type TemplateManifest,
-} from '@trustos/template-registry';
+} from '@trustsystem/template-registry';
 import type { Output } from '../output';
 import { formatRows, style } from '../output';
 

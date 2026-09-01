@@ -1,20 +1,23 @@
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { HumanActorsOnly } from '@trustos/identity/nest';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
-import { toWorkflowActor, WORKFLOW_PERMISSIONS } from '@trustos/workflow-core';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { HumanActorsOnly } from '@trustsystem/identity/nest';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
+import { toWorkflowActor, WORKFLOW_PERMISSIONS } from '@trustsystem/workflow-core';
 import {
   describeDefinitionConditions,
   formatComparison,
   simulateDefinition,
-} from '@trustos/workflow-definition';
-import { DEFINITION_LIFECYCLE, type WorkflowDefinitionService } from '@trustos/workflow-runtime';
+} from '@trustsystem/workflow-definition';
+import {
+  DEFINITION_LIFECYCLE,
+  type WorkflowDefinitionService,
+} from '@trustsystem/workflow-runtime';
 import { WORKFLOW_DEFINITION_SERVICE } from '../tokens';
 
 /*
@@ -67,7 +70,7 @@ const draftSchema = z.object({
    * The definition document, unparsed.
    *
    * `unknown` rather than a mirrored schema. The definition schema lives in
-   * `@trustos/workflow-definition` and validating here as well would be two schemas to keep
+   * `@trustsystem/workflow-definition` and validating here as well would be two schemas to keep
    * in step — and the second one would drift.
    */
   document: z.unknown(),

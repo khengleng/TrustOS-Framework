@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ApiCatalog, apiDefinitionSchema } from '@trustos/api-catalog';
-import { consumerSchema } from '@trustos/api-consumer';
+import { ApiCatalog, apiDefinitionSchema } from '@trustsystem/api-catalog';
+import { consumerSchema } from '@trustsystem/api-consumer';
 import {
   accessRequestSchema,
   assertSandboxOnly,
@@ -209,7 +209,7 @@ describe('what the portal shows', () => {
 describe('credentials', () => {
   it('shows a prefix and says the key is gone', () => {
     /*
-     * The portal is exactly where somebody adds a "show key" button. @trustos/api-keys makes that
+     * The portal is exactly where somebody adds a "show key" button. @trustsystem/api-keys makes that
      * impossible by hashing; this makes the correct answer one call away.
      */
     const display = credentialDisplay({

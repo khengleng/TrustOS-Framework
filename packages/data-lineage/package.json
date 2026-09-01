@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/data-lineage",
+  "name": "@trustsystem/data-lineage",
   "version": "0.1.0",
   "description": "Where governed data came from and where it goes. Queryable; extension interfaces rather than a scanner.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/data-catalog": "0.1.0",
-    "@trustos/data-classification": "0.1.0",
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/data-catalog": "0.1.0",
+    "@trustsystem/data-classification": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

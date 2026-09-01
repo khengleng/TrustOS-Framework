@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { apiDefinitionSchema } from '@trustos/api-catalog';
-import { consumerSchema } from '@trustos/api-consumer';
-import { policyDocumentSchema } from '@trustos/policy-registry';
-import { evaluatePolicy, runPolicyTests } from '@trustos/policy-evaluator';
+import { apiDefinitionSchema } from '@trustsystem/api-catalog';
+import { consumerSchema } from '@trustsystem/api-consumer';
+import { policyDocumentSchema } from '@trustsystem/policy-registry';
+import { evaluatePolicy, runPolicyTests } from '@trustsystem/policy-evaluator';
 import {
   API_POLICY_ATTRIBUTES,
   assertApiPolicy,

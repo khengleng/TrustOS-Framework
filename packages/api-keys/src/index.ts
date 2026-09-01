@@ -1,5 +1,5 @@
 /**
- * @trustos/api-keys
+ * @trustsystem/api-keys
  *
  * API keys: generated once, hashed immediately, never recoverable.
  *

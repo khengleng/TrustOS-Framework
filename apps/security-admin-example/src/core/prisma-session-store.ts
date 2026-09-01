@@ -1,10 +1,10 @@
-import type { PrismaService } from '@trustos/database';
+import type { PrismaService } from '@trustsystem/database';
 import type {
   RefreshTokenRecord,
   SessionRecord,
   SessionRevocationReason,
   SessionStore,
-} from '@trustos/session-security';
+} from '@trustsystem/session-security';
 
 /**
  * Prisma-backed session store.
@@ -15,7 +15,7 @@ import type {
  * recognises and an administrator revokes, and a refresh token is a single-use
  * credential in a rotation family.
  *
- * Not tenant-scoped through `@trustos/tenancy`: a session lookup happens *before* an
+ * Not tenant-scoped through `@trustsystem/tenancy`: a session lookup happens *before* an
  * actor exists, so there is no tenant context to scope to. Every method that could
  * cross a boundary takes a `userId` and filters on it.
  */

@@ -1,10 +1,10 @@
-# @trustos/module-scheduler
+# @trustsystem/module-scheduler
 
 Cron, interval and one-time schedules with IANA timezone support and explicit daylight-saving handling.
 
 ## What this package is
 
-A thin module wrapper. The implementation is in `@trustos/scheduler`; this package contributes the declarations the platform needs — permissions,
+A thin module wrapper. The implementation is in `@trustsystem/scheduler`; this package contributes the declarations the platform needs — permissions,
 routes, audit events, migrations and a health indicator — and the start/stop lifecycle.
 
 ## Installing
@@ -17,7 +17,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 ```ts
-import { SchedulerModule } from '@trustos/module-scheduler/nest';
+import { SchedulerModule } from '@trustsystem/module-scheduler/nest';
 
 @Module({ imports: [SchedulerModule.forRoot(binding)] })
 export class AppModule {}

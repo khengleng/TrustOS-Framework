@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/api-quota",
+  "name": "@trustsystem/api-quota",
   "version": "0.1.0",
   "description": "Daily, monthly and plan quotas, with the usage that is reported rather than inferred.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/api-consumer": "0.1.0",
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/api-consumer": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

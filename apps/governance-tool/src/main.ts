@@ -3,20 +3,24 @@ import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustos/config';
-import { AllExceptionsFilter } from '@trustos/errors/nest';
-import { RECORDED_APPLICATION_EVIDENCE, consoleCatalogFor } from '@trustos/governance-tool-core';
-import { OidcIdentityProvider, type IdentityProvider } from '@trustos/identity';
-import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
-import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
+import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustsystem/config';
+import { AllExceptionsFilter } from '@trustsystem/errors/nest';
+import {
+  RECORDED_APPLICATION_EVIDENCE,
+  templatesWithheldFrom,
+} from '@trustsystem/governance-tool-core';
+import { resourceRegistrationsFor, resourceRegistryFor } from './resource-registrations';
+import { OidcIdentityProvider, type IdentityProvider } from '@trustsystem/identity';
+import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustsystem/logging';
+import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustsystem/observability';
 import {
   SecurityPolicyError,
   loadSecurityPolicy,
   securityPolicySummary,
   type SecurityPolicy,
-} from '@trustos/security-policy';
-import { securityHeadersMiddleware } from '@trustos/session-security';
-import { tenantScopeMiddleware } from '@trustos/tenancy';
+} from '@trustsystem/security-policy';
+import { securityHeadersMiddleware } from '@trustsystem/session-security';
+import { tenantScopeMiddleware } from '@trustsystem/tenancy';
 import { GovernanceToolModule } from './governance-tool.module';
 
 /**
@@ -97,6 +101,8 @@ async function bootstrap(): Promise<void> {
    * how a UAT instance ends up believing it is production or the reverse.
    */
   const environment = readEnvironment();
+  /** Approved resources for this environment. Read by the start-up banner and the report below. */
+  const declaredResources = resourceRegistrationsFor(environment);
 
   const app = await NestFactory.create<NestExpressApplication>(
     GovernanceToolModule.forRoot({
@@ -115,7 +121,19 @@ async function bootstrap(): Promise<void> {
          * way that registering *resources* is not, which is why the warning below
          * about resources still stands.
          */
-        apps: consoleCatalogFor(environment),
+        /*
+         * No `apps` override. The module provides a database-backed catalog and seeds it from
+         * these same console templates on a genuinely empty environment — passing an in-memory
+         * one here would have overridden it and put the old defect straight back.
+         */
+
+        /*
+         * The resources this deployment has approved.
+         *
+         * Empty until an owner and an approver exist for each one; see
+         * `resource-registrations.ts` for why that list is not filled in with plausible values.
+         */
+        resources: resourceRegistryFor(environment),
 
         /*
          * Validation evidence, when the deployment ships it.
@@ -241,8 +259,8 @@ async function bootstrap(): Promise<void> {
       securityPolicy: securityPolicySummary(policy),
       // Stated at start-up rather than discovered at the first request.
       trustosEnvironment: environment,
-      registeredResources: 0,
-      appCatalog: 'in-memory',
+      registeredResources: declaredResources.length,
+      appCatalog: 'database',
       /*
        * What the catalog will report validation status from, stated at start-up.
        *
@@ -273,17 +291,45 @@ async function bootstrap(): Promise<void> {
     );
   }
 
-  logger.warn(
-    {},
-    'No resources are registered. Every read will be refused with "no approved resource" until ' +
-      'a deployment registers its own — pass `resources` to GovernanceToolModule.forRoot.',
-  );
+  /*
+   * Reported either way, positively.
+   *
+   * The previous version warned unconditionally, which meant the message was equally true
+   * whether nothing had been registered or the registry had just been populated — and an
+   * operator could not tell which. It also meant the absence of the warning could never be
+   * evidence of anything.
+   */
+  /*
+   * A console the seed cannot register honestly.
+   *
+   * Production refuses a highly-restricted application with no recorded security review. The
+   * seed used to satisfy that with a hardcoded date, which made the control report a fiction.
+   * It now withholds the template instead — and says so here, because a console that quietly
+   * fails to appear is indistinguishable from one nobody asked for.
+   */
+  const withheld = templatesWithheldFrom(environment);
+  if (withheld.length > 0) {
+    logger.warn(
+      { environment, withheld },
+      'Console templates withheld from the seed: their classification requires a security ' +
+        'review and none is recorded. Every request naming one will be refused until it is ' +
+        'registered with a real review date.',
+    );
+  }
 
-  logger.warn(
-    {},
-    'The internal application catalog is in memory. Applications created here are lost on ' +
-      'restart — pass `apps` to GovernanceToolModule.forRoot with a persistent catalog.',
-  );
+  if (declaredResources.length === 0) {
+    logger.warn(
+      { environment },
+      'No resources are approved for this environment. Every read will be refused with ' +
+        '"no approved resource" until one is declared in resource-registrations.ts — which ' +
+        'needs an owner and a separate approver per resource, not a code change alone.',
+    );
+  } else {
+    logger.info(
+      { environment, resources: declaredResources.map((resource) => resource.resourceId) },
+      'Approved resources loaded for this environment.',
+    );
+  }
 }
 
 /**

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustos/sre-core';
-import { BackupInventory, backupRecordSchema } from '@trustos/backup';
-import { restoreTestSchema, RESTORE_CHECKS } from '@trustos/recovery';
-import { drPlanSchema } from '@trustos/disaster-recovery';
+import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustsystem/sre-core';
+import { BackupInventory, backupRecordSchema } from '@trustsystem/backup';
+import { restoreTestSchema, RESTORE_CHECKS } from '@trustsystem/recovery';
+import { drPlanSchema } from '@trustsystem/disaster-recovery';
 import {
   assertContinuityProven,
   businessProcessSchema,

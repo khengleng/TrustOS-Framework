@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   ACCESS_CLASSES,
   DATA_CLASSIFICATIONS,
@@ -12,7 +12,7 @@ import {
   type AccessDecision,
   type Environment,
   type ResourceOperation,
-} from '@trustos/governance-tool-core';
+} from '@trustsystem/governance-tool-core';
 
 /**
  * The approved resource registry.
@@ -283,7 +283,7 @@ function keyOf(environment: Environment, resourceId: string): string {
 /**
  * The classification of the standard resources the console templates reference.
  *
- * Shared with `@trustos/governance-tool-core`'s `STANDARD_RESOURCE_IDS`, so the consoles and the
+ * Shared with `@trustsystem/governance-tool-core`'s `STANDARD_RESOURCE_IDS`, so the consoles and the
  * registry cannot disagree about what `trustos.wallet` is. It is a **classification**, not a
  * registration: a deployment still registers each one with its own owner, credential reference
  * and allowed groups, because those are facts about a deployment rather than about TrustOS.

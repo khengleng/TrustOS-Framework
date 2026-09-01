@@ -1,5 +1,5 @@
 /**
- * @trustos/token-meter
+ * @trustsystem/token-meter
  *
  * Token estimation, context-window checks and estimate drift.
  *

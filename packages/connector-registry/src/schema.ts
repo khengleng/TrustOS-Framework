@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { PROVIDER_HEALTH } from '@trustos/provider-sdk';
-import { retryPolicySchema } from '@trustos/retry';
+import { PROVIDER_HEALTH } from '@trustsystem/provider-sdk';
+import { retryPolicySchema } from '@trustsystem/retry';
 import {
   isProviderInterface,
   operationsOf,

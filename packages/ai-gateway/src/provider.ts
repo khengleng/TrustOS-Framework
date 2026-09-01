@@ -7,8 +7,8 @@ import type {
   ToolCall,
   ToolDefinition,
   Usage,
-} from '@trustos/ai-sdk';
-import type { Model } from '@trustos/model-registry';
+} from '@trustsystem/ai-sdk';
+import type { Model } from '@trustsystem/model-registry';
 
 /**
  * The provider adapter contract.

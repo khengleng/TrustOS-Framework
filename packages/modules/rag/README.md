@@ -1,10 +1,10 @@
-# @trustos/module-rag
+# @trustsystem/module-rag
 
 Answering from documents: chunking, embedding, a vector-store interface, hybrid search, citation checking and per-collection access control.
 
 ## What this package is
 
-A thin module wrapper. The implementation is in `@trustos/embedding`, `@trustos/knowledge`, `@trustos/rag`, `@trustos/vector-store`; this package contributes the declarations the platform needs — permissions,
+A thin module wrapper. The implementation is in `@trustsystem/embedding`, `@trustsystem/knowledge`, `@trustsystem/rag`, `@trustsystem/vector-store`; this package contributes the declarations the platform needs — permissions,
 audit events and a health indicator — and the start/stop lifecycle.
 
 ## Installing
@@ -17,7 +17,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 ```ts
-import { RagModule } from '@trustos/module-rag/nest';
+import { RagModule } from '@trustsystem/module-rag/nest';
 
 @Module({ imports: [RagModule.forRoot(binding)] })
 export class AppModule {}

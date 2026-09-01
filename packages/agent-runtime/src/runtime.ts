@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
 import {
   AiError,
   isComplete,
@@ -12,14 +12,14 @@ import {
   type CompletionResult,
   type Message,
   type ToolCall,
-} from '@trustos/ai-sdk';
-import type { AgentDefinition } from '@trustos/agent-framework';
-import type { AiGateway } from '@trustos/ai-gateway';
-import type { AiPolicyEngine } from '@trustos/ai-policy';
-import type { MemoryService } from '@trustos/agent-memory';
-import type { ConversationService } from '@trustos/conversation';
-import { toToolMessage, type FunctionResult } from '@trustos/function-calling';
-import type { ToolRegistry } from '@trustos/tool-execution';
+} from '@trustsystem/ai-sdk';
+import type { AgentDefinition } from '@trustsystem/agent-framework';
+import type { AiGateway } from '@trustsystem/ai-gateway';
+import type { AiPolicyEngine } from '@trustsystem/ai-policy';
+import type { MemoryService } from '@trustsystem/agent-memory';
+import type { ConversationService } from '@trustsystem/conversation';
+import { toToolMessage, type FunctionResult } from '@trustsystem/function-calling';
+import type { ToolRegistry } from '@trustsystem/tool-execution';
 
 /**
  * The agent runtime.

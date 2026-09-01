@@ -67,7 +67,7 @@ jobs:
         env:
           SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shadow
         run: |
-          if ! npm run migrate:drift -w @trustos/database --silent; then
+          if ! npm run migrate:drift -w @trustsystem/database --silent; then
             echo "::error::prisma/migrations is out of date with schema.prisma."
             echo "Add a migration with 'npm run db:migrate', or correct the schema."
             exit 1
@@ -113,7 +113,7 @@ jobs:
       - name: Build packages
         run: npm run build:packages
 
-      # npm workspaces resolve every @trustos/* name locally, so a package that could
+      # npm workspaces resolve every @trustsystem/* name locally, so a package that could
       # never be installed from a registry looks perfectly healthy in this repository.
       # It breaks in the consuming repository instead, which is the worst place to
       # find out. The dry run asserts the publishable set is closed: entry points
@@ -124,9 +124,9 @@ jobs:
 
       - name: Type check applications
         run: |
-          npm run typecheck -w @trustos/api-example
-          npm run typecheck -w @trustos/saas-starter
-          npm run typecheck -w @trustos/admin-example
+          npm run typecheck -w @trustsystem/api-example
+          npm run typecheck -w @trustsystem/saas-starter
+          npm run typecheck -w @trustsystem/admin-example
 
       - name: Unit tests
         run: npm test
@@ -320,7 +320,7 @@ jobs:
       - name: Install the framework
         run: npm ci
 
-      # Generated applications resolve @trustos/* through file: links to this
+      # Generated applications resolve @trustsystem/* through file: links to this
       # checkout, so the packages must be compiled before one is generated.
       - name: Build the framework packages
         run: npm run build:packages

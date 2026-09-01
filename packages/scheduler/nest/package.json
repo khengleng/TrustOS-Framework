@@ -1,6 +1,6 @@
 {
-  "//": "Subpath stub: keeps NestJS bindings out of consumers that import '@trustos/scheduler'.",
-  "name": "@trustos/scheduler-nest",
+  "//": "Subpath stub: keeps NestJS bindings out of consumers that import '@trustsystem/scheduler'.",
+  "name": "@trustsystem/scheduler-nest",
   "private": true,
   "main": "../dist/nest/index.js",
   "types": "../dist/nest/index.d.ts"

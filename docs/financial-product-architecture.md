@@ -174,14 +174,14 @@ A channel calls `POST /v1/products/merchant-wallet-basic/payments`.
 
 Six, and each one is an interface with no implementation in this repository.
 
-| Seam            | Interface                                            | Bound to                                                                 |
-| --------------- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
-| Block handlers  | `BlockHandler`                                       | `@trustos/wallet`, `@trustos/ledger`, `@trustos/fees`, `@trustos/limits` |
-| Connectors      | `ConnectorDefinition` + `@trustos/adapter-framework` | The deployment's rails                                                   |
-| Product storage | `ProductStore`                                       | Prisma, with the three atomicity contracts the interface documents       |
-| Events          | `ProductEventPublisher`                              | `@trustos/event-bus`                                                     |
-| Audit           | `ProductAuditRecorder`                               | `@trustos/audit`                                                         |
-| Metrics         | `ProductMetricSink`                                  | The deployment's exporter                                                |
+| Seam            | Interface                                                | Bound to                                                                                 |
+| --------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Block handlers  | `BlockHandler`                                           | `@trustsystem/wallet`, `@trustsystem/ledger`, `@trustsystem/fees`, `@trustsystem/limits` |
+| Connectors      | `ConnectorDefinition` + `@trustsystem/adapter-framework` | The deployment's rails                                                                   |
+| Product storage | `ProductStore`                                           | Prisma, with the three atomicity contracts the interface documents                       |
+| Events          | `ProductEventPublisher`                                  | `@trustsystem/event-bus`                                                                 |
+| Audit           | `ProductAuditRecorder`                                   | `@trustsystem/audit`                                                                     |
+| Metrics         | `ProductMetricSink`                                      | The deployment's exporter                                                                |
 
 ## Running it
 

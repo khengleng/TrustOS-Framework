@@ -1,5 +1,5 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { moduleProviders, type ModuleHostBinding } from '@trustos/module-sdk/nest';
+import { moduleProviders, type ModuleHostBinding } from '@trustsystem/module-sdk/nest';
 import { transactionsModule } from '../transactions.module';
 
 /**

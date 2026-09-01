@@ -1,5 +1,5 @@
 /**
- * @trustos/api-versioning
+ * @trustsystem/api-versioning
  *
  * What changed between two versions, what bump it requires, and what a breaking change owes its
  * consumers.

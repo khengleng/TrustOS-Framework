@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/financial-product-composer",
+  "name": "@trustsystem/financial-product-composer",
   "version": "0.1.0",
   "description": "The product composer: build a product from approved blocks, validate the graph, start from a template, accept an AI proposal as a draft.",
   "license": "UNLICENSED",
@@ -17,13 +17,13 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/connector-registry": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-block-registry": "0.1.0",
-    "@trustos/financial-core": "0.1.0",
-    "@trustos/financial-product-core": "0.1.0",
-    "@trustos/financial-product-rules": "0.1.0",
-    "@trustos/financial-product-state-machine": "0.1.0",
+    "@trustsystem/connector-registry": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-block-registry": "0.1.0",
+    "@trustsystem/financial-core": "0.1.0",
+    "@trustsystem/financial-product-core": "0.1.0",
+    "@trustsystem/financial-product-rules": "0.1.0",
+    "@trustsystem/financial-product-state-machine": "0.1.0",
     "zod": "^3.24.1"
   }
 }

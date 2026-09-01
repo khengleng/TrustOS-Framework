@@ -1,4 +1,4 @@
-import type { ProviderHealthStatus } from '@trustos/provider-sdk';
+import type { ProviderHealthStatus } from '@trustsystem/provider-sdk';
 
 /**
  * Integration health.

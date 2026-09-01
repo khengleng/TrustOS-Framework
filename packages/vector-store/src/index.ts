@@ -1,5 +1,5 @@
 /**
- * @trustos/vector-store
+ * @trustsystem/vector-store
  *
  * Vector storage abstraction with an in-memory default. PGVector, Qdrant, Milvus, Pinecone and
  * Weaviate are adapters a deployment supplies.

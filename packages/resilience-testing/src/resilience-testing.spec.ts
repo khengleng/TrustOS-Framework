@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustos/sre-core';
-import { servicePostureSchema } from '@trustos/resilience';
+import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustsystem/sre-core';
+import { servicePostureSchema } from '@trustsystem/resilience';
 import {
   assertRunnable,
   experimentResultSchema,

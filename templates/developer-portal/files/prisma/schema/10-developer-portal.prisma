@@ -57,7 +57,7 @@ model ApiApplication {
   @@index([deletedAt])
 }
 
-/// The record of a key issued by @trustos/api-keys. Holds the prefix so a
+/// The record of a key issued by @trustsystem/api-keys. Holds the prefix so a
 /// developer can recognize it and never the secret — see the migration note.
 model ApiKeyRecord {
   id             String @id @default(cuid())

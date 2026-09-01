@@ -1,8 +1,8 @@
 /**
- * @trustos/webhooks
+ * @trustsystem/webhooks
  *
  * Endpoints, subscriptions, signing secrets and the delivery record. The management half — the
- * sending half is `@trustos/webhook-runtime`, kept separate so an admin API can depend on this
+ * sending half is `@trustsystem/webhook-runtime`, kept separate so an admin API can depend on this
  * without pulling in an HTTP client and a worker loop.
  *
  * Read `signature.ts` first if you are implementing a receiver, and `docs/webhooks.md` if you

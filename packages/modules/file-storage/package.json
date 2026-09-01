@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-file-storage",
+  "name": "@trustsystem/module-file-storage",
   "version": "0.1.0",
   "description": "TrustOS File Storage module. Provider-abstracted object storage with checksums, versioning and per-organization key namespaces.",
   "license": "UNLICENSED",
@@ -21,13 +21,13 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/module-sdk": "0.1.0",
-    "@trustos/rbac": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/tenancy": "0.1.0",
-    "@trustos/validation": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/module-sdk": "0.1.0",
+    "@trustsystem/rbac": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/tenancy": "0.1.0",
+    "@trustsystem/validation": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

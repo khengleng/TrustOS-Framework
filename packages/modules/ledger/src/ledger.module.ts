@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The ledger module.
  *
  * Double-entry bookkeeping: journals, accounts, reversal, trial balance and reporting. Posted journals are immutable and every journal must balance.
  *
- * A thin wrapper. The implementation is in `@trustos/accounts`, `@trustos/financial-core`, `@trustos/financial-policy`, `@trustos/financial-reporting`, `@trustos/ledger` —
+ * A thin wrapper. The implementation is in `@trustsystem/accounts`, `@trustsystem/financial-core`, `@trustsystem/financial-policy`, `@trustsystem/financial-reporting`, `@trustsystem/ledger` —
  * this package contributes the declarations the platform needs (permissions, audit events,
  * health) and the start/stop lifecycle.
  *

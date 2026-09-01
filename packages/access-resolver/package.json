@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/access-resolver",
+  "name": "@trustsystem/access-resolver",
   "version": "0.1.0",
   "description": "Resolves a verified subject to the roles and permissions it holds in an organization.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/identity": "0.1.0",
-    "@trustos/rbac": "0.1.0",
-    "@trustos/shared-types": "0.1.0"
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/identity": "0.1.0",
+    "@trustsystem/rbac": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0"
   }
 }

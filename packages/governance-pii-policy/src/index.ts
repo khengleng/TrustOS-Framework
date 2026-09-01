@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-pii-policy
+ * @trustsystem/governance-pii-policy
  *
  * Centralized masking, and controlled reveal.
  *

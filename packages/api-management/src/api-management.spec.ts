@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { ApiCatalog, apiDefinitionSchema } from '@trustos/api-catalog';
-import { ConsumerRegistry, consumerSchema } from '@trustos/api-consumer';
-import { InMemoryQuotaUsageStore, quotaSchema } from '@trustos/api-quota';
-import { InMemoryRateCounterStore, rateLimitSchema } from '@trustos/api-rate-limit';
-import { classificationCeilingPolicy } from '@trustos/api-policy';
+import { ApiCatalog, apiDefinitionSchema } from '@trustsystem/api-catalog';
+import { ConsumerRegistry, consumerSchema } from '@trustsystem/api-consumer';
+import { InMemoryQuotaUsageStore, quotaSchema } from '@trustsystem/api-quota';
+import { InMemoryRateCounterStore, rateLimitSchema } from '@trustsystem/api-rate-limit';
+import { classificationCeilingPolicy } from '@trustsystem/api-policy';
 import { ApiGateway, InMemoryAnalyticsSink, summariseAnalytics } from './index';
 
 const NOW = new Date('2026-06-20T12:00:00.000Z');

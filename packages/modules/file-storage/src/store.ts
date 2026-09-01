@@ -1,4 +1,4 @@
-import { ModuleRepository, type ModuleContext } from '@trustos/module-sdk';
+import { ModuleRepository, type ModuleContext } from '@trustsystem/module-sdk';
 import type { FileStorageConfig } from './config';
 
 /**
@@ -59,7 +59,7 @@ export interface StoredObjectStore {
  * Prisma-backed store.
  *
  * Both repositories are `ModuleRepository`, so `organizationId` is applied by
- * `@trustos/tenancy` on every query rather than by these methods remembering to.
+ * `@trustsystem/tenancy` on every query rather than by these methods remembering to.
  */
 export class PrismaStoredObjectStore implements StoredObjectStore {
   private readonly objects: ModuleRepository<StoredObjectRow>;

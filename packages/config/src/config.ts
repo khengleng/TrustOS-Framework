@@ -1,4 +1,4 @@
-import type { ServiceEnvironment } from '@trustos/shared-types';
+import type { ServiceEnvironment } from '@trustsystem/shared-types';
 import { applyEnvDefaults, baseEnvSchema, productionInvariants, type RawEnv } from './env-schema';
 
 /**

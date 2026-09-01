@@ -1,5 +1,5 @@
-import { renderChangelog, type NotesEntry } from '@trustos/release-manager';
-import type { AnalysisReport, GraphModule } from '@trustos/dependency-analyzer';
+import { renderChangelog, type NotesEntry } from '@trustsystem/release-manager';
+import type { AnalysisReport, GraphModule } from '@trustsystem/dependency-analyzer';
 
 /**
  * Generated documentation.

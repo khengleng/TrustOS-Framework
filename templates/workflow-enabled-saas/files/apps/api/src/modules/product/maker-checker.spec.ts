@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CHANGE_REQUEST_APPROVAL, validateDefinition } from '@trustos/workflow-definition';
-import { simulateDefinition } from '@trustos/workflow-definition';
+import { CHANGE_REQUEST_APPROVAL, validateDefinition } from '@trustsystem/workflow-definition';
+import { simulateDefinition } from '@trustsystem/workflow-definition';
 import definition from '../../../../../workflows/change-request-approval.json';
 
 /**

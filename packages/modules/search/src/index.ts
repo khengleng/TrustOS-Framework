@@ -1,5 +1,5 @@
 /**
- * @trustos/module-search
+ * @trustsystem/module-search
  *
  * Global search across registered adapters, with permission filtering, tenant
  * verification, ranking and pagination.

@@ -1,23 +1,23 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The webhooks module.
  *
  * Outbound webhooks with HMAC signatures, overlapping secret rotation, replay protection and delivery history.
  *
- * A thin wrapper. The implementation is in `@trustos/webhooks`, `@trustos/webhook-runtime` — this
+ * A thin wrapper. The implementation is in `@trustsystem/webhooks`, `@trustsystem/webhook-runtime` — this
  * package contributes the declarations the platform needs (permissions, routes, audit events,
  * health) and the start/stop lifecycle.
  *
- * Read `destination.ts` in `@trustos/webhook-runtime` before changing anything about where a
+ * Read `destination.ts` in `@trustsystem/webhook-runtime` before changing anything about where a
  * delivery goes. A webhook URL is attacker-controlled input the server then makes a request to.
  */
 

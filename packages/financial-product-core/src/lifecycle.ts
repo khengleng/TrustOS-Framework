@@ -104,7 +104,7 @@ export interface LifecycleTransition {
  *
  * `pause` and `activate` form the only loop, because pausing is the incident response and
  * un-pausing has to be possible without a new approval — the version being restored is one that
- * was already approved. Rollback uses the same pair; see `@trustos/financial-product-versioning`.
+ * was already approved. Rollback uses the same pair; see `@trustsystem/financial-product-versioning`.
  */
 export const LIFECYCLE_TRANSITIONS: readonly LifecycleTransition[] = [
   {

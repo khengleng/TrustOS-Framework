@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/wallet",
+  "name": "@trustsystem/wallet",
   "version": "0.1.0",
   "description": "Ledger-backed wallets: available, held and reserved balances, freeze, holds and history.",
   "license": "UNLICENSED",
@@ -17,14 +17,14 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/accounts": "0.1.0",
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-core": "0.1.0",
-    "@trustos/ledger": "0.1.0",
-    "@trustos/limits": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/accounts": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-core": "0.1.0",
+    "@trustsystem/ledger": "0.1.0",
+    "@trustsystem/limits": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

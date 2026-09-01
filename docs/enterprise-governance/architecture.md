@@ -30,38 +30,38 @@ references is checked, and an unresolvable one is a finding rather than a silent
 
 ## What lives where
 
-| Question                                 | Package                        |
-| ---------------------------------------- | ------------------------------ |
-| How sensitive is this?                   | `@trustos/data-classification` |
-| What data exists?                        | `@trustos/data-catalog`        |
-| Where did it come from?                  | `@trustos/data-lineage`        |
-| How long do we keep it?                  | `@trustos/data-retention`      |
-| How is it masked?                        | `@trustos/data-masking`        |
-| Who may see it, and why?                 | `@trustos/data-access-policy`  |
-| What is wrong with our data governance?  | `@trustos/data-governance`     |
-| What are the rules?                      | `@trustos/policy-registry`     |
-| What does this rule decide?              | `@trustos/policy-evaluator`    |
-| What did we decide, and can we prove it? | `@trustos/policy-decision-log` |
-| Decide, enforce, record                  | `@trustos/policy-engine`       |
-| What runs, and who owns it?              | `@trustos/sre-core`            |
-| What are we measuring?                   | `@trustos/sli`                 |
-| What counts as working?                  | `@trustos/slo`                 |
-| Is it working right now?                 | `@trustos/dependency-health`   |
-| What happened when it stopped?           | `@trustos/incident-management` |
-| What happens when a dependency fails?    | `@trustos/resilience`          |
-| Which APIs exist?                        | `@trustos/api-catalog`         |
-| What changed between versions?           | `@trustos/api-versioning`      |
-| Who may call what?                       | `@trustos/api-consumer`        |
-| How fast?                                | `@trustos/api-rate-limit`      |
-| How much?                                | `@trustos/api-quota`           |
-| What else does this deployment require?  | `@trustos/api-policy`          |
-| What may a developer see?                | `@trustos/developer-access`    |
-| All of it, in order                      | `@trustos/api-management`      |
-| What is backed up?                       | `@trustos/backup`              |
-| Has it ever been restored?               | `@trustos/recovery`            |
-| What is the plan?                        | `@trustos/disaster-recovery`   |
-| Does the plan meet the promise?          | `@trustos/continuity`          |
-| What breaks when we break it on purpose? | `@trustos/resilience-testing`  |
+| Question                                 | Package                            |
+| ---------------------------------------- | ---------------------------------- |
+| How sensitive is this?                   | `@trustsystem/data-classification` |
+| What data exists?                        | `@trustsystem/data-catalog`        |
+| Where did it come from?                  | `@trustsystem/data-lineage`        |
+| How long do we keep it?                  | `@trustsystem/data-retention`      |
+| How is it masked?                        | `@trustsystem/data-masking`        |
+| Who may see it, and why?                 | `@trustsystem/data-access-policy`  |
+| What is wrong with our data governance?  | `@trustsystem/data-governance`     |
+| What are the rules?                      | `@trustsystem/policy-registry`     |
+| What does this rule decide?              | `@trustsystem/policy-evaluator`    |
+| What did we decide, and can we prove it? | `@trustsystem/policy-decision-log` |
+| Decide, enforce, record                  | `@trustsystem/policy-engine`       |
+| What runs, and who owns it?              | `@trustsystem/sre-core`            |
+| What are we measuring?                   | `@trustsystem/sli`                 |
+| What counts as working?                  | `@trustsystem/slo`                 |
+| Is it working right now?                 | `@trustsystem/dependency-health`   |
+| What happened when it stopped?           | `@trustsystem/incident-management` |
+| What happens when a dependency fails?    | `@trustsystem/resilience`          |
+| Which APIs exist?                        | `@trustsystem/api-catalog`         |
+| What changed between versions?           | `@trustsystem/api-versioning`      |
+| Who may call what?                       | `@trustsystem/api-consumer`        |
+| How fast?                                | `@trustsystem/api-rate-limit`      |
+| How much?                                | `@trustsystem/api-quota`           |
+| What else does this deployment require?  | `@trustsystem/api-policy`          |
+| What may a developer see?                | `@trustsystem/developer-access`    |
+| All of it, in order                      | `@trustsystem/api-management`      |
+| What is backed up?                       | `@trustsystem/backup`              |
+| Has it ever been restored?               | `@trustsystem/recovery`            |
+| What is the plan?                        | `@trustsystem/disaster-recovery`   |
+| Does the plan meet the promise?          | `@trustsystem/continuity`          |
+| What breaks when we break it on purpose? | `@trustsystem/resilience-testing`  |
 
 ## Four positions that shape everything
 
@@ -81,7 +81,7 @@ which is exactly backwards — the moment you can no longer see is the moment to
 
 ### Configuration can refuse; only code can permit
 
-`@trustos/api-policy` and `@trustos/policy-engine` both expose adapters into `@trustos/authorization`
+`@trustsystem/api-policy` and `@trustsystem/policy-engine` both expose adapters into `@trustsystem/authorization`
 that return a refusal or abstain. Neither can return an allow.
 
 This is what makes a configurable policy layer safe. A document policy that could grant would let
@@ -102,7 +102,7 @@ looks like somebody being given the permissions they need to do their job.
 
 ### An audit trail is not a log
 
-Every consequential action in this layer lands in `@trustos/audit`, which is persistent and
+Every consequential action in this layer lands in `@trustsystem/audit`, which is persistent and
 append-only. Everything else — the registries, the catalogs, the decision log sink in the example
 applications — is in memory and says so at start-up.
 

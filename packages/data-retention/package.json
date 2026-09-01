@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/data-retention",
+  "name": "@trustsystem/data-retention",
   "version": "0.1.0",
   "description": "Retention, archival, legal hold and deletion \u2014 with the refusal that legal hold always wins.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/data-classification": "0.1.0",
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/data-classification": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

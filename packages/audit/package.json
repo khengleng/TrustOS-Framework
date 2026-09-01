@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/audit",
+  "name": "@trustsystem/audit",
   "version": "0.1.0",
   "description": "Append-only audit logging for security-sensitive actions.",
   "license": "UNLICENSED",
@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.1.28",
-    "@trustos/database": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/shared-types": "0.1.0"
+    "@trustsystem/database": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/financial-product-policy",
+  "name": "@trustsystem/financial-product-policy",
   "version": "0.1.0",
   "description": "Product separation of duties as authorization policies. Every policy can only refuse.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/authorization": "0.1.0",
-    "@trustos/financial-product-core": "0.1.0",
-    "@trustos/rbac": "0.1.0"
+    "@trustsystem/authorization": "0.1.0",
+    "@trustsystem/financial-product-core": "0.1.0",
+    "@trustsystem/rbac": "0.1.0"
   }
 }

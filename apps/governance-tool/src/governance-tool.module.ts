@@ -1,45 +1,49 @@
 import { DynamicModule, Global, Module, type Provider } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import { AuditService, PrismaAuditSink } from '@trustos/audit';
-import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
-import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
-import type { AppConfig } from '@trustos/config';
-import { PrismaAccessResolver } from '@trustos/access-resolver';
-import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustos/database';
+import { AuditService, PrismaAuditSink } from '@trustsystem/audit';
+import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustsystem/authorization';
+import { PolicyAuthorizationGuard } from '@trustsystem/authorization/nest';
+import type { AppConfig } from '@trustsystem/config';
+import { PrismaAccessResolver } from '@trustsystem/access-resolver';
+import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustsystem/database';
 import {
   ObservabilityModule,
   databaseHealthIndicator,
   identityHealthIndicator,
-} from '@trustos/observability';
-import { BearerTokenAuthenticator } from '@trustos/identity';
-import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
-import type { AccessResolver, CredentialAuthenticator, IdentityProvider } from '@trustos/identity';
-import type { Logger } from '@trustos/logging';
-import { canGrantRole, PermissionsGuard } from '@trustos/rbac';
+} from '@trustsystem/observability';
+import { BearerTokenAuthenticator } from '@trustsystem/identity';
+import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustsystem/identity/nest';
+import type {
+  AccessResolver,
+  CredentialAuthenticator,
+  IdentityProvider,
+} from '@trustsystem/identity';
+import type { Logger } from '@trustsystem/logging';
+import { canGrantRole, PermissionsGuard } from '@trustsystem/rbac';
 import {
   LoggerSecurityEventSink,
   PersistentSecurityEventSink,
   SecurityEventEmitter,
   type SecurityEventSink,
-} from '@trustos/security-events';
-import type { SecurityPolicy } from '@trustos/security-policy';
-import { TenantGuard } from '@trustos/tenancy';
+} from '@trustsystem/security-events';
+import type { SecurityPolicy } from '@trustsystem/security-policy';
+import { TenantGuard } from '@trustsystem/tenancy';
 import {
   InternalAppCatalog,
   consoleCatalogFor,
   type Environment,
   NO_APPLICATION_EVIDENCE,
   type ApplicationEvidenceIndex,
-} from '@trustos/governance-tool-core';
-import { GovernanceAuditBridge } from '@trustos/governance-audit-bridge';
+} from '@trustsystem/governance-tool-core';
+import { GovernanceAuditBridge } from '@trustsystem/governance-audit-bridge';
 import {
   EnvironmentRegistry,
   environmentConfigSchema,
-} from '@trustos/governance-environment-config';
-import { MaskPolicy } from '@trustos/governance-pii-policy';
-import { ResourceRegistry } from '@trustos/governance-resource-policy';
-import { GovernanceToolRuntime } from '@trustos/governance-tool-runtime';
-import type { ApprovalWorkbenchService } from '@trustos/approval-workbench';
+} from '@trustsystem/governance-environment-config';
+import { MaskPolicy } from '@trustsystem/governance-pii-policy';
+import { ResourceRegistry } from '@trustsystem/governance-resource-policy';
+import { GovernanceToolRuntime } from '@trustsystem/governance-tool-runtime';
+import type { ApprovalWorkbenchService } from '@trustsystem/approval-workbench';
 import { ApprovalWorkbenchController } from './controllers/approval-workbench.controller';
 import { CatalogController } from './controllers/catalog.controller';
 import { ConsoleController } from './controllers/console.controller';
@@ -64,6 +68,7 @@ import {
   SECURITY_EVENTS,
   SECURITY_POLICY,
 } from './tokens';
+import { PersistentAppCatalog } from './persistent-app-catalog';
 
 /**
  * The Governance Tool.
@@ -72,7 +77,7 @@ import {
  * and the promotion that moves an application between environments.
  *
  * **This application serves descriptors. It carries no traffic.** Reads and actions go through
- * `@trustos/internal-app-gateway`, which is a separate deployable for a reason: the surface that
+ * `@trustsystem/internal-app-gateway`, which is a separate deployable for a reason: the surface that
  * lists what exists and the surface that reaches production data have different blast radii, and
  * running them in one process means one vulnerability reaches both.
  *
@@ -284,7 +289,27 @@ export class GovernanceToolModule {
             ]),
         },
 
-        { provide: APP_CATALOG, useValue: overrides.apps ?? consoleCatalogFor(environment) },
+        {
+          provide: APP_CATALOG,
+          inject: [PrismaService],
+          /*
+           * Durable, and seeded from the console templates on a genuinely empty environment.
+           *
+           * The previous default was an in-memory catalog, which meant every application
+           * registered through the API existed until the container next moved. That is a
+           * governance record disappearing on a restart. `PersistentAppCatalog` keeps the reads
+           * in memory — the registration check is on every request's path — while making the
+           * table the record of what exists.
+           */
+          useFactory: async (prisma: PrismaService): Promise<InternalAppCatalog> =>
+            overrides.apps ??
+            (await PersistentAppCatalog.load({
+              prisma,
+              environment,
+              seed: consoleCatalogFor(environment).list(environment),
+              logger,
+            })),
+        },
 
         {
           provide: GOVERNANCE_AUDIT,

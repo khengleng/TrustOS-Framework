@@ -1,17 +1,21 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { MODULE_CATALOG } from '@trustos/module-registry';
-import { listTemplates } from '@trustos/template-registry';
-import { actionItems, describePlatform, type InstalledModuleView } from '@trustos/platform-manager';
+import { MODULE_CATALOG } from '@trustsystem/module-registry';
+import { listTemplates } from '@trustsystem/template-registry';
+import {
+  actionItems,
+  describePlatform,
+  type InstalledModuleView,
+} from '@trustsystem/platform-manager';
 import {
   Marketplace,
   summarize as summarizeModule,
   type MarketplaceEntry,
-} from '@trustos/module-marketplace';
-import { moduleProvenanceSchema } from '@trustos/module-registry';
-import { ReleaseManager } from '@trustos/release-manager';
-import { validateArchitecture, groupByRule } from '@trustos/architecture-validator';
+} from '@trustsystem/module-marketplace';
+import { moduleProvenanceSchema } from '@trustsystem/module-registry';
+import { ReleaseManager } from '@trustsystem/release-manager';
+import { validateArchitecture, groupByRule } from '@trustsystem/architecture-validator';
 import type { Output } from '../output';
 import { formatRows, style } from '../output';
 
@@ -370,8 +374,8 @@ export async function runArchitectureCheck(
         };
 
         declared[entry.name] = Object.keys(manifest.dependencies ?? {})
-          .filter((name) => name.startsWith('@trustos/'))
-          .map((name) => name.slice('@trustos/'.length));
+          .filter((name) => name.startsWith('@trustsystem/'))
+          .map((name) => name.slice('@trustsystem/'.length));
       } catch {
         // A package with an unreadable manifest is checked without the dependency rule rather
         // than skipped: the security rules still apply to it.

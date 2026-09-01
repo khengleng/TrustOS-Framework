@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   areComparable,
   explainIncomparable,
   score,
   type DistanceMetric,
   type Embedding,
-} from '@trustos/embedding';
+} from '@trustsystem/embedding';
 
 /**
  * Vector storage abstraction.
@@ -25,7 +25,7 @@ import {
  *
  * **2. Embeddings must be comparable.** A collection records the model that populated it, and a
  * search with a different model's vector is refused. Without that check the search silently
- * returns arbitrary results — see the header of `@trustos/embedding`.
+ * returns arbitrary results — see the header of `@trustsystem/embedding`.
  */
 
 export const vectorRecordSchema = z

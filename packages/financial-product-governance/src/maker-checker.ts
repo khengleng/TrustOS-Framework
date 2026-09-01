@@ -1,24 +1,24 @@
 import { z } from 'zod';
-import { isSameActor } from '@trustos/workflow-core';
+import { isSameActor } from '@trustsystem/workflow-core';
 import {
   PRODUCT_AUDIT_ACTIONS,
   newProductId,
   productError,
   type ProductAuditRecord,
   type ProductAuditRecorder,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 import type { ChangeClassification } from './change-classification';
 
 /**
  * Maker-checker for product changes.
  *
- * The approval *models* are `@trustos/workflow-approvals`' — six of them, all pure functions of
+ * The approval *models* are `@trustsystem/workflow-approvals`' — six of them, all pure functions of
  * the decision trail, and this package does not restate any of them. What it adds is the part
  * specific to products: which approval **levels** a change needs, derived from what changed
  * rather than declared by whoever is submitting it.
  *
  * Progress is derived from the decisions, never tracked alongside them. That is the same choice
- * `@trustos/workflow-approvals` makes and for the same reason: a counter that increments per
+ * `@trustsystem/workflow-approvals` makes and for the same reason: a counter that increments per
  * approval is the design that produces "the record says two of three and only one decision
  * exists". Recomputing from the trail means the trail is the truth, and the trail is what an
  * auditor reads.

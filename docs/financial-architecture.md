@@ -95,7 +95,7 @@ Three couplings surprise people, so they are named here:
 ## Money
 
 ```ts
-import { money, addMoney, allocateMoney, formatMoney } from '@trustos/financial-core';
+import { money, addMoney, allocateMoney, formatMoney } from '@trustsystem/financial-core';
 
 const price = money('1234.56', 'USD'); // a string, never a number
 const fee = multiplyMoney(price, parseDecimal('0.025')); // 30.86 USD, exactly

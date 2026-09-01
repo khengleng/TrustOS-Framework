@@ -1,5 +1,5 @@
 /**
- * @trustos/retry
+ * @trustsystem/retry
  *
  * Retry policies, execution, and circuit breaking. Every integration in phase 6 retries
  * something, and they all use this — retry is where well-meaning code causes outages, and one

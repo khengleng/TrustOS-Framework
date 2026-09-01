@@ -1,5 +1,5 @@
 /**
- * @trustos/integration-health
+ * @trustsystem/integration-health
  *
  * One question — is the integration layer working? — answered as healthy, warning or critical.
  *

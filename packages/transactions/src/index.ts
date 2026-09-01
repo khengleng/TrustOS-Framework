@@ -1,5 +1,5 @@
 /**
- * @trustos/transactions
+ * @trustsystem/transactions
  *
  * The transaction lifecycle: authorize, capture, complete, reverse and refund, with idempotency.
  *

@@ -1,11 +1,17 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { addMoney, money, moneyToJson, subtractMoney, type Money } from '@trustos/financial-core';
-import { calculateFee, type FeeCalculation, type FeeSchedule } from '@trustos/fees';
-import type { LimitEngine } from '@trustos/limits';
-import { credit, debit, type Ledger } from '@trustos/ledger';
-import type { WalletBalance, WalletService } from '@trustos/wallet';
-import type { AuditService } from '@trustos/audit';
+import { ApiError } from '@trustsystem/errors';
+import {
+  addMoney,
+  money,
+  moneyToJson,
+  subtractMoney,
+  type Money,
+} from '@trustsystem/financial-core';
+import { calculateFee, type FeeCalculation, type FeeSchedule } from '@trustsystem/fees';
+import type { LimitEngine } from '@trustsystem/limits';
+import { credit, debit, type Ledger } from '@trustsystem/ledger';
+import type { WalletBalance, WalletService } from '@trustsystem/wallet';
+import type { AuditService } from '@trustsystem/audit';
 import type { Merchant } from './merchant';
 
 /**
@@ -41,7 +47,7 @@ import type { Merchant } from './merchant';
 export const paymentRequestSchema = z
   .object({
     merchantId: z.string().min(3).max(64),
-    /** A decimal string. Money is never a float — see @trustos/financial-core. */
+    /** A decimal string. Money is never a float — see @trustsystem/financial-core. */
     amount: z.string().regex(/^\d{1,15}(\.\d{1,4})?$/, 'A decimal amount, as a string.'),
     currency: z.string().length(3),
     /** The merchant's own reference. Doubles as the idempotency key. */

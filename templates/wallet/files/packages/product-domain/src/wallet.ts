@@ -9,7 +9,7 @@
  * with another template layered beneath this one.
  */
 
-import { definePermission, type PermissionDefinition } from '@trustos/template-sdk';
+import { definePermission, type PermissionDefinition } from '@trustsystem/template-sdk';
 
 export const WALLET_PERMISSIONS = {
   WALLET_PROFILE_READ: definePermission('wallet.wallet-profile.read', 'View wallets.'),

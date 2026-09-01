@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-workflow-bridge
+ * @trustsystem/governance-workflow-bridge
  *
  * The approval and case **experience**. TrustOS Workflow remains authoritative for the state.
  *

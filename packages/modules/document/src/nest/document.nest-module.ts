@@ -3,7 +3,7 @@ import {
   moduleProviders,
   moduleServiceProvider,
   type ModuleHostBinding,
-} from '@trustos/module-sdk/nest';
+} from '@trustsystem/module-sdk/nest';
 import { documentModule, type DocumentInstance } from '../document.module';
 import { DocumentController } from './document.controller';
 import { DOCUMENT_SERVICE } from './tokens';

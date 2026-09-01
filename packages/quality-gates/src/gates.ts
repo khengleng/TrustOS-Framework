@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { validateArchitecture, type SourceFile } from '@trustos/architecture-validator';
+import { ApiError } from '@trustsystem/errors';
+import { validateArchitecture, type SourceFile } from '@trustsystem/architecture-validator';
 
 /**
  * Quality gates.

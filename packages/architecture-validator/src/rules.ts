@@ -154,7 +154,7 @@ export const FRAMEWORK_RULES: ArchitectureRule[] = [
     appliesTo: 'packages/',
     severity: 'error',
     remediation:
-      'Import from `@trustos/<package>`. A deep import binds to a file layout that is not part of ' +
+      'Import from `@trustsystem/<package>`. A deep import binds to a file layout that is not part of ' +
       'the contract, and it breaks on a refactor nobody thought was breaking.',
   },
   {
@@ -196,7 +196,7 @@ export const FRAMEWORK_RULES: ArchitectureRule[] = [
   {
     id: 'no-console-in-packages',
     kind: 'security',
-    description: 'Framework packages log through @trustos/logging, never console.',
+    description: 'Framework packages log through @trustsystem/logging, never console.',
     appliesTo: 'packages/',
     severity: 'error',
     remediation:
@@ -220,7 +220,7 @@ export const FRAMEWORK_RULES: ArchitectureRule[] = [
     appliesTo: 'packages/',
     severity: 'error',
     remediation:
-      'Use @trustos/financial-core. A float agrees with every test and disagrees with the ' +
+      'Use @trustsystem/financial-core. A float agrees with every test and disagrees with the ' +
       'counterparty once in ten thousand transactions.',
   },
 ];

@@ -1,5 +1,5 @@
 /**
- * @trustos/version-manager
+ * @trustsystem/version-manager
  *
  * Semantic versioning, ranges, the compatibility matrix, version history and upgrade
  * recommendations. The package everything else in Phase 10 asks "may these run together" and

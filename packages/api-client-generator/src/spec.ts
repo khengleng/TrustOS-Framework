@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * The OpenAPI subset the generator reads.

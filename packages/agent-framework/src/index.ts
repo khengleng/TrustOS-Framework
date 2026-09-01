@@ -1,5 +1,5 @@
 /**
- * @trustos/agent-framework
+ * @trustsystem/agent-framework
  *
  * Agent definitions: role, prompt, tools, permissions, models, limits, output schema.
  *

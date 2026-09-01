@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/security-testing",
+  "name": "@trustsystem/security-testing",
   "version": "0.1.0",
   "description": "Reusable security test helpers: forged and tampered tokens, wrong issuer and audience, redaction assertions, and a suite an application can run against its own wiring.",
   "license": "UNLICENSED",
@@ -18,14 +18,14 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/api-keys": "0.1.0",
-    "@trustos/authorization": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/identity": "0.1.0",
-    "@trustos/security-events": "0.1.0",
-    "@trustos/security-policy": "0.1.0",
-    "@trustos/session-security": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/api-keys": "0.1.0",
+    "@trustsystem/authorization": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/identity": "0.1.0",
+    "@trustsystem/security-events": "0.1.0",
+    "@trustsystem/security-policy": "0.1.0",
+    "@trustsystem/session-security": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

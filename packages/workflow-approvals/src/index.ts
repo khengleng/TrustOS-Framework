@@ -1,5 +1,5 @@
 /**
- * @trustos/workflow-approvals
+ * @trustsystem/workflow-approvals
  *
  * The six approval models, as pure functions of the decision trail.
  *

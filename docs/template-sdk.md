@@ -1,6 +1,6 @@
 # Template SDK
 
-`@trustos/template-sdk` is what every industry template is built out of: navigation, forms,
+`@trustsystem/template-sdk` is what every industry template is built out of: navigation, forms,
 tables, filters, search, pagination, dashboards, charts, CRUD, uploads and notifications.
 
 Two decisions shape all of it.
@@ -11,8 +11,8 @@ renderer is unusable in half of it. What the SDK ships is descriptors — a tabl
 set — plus the pure logic that operates on them.
 
 **It reuses the framework rather than restating it.** Validation primitives come from
-`@trustos/validation`, errors from `@trustos/errors`, permission keys are the ones `@trustos/rbac`
-enforces, and a monetary value is a string on its way to `@trustos/financial-core`. The SDK adds
+`@trustsystem/validation`, errors from `@trustsystem/errors`, permission keys are the ones `@trustsystem/rbac`
+enforces, and a monetary value is a string on its way to `@trustsystem/financial-core`. The SDK adds
 the layer above those — where a screen, an endpoint and a permission have to agree — and nothing
 below it.
 
@@ -60,20 +60,20 @@ template writes on every call and a test proves.
 
 ## The twelve areas
 
-| Area          | Key exports                                                  | The failure it prevents                            |
-| ------------- | ------------------------------------------------------------ | -------------------------------------------------- |
-| Navigation    | `filterNavigation`, `findActiveItem`, `breadcrumbsFor`       | A menu showing screens the API will refuse         |
-| Forms         | `buildFormSchema`, `buildUpdateSchema`, `redactSensitive`    | A form and a DTO that disagree                     |
-| Validation    | derived from the form; primitives from `@trustos/validation` | Two descriptions of one rule                       |
-| Tables        | `visibleColumns`, `pickColumns`, `resolveSort`               | A hidden column still in the payload               |
-| Pagination    | `buildOffsetPage`, `buildCursorPage`                         | A sync job skipping a record at a page boundary    |
-| Filters       | `parseFilters`, `toPrismaWhere`                              | A caller filtering on `passwordHash`               |
-| Search        | `normalizeSearchTerm`, `toSearchWhere`                       | A free-text box searching a column holding a token |
-| Dashboards    | `visibleWidgets`, `interpretTrend`                           | A number computed, sent, and hidden in the browser |
-| Charts        | `fillSeriesGaps`, `toSeries`, `dailyRange`                   | "We sold nothing" drawn as "we have no data"       |
-| CRUD          | `assertCan`, `buildListQuery`, `buildListResponse`           | An unguarded write nobody chose                    |
-| File upload   | `assertUploadAllowed`, `sniffContentType`, `safeFilename`    | An HTML file named `photo.jpg`                     |
-| Notifications | `notificationTemplateSchema`, `buildNotification`            | An OTP in a delivery provider's dashboard          |
+| Area          | Key exports                                                      | The failure it prevents                            |
+| ------------- | ---------------------------------------------------------------- | -------------------------------------------------- |
+| Navigation    | `filterNavigation`, `findActiveItem`, `breadcrumbsFor`           | A menu showing screens the API will refuse         |
+| Forms         | `buildFormSchema`, `buildUpdateSchema`, `redactSensitive`        | A form and a DTO that disagree                     |
+| Validation    | derived from the form; primitives from `@trustsystem/validation` | Two descriptions of one rule                       |
+| Tables        | `visibleColumns`, `pickColumns`, `resolveSort`                   | A hidden column still in the payload               |
+| Pagination    | `buildOffsetPage`, `buildCursorPage`                             | A sync job skipping a record at a page boundary    |
+| Filters       | `parseFilters`, `toPrismaWhere`                                  | A caller filtering on `passwordHash`               |
+| Search        | `normalizeSearchTerm`, `toSearchWhere`                           | A free-text box searching a column holding a token |
+| Dashboards    | `visibleWidgets`, `interpretTrend`                               | A number computed, sent, and hidden in the browser |
+| Charts        | `fillSeriesGaps`, `toSeries`, `dailyRange`                       | "We sold nothing" drawn as "we have no data"       |
+| CRUD          | `assertCan`, `buildListQuery`, `buildListResponse`               | An unguarded write nobody chose                    |
+| File upload   | `assertUploadAllowed`, `sniffContentType`, `safeFilename`        | An HTML file named `photo.jpg`                     |
+| Notifications | `notificationTemplateSchema`, `buildNotification`                | An OTP in a delivery provider's dashboard          |
 
 ## Worked example
 
@@ -85,7 +85,7 @@ import {
   buildListResponse,
   assertCan,
   type ResourceDefinition,
-} from '@trustos/template-sdk';
+} from '@trustsystem/template-sdk';
 
 export const ORDERS: ResourceDefinition = {
   key: 'orders',

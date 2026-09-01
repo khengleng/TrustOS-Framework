@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-registry",
+  "name": "@trustsystem/module-registry",
   "version": "0.1.0",
   "description": "The approved TrustOS module catalog and the runtime registry applications discover modules through.",
   "license": "UNLICENSED",
@@ -17,7 +17,7 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/module-sdk": "0.1.0",
+    "@trustsystem/module-sdk": "0.1.0",
     "zod": "^3.24.1"
   }
 }

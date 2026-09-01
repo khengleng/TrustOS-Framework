@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import jwt from 'jsonwebtoken';
-import { loadConfig } from '@trustos/config';
-import type { ApiError } from '@trustos/errors';
+import { loadConfig } from '@trustsystem/config';
+import type { ApiError } from '@trustsystem/errors';
 import { TokenService, hashRefreshToken } from './tokens';
 import { hashPassword, needsRehash, verifyPassword, verifyPasswordAgainstDummy } from './password';
 import { readBearerToken } from './nest/jwt-auth.guard';

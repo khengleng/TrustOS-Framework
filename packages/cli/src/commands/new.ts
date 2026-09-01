@@ -5,8 +5,8 @@ import {
   generateApplication,
   planApplication,
   type GenerationRequest,
-} from '@trustos/generator-core';
-import { requireTemplate } from '@trustos/template-registry';
+} from '@trustsystem/generator-core';
+import { requireTemplate } from '@trustsystem/template-registry';
 import type { Output } from '../output';
 import { formatRows, style } from '../output';
 import {

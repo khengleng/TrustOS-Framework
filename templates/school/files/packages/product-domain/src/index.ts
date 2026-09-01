@@ -6,7 +6,7 @@
  * reaches every child without anybody editing the child.
  */
 
-import type { PermissionDefinition } from '@trustos/template-sdk';
+import type { PermissionDefinition } from '@trustsystem/template-sdk';
 import { EDUCATION_PERMISSIONS_LIST, EDUCATION_PERMISSIONS_ROLES } from './education';
 import { SCHOOL_PERMISSIONS_LIST, SCHOOL_PERMISSIONS_ROLES } from './school';
 

@@ -1,11 +1,11 @@
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 import { reportingConfigSchema, type ReportingConfig } from './config';
 import { UnavailablePdfRenderer, type PdfRenderer } from './export';
 import { ReportingService } from './reporting.service';

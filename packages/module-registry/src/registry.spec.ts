@@ -4,7 +4,7 @@ import {
   defineModule,
   type ModuleInstance,
   type TrustosModule,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 import { z } from 'zod';
 import { ModuleRegistry } from './registry';
 

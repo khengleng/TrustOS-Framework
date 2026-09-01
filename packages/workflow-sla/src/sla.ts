@@ -1,6 +1,11 @@
-import { ApiError } from '@trustos/errors';
-import type { SlaKind, SlaSeverity, SlaStatus, WorkflowSlaRecord } from '@trustos/workflow-core';
-import type { WorkflowSlaRuleSpec } from '@trustos/workflow-definition';
+import { ApiError } from '@trustsystem/errors';
+import type {
+  SlaKind,
+  SlaSeverity,
+  SlaStatus,
+  WorkflowSlaRecord,
+} from '@trustsystem/workflow-core';
+import type { WorkflowSlaRuleSpec } from '@trustsystem/workflow-definition';
 import { CalendarRegistry, type BusinessCalendar } from './calendar';
 
 /**
@@ -404,7 +409,7 @@ export class SlaService {
    * being null, so two schedulers running concurrently produce one claim each at most
    * and the loser gets null. Returning the claimed records rather than firing the
    * side effects here keeps this package free of any notification dependency —
-   * `@trustos/workflow-escalation` consumes the output.
+   * `@trustsystem/workflow-escalation` consumes the output.
    */
   async sweep(input: { limit?: number; organizationId?: string } = {}): Promise<{
     warned: WorkflowSlaRecord[];

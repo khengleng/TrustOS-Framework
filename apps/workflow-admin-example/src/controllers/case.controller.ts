@@ -1,24 +1,24 @@
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
 import {
   actorHasPermission,
   toWorkflowActor,
   WORKFLOW_PERMISSIONS,
   type CaseStatus,
-} from '@trustos/workflow-core';
-import type { CaseService } from '@trustos/case-management';
+} from '@trustsystem/workflow-core';
+import type { CaseService } from '@trustsystem/case-management';
 import {
   describeEvent,
   visibleCommentLevels,
   type AttachmentService,
   type CommentService,
-} from '@trustos/workflow-history';
+} from '@trustsystem/workflow-history';
 import { ATTACHMENT_SERVICE, CASE_SERVICE, COMMENT_SERVICE } from '../tokens';
 
 /*

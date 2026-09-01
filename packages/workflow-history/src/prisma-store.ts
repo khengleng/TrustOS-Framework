@@ -1,11 +1,11 @@
-import { WORKFLOW_EVENT_TYPES } from '@trustos/workflow-core';
+import { WORKFLOW_EVENT_TYPES } from '@trustsystem/workflow-core';
 import type {
   CommentVisibility,
   WorkflowAttachmentRecord,
   WorkflowCommentAmendmentRecord,
   WorkflowCommentRecord,
   WorkflowEventRecord,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 import type { AttachmentStore, CommentStore } from './collaboration';
 import type { HistoryPage, HistoryQuery, HistoryStore } from './history';
 

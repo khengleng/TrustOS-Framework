@@ -1,6 +1,6 @@
-import { ApiError } from '@trustos/errors';
-import type { ModuleContext } from '@trustos/module-sdk';
-import { buildPageMeta, type Paginated } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { ModuleContext } from '@trustsystem/module-sdk';
+import { buildPageMeta, type Paginated } from '@trustsystem/shared-types';
 import { searchTermSchema, type SearchAdapter, type SearchHit } from './adapter';
 import type { SearchConfig } from './config';
 import { sourceOrderRanker, weightedRanker, type Ranker } from './ranking';

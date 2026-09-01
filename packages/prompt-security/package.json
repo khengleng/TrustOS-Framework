@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/prompt-security",
+  "name": "@trustsystem/prompt-security",
   "version": "0.1.0",
   "description": "Prompt-injection and jailbreak detection over untrusted input.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/ai-sdk": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/ai-sdk": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

@@ -1,5 +1,5 @@
 /**
- * @trustos/ai-workflows
+ * @trustsystem/ai-workflows
  *
  * The seam between phase 5's workflows, phase 6's events and phase 7's AI.
  *

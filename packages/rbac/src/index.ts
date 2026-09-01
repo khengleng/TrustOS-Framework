@@ -1,8 +1,8 @@
 /**
- * @trustos/rbac
+ * @trustsystem/rbac
  *
  * Roles, permissions, and the deny-by-default guard that enforces them.
- * Depends only on @trustos/errors and @trustos/shared-types, so authorization
+ * Depends only on @trustsystem/errors and @trustsystem/shared-types, so authorization
  * rules stay testable without a database or an HTTP server.
  */
 export * from './permissions';

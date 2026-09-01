@@ -1,5 +1,5 @@
 /**
- * @trustos/cost-monitor
+ * @trustsystem/cost-monitor
  *
  * Cost accounting per tenant, application, model and day, with budgets and alerts.
  *

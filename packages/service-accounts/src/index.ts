@@ -1,5 +1,5 @@
 /**
- * @trustos/service-accounts
+ * @trustsystem/service-accounts
  *
  * Machine identities.
  *

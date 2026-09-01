@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-data-access
+ * @trustsystem/governance-data-access
  *
  * The choke point: every read and every write an internal application performs goes through
  * `DataAccessGuard`, and there is no second path.

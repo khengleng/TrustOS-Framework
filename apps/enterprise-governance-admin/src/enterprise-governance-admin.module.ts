@@ -1,32 +1,36 @@
 import { DynamicModule, Global, Module, type Provider } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import { AuditService, PrismaAuditSink } from '@trustos/audit';
-import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
-import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
-import type { AppConfig } from '@trustos/config';
-import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustos/database';
-import { ObservabilityModule, databaseHealthIndicator } from '@trustos/observability';
-import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
-import type { AccessResolver, CredentialAuthenticator, IdentityProvider } from '@trustos/identity';
-import type { Logger } from '@trustos/logging';
-import { canGrantRole, PermissionsGuard } from '@trustos/rbac';
+import { AuditService, PrismaAuditSink } from '@trustsystem/audit';
+import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustsystem/authorization';
+import { PolicyAuthorizationGuard } from '@trustsystem/authorization/nest';
+import type { AppConfig } from '@trustsystem/config';
+import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustsystem/database';
+import { ObservabilityModule, databaseHealthIndicator } from '@trustsystem/observability';
+import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustsystem/identity/nest';
+import type {
+  AccessResolver,
+  CredentialAuthenticator,
+  IdentityProvider,
+} from '@trustsystem/identity';
+import type { Logger } from '@trustsystem/logging';
+import { canGrantRole, PermissionsGuard } from '@trustsystem/rbac';
 import {
   LoggerSecurityEventSink,
   PersistentSecurityEventSink,
   SecurityEventEmitter,
   type SecurityEventSink,
-} from '@trustos/security-events';
-import type { SecurityPolicy } from '@trustos/security-policy';
-import { TenantGuard } from '@trustos/tenancy';
-import { DataCatalog } from '@trustos/data-catalog';
-import { LineageGraph } from '@trustos/data-lineage';
-import { PolicyRegistry } from '@trustos/policy-registry';
-import { InMemoryPolicyDecisionSink, PolicyDecisionLog } from '@trustos/policy-decision-log';
-import { PolicyEngine } from '@trustos/policy-engine';
-import { ServiceRegistry } from '@trustos/sre-core';
-import { ApiCatalog } from '@trustos/api-catalog';
-import { ConsumerRegistry } from '@trustos/api-consumer';
-import { BackupInventory } from '@trustos/backup';
+} from '@trustsystem/security-events';
+import type { SecurityPolicy } from '@trustsystem/security-policy';
+import { TenantGuard } from '@trustsystem/tenancy';
+import { DataCatalog } from '@trustsystem/data-catalog';
+import { LineageGraph } from '@trustsystem/data-lineage';
+import { PolicyRegistry } from '@trustsystem/policy-registry';
+import { InMemoryPolicyDecisionSink, PolicyDecisionLog } from '@trustsystem/policy-decision-log';
+import { PolicyEngine } from '@trustsystem/policy-engine';
+import { ServiceRegistry } from '@trustsystem/sre-core';
+import { ApiCatalog } from '@trustsystem/api-catalog';
+import { ConsumerRegistry } from '@trustsystem/api-consumer';
+import { BackupInventory } from '@trustsystem/backup';
 import { DataGovernanceController } from './controllers/data-governance.controller';
 import { PolicyController } from './controllers/policy.controller';
 import { ApiGovernanceController } from './controllers/api-governance.controller';
@@ -77,7 +81,7 @@ import {
  *
  * The one thing that is deliberately *not* in memory is the audit trail. Everything consequential
  * this application does — a reclassification proposal, a policy activation, a DR activation —
- * lands in `@trustos/audit`, which is persistent, because those are the records that matter after
+ * lands in `@trustsystem/audit`, which is persistent, because those are the records that matter after
  * a restart and after an incident.
  */
 

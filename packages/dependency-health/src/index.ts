@@ -1,5 +1,5 @@
 /**
- * @trustos/dependency-health
+ * @trustsystem/dependency-health
  *
  * Four health states, derived on read against a freshness budget.
  *

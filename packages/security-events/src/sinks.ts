@@ -3,8 +3,8 @@ import type { SecurityEvent, SecurityEventSink } from './events';
 /**
  * Sinks that bridge security events into things the framework already has.
  *
- * Both are written against narrow ports rather than against `@trustos/audit` or
- * `@trustos/logging` directly, so this package stays installable without pulling
+ * Both are written against narrow ports rather than against `@trustsystem/audit` or
+ * `@trustsystem/logging` directly, so this package stays installable without pulling
  * a Prisma client into a worker that only needs to record a failed login.
  */
 
@@ -82,7 +82,7 @@ export class AuditSecurityEventSink implements SecurityEventSink {
   }
 }
 
-/** What the logging sink needs. `Logger` from @trustos/logging satisfies it. */
+/** What the logging sink needs. `Logger` from @trustsystem/logging satisfies it. */
 export interface StructuredLogger {
   info(payload: Record<string, unknown>, message: string): void;
   warn(payload: Record<string, unknown>, message: string): void;
@@ -162,7 +162,7 @@ export interface SecurityEventDelegate {
 /**
  * Persists events.
  *
- * Deliberately not tenant-scoped through `@trustos/tenancy`: most security events
+ * Deliberately not tenant-scoped through `@trustsystem/tenancy`: most security events
  * have no organization, and a scoped delegate would refuse to write them. The
  * table is platform-owned. Reading it is gated separately: the security portal's
  * event list requires `security.event.read` *and* filters on the caller's own

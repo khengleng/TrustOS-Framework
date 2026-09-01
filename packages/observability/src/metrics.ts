@@ -72,7 +72,7 @@ export interface HttpRequestMetric {
  * Records the standard HTTP metrics for one finished request.
  *
  * Wire it to the single `onComplete` hook exposed by
- * `requestContextMiddleware` in @trustos/logging.
+ * `requestContextMiddleware` in @trustsystem/logging.
  *
  * Note the label set: method, route and status class only. Labelling by raw
  * path or by organization id multiplies cardinality by the number of ids in

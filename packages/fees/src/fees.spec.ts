@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ApiError } from '@trustos/errors';
-import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
+import { ApiError } from '@trustsystem/errors';
+import { CurrencyRegistry, formatMoney, money } from '@trustsystem/financial-core';
 import {
   FeeService,
   calculateFee,
@@ -516,7 +516,7 @@ describe('currency', () => {
       expect.unreachable();
     } catch (error) {
       expect(detailsOf(error)).toMatch(/prices in USD and this amount is in KHR/);
-      expect(detailsOf(error)).toMatch(/@trustos\/fx/);
+      expect(detailsOf(error)).toMatch(/@trustsystem\/fx/);
     }
   });
 });

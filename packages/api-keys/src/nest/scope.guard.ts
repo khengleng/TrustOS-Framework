@@ -1,9 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ApiError } from '@trustos/errors';
-import { ROUTE_METADATA } from '@trustos/rbac';
-import type { SecurityEventEmitter } from '@trustos/security-events';
-import { isMachineActor, type ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import { ROUTE_METADATA } from '@trustsystem/rbac';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
+import { isMachineActor, type ActorContext } from '@trustsystem/shared-types';
 import { scopesSatisfyAll } from '../scopes';
 import { SCOPE_METADATA } from './decorators';
 

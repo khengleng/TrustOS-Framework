@@ -1,12 +1,12 @@
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
-import { LocalStorageProvider, type StorageProvider } from '@trustos/module-file-storage';
+} from '@trustsystem/module-sdk';
+import { LocalStorageProvider, type StorageProvider } from '@trustsystem/module-file-storage';
 import { documentConfigSchema, type DocumentConfig } from './config';
 import { DocumentService } from './document.service';
 import { PrismaDocumentStore, type DocumentStore } from './store';

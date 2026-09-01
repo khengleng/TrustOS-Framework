@@ -1,5 +1,5 @@
-import type { LoggerPort } from '@trustos/logging';
-import { ApiError } from '@trustos/errors';
+import type { LoggerPort } from '@trustsystem/logging';
+import { ApiError } from '@trustsystem/errors';
 import { z } from 'zod';
 
 /**

@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { ApiError } from '@trustos/errors';
-import { canGrantRole } from '@trustos/rbac';
-import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustos/security-events';
-import { securityPolicySchema } from '@trustos/security-policy';
-import type { ActorContext } from '@trustos/shared-types';
+import type { ApiError } from '@trustsystem/errors';
+import { canGrantRole } from '@trustsystem/rbac';
+import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustsystem/security-events';
+import { securityPolicySchema } from '@trustsystem/security-policy';
+import type { ActorContext } from '@trustsystem/shared-types';
 import { Authorizer } from './authorizer';
 import { authorize } from './decision';
 import { roleGrantPolicy, scopeMatches, standardPolicies } from './policies';

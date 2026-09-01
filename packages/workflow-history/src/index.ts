@@ -1,5 +1,5 @@
 /**
- * @trustos/workflow-history
+ * @trustsystem/workflow-history
  *
  * Append-only workflow history, comments that cannot be silently edited, and
  * attachments that reference documents rather than copying them.

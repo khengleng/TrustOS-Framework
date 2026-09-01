@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ApiError } from '@trustos/errors';
-import { ROUTE_METADATA } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import { ROUTE_METADATA } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
 import type { Authorizer } from '../authorizer';
 import { AUTHORIZATION_METADATA } from './metadata';
 

@@ -1,4 +1,4 @@
-import { listTemplates } from '@trustos/template-registry';
+import { listTemplates } from '@trustsystem/template-registry';
 import type { Output } from '../output';
 import { formatRows, style } from '../output';
 

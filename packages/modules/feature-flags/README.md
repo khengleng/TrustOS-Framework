@@ -1,4 +1,4 @@
-# @trustos/module-feature-flags
+# @trustsystem/module-feature-flags
 
 **Feature Flags** · v0.1.0 · stable · owned by TrustOS Platform Engineering
 
@@ -143,7 +143,7 @@ npx vitest run packages/modules/feature-flags
 
 Unit, tenant isolation, RBAC where this module makes its own authorization decisions,
 configuration validation and lifecycle. Isolation tests drive the Prisma store over
-`FakeModelDelegate`, so they exercise `@trustos/tenancy` rather than a test double.
+`FakeModelDelegate`, so they exercise `@trustsystem/tenancy` rather than a test double.
 
 ## Changes
 

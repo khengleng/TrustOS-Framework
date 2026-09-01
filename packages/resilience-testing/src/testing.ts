@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { DEPENDENCY_KINDS, type Service } from '@trustos/sre-core';
-import type { ServicePosture } from '@trustos/resilience';
+import { ApiError } from '@trustsystem/errors';
+import { DEPENDENCY_KINDS, type Service } from '@trustsystem/sre-core';
+import type { ServicePosture } from '@trustsystem/resilience';
 
 /**
  * Controlled failure injection.

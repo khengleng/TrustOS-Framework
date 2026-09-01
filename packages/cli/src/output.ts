@@ -29,7 +29,7 @@ const codes = {
 
 export function colorEnabled(stream: NodeJS.WriteStream = process.stdout): boolean {
   /*
-   * The one sanctioned read of process.env outside @trustos/config.
+   * The one sanctioned read of process.env outside @trustsystem/config.
    *
    * NO_COLOR and FORCE_COLOR are terminal conventions, not application
    * configuration: they are honoured by every well-behaved CLI, they have no

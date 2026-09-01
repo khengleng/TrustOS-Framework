@@ -1,5 +1,5 @@
 /**
- * @trustos/plugin-framework
+ * @trustsystem/plugin-framework
  *
  * Plugin manifests, declared permissions, signature verification and the extension points a
  * plugin may claim.

@@ -2,10 +2,10 @@ import {
   productError,
   type ProductDefinition,
   type ProductLifecycleStatus,
-} from '@trustos/financial-product-core';
-import type { PublishedVersion } from '@trustos/financial-product-versioning';
-import type { ProductDecision } from '@trustos/financial-product-governance';
-import type { ProductVariant } from '@trustos/financial-product-variants';
+} from '@trustsystem/financial-product-core';
+import type { PublishedVersion } from '@trustsystem/financial-product-versioning';
+import type { ProductDecision } from '@trustsystem/financial-product-governance';
+import type { ProductVariant } from '@trustsystem/financial-product-variants';
 
 /**
  * The store contract, and an in-memory implementation of it.

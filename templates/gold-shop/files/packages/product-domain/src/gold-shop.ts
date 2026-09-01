@@ -9,7 +9,7 @@
  * with another template layered beneath this one.
  */
 
-import { definePermission, type PermissionDefinition } from '@trustos/template-sdk';
+import { definePermission, type PermissionDefinition } from '@trustsystem/template-sdk';
 
 export const GOLD_SHOP_PERMISSIONS = {
   GOLD_PRICE_READ: definePermission('goldshop.gold-price.read', 'View price quotes.'),

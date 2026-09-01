@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { EventRegistry, type EventSchemaDefinition } from '@trustos/event-registry';
+import { EventRegistry, type EventSchemaDefinition } from '@trustsystem/event-registry';
 import { AUTO_DISABLE_THRESHOLD, DEFAULT_ROTATION_GRACE_MS, WebhookService } from './endpoints';
 import { AesSecretCipher, PlaintextSecretCipher, secretHint } from './secrets';
 import { createInMemoryWebhookStores } from './testing';

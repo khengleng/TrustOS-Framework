@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import { AiError } from '@trustos/ai-sdk';
+import { ApiError } from '@trustsystem/errors';
+import { AiError } from '@trustsystem/ai-sdk';
 import {
   isUsable,
   isVisibleTo,

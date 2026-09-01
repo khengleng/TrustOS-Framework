@@ -1,14 +1,14 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   checkCompatibility,
   type CompatibilityInput,
   type CompatibilityReport,
-} from '@trustos/compatibility-engine';
+} from '@trustsystem/compatibility-engine';
 import {
   analyzeDependencies,
   type AnalysisReport,
   type GraphModule,
-} from '@trustos/dependency-analyzer';
+} from '@trustsystem/dependency-analyzer';
 import {
   assertBackupTaken,
   describePlan,
@@ -17,14 +17,14 @@ import {
   type Migration,
   type MigrationPlan,
   type RollbackPlan,
-} from '@trustos/migration-tools';
-import { ReleaseManager } from '@trustos/release-manager';
+} from '@trustsystem/migration-tools';
+import { ReleaseManager } from '@trustsystem/release-manager';
 import {
   assertForwardUpgrade,
   recommendUpgrade,
   VersionHistory,
   type UpgradeRecommendation,
-} from '@trustos/version-manager';
+} from '@trustsystem/version-manager';
 
 /**
  * The upgrade.

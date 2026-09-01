@@ -1,6 +1,6 @@
-import { formatDecimal, toMinorUnits } from '@trustos/financial-core';
-import type { ExecutionRecord } from '@trustos/financial-product-runtime';
-import type { SandboxState } from '@trustos/financial-product-sandbox';
+import { formatDecimal, toMinorUnits } from '@trustsystem/financial-core';
+import type { ExecutionRecord } from '@trustsystem/financial-product-runtime';
+import type { SandboxState } from '@trustsystem/financial-product-sandbox';
 
 /**
  * Simulation metrics.
@@ -207,7 +207,7 @@ export function summarise(input: {
       'The success rate is a rate under the injected scenario mix. With no scenarios injected it ' +
         'measures the product’s internal logic and is not a reliability estimate.',
       'Fees are computed by the sandbox’s placeholder rate, not by the product’s fee schedule. ' +
-        'Use @trustos/fees for a priced figure.',
+        'Use @trustsystem/fees for a priced figure.',
     ],
   };
 }

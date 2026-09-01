@@ -1,5 +1,5 @@
 /**
- * @trustos/event-bus
+ * @trustsystem/event-bus
  *
  * Publish, subscribe, ordering per aggregate, retry and dead letters — over an interface, with
  * an in-memory default.

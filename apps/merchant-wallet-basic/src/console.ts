@@ -3,7 +3,7 @@ import {
   STANDARD_RESOURCE_IDS,
   internalApplicationSchema,
   type InternalApplication,
-} from '@trustos/governance-tool-core';
+} from '@trustsystem/governance-tool-core';
 
 /**
  * §11: the Merchant Operations Console.

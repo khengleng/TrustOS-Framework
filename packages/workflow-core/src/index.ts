@@ -1,5 +1,5 @@
 /**
- * @trustos/workflow-core
+ * @trustsystem/workflow-core
  *
  * The workflow domain, as types plus the small number of pure functions every
  * workflow package needs. No runtime, no persistence, no framework binding — so

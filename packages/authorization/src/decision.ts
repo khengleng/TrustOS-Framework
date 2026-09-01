@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuthenticationLevel, PolicyEnvironment } from '@trustos/security-policy';
-import type { ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { AuthenticationLevel, PolicyEnvironment } from '@trustsystem/security-policy';
+import type { ActorContext } from '@trustsystem/shared-types';
 
 /**
  * The authorization request and its answer.

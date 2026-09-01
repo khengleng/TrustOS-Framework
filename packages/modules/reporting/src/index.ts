@@ -1,5 +1,5 @@
 /**
- * @trustos/module-reporting
+ * @trustsystem/module-reporting
  *
  * Declarative report definitions with filtering, pagination, CSV export, a PDF
  * renderer port and a scheduled-report interface.

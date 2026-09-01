@@ -9,7 +9,7 @@
  * with another template layered beneath this one.
  */
 
-import { definePermission, type PermissionDefinition } from '@trustos/template-sdk';
+import { definePermission, type PermissionDefinition } from '@trustsystem/template-sdk';
 
 export const CRM_PERMISSIONS = {
   CUSTOMER_READ: definePermission('crm.customer.read', 'View customers.'),

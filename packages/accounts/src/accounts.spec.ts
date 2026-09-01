@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '@trustos/errors';
-import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
-import { InMemoryLedgerStore, Ledger, credit, debit } from '@trustos/ledger';
+import { ApiError } from '@trustsystem/errors';
+import { CurrencyRegistry, formatMoney, money } from '@trustsystem/financial-core';
+import { InMemoryLedgerStore, Ledger, credit, debit } from '@trustsystem/ledger';
 import {
   NORMAL_SIDE,
   accountCode,

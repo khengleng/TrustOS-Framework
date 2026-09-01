@@ -1,5 +1,5 @@
 /**
- * @trustos/identity
+ * @trustsystem/identity
  *
  * Provider-neutral identity. Application code consumes this and never a provider
  * SDK, so swapping local authentication for Keycloak is a configuration change and

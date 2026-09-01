@@ -1,10 +1,10 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { merchantWalletBasicTemplate } from '@trustos/financial-product-composer';
-import { publishVersion, type PublishedVersion } from '@trustos/financial-product-versioning';
-import { SANDBOX_EPOCH, runSandbox } from '@trustos/financial-product-sandbox';
-import { simulate } from '@trustos/financial-product-simulator';
+import { merchantWalletBasicTemplate } from '@trustsystem/financial-product-composer';
+import { publishVersion, type PublishedVersion } from '@trustsystem/financial-product-versioning';
+import { SANDBOX_EPOCH, runSandbox } from '@trustsystem/financial-product-sandbox';
+import { simulate } from '@trustsystem/financial-product-simulator';
 
 /**
  * §13 and §14 of the pilot specification: the eight sandbox scenarios and the three simulation

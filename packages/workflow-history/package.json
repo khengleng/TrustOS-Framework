@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/workflow-history",
+  "name": "@trustsystem/workflow-history",
   "version": "0.1.0",
   "description": "Append-only workflow history, comments with amendment records, and attachment references.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/workflow-core": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/workflow-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

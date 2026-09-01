@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustos/security-events';
-import type { WorkflowEscalationRecord, WorkflowPriority } from '@trustos/workflow-core';
-import type { WorkflowEscalationRuleSpec } from '@trustos/workflow-definition';
+import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustsystem/security-events';
+import type { WorkflowEscalationRecord, WorkflowPriority } from '@trustsystem/workflow-core';
+import type { WorkflowEscalationRuleSpec } from '@trustsystem/workflow-definition';
 import {
   EscalationService,
   escalationIdempotencyKey,

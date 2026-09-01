@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/financial-product-governance",
+  "name": "@trustsystem/financial-product-governance",
   "version": "0.1.0",
   "description": "Product governance: ownership, change classification, maker-checker approval requirements and the audit trail.",
   "license": "UNLICENSED",
@@ -17,13 +17,13 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-product-core": "0.1.0",
-    "@trustos/financial-product-policy": "0.1.0",
-    "@trustos/financial-product-state-machine": "0.1.0",
-    "@trustos/workflow-approvals": "0.1.0",
-    "@trustos/workflow-core": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-product-core": "0.1.0",
+    "@trustsystem/financial-product-policy": "0.1.0",
+    "@trustsystem/financial-product-state-machine": "0.1.0",
+    "@trustsystem/workflow-approvals": "0.1.0",
+    "@trustsystem/workflow-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

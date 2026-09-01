@@ -1,5 +1,5 @@
 /**
- * @trustos/rag
+ * @trustsystem/rag
  *
  * Chunking, retrieval, fusion, diversification and citation.
  *

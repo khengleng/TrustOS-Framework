@@ -1,4 +1,4 @@
-import { ModuleRepository, type ModuleContext } from '@trustos/module-sdk';
+import { ModuleRepository, type ModuleContext } from '@trustsystem/module-sdk';
 import type { FeatureFlagsConfig } from './config';
 
 /** Where flags and per-subject overrides live. */

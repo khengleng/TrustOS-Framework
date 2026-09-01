@@ -1,5 +1,5 @@
 /**
- * @trustos/api-policy
+ * @trustsystem/api-policy
  *
  * The deployment-specific half of API access, as policy documents.
  *

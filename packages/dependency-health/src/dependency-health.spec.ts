@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustos/sre-core';
+import { ServiceRegistry, runbookSchema, serviceSchema } from '@trustsystem/sre-core';
 import { DependencyHealthBoard, healthProbeSchema, worst } from './index';
 
 const NOW = new Date('2026-06-01T12:00:00.000Z');

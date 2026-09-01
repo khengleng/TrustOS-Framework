@@ -1,5 +1,5 @@
 /**
- * @trustos/ai-observability
+ * @trustsystem/ai-observability
  *
  * What the AI platform did, in numbers: requests, latency, failures, retries, provider health,
  * tokens, cost, cache hit rate, agent and prompt usage.

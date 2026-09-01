@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
+import { CurrencyRegistry, formatMoney, money } from '@trustsystem/financial-core';
 import { ReconciliationService, compare } from './reconciliation';
 import { InMemoryReconciliationStore } from './testing';
 

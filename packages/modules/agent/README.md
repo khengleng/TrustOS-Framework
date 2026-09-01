@@ -1,10 +1,10 @@
-# @trustos/module-agent
+# @trustsystem/module-agent
 
 Agents that take actions: declarative agent definitions, the tool loop with per-actor permission checks, memory, conversation state, stop conditions and human review.
 
 ## What this package is
 
-A thin module wrapper. The implementation is in `@trustos/agent-framework`, `@trustos/agent-memory`, `@trustos/agent-runtime`, `@trustos/conversation`, `@trustos/function-calling`, `@trustos/human-review`, `@trustos/tool-execution`; this package contributes the declarations the platform needs — permissions,
+A thin module wrapper. The implementation is in `@trustsystem/agent-framework`, `@trustsystem/agent-memory`, `@trustsystem/agent-runtime`, `@trustsystem/conversation`, `@trustsystem/function-calling`, `@trustsystem/human-review`, `@trustsystem/tool-execution`; this package contributes the declarations the platform needs — permissions,
 audit events and a health indicator — and the start/stop lifecycle.
 
 ## Installing
@@ -17,7 +17,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 ```ts
-import { AgentModule } from '@trustos/module-agent/nest';
+import { AgentModule } from '@trustsystem/module-agent/nest';
 
 @Module({ imports: [AgentModule.forRoot(binding)] })
 export class AppModule {}

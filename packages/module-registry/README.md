@@ -1,4 +1,4 @@
-# @trustos/module-registry
+# @trustsystem/module-registry
 
 Two things, both about discovery.
 
@@ -10,7 +10,7 @@ dependencies. It is the single declaration point — module packages read their 
 entry through `moduleDeclarations(id)` rather than restating it.
 
 ```ts
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 
 export const searchModule = defineModule({
   ...moduleDeclarations('search'),

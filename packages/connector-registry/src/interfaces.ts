@@ -16,7 +16,7 @@ import { z } from 'zod';
  *
  * The framework ships **no implementation of any of these**. Not one, deliberately — the seam is
  * the deliverable, and an adapter here is an adapter every deployment carries. A product built on
- * this brings its own, wired through `@trustos/adapter-framework`.
+ * this brings its own, wired through `@trustsystem/adapter-framework`.
  */
 
 export const PROVIDER_INTERFACES = {

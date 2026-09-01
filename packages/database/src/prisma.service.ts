@@ -1,6 +1,6 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import type { AppConfig } from '@trustos/config';
+import type { AppConfig } from '@trustsystem/config';
 import { APP_CONFIG, DATABASE_LOGGER } from './tokens';
 import { attachLogHandlers, prismaClientOptions, type DatabaseLogger } from './prisma-client';
 

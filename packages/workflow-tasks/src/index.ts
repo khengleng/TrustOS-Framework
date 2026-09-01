@@ -1,5 +1,5 @@
 /**
- * @trustos/workflow-tasks
+ * @trustsystem/workflow-tasks
  *
  * Tasks, assignment and the concurrency that makes a shared queue work.
  *

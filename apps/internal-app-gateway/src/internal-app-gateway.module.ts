@@ -1,36 +1,40 @@
 import { DynamicModule, Global, Module, type Provider } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import { AuditService, PrismaAuditSink } from '@trustos/audit';
-import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
-import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
-import type { AppConfig } from '@trustos/config';
-import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustos/database';
-import { ObservabilityModule, databaseHealthIndicator } from '@trustos/observability';
-import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
-import type { AccessResolver, CredentialAuthenticator, IdentityProvider } from '@trustos/identity';
-import type { Logger } from '@trustos/logging';
-import { canGrantRole, PermissionsGuard } from '@trustos/rbac';
+import { AuditService, PrismaAuditSink } from '@trustsystem/audit';
+import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustsystem/authorization';
+import { PolicyAuthorizationGuard } from '@trustsystem/authorization/nest';
+import type { AppConfig } from '@trustsystem/config';
+import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustsystem/database';
+import { ObservabilityModule, databaseHealthIndicator } from '@trustsystem/observability';
+import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustsystem/identity/nest';
+import type {
+  AccessResolver,
+  CredentialAuthenticator,
+  IdentityProvider,
+} from '@trustsystem/identity';
+import type { Logger } from '@trustsystem/logging';
+import { canGrantRole, PermissionsGuard } from '@trustsystem/rbac';
 import {
   LoggerSecurityEventSink,
   PersistentSecurityEventSink,
   SecurityEventEmitter,
   type SecurityEventSink,
-} from '@trustos/security-events';
-import type { SecurityPolicy } from '@trustos/security-policy';
-import { TenantGuard } from '@trustos/tenancy';
+} from '@trustsystem/security-events';
+import type { SecurityPolicy } from '@trustsystem/security-policy';
+import { TenantGuard } from '@trustsystem/tenancy';
 import {
   InternalAppCatalog,
   consoleCatalogFor,
   type Environment,
-} from '@trustos/governance-tool-core';
-import { GovernanceAuditBridge } from '@trustos/governance-audit-bridge';
+} from '@trustsystem/governance-tool-core';
+import { GovernanceAuditBridge } from '@trustsystem/governance-audit-bridge';
 import {
   EnvironmentRegistry,
   environmentConfigSchema,
-} from '@trustos/governance-environment-config';
-import { MaskPolicy } from '@trustos/governance-pii-policy';
-import { ResourceRegistry } from '@trustos/governance-resource-policy';
-import { GovernanceToolRuntime } from '@trustos/governance-tool-runtime';
+} from '@trustsystem/governance-environment-config';
+import { MaskPolicy } from '@trustsystem/governance-pii-policy';
+import { ResourceRegistry } from '@trustsystem/governance-resource-policy';
+import { GovernanceToolRuntime } from '@trustsystem/governance-tool-runtime';
 import { GatewayController } from './controllers/gateway.controller';
 import {
   ACCESS_RESOLVER,

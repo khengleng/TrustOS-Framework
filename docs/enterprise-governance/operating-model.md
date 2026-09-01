@@ -53,16 +53,16 @@ sound like "handle sensitive support cases".
 Governance work that has no schedule does not happen. These are defaults; the framework reads
 several of them from configuration and reports overdue items rather than enforcing a calendar.
 
-| What                        | How often                            | Enforced by                                      |
-| --------------------------- | ------------------------------------ | ------------------------------------------------ |
-| Catalog review              | Per classification, 90–365 days      | `DataCatalog.overdueReviews`                     |
-| Access grant review         | 90 days, or the grant lapses         | `lapsingGrants` in `@trustos/data-access-policy` |
-| Policy review               | Per policy `reviewDate`              | `PolicyRegistry.overdueReviews`                  |
-| Consumer review             | 180 days                             | `reviewConsumer`                                 |
-| Runbook review              | 180 days                             | `reviewProcedures`                               |
-| Restore test                | Per source; 90 days for the database | `BackupInventory.analyse`                        |
-| DR exercise                 | 180 days                             | `reviewPlans`                                    |
-| Incident corrective actions | Per action due date                  | `overdueActions`                                 |
+| What                        | How often                            | Enforced by                                          |
+| --------------------------- | ------------------------------------ | ---------------------------------------------------- |
+| Catalog review              | Per classification, 90–365 days      | `DataCatalog.overdueReviews`                         |
+| Access grant review         | 90 days, or the grant lapses         | `lapsingGrants` in `@trustsystem/data-access-policy` |
+| Policy review               | Per policy `reviewDate`              | `PolicyRegistry.overdueReviews`                      |
+| Consumer review             | 180 days                             | `reviewConsumer`                                     |
+| Runbook review              | 180 days                             | `reviewProcedures`                                   |
+| Restore test                | Per source; 90 days for the database | `BackupInventory.analyse`                            |
+| DR exercise                 | 180 days                             | `reviewPlans`                                        |
+| Incident corrective actions | Per action due date                  | `overdueActions`                                     |
 
 Access grants are the one that expires rather than merely being reported. Everything else surfaces
 as a finding, because a policy that stopped working because nobody reviewed it would be an outage
@@ -85,6 +85,6 @@ after reading a finding. Automation would be faster and would eventually remove 
 needed at a moment nobody was watching.
 
 **It does not let AI act.** The governance assistant explains, summarizes, drafts and suggests.
-`AI_FORBIDDEN_ACTIONS` in `@trustos/governance-ai-bridge` names what it may never do, and the
+`AI_FORBIDDEN_ACTIONS` in `@trustsystem/governance-ai-bridge` names what it may never do, and the
 constraint is structural rather than a rule: the output type carries text, and there is no path
 from an output to an action.

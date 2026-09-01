@@ -3,7 +3,7 @@ import type {
   WorkflowDecisionRecord,
   WorkflowInstanceRecord,
   WorkflowTaskRecord,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 
 /**
  * What the Approval Workbench is allowed to reach.

@@ -1,4 +1,4 @@
-import type { ModuleCatalogEntry } from '@trustos/module-registry';
+import type { ModuleCatalogEntry } from '@trustsystem/module-registry';
 import { GeneratorError } from './errors';
 import { normalizeLineEndings } from './plan';
 
@@ -83,11 +83,11 @@ export function renderInstalledModulesFile(entries: ModuleCatalogEntry[]): strin
  * model stays under human control.
  */
 import type { DynamicModule } from '@nestjs/common';
-import type { AppConfig } from '@trustos/config';
-import type { AuditService } from '@trustos/audit';
-import { PrismaService } from '@trustos/database';
-import type { Logger } from '@trustos/logging';
-import type { ModuleHostBinding } from '@trustos/module-sdk/nest';
+import type { AppConfig } from '@trustsystem/config';
+import type { AuditService } from '@trustsystem/audit';
+import { PrismaService } from '@trustsystem/database';
+import type { Logger } from '@trustsystem/logging';
+import type { ModuleHostBinding } from '@trustsystem/module-sdk/nest';
 ${imports}
 import { APP_CONFIG_TOKEN, APP_LOGGER, AUDIT_SERVICE } from '../tokens';
 import { MODULE_CONFIG, type InstalledModuleId } from './module-config';

@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { TIER_EXPECTATIONS, type ServiceRegistry, type ServiceTier } from '@trustos/sre-core';
-import { BACKUP_SOURCES, type BackupInventory, type BackupSource } from '@trustos/backup';
-import { measuredRestoreMinutes, type RestoreTest } from '@trustos/recovery';
-import { readinessOf, type DrPlan } from '@trustos/disaster-recovery';
+import { ApiError } from '@trustsystem/errors';
+import { TIER_EXPECTATIONS, type ServiceRegistry, type ServiceTier } from '@trustsystem/sre-core';
+import { BACKUP_SOURCES, type BackupInventory, type BackupSource } from '@trustsystem/backup';
+import { measuredRestoreMinutes, type RestoreTest } from '@trustsystem/recovery';
+import { readinessOf, type DrPlan } from '@trustsystem/disaster-recovery';
 
 /**
  * Business continuity.

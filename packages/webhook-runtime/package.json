@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/webhook-runtime",
+  "name": "@trustsystem/webhook-runtime",
   "version": "0.1.0",
   "description": "Webhook delivery: signing, retry, failure tracking, delivery history and replay protection.",
   "license": "UNLICENSED",
@@ -18,15 +18,15 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/event-bus": "0.1.0",
-    "@trustos/event-sdk": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/retry": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/webhooks": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/event-bus": "0.1.0",
+    "@trustsystem/event-sdk": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/retry": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/webhooks": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

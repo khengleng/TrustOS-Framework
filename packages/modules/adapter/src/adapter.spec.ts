@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createTestModuleContext } from '@trustos/module-sdk';
+import { createTestModuleContext } from '@trustsystem/module-sdk';
 import { createAdapter, adapterConfigSchema, adapterModule } from './adapter.module';
 
 /*
- * `@trustos/module-adapter` is a contract wrapper.
+ * `@trustsystem/module-adapter` is a contract wrapper.
  *
  * The behaviour lives in the framework packages it fronts and is tested where it is
  * implemented; what this package owns is the declaration the platform reads and the

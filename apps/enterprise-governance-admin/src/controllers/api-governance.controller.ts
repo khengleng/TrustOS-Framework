@@ -1,14 +1,14 @@
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
-import type { AuditService } from '@trustos/audit';
-import { apiClassification, type ApiCatalog } from '@trustos/api-catalog';
-import { reviewConsumer, type ConsumerRegistry } from '@trustos/api-consumer';
-import { analyseCompatibility } from '@trustos/api-versioning';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
+import type { AuditService } from '@trustsystem/audit';
+import { apiClassification, type ApiCatalog } from '@trustsystem/api-catalog';
+import { reviewConsumer, type ConsumerRegistry } from '@trustsystem/api-consumer';
+import { analyseCompatibility } from '@trustsystem/api-versioning';
 import { API_CATALOG, AUDIT_SERVICE, CONSUMER_REGISTRY } from '../tokens';
 import { ENTERPRISE_PERMISSIONS } from '../permissions';
 
@@ -50,7 +50,7 @@ export class ApiGovernanceController {
         environment: api.environment,
         businessOwnerId: api.businessOwnerId,
         technicalOwnerId: api.technicalOwnerId,
-        // Derived from the operations, not declared. See @trustos/api-catalog.
+        // Derived from the operations, not declared. See @trustsystem/api-catalog.
         classification: apiClassification(api),
         consumers: this.consumers.consumersOf(api.apiId, api.version).length,
         retirementDate: api.retirementDate,

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import type { LoggerPort } from '@trustos/logging';
-import { formatMoney, type Money } from '@trustos/financial-core';
+import type { LoggerPort } from '@trustsystem/logging';
+import { formatMoney, type Money } from '@trustsystem/financial-core';
 
 /**
  * Risk and compliance extension points.

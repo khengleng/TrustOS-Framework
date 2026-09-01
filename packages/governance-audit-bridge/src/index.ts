@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-audit-bridge
+ * @trustsystem/governance-audit-bridge
  *
  * Forwards Governance Tool actions into the **TrustOS** audit trail, not into a trail of its own.
  * Two audit trails means two answers to "what happened", and during an investigation somebody has

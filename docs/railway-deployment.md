@@ -59,7 +59,7 @@ That file already declares everything:
 {
   "build": {
     "builder": "RAILPACK",
-    "buildCommand": "npm ci && npm run build:packages && npm run build -w @trustos/api-example"
+    "buildCommand": "npm ci && npm run build:packages && npm run build -w @trustsystem/api-example"
   },
   "deploy": {
     "startCommand": "node apps/api-example/dist/main.js",
@@ -93,7 +93,7 @@ ignored, which presents as `No start command detected`):
 ```bash
 railway variables --service trustos-api --skip-deploys \
   --set "RAILPACK_INSTALL_CMD=npm ci" \
-  --set "RAILPACK_BUILD_CMD=npm run build:packages && npm run build -w @trustos/api-example" \
+  --set "RAILPACK_BUILD_CMD=npm run build:packages && npm run build -w @trustsystem/api-example" \
   --set "RAILPACK_START_CMD=npm run db:deploy && node apps/api-example/dist/main.js"
 railway up --service trustos-api
 ```
@@ -254,14 +254,14 @@ trail.
 
 ## 9. Troubleshooting
 
-| Symptom                                              | Cause                                                                                                                                      |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `No start command detected` in the build log         | You set `NIXPACKS_*` variables but Railway builds with Railpack. Use `RAILPACK_INSTALL_CMD` / `RAILPACK_BUILD_CMD` / `RAILPACK_START_CMD`. |
-| Build fails on `Cannot find module '@prisma/client'` | `postinstall` did not run. Ensure the build command starts with `npm ci`, not `npm ci --ignore-scripts`.                                   |
-| Build fails on `Cannot find module '@trustos/...'`   | `npm run build:packages` is missing from the build command. Packages must be compiled before an app that imports them.                     |
-| `Invalid configuration:` at boot                     | Exactly the listed variables are missing or invalid. The message names each one.                                                           |
-| Health check fails, logs look fine                   | The service is not binding `0.0.0.0:$PORT`. Do not hardcode `PORT`.                                                                        |
-| `/ready` returns 503                                 | The database is unreachable. `/health` still returns 200 by design; check the Postgres plugin and `DATABASE_URL`.                          |
-| Every audit record shows the same IP                 | `TRUST_PROXY` is not `true`.                                                                                                               |
-| CORS errors in the admin app                         | The admin origin is missing from the API's `CORS_ORIGINS` (comma-separated, no wildcard in production).                                    |
-| 401 immediately after deploy                         | `JWT_SECRET` changed; all outstanding access tokens are invalid. Expected — clients refresh or sign in again.                              |
+| Symptom                                                | Cause                                                                                                                                      |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `No start command detected` in the build log           | You set `NIXPACKS_*` variables but Railway builds with Railpack. Use `RAILPACK_INSTALL_CMD` / `RAILPACK_BUILD_CMD` / `RAILPACK_START_CMD`. |
+| Build fails on `Cannot find module '@prisma/client'`   | `postinstall` did not run. Ensure the build command starts with `npm ci`, not `npm ci --ignore-scripts`.                                   |
+| Build fails on `Cannot find module '@trustsystem/...'` | `npm run build:packages` is missing from the build command. Packages must be compiled before an app that imports them.                     |
+| `Invalid configuration:` at boot                       | Exactly the listed variables are missing or invalid. The message names each one.                                                           |
+| Health check fails, logs look fine                     | The service is not binding `0.0.0.0:$PORT`. Do not hardcode `PORT`.                                                                        |
+| `/ready` returns 503                                   | The database is unreachable. `/health` still returns 200 by design; check the Postgres plugin and `DATABASE_URL`.                          |
+| Every audit record shows the same IP                   | `TRUST_PROXY` is not `true`.                                                                                                               |
+| CORS errors in the admin app                           | The admin origin is missing from the API's `CORS_ORIGINS` (comma-separated, no wildcard in production).                                    |
+| 401 immediately after deploy                           | `JWT_SECRET` changed; all outstanding access tokens are invalid. Expected — clients refresh or sign in again.                              |

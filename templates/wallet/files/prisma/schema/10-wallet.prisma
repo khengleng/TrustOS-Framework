@@ -2,7 +2,7 @@
 // TrustOS Wallet — product models
 //
 // Customer wallets over the framework ledger: wallet profiles, transfers,
-// transfer limits and history. Balances come from @trustos/wallet — this
+// transfer limits and history. Balances come from @trustsystem/wallet — this
 // template stores no balance column.
 //
 // Out of scope, deliberately: payment providers, card issuing, cash-in and
@@ -35,7 +35,7 @@ enum TransferStatus {
 
 /// The product-side record of a wallet. `walletId` points at the framework
 /// wallet that owns the money; everything financial is read through
-/// @trustos/wallet.
+/// @trustsystem/wallet.
 model WalletProfile {
   id             String @id @default(cuid())
   organizationId String
@@ -57,7 +57,7 @@ model WalletProfile {
   @@index([deletedAt])
 }
 
-/// A movement between two wallets. The journal is written by @trustos/ledger;
+/// A movement between two wallets. The journal is written by @trustsystem/ledger;
 /// this row is the product-level record of *why*, and `journalId` is the link
 /// between them.
 model WalletTransfer {
@@ -84,7 +84,7 @@ model WalletTransfer {
 }
 
 /// Which framework limit keys apply to a wallet tier. The ceilings themselves
-/// live in @trustos/limits — this maps tiers onto them so a tier change is one
+/// live in @trustsystem/limits — this maps tiers onto them so a tier change is one
 /// row, not a migration.
 model TransferLimitProfile {
   id             String @id @default(cuid())

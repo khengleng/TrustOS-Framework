@@ -3,15 +3,15 @@ import {
   type ExecutionInput,
   type ProductActor,
   type ProductDefinition,
-} from '@trustos/financial-product-core';
-import { fromMinorUnits } from '@trustos/financial-core';
+} from '@trustsystem/financial-product-core';
+import { fromMinorUnits } from '@trustsystem/financial-core';
 import {
   BlockHandlerRegistry,
   InMemoryIdempotencyStore,
   ProductRuntime,
   type ExecutionRecord,
-} from '@trustos/financial-product-runtime';
-import type { PublishedVersion } from '@trustos/financial-product-versioning';
+} from '@trustsystem/financial-product-runtime';
+import type { PublishedVersion } from '@trustsystem/financial-product-versioning';
 import {
   SANDBOX_CURRENCIES,
   ScenarioPlan,
@@ -20,7 +20,7 @@ import {
   sandboxConnectorRegistry,
   sandboxHandlers,
   type SandboxScenario,
-} from '@trustos/financial-product-sandbox';
+} from '@trustsystem/financial-product-sandbox';
 import { summarise, type SimulationReport } from './metrics';
 
 /**
@@ -44,7 +44,7 @@ import { summarise, type SimulationReport } from './metrics';
  * connector registry are built once and the *state* is reset per transaction where it needs to
  * be. This is what makes 100,000 finish in seconds rather than minutes.
  *
- * **It never touches production.** It runs through `@trustos/financial-product-sandbox`, which
+ * **It never touches production.** It runs through `@trustsystem/financial-product-sandbox`, which
  * has no constructor parameter through which a production store could arrive. There is nothing
  * to configure wrongly.
  *

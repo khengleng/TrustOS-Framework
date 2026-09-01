@@ -4,7 +4,7 @@ import {
   isBreakingChange,
   type CompatibilitySubject,
   type CompatibilityVerdict,
-} from '@trustos/version-manager';
+} from '@trustsystem/version-manager';
 
 /**
  * The compatibility engine.

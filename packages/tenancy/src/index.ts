@@ -1,5 +1,5 @@
 /**
- * @trustos/tenancy
+ * @trustsystem/tenancy
  *
  * Organization-based tenant isolation. Read docs/architecture.md ("Tenant
  * isolation rules") before changing anything in this package — its invariants

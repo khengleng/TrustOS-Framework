@@ -1,5 +1,5 @@
-import { evaluateCondition, describeCondition } from '@trustos/workflow-definition';
-import type { ProductRule, RuleOutcome } from '@trustos/financial-product-core';
+import { evaluateCondition, describeCondition } from '@trustsystem/workflow-definition';
+import type { ProductRule, RuleOutcome } from '@trustsystem/financial-product-core';
 import type { RuleFacts } from './facts';
 
 /**

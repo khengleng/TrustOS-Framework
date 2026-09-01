@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-policy
+ * @trustsystem/financial-policy
  *
  * Per-tenant financial policy: allowed currencies, overdraft, approval thresholds, settlement.
  *

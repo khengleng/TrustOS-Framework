@@ -4,7 +4,7 @@ import {
   zeroMoney,
   type CurrencyRegistry,
   type Money,
-} from '@trustos/financial-core';
+} from '@trustsystem/financial-core';
 import type { Limit, LimitScope, LimitStore, LimitUsage } from './limits';
 
 /**

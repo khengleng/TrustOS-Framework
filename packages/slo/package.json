@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/slo",
+  "name": "@trustsystem/slo",
   "version": "0.1.0",
   "description": "Objectives and error budgets, with the burn-rate policy that decides what an exhausted budget stops.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/sli": "0.1.0",
-    "@trustos/sre-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/sli": "0.1.0",
+    "@trustsystem/sre-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

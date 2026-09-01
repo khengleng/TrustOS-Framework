@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/integration-monitor",
+  "name": "@trustsystem/integration-monitor",
   "version": "0.1.0",
   "description": "Read models for an integration dashboard: throughput, failures, dead letters, backlogs.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/integration-health": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/integration-health": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   }
 }

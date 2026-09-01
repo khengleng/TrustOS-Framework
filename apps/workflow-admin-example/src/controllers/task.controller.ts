@@ -1,13 +1,17 @@
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
-import { toWorkflowActor, WORKFLOW_PERMISSIONS } from '@trustos/workflow-core';
-import { isEligibleForTask, type MemberDirectory, type TaskService } from '@trustos/workflow-tasks';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
+import { toWorkflowActor, WORKFLOW_PERMISSIONS } from '@trustsystem/workflow-core';
+import {
+  isEligibleForTask,
+  type MemberDirectory,
+  type TaskService,
+} from '@trustsystem/workflow-tasks';
 import { MEMBER_DIRECTORY, TASK_SERVICE } from '../tokens';
 
 /*

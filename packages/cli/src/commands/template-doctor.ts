@@ -6,7 +6,7 @@ import {
   compareSemver,
   findTemplate,
   resolveTemplateChain,
-} from '@trustos/template-registry';
+} from '@trustsystem/template-registry';
 import type { Output } from '../output';
 import { formatRows, style } from '../output';
 
@@ -443,14 +443,14 @@ async function checkFrameworkPin(
     dependencies?: Record<string, string>;
   };
 
-  const specifier = parsed.dependencies?.['@trustos/config'];
+  const specifier = parsed.dependencies?.['@trustsystem/config'];
 
   if (!specifier) {
     return [
       {
         area: 'framework version',
         status: 'WARN',
-        detail: 'No @trustos/config dependency found, so the framework version cannot be read.',
+        detail: 'No @trustsystem/config dependency found, so the framework version cannot be read.',
       },
     ];
   }
@@ -474,7 +474,7 @@ async function checkFrameworkPin(
         area: 'framework version',
         status: 'FAIL',
         detail: `Depends on framework ${installed}; "${template.id}" needs ${template.minimumFrameworkVersion} or newer.`,
-        remediation: 'Upgrade the @trustos/* dependencies.',
+        remediation: 'Upgrade the @trustsystem/* dependencies.',
       },
     ];
   }

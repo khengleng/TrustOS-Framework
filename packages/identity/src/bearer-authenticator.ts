@@ -1,6 +1,6 @@
-import { ApiError } from '@trustos/errors';
-import type { SecurityEventEmitter } from '@trustos/security-events';
-import type { ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
+import type { ActorContext } from '@trustsystem/shared-types';
 import {
   readAuthorizationCredential,
   type CredentialAuthenticator,
@@ -134,7 +134,7 @@ export class BearerTokenAuthenticator implements CredentialAuthenticator {
     /*
      * The organization comes from the provider's own claim, if it has one, and is
      * then re-validated by `AccessResolver`. It is never read from a header — see
-     * `@trustos/authorization` for the tenant-header attack this closes.
+     * `@trustsystem/authorization` for the tenant-header attack this closes.
      */
     const organizationId = mapping.organizationId;
     const access = await this.options.access.resolve(identity.subject, organizationId);

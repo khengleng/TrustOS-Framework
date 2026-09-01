@@ -5,7 +5,7 @@
  * its own rather than copying anything out of it.
  */
 
-import type { PermissionDefinition } from '@trustos/template-sdk';
+import type { PermissionDefinition } from '@trustsystem/template-sdk';
 import { NGO_PERMISSIONS_LIST, NGO_PERMISSIONS_ROLES } from './ngo';
 
 export * from './ngo';

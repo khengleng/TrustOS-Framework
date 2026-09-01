@@ -1,14 +1,14 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import type { AppConfig } from '@trustos/config';
-import { PrismaService } from '@trustos/database';
+import type { AppConfig } from '@trustsystem/config';
+import { PrismaService } from '@trustsystem/database';
 import {
   AuthService,
   PrismaAuthUserStore,
   PrismaMembershipResolver,
   PrismaRefreshTokenStore,
   TokenService,
-} from '@trustos/auth';
-import type { AuditService } from '@trustos/audit';
+} from '@trustsystem/auth';
+import type { AuditService } from '@trustsystem/audit';
 import { AUDIT_SERVICE, AUTH_SERVICE } from '../../tokens';
 import { AuthAuditBridge } from './auth-audit.bridge';
 import { AuthController } from './auth.controller';

@@ -3,7 +3,7 @@ import {
   productError,
   type ProductDefinition,
   type ProductRule,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 import { OVERRIDABLE_PATHS, type ProductVariant } from './variant';
 
 /**

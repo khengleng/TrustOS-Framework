@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/connector-registry",
+  "name": "@trustsystem/connector-registry",
   "version": "0.1.0",
   "description": "Provider-neutral connector metadata: interfaces, operations, schemas, timeouts and health. No provider implementations.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-product-core": "0.1.0",
-    "@trustos/provider-sdk": "0.1.0",
-    "@trustos/retry": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-product-core": "0.1.0",
+    "@trustsystem/provider-sdk": "0.1.0",
+    "@trustsystem/retry": "0.1.0",
     "zod": "^3.24.1"
   }
 }

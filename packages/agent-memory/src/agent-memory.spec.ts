@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { DEFAULT_TTL_MS, MemoryService, memoryPolicySchema } from './memory';
 import { InMemoryMemoryStore } from './testing';
 

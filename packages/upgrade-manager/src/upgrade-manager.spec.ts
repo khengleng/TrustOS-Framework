@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { migrationSchema, type Migration } from '@trustos/migration-tools';
-import { ReleaseManager } from '@trustos/release-manager';
-import { VersionHistory } from '@trustos/version-manager';
+import { migrationSchema, type Migration } from '@trustsystem/migration-tools';
+import { ReleaseManager } from '@trustsystem/release-manager';
+import { VersionHistory } from '@trustsystem/version-manager';
 import {
   executeUpgrade,
   planUpgrade,

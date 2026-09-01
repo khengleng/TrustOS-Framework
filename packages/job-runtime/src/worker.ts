@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import type { LoggerPort } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
-import { backoffDelay, RETRY_PRESETS, type RetryPolicy } from '@trustos/retry';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
+import { backoffDelay, RETRY_PRESETS, type RetryPolicy } from '@trustsystem/retry';
 import { DEFAULT_LEASE_MS, LEASE_RENEWAL_MS, type Job } from './entities';
 import { JOB_METRICS } from './metrics';
 import type { JobStore } from './queue';

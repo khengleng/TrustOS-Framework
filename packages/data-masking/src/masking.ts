@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { obligationsFor, type DataClassificationLevel } from '@trustos/data-classification';
+import { ApiError } from '@trustsystem/errors';
+import { obligationsFor, type DataClassificationLevel } from '@trustsystem/data-classification';
 import {
   MASK_STRATEGIES,
   MaskPolicy,
@@ -8,12 +8,12 @@ import {
   maskRuleSchema,
   type MaskRule,
   type MaskStrategy,
-} from '@trustos/governance-pii-policy';
+} from '@trustsystem/governance-pii-policy';
 
 /**
  * Platform-wide masking.
  *
- * The display strategies and the reveal ceremony are `@trustos/governance-pii-policy`'s, and are
+ * The display strategies and the reveal ceremony are `@trustsystem/governance-pii-policy`'s, and are
  * **reused rather than restated** — a second `mask()` in this repository would be a second set of
  * rules about how many digits of an account number a person sees, and the two would diverge.
  * That package landed first because the Governance Tool needed it; the layering is legal in both

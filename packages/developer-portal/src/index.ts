@@ -1,5 +1,5 @@
 /**
- * @trustos/developer-portal
+ * @trustsystem/developer-portal
  *
  * A self-contained developer site: guides, generated reference, modules, templates, an API
  * explorer, SDK downloads and release notes.

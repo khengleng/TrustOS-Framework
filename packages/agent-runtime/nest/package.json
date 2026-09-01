@@ -1,6 +1,6 @@
 {
-  "//": "Subpath stub: keeps NestJS bindings out of consumers that import '@trustos/agent-runtime'.",
-  "name": "@trustos/agent-runtime-nest",
+  "//": "Subpath stub: keeps NestJS bindings out of consumers that import '@trustsystem/agent-runtime'.",
+  "name": "@trustsystem/agent-runtime-nest",
   "private": true,
   "main": "../dist/nest/index.js",
   "types": "../dist/nest/index.d.ts"

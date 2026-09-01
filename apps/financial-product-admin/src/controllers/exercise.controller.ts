@@ -1,28 +1,28 @@
 import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
 import {
   FINANCIAL_PRODUCT_PERMISSIONS,
   executionInputSchema,
-} from '@trustos/financial-product-core';
-import type { ProductRegistry } from '@trustos/financial-product-registry';
+} from '@trustsystem/financial-product-core';
+import type { ProductRegistry } from '@trustsystem/financial-product-registry';
 import {
   SANDBOX_SCENARIOS,
   SCENARIO_DESCRIPTIONS,
   runSandbox,
-} from '@trustos/financial-product-sandbox';
-import { formatReport, simulate } from '@trustos/financial-product-simulator';
+} from '@trustsystem/financial-product-sandbox';
+import { formatReport, simulate } from '@trustsystem/financial-product-simulator';
 import { PRODUCT_REGISTRY } from '../tokens';
 
 /**
  * Sandbox and simulator.
  *
  * The two ways to run a product without a customer. Both go through
- * `@trustos/financial-product-sandbox`, which has no constructor parameter through which a
+ * `@trustsystem/financial-product-sandbox`, which has no constructor parameter through which a
  * production store, connector registry or credential could arrive — so "a sandbox run must never
  * touch production data" is a sentence with nowhere to be violated rather than a rule somebody
  * follows.

@@ -3,8 +3,8 @@ import {
   productError,
   type ProductDefinition,
   type ProductType,
-} from '@trustos/financial-product-core';
-import { APPROVED_BLOCKS, type BlockRegistry } from '@trustos/financial-block-registry';
+} from '@trustsystem/financial-product-core';
+import { APPROVED_BLOCKS, type BlockRegistry } from '@trustsystem/financial-block-registry';
 import { ProductComposer } from './composer';
 import { validateProduct, type ValidationResult } from './validate';
 import { findTemplate, PRODUCT_TEMPLATES } from './templates';
@@ -18,7 +18,7 @@ import { findTemplate, PRODUCT_TEMPLATES } from './templates';
  *
  * The framework ships **no model call**. There is no prompt executed here, no gateway client, no
  * provider. `buildCompositionBrief` produces the structured brief a deployment sends through
- * `@trustos/ai-gateway` — which is where policy, guardrails, cost accounting and audit are
+ * `@trustsystem/ai-gateway` — which is where policy, guardrails, cost accounting and audit are
  * applied — and `draftFromProposal` takes whatever comes back. Calling a model from this package
  * would be a call that went around the gateway, and a request that goes around the gateway is a
  * request nobody can account for afterwards.

@@ -1,17 +1,17 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustos/config';
-import { AllExceptionsFilter } from '@trustos/errors/nest';
-import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
-import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
+import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustsystem/config';
+import { AllExceptionsFilter } from '@trustsystem/errors/nest';
+import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustsystem/logging';
+import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustsystem/observability';
 import {
   SecurityPolicyError,
   loadSecurityPolicy,
   securityPolicySummary,
-} from '@trustos/security-policy';
-import { securityHeadersMiddleware } from '@trustos/session-security';
-import { tenantScopeMiddleware } from '@trustos/tenancy';
+} from '@trustsystem/security-policy';
+import { securityHeadersMiddleware } from '@trustsystem/session-security';
+import { tenantScopeMiddleware } from '@trustsystem/tenancy';
 import { FinancialProductAdminModule } from './financial-product-admin.module';
 
 /**

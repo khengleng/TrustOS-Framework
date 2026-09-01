@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
-import { ApiError } from '@trustos/errors';
-import type { AppConfig } from '@trustos/config';
+import { ApiError } from '@trustsystem/errors';
+import type { AppConfig } from '@trustsystem/config';
 
 /**
  * Access-token claims.
@@ -63,7 +63,7 @@ export interface IssuedToken {
  *
  * Access and refresh tokens are signed with *different* secrets so that a leak
  * of the access-token key does not let an attacker mint refresh tokens, which
- * are long-lived. `@trustos/config` refuses to boot production if the two
+ * are long-lived. `@trustsystem/config` refuses to boot production if the two
  * secrets match.
  */
 export class TokenService {

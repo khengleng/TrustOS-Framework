@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
-import { AccountService, InMemoryAccountStore } from '@trustos/accounts';
+import { CurrencyRegistry, formatMoney, money } from '@trustsystem/financial-core';
+import { AccountService, InMemoryAccountStore } from '@trustsystem/accounts';
 import { credit, debit } from './journal';
 import { Ledger } from './ledger';
 import { InMemoryLedgerStore } from './testing';
@@ -309,7 +309,8 @@ describe('accuracy at scale', () => {
      * shows up as a difference of a few units, which is exactly the size of error that survives a
      * three-way test.
      */
-    const { allocate, parseDecimal, sum, formatDecimal } = await import('@trustos/financial-core');
+    const { allocate, parseDecimal, sum, formatDecimal } =
+      await import('@trustsystem/financial-core');
 
     const parts = allocate(
       parseDecimal('1000000.00'),
@@ -321,7 +322,7 @@ describe('accuracy at scale', () => {
   });
 
   it('sums a hundred thousand small amounts exactly', async () => {
-    const { parseDecimal, sum, formatDecimal } = await import('@trustos/financial-core');
+    const { parseDecimal, sum, formatDecimal } = await import('@trustsystem/financial-core');
 
     const values = Array.from({ length: 100_000 }, () => parseDecimal('0.01'));
 

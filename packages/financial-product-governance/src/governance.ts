@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { productError, type ProductDefinition } from '@trustos/financial-product-core';
+import { productError, type ProductDefinition } from '@trustsystem/financial-product-core';
 
 /**
  * Product governance metadata, and whether it is in good standing.

@@ -1,5 +1,5 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
-import type { AppConfig } from '@trustos/config';
+import type { AppConfig } from '@trustsystem/config';
 import { PrismaService } from './prisma.service';
 import { APP_CONFIG, DATABASE_LOGGER } from './tokens';
 import type { DatabaseLogger } from './prisma-client';

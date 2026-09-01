@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { MODULE_CATALOG } from '@trustos/module-registry';
-import { CurrencyRegistry, formatDecimal, parseDecimal } from '@trustos/financial-core';
+import { MODULE_CATALOG } from '@trustsystem/module-registry';
+import { CurrencyRegistry, formatDecimal, parseDecimal } from '@trustsystem/financial-core';
 import { formatRows, style, type Output } from '../output';
 
 /**
@@ -71,7 +71,9 @@ export async function runFinancialDoctor(
     ...((packageJson?.devDependencies as Record<string, string>) ?? {}),
   };
 
-  const installed = FINANCIAL_MODULE_IDS.filter((id) => `@trustos/module-${id}` in dependencies);
+  const installed = FINANCIAL_MODULE_IDS.filter(
+    (id) => `@trustsystem/module-${id}` in dependencies,
+  );
   const findings: FinancialFinding[] = [];
 
   if (installed.length === 0) {
@@ -192,7 +194,8 @@ async function checkWiring(
       detail:
         'No limit engine is wired, so no wallet has a spending ceiling. That is a legitimate ' +
         'configuration and it is usually an omission.',
-      remediation: 'Wire LimitEngine from @trustos/limits, or record that limits are deliberate.',
+      remediation:
+        'Wire LimitEngine from @trustsystem/limits, or record that limits are deliberate.',
     });
   }
 
@@ -613,7 +616,7 @@ async function checkForFloats(
         `${hits.slice(0, 5).join(', ')}${hits.length > 5 ? ', …' : ''}. This produces a system ` +
         'that agrees with every test and disagrees with the counterparty.',
       remediation:
-        'Use parseDecimal and the Money helpers from @trustos/financial-core. See docs/financial-architecture.md.',
+        'Use parseDecimal and the Money helpers from @trustsystem/financial-core. See docs/financial-architecture.md.',
     },
   ];
 }

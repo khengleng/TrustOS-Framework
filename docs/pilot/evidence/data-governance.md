@@ -2,7 +2,7 @@
 
 ## The classifications
 
-The six the pilot specification names, registered in `@trustos/data-catalog`:
+The six the pilot specification names, registered in `@trustsystem/data-catalog`:
 
 | Entity                       | Classification      | Personal data | Purpose                                                          |
 | ---------------------------- | ------------------- | ------------- | ---------------------------------------------------------------- |
@@ -67,5 +67,5 @@ entry exists and who to ask, and not enough to learn the schema.
 Two controls agreeing, which is the point:
 
 - `obligationsFor('HIGHLY_RESTRICTED').aiInputPermitted` is `false`.
-- No feature's input allow-list in `@trustos/governance-ai-bridge` names a ledger or journal input,
+- No feature's input allow-list in `@trustsystem/governance-ai-bridge` names a ledger or journal input,
   asserted across every feature rather than the ones somebody remembered.

@@ -1,10 +1,10 @@
-# @trustos/module-export
+# @trustsystem/module-export
 
 Streaming export to CSV, JSON and NDJSON with keyset pagination and formula-injection escaping.
 
 ## What this package is
 
-A thin module wrapper. The implementation is in `@trustos/export`; this package contributes the declarations the platform needs — permissions,
+A thin module wrapper. The implementation is in `@trustsystem/export`; this package contributes the declarations the platform needs — permissions,
 routes, audit events, migrations and a health indicator — and the start/stop lifecycle.
 
 ## Installing
@@ -17,7 +17,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 ```ts
-import { ExportModule } from '@trustos/module-export/nest';
+import { ExportModule } from '@trustsystem/module-export/nest';
 
 @Module({ imports: [ExportModule.forRoot(binding)] })
 export class AppModule {}

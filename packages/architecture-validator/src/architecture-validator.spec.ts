@@ -25,7 +25,7 @@ describe('layering', () => {
   it('refuses a foundation package reaching up', () => {
     // A foundation package that imports a product one cannot be reused without the product.
     const report = validateArchitecture({
-      files: [file('packages/errors/src/x.ts', "import { A } from '@trustos/audit';\n")],
+      files: [file('packages/errors/src/x.ts', "import { A } from '@trustsystem/audit';\n")],
     });
 
     expect(report.ok).toBe(false);
@@ -34,7 +34,7 @@ describe('layering', () => {
 
   it('allows a downward dependency', () => {
     const report = validateArchitecture({
-      files: [file('packages/audit/src/x.ts', "import { ApiError } from '@trustos/errors';\n")],
+      files: [file('packages/audit/src/x.ts', "import { ApiError } from '@trustsystem/errors';\n")],
     });
 
     expect(report.violations).toEqual([]);
@@ -45,7 +45,7 @@ describe('dependencies', () => {
   it('refuses a deep import into another package', () => {
     // A deep import binds to a file layout that is not part of the contract.
     const report = validateArchitecture({
-      files: [file('packages/a/src/x.ts', "import { y } from '@trustos/b/src/internal';\n")],
+      files: [file('packages/a/src/x.ts', "import { y } from '@trustsystem/b/src/internal';\n")],
     });
 
     expect(report.violations.map((v) => v.ruleId)).toContain('no-cross-package-deep-import');
@@ -54,7 +54,7 @@ describe('dependencies', () => {
   it('refuses an import a package never declared', () => {
     // An undeclared import works in the monorepo and fails when the package is installed alone.
     const report = validateArchitecture({
-      files: [file('packages/a/src/x.ts', "import { y } from '@trustos/b';\n")],
+      files: [file('packages/a/src/x.ts', "import { y } from '@trustsystem/b';\n")],
       declaredDependencies: { a: ['errors'] },
     });
 
@@ -64,7 +64,7 @@ describe('dependencies', () => {
   it('lets a test import anything', () => {
     // Forcing a test fixture into package.json puts test-only packages into every install.
     const report = validateArchitecture({
-      files: [file('packages/a/src/x.spec.ts', "import { y } from '@trustos/b';\n")],
+      files: [file('packages/a/src/x.spec.ts', "import { y } from '@trustsystem/b';\n")],
       declaredDependencies: { a: ['errors'] },
     });
 
@@ -216,7 +216,7 @@ describe('generated code', () => {
       files: [
         file(
           'packages/errors/src/generate.ts',
-          'export const template = `\n' + "import { A } from '@trustos/audit';\n" + '`;\n',
+          'export const template = `\n' + "import { A } from '@trustsystem/audit';\n" + '`;\n',
         ),
       ],
       declaredDependencies: { errors: [] },
@@ -245,7 +245,7 @@ describe('rules', () => {
     const report = validateArchitecture({
       files: [
         file('packages/a/src/MyThing.ts', 'export const x = 1;\n'),
-        file('packages/errors/src/x.ts', "import { A } from '@trustos/audit';\n"),
+        file('packages/errors/src/x.ts', "import { A } from '@trustsystem/audit';\n"),
       ],
     });
 

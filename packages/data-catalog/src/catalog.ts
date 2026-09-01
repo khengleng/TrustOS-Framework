@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   DATA_CLASSIFICATION_LEVELS,
   combineClassifications,
   type DataClassificationLevel,
-} from '@trustos/data-classification';
+} from '@trustsystem/data-classification';
 
 /**
  * The data catalog.

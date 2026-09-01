@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/scheduler",
+  "name": "@trustsystem/scheduler",
   "version": "0.1.0",
   "description": "Cron, recurring, delayed and one-time schedules over the job runtime.",
   "license": "UNLICENSED",
@@ -18,12 +18,12 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/job-runtime": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/job-runtime": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

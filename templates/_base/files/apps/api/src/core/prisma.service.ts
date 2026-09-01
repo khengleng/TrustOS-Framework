@@ -1,14 +1,14 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from './prisma-client';
-import type { AppConfig } from '@trustos/config';
-import type { Logger } from '@trustos/logging';
+import type { AppConfig } from '@trustsystem/config';
+import type { Logger } from '@trustsystem/logging';
 
 /**
  * This application's Prisma client.
  *
  * Why the framework's `PrismaService` is not used directly
  * --------------------------------------------------------
- * `@trustos/database` ships a `PrismaService` generated from the *framework*
+ * `@trustsystem/database` ships a `PrismaService` generated from the *framework*
  * schema. It knows `User`, `Organization`, `AuditLog` and the rest — but it has
  * never heard of this product's models, at compile time or at run time: its
  * `@prisma/client` resolves inside the framework package.

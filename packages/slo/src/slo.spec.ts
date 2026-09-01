@@ -4,7 +4,7 @@ import {
   sliDefinitionSchema,
   sliMeasurementSchema,
   sufficientToJudge,
-} from '@trustos/sli';
+} from '@trustsystem/sli';
 import {
   burnAlert,
   burnRate,

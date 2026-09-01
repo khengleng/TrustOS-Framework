@@ -1,5 +1,5 @@
 /**
- * @trustos/observability
+ * @trustsystem/observability
  *
  * Health probes that work today, plus metrics and tracing seams that cost
  * nothing until a backend is adopted.

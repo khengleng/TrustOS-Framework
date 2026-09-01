@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ApiError } from '@trustos/errors';
-import type { WorkflowActor } from '@trustos/workflow-core';
-import type { WorkflowEngine } from '@trustos/workflow-runtime';
+import { ApiError } from '@trustsystem/errors';
+import type { WorkflowActor } from '@trustsystem/workflow-core';
+import type { WorkflowEngine } from '@trustsystem/workflow-runtime';
 import { ChangeRequestService } from './change-request.service';
 import { WORKFLOW_ENGINE } from '../../tokens';
 

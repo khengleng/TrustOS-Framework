@@ -11,19 +11,19 @@ import {
   toMinorUnits,
   zeroMoney,
   type Money,
-} from '@trustos/financial-core';
-import { APPROVED_BLOCKS, type BlockRegistry } from '@trustos/financial-block-registry';
+} from '@trustsystem/financial-core';
+import { APPROVED_BLOCKS, type BlockRegistry } from '@trustsystem/financial-block-registry';
 import {
   ConnectorRegistry,
   PROVIDER_INTERFACE_NAMES,
   operationsOf,
-} from '@trustos/connector-registry';
-import type { ProductDefinition } from '@trustos/financial-product-core';
+} from '@trustsystem/connector-registry';
+import type { ProductDefinition } from '@trustsystem/financial-product-core';
 import type {
   BlockExecutionInput,
   BlockHandler,
   BlockResult,
-} from '@trustos/financial-product-runtime';
+} from '@trustsystem/financial-product-runtime';
 import { SCENARIO_OUTCOMES, ScenarioPlan, type SandboxScenario } from './scenarios';
 
 /**
@@ -34,7 +34,7 @@ import { SCENARIO_OUTCOMES, ScenarioPlan, type SandboxScenario } from './scenari
  * somebody just added is a sandbox that reports a product as broken when it is the sandbox that
  * is.
  *
- * The arithmetic is real. Balances, fees and limits are computed with `@trustos/financial-core`'s
+ * The arithmetic is real. Balances, fees and limits are computed with `@trustsystem/financial-core`'s
  * `Money`, not with numbers — because the sandbox's job is to tell a product owner what their fee
  * configuration produces, and a sandbox that used floats would tell them something that disagrees
  * with production once in ten thousand transactions. The *providers* are mocked; the money is
@@ -240,7 +240,7 @@ function simulate(category: string, input: BlockExecutionInput, state: SandboxSt
        * A flat placeholder rate, applied exactly.
        *
        * The sandbox does not read the product's fee schedule — computing a fee from a schedule is
-       * `@trustos/fees`' job, and a second implementation here would be a second set of rounding
+       * `@trustsystem/fees`' job, and a second implementation here would be a second set of rounding
        * decisions. What it demonstrates is that the *plumbing* carries a fee through to the
        * ledger, which is the thing a composition can get wrong.
        */

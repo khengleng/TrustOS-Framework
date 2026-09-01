@@ -197,7 +197,7 @@ function repositoryFile(slice: Slice): GeneratedFile {
   const lines: string[] = [];
 
   lines.push("import { Injectable, Inject } from '@nestjs/common';");
-  lines.push("import { PrismaService } from '@trustos/database';");
+  lines.push("import { PrismaService } from '@trustsystem/database';");
   lines.push("import { TenantRepository } from '../../common/tenant-repository';");
   lines.push(`import type { ${slice.entity} } from './${slice.plural}.types';`);
   lines.push('');
@@ -249,7 +249,7 @@ function serviceFile(slice: Slice): GeneratedFile {
   const lines: string[] = [];
 
   lines.push("import { Inject, Injectable } from '@nestjs/common';");
-  lines.push("import type { AuditService } from '@trustos/audit';");
+  lines.push("import type { AuditService } from '@trustsystem/audit';");
   lines.push("import { AUDIT_SERVICE } from '../../tokens';");
   lines.push(`import { ${slice.entity}Repository } from './${slice.plural}.repository';`);
   lines.push(
@@ -356,8 +356,8 @@ function controllerFile(slice: Slice): GeneratedFile {
 
   lines.push("import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';");
   lines.push("import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';");
-  lines.push("import { RequirePermissions } from '@trustos/rbac';");
-  lines.push("import { OrganizationId } from '@trustos/tenancy';");
+  lines.push("import { RequirePermissions } from '@trustsystem/rbac';");
+  lines.push("import { OrganizationId } from '@trustsystem/tenancy';");
   lines.push(`import { ${slice.entity}Service } from './${slice.plural}.service';`);
   lines.push(
     `import type { ${slice.entity}, Create${slice.entity}Input, Update${slice.entity}Input } from './${slice.plural}.types';`,
@@ -455,7 +455,7 @@ function testFile(slice: Slice): GeneratedFile {
   const lines: string[] = [];
 
   lines.push("import { describe, expect, it } from 'vitest';");
-  lines.push("import { FakeModelDelegate, runInTenantContext } from '@trustos/tenancy';");
+  lines.push("import { FakeModelDelegate, runInTenantContext } from '@trustsystem/tenancy';");
   lines.push('');
   lines.push('/**');
   lines.push(` * ${slice.entity} tenant isolation.`);

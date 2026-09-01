@@ -110,7 +110,7 @@ model MenuEntry {
 }
 
 /// What a user has muted. Security notifications ignore this — see
-/// @trustos/template-sdk.
+/// @trustsystem/template-sdk.
 model MiniAppNotificationSetting {
   id             String @id @default(cuid())
   organizationId String

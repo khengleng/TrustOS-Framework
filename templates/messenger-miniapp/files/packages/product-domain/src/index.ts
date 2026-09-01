@@ -6,7 +6,7 @@
  * parent reaches every child without anybody editing the child.
  */
 
-import type { PermissionDefinition } from '@trustos/template-sdk';
+import type { PermissionDefinition } from '@trustsystem/template-sdk';
 import {
   TELEGRAM_MINIAPP_PERMISSIONS_LIST,
   TELEGRAM_MINIAPP_PERMISSIONS_ROLES,

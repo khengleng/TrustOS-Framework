@@ -50,7 +50,7 @@ export interface RoleSummary {
 
 /**
  * An audit record as returned to authorized readers. `before`/`after` are
- * already redacted server-side — see @trustos/audit.
+ * already redacted server-side — see @trustsystem/audit.
  */
 export interface AuditLogEntry {
   id: AuditLogId;

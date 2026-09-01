@@ -39,10 +39,10 @@ POST /api/payments  { merchantId, amount, currency, reference }
         ├─ 1. validate merchant   approved, in this organization
         ├─ 2. check product       bound to a version, currency matches
         ├─ 3. check wallet        exists, not frozen
-        ├─ 4. consume limit       reserve, not check — @trustos/limits
+        ├─ 4. consume limit       reserve, not check — @trustsystem/limits
         ├─ 5. mock risk rule      a declared mock, pluggable
         ├─ 6. mock provider       a declared mock, can time out
-        ├─ 7. calculate fee       @trustos/fees, from the schedule
+        ├─ 7. calculate fee       @trustsystem/fees, from the schedule
         ├─ 8. post ledger         one journal, three entries, balanced
         └─ 9. return              gross, fee, net, journal id, correlation id
 ```

@@ -1,10 +1,10 @@
-# @trustos/module-import
+# @trustsystem/module-import
 
 Bulk import with CSV and JSON parsing, per-row validation, preview, dry run, apply and rollback.
 
 ## What this package is
 
-A thin module wrapper. The implementation is in `@trustos/import`; this package contributes the declarations the platform needs — permissions,
+A thin module wrapper. The implementation is in `@trustsystem/import`; this package contributes the declarations the platform needs — permissions,
 routes, audit events, migrations and a health indicator — and the start/stop lifecycle.
 
 ## Installing
@@ -17,7 +17,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 ```ts
-import { ImportModule } from '@trustos/module-import/nest';
+import { ImportModule } from '@trustsystem/module-import/nest';
 
 @Module({ imports: [ImportModule.forRoot(binding)] })
 export class AppModule {}

@@ -3,7 +3,7 @@ import {
   moduleProviders,
   moduleServiceProvider,
   type ModuleHostBinding,
-} from '@trustos/module-sdk/nest';
+} from '@trustsystem/module-sdk/nest';
 import { workflowModule, type WorkflowInstanceModule } from '../workflow.module';
 import { WorkflowController } from './workflow.controller';
 import { WORKFLOW_SERVICE } from './tokens';

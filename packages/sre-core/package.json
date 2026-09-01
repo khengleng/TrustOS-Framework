@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/sre-core",
+  "name": "@trustsystem/sre-core",
   "version": "0.1.0",
   "description": "Services, dependencies, runbooks and maintenance windows \u2014 the registry everything else in SRE hangs from.",
   "license": "UNLICENSED",
@@ -17,7 +17,7 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

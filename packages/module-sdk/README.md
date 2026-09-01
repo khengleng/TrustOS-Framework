@@ -1,10 +1,10 @@
-# @trustos/module-sdk
+# @trustsystem/module-sdk
 
 The contract every TrustOS module implements.
 
 ```ts
 export const notificationModule = defineModule<NotificationConfig>({
-  ...moduleDeclarations('notification'), // from @trustos/module-registry
+  ...moduleDeclarations('notification'), // from @trustsystem/module-registry
   configSchema: notificationConfigSchema,
   tenantScoped: true,
   create: (context) => createNotification(context),
@@ -35,7 +35,7 @@ declarations someone had patience for.
 | Field                           | Notes                                                                                  |
 | ------------------------------- | -------------------------------------------------------------------------------------- |
 | `config`                        | Validated at construction, not at first use                                            |
-| `logger`                        | `LoggerPort` from `@trustos/logging`                                                   |
+| `logger`                        | `LoggerPort` from `@trustsystem/logging`                                               |
 | `audit`                         | A narrow port: `record` only. A module writes history and has no business reading it   |
 | `environment`                   | `development` \| `test` \| `production`                                                |
 | `clock()`                       | Injectable. Modules must not call `new Date()`                                         |
@@ -49,7 +49,7 @@ and a test without change.
 
 ## Persistence
 
-`ModuleRepository` wraps `@trustos/tenancy`, so `organizationId` is applied
+`ModuleRepository` wraps `@trustsystem/tenancy`, so `organizationId` is applied
 structurally rather than remembered per call site. It has no method that can read
 outside the active organization.
 
@@ -72,7 +72,7 @@ SLA and retry assertions. `RecordingAuditPort` collects records and offers
 
 ## NestJS
 
-`@trustos/module-sdk/nest` provides `moduleProviders`, which wires the context, the
+`@trustsystem/module-sdk/nest` provides `moduleProviders`, which wires the context, the
 instance and the lifecycle. The host names its own tokens:
 
 ```ts

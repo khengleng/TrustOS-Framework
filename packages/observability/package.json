@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/observability",
+  "name": "@trustsystem/observability",
   "version": "0.1.0",
   "description": "Health and readiness probes, request timing, and OpenTelemetry-ready interfaces.",
   "license": "UNLICENSED",
@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.1.28",
-    "@trustos/config": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/shared-types": "0.1.0"
+    "@trustsystem/config": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0"
   }
 }

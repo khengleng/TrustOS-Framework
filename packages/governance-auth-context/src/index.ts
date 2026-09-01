@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-auth-context
+ * @trustsystem/governance-auth-context
  *
  * Turns an authenticated enterprise identity into a TrustOS actor context.
  *

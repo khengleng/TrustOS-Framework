@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-adapter",
+  "name": "@trustsystem/module-adapter",
   "version": "0.1.0",
   "description": "TrustOS Provider Adapters module. The five-method provider contract with a registry, circuit-breaker-guarded calls and lifecycle management.",
   "license": "UNLICENSED",
@@ -21,14 +21,14 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/adapter-framework": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/module-sdk": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/provider-sdk": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/adapter-framework": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/module-sdk": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/provider-sdk": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

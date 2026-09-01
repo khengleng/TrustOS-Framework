@@ -1,11 +1,11 @@
-import type { AuthorizationRequest, Policy, PolicyResult } from '@trustos/authorization';
+import type { AuthorizationRequest, Policy, PolicyResult } from '@trustsystem/authorization';
 import {
   EDITABLE_STATUSES,
   EXECUTABLE_STATUSES,
   MAKER_CHECKER_FIELDS,
   FINANCIAL_PRODUCT_PERMISSIONS,
   type ProductLifecycleStatus,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 
 /**
  * Financial product separation of duties, as policies on the phase 4 authorization engine.
@@ -104,7 +104,7 @@ function isProductResource(request: AuthorizationRequest, type?: ProductResource
 /**
  * Actions that count as an approval decision.
  *
- * An explicit set rather than a suffix match, for the reason `@trustos/workflow-policy` gives:
+ * An explicit set rather than a suffix match, for the reason `@trustsystem/workflow-policy` gives:
  * `endsWith('.approve')` also catches an action somebody adds later whose meaning is different,
  * and a set that silently grows is a control nobody re-reviewed.
  */

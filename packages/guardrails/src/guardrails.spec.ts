@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { message } from '@trustos/ai-sdk';
-import { detectPii, redactPii, scanCategories } from '@trustos/content-filter';
-import { fenceUntrusted, scanForInjection, scanVariables } from '@trustos/prompt-security';
+import { message } from '@trustsystem/ai-sdk';
+import { detectPii, redactPii, scanCategories } from '@trustsystem/content-filter';
+import { fenceUntrusted, scanForInjection, scanVariables } from '@trustsystem/prompt-security';
 import { Guardrails } from './pipeline';
 
 const guards = (profiles?: unknown[]) =>

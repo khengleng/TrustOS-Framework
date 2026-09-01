@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The retrieval-augmented generation module.
  *
  * Answering from documents: chunking, embedding, a vector-store interface, hybrid search, citation checking and per-collection access control.
  *
- * A thin wrapper. The implementation is in `@trustos/embedding`, `@trustos/knowledge`, `@trustos/rag`, `@trustos/vector-store` — this
+ * A thin wrapper. The implementation is in `@trustsystem/embedding`, `@trustsystem/knowledge`, `@trustsystem/rag`, `@trustsystem/vector-store` — this
  * package contributes the declarations the platform needs (permissions, audit events, health)
  * and the start/stop lifecycle.
  *

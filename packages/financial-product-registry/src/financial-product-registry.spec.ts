@@ -3,9 +3,9 @@ import {
   collectingAuditRecorder,
   productErrorCode,
   type ProductDefinition,
-} from '@trustos/financial-product-core';
-import { merchantWalletBasicTemplate } from '@trustos/financial-product-composer';
-import { parseVariant } from '@trustos/financial-product-variants';
+} from '@trustsystem/financial-product-core';
+import { merchantWalletBasicTemplate } from '@trustsystem/financial-product-composer';
+import { parseVariant } from '@trustsystem/financial-product-variants';
 import {
   InMemoryProductStore,
   ProductRegistry,
@@ -102,7 +102,7 @@ async function registryClassification(registry: ProductRegistry, productId: stri
   const state = await registry.checkTransition(maker, productId, 'approve');
   void state;
   const record = await registry.get(maker, productId);
-  const { classifyChange } = await import('@trustos/financial-product-governance');
+  const { classifyChange } = await import('@trustsystem/financial-product-governance');
   return classifyChange(null, record.draft as ProductDefinition);
 }
 
@@ -411,7 +411,7 @@ describe('publication and activation', () => {
     await registry.transition(maker, 'merchant-wallet-basic', 'sandbox');
     await registry.transition(maker, 'merchant-wallet-basic', 'submit');
 
-    const { classifyChange } = await import('@trustos/financial-product-governance');
+    const { classifyChange } = await import('@trustsystem/financial-product-governance');
     const previous = (await registry.get(maker, 'merchant-wallet-basic')).versions[0]!.definition;
     const classification = classifyChange(previous, withExtraBlock);
     const checkers = [checkerF, checkerA, checkerB, checkerC, checkerD, checkerE];

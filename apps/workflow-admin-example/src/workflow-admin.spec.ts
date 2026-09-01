@@ -2,12 +2,12 @@ import 'reflect-metadata';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import { afterEach, describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
-import { loadConfig } from '@trustos/config';
-import { PrismaService } from '@trustos/database';
-import { createLogger } from '@trustos/logging';
-import { InMemorySecurityEventSink } from '@trustos/security-events';
-import { securityPolicySchema } from '@trustos/security-policy';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
+import { loadConfig } from '@trustsystem/config';
+import { PrismaService } from '@trustsystem/database';
+import { createLogger } from '@trustsystem/logging';
+import { InMemorySecurityEventSink } from '@trustsystem/security-events';
+import { securityPolicySchema } from '@trustsystem/security-policy';
 import { WorkflowAdminModule } from './workflow-admin.module';
 import { GUARD_ORDER } from './tokens';
 

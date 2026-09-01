@@ -1,5 +1,5 @@
 /**
- * @trustos/compatibility-engine
+ * @trustsystem/compatibility-engine
  *
  * Whether the framework, its modules, the database, the CLI, the templates and the API contract
  * can run together.

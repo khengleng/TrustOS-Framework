@@ -1,4 +1,4 @@
-import { ModuleRepository, type ModuleContext } from '@trustos/module-sdk';
+import { ModuleRepository, type ModuleContext } from '@trustsystem/module-sdk';
 import type { WorkflowConfig } from './config';
 import type { ApprovalStep } from './definition';
 

@@ -1,5 +1,5 @@
 /**
- * @trustos/content-filter
+ * @trustsystem/content-filter
  *
  * PII detection and redaction, and risk-category signals.
  *

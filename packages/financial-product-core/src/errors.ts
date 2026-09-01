@@ -1,4 +1,4 @@
-import { ApiError, isApiError, type ErrorCode } from '@trustos/errors';
+import { ApiError, isApiError, type ErrorCode } from '@trustsystem/errors';
 
 /**
  * The product layer's refusals.
@@ -41,7 +41,7 @@ export type ProductErrorCode = (typeof PRODUCT_ERROR_CODES)[number];
  * Diagnostic context attached to a refusal.
  *
  * Identifiers, rule names and lifecycle states. Never a payload, never an amount, never a
- * credential — this travels into logs and audit records, and `@trustos/errors` says plainly that
+ * credential — this travels into logs and audit records, and `@trustsystem/errors` says plainly that
  * `context` is for things a log sink may hold.
  */
 export interface ProductErrorContext {

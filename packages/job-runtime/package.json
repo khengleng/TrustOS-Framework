@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/job-runtime",
+  "name": "@trustsystem/job-runtime",
   "version": "0.1.0",
   "description": "Background jobs: queue, worker abstraction, priority, progress, timeout and history.",
   "license": "UNLICENSED",
@@ -18,12 +18,12 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/retry": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/retry": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

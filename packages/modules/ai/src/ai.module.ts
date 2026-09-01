@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The ai platform module.
  *
  * The AI gateway and everything a model call has to pass through: model registry, prompt registry, guardrails, tenant policy, routing, cost accounting and caching.
  *
- * A thin wrapper. The implementation is in `@trustos/ai-cache`, `@trustos/ai-gateway`, `@trustos/ai-observability`, `@trustos/ai-policy`, `@trustos/ai-sdk`, `@trustos/content-filter`, `@trustos/cost-monitor`, `@trustos/guardrails`, `@trustos/model-registry`, `@trustos/model-router`, `@trustos/prompt-registry`, `@trustos/prompt-security`, `@trustos/token-meter` — this
+ * A thin wrapper. The implementation is in `@trustsystem/ai-cache`, `@trustsystem/ai-gateway`, `@trustsystem/ai-observability`, `@trustsystem/ai-policy`, `@trustsystem/ai-sdk`, `@trustsystem/content-filter`, `@trustsystem/cost-monitor`, `@trustsystem/guardrails`, `@trustsystem/model-registry`, `@trustsystem/model-router`, `@trustsystem/prompt-registry`, `@trustsystem/prompt-security`, `@trustsystem/token-meter` — this
  * package contributes the declarations the platform needs (permissions, audit events, health)
  * and the start/stop lifecycle.
  *

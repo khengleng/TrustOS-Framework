@@ -1,14 +1,14 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ApiError } from '@trustos/errors';
-import { ROUTE_METADATA } from '@trustos/rbac';
+import { ApiError } from '@trustsystem/errors';
+import { ROUTE_METADATA } from '@trustsystem/rbac';
 import {
   meetsAuthenticationLevel,
   type AuthenticationLevel,
   type MfaPolicy,
-} from '@trustos/security-policy';
-import type { SecurityEventEmitter } from '@trustos/security-events';
-import { isMachineActor, type ActorContext, type ActorType } from '@trustos/shared-types';
+} from '@trustsystem/security-policy';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
+import { isMachineActor, type ActorContext, type ActorType } from '@trustsystem/shared-types';
 import { IDENTITY_METADATA } from './metadata';
 
 /**

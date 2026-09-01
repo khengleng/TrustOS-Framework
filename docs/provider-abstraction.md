@@ -104,7 +104,7 @@ anybody who can reach the network can call.
 ## What a connector is not
 
 **It is not the adapter.** The code that makes the call belongs to a deployment and is reached
-through `@trustos/adapter-framework`, which already owns the retry, the circuit breaker, the
+through `@trustsystem/adapter-framework`, which already owns the retry, the circuit breaker, the
 health check and the error translation. A second one here would be a second set of defaults.
 
 **It carries no endpoint.** The schema refuses anything URL-shaped in the id, the name or the
@@ -172,8 +172,8 @@ their providers — that is what a connector is for.
 
 To add one:
 
-1. **Write the adapter** in the deployment, implementing `@trustos/provider-sdk`'s `Provider`
-   contract, and register it with `@trustos/adapter-framework`. It owns authentication, mapping,
+1. **Write the adapter** in the deployment, implementing `@trustsystem/provider-sdk`'s `Provider`
+   contract, and register it with `@trustsystem/adapter-framework`. It owns authentication, mapping,
    timeout, retry, the circuit breaker, health and error translation.
 2. **Register the connector metadata** in that deployment's `ConnectorRegistry`, scoped to the
    organization. Name the interface and the operation; do not name a URL.
@@ -190,8 +190,8 @@ The specification asks that these be listed as extension points, so plainly:
 
 | Step                              | Where                                                                      |
 | --------------------------------- | -------------------------------------------------------------------------- |
-| The HTTP client, auth and mapping | A deployment package implementing `@trustos/provider-sdk`                  |
-| Retry, breaker, health            | Already in `@trustos/adapter-framework`. Do not write a second one         |
+| The HTTP client, auth and mapping | A deployment package implementing `@trustsystem/provider-sdk`              |
+| Retry, breaker, health            | Already in `@trustsystem/adapter-framework`. Do not write a second one     |
 | The connector record              | The deployment's `ConnectorRegistry`, tenant-scoped                        |
 | The product binding               | `providers[].connectorId` in the definition, approved as a provider change |
 | The block                         | None. `payment.execute` already exists and is what the product calls       |

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { LoggerPort } from '@trustsystem/logging';
 
 /**
  * Agent memory.
@@ -160,7 +160,7 @@ export interface MemoryServiceOptions {
   store: MemoryStore;
   policy?: MemoryPolicy;
   logger?: LoggerPort;
-  /** Detects personal data, when `rejectPii` is on. Wire `@trustos/content-filter`. */
+  /** Detects personal data, when `rejectPii` is on. Wire `@trustsystem/content-filter`. */
   detectPii?: (text: string) => { found: boolean; types: string[] };
   now?: () => Date;
   newId?: (prefix: string) => string;
@@ -254,7 +254,7 @@ export class MemoryService {
    *
    * **Substring matching, not semantic search.** That is a real limitation and it is stated rather
    * than hidden: a semantic memory search needs an embedding per memory and a vector store, which
-   * is `@trustos/rag`'s job, and wiring it here would make memory depend on the whole retrieval
+   * is `@trustsystem/rag`'s job, and wiring it here would make memory depend on the whole retrieval
    * stack. An application that needs semantic recall stores memories as a knowledge collection.
    *
    * What this does well is what memory is mostly for: the last N things about this conversation,

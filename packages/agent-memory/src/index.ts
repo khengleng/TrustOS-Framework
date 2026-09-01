@@ -1,5 +1,5 @@
 /**
- * @trustos/agent-memory
+ * @trustsystem/agent-memory
  *
  * Conversation, session, user, organization and long-term memory with expiry and scope policy.
  *

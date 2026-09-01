@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { isApiError, type ApiError } from '@trustos/errors';
+import { isApiError, type ApiError } from '@trustsystem/errors';
 import { parseOrThrow, tryParse } from './parse';
 import { emailSchema, passwordSchema, paginationQuerySchema, slugify } from './schemas';
 

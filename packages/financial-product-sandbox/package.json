@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/financial-product-sandbox",
+  "name": "@trustsystem/financial-product-sandbox",
   "version": "0.1.0",
   "description": "Isolated sandbox execution: mock providers, synthetic data and the failure scenarios a product must survive.",
   "license": "UNLICENSED",
@@ -17,13 +17,13 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/connector-registry": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-block-registry": "0.1.0",
-    "@trustos/financial-core": "0.1.0",
-    "@trustos/financial-product-core": "0.1.0",
-    "@trustos/financial-product-runtime": "0.1.0",
-    "@trustos/financial-product-versioning": "0.1.0",
+    "@trustsystem/connector-registry": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-block-registry": "0.1.0",
+    "@trustsystem/financial-core": "0.1.0",
+    "@trustsystem/financial-product-core": "0.1.0",
+    "@trustsystem/financial-product-runtime": "0.1.0",
+    "@trustsystem/financial-product-versioning": "0.1.0",
     "zod": "^3.24.1"
   }
 }

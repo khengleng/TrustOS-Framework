@@ -1,5 +1,5 @@
 /**
- * @trustos/sync
+ * @trustsystem/sync
  *
  * Pull, push and bidirectional synchronization: incremental watermarks, conflict policies, run
  * history and a conflict log.

@@ -1,5 +1,5 @@
 /**
- * @trustos/ai-gateway
+ * @trustsystem/ai-gateway
  *
  * The single path to a provider: validation, policy, routing, context fitting, budget, guardrails,
  * cache, retry, fallback, cost and audit.

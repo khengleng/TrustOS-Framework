@@ -5,16 +5,16 @@ import {
   type ExecutionInput,
   type ProductActor,
   type ProductClock,
-} from '@trustos/financial-product-core';
-import type { ProductRegistry, RegistryActor } from '@trustos/financial-product-registry';
-import type { ExecutionRecord, ProductRuntime } from '@trustos/financial-product-runtime';
+} from '@trustsystem/financial-product-core';
+import type { ProductRegistry, RegistryActor } from '@trustsystem/financial-product-registry';
+import type { ExecutionRecord, ProductRuntime } from '@trustsystem/financial-product-runtime';
 import { ProductRouteTable, type ProductRoute } from './routes';
 
 /**
  * The dispatcher.
  *
  * Headless: it takes a request shape and returns a response shape, and it knows nothing about
- * HTTP beyond a method, a path, headers and a body. That is the same choice `@trustos/template-sdk`
+ * HTTP beyond a method, a path, headers and a body. That is the same choice `@trustsystem/template-sdk`
  * makes and for the same reason — a deployment runs NestJS, another runs Fastify, and a
  * dispatcher that imported either would be unusable in the other. The framework ships the
  * decision-making; the deployment ships the twelve lines that adapt it.
@@ -268,7 +268,7 @@ function readInput(body: Readonly<Record<string, unknown>>): ExecutionInput {
  * Usage is read from the request only in the absence of a usage service.
  *
  * Defaulted to zero rather than trusted: a caller-supplied daily usage would let a client tell the
- * limit engine how much they had already spent. The deployment wires `@trustos/limits` and
+ * limit engine how much they had already spent. The deployment wires `@trustsystem/limits` and
  * supplies the real figures through the runtime.
  */
 function readUsage(_body: Readonly<Record<string, unknown>>) {

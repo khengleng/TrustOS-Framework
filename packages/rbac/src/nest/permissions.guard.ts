@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ApiError } from '@trustos/errors';
-import type { ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { ActorContext } from '@trustsystem/shared-types';
 import { ROUTE_METADATA } from './metadata';
 import { assertPermissions, assertRole, type PermissionMode } from '../permission-checker';
 

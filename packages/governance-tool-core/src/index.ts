@@ -1,7 +1,7 @@
 export * from './recorded-evidence';
 export * from './application-evidence';
 /**
- * @trustos/governance-tool-core
+ * @trustsystem/governance-tool-core
  *
  * The Governance Tool's vocabulary: internal application definitions, the three data-access
  * classes, the permission catalog and the ten console templates.

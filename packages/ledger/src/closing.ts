@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { formatMoney, type Money } from '@trustos/financial-core';
+import { ApiError } from '@trustsystem/errors';
+import { formatMoney, type Money } from '@trustsystem/financial-core';
 
 /**
  * Period closing.

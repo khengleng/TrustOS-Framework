@@ -94,8 +94,8 @@ Verified by refusing to start: setting `CORS_ORIGINS=*` in production produces
 
 ## Rate limits — partial
 
-`@trustos/session-security` implements per-route limits with the policy's rules, and
-`@trustos/api-rate-limit` implements the API gate's. Both are tested, including the concurrency
+`@trustsystem/session-security` implements per-route limits with the policy's rules, and
+`@trustsystem/api-rate-limit` implements the API gate's. Both are tested, including the concurrency
 case where a check-then-increment store would let two callers through.
 
 **Not exercised under load against a deployment.** The limits are correct in-process; whether they
@@ -107,7 +107,7 @@ for the partial rather than a defect.
 **`api-example` mounted no security headers.**
 
 Every other application in the repository mounts `securityHeadersMiddleware`. The reference API —
-the one people copy — did not, because it predates `@trustos/session-security` and was never
+the one people copy — did not, because it predates `@trustsystem/session-security` and was never
 backfilled. A live smoke test found no `X-Content-Type-Options` and no `X-Frame-Options` on any
 response.
 
@@ -142,7 +142,7 @@ Every request line carries `requestId`, `actorId`, `organizationId`, `method`, `
 No line carried a token, a secret, a password or a financial payload. The start-up line logs the
 whole configuration with `redactSecrets` applied.
 
-`@trustos/audit` redacts `before` and `after` before writing, so the audit trail cannot become the
+`@trustsystem/audit` redacts `before` and `after` before writing, so the audit trail cannot become the
 place sensitive values are kept.
 
 ## SQL injection

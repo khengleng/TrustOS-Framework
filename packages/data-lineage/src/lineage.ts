@@ -1,7 +1,10 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { combineClassifications, type DataClassificationLevel } from '@trustos/data-classification';
-import type { DataCatalog } from '@trustos/data-catalog';
+import { ApiError } from '@trustsystem/errors';
+import {
+  combineClassifications,
+  type DataClassificationLevel,
+} from '@trustsystem/data-classification';
+import type { DataCatalog } from '@trustsystem/data-catalog';
 
 /**
  * Data lineage.

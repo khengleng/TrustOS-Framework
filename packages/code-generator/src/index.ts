@@ -1,5 +1,5 @@
 /**
- * @trustos/code-generator
+ * @trustsystem/code-generator
  *
  * One entity in, a working vertical slice out: Prisma model, types, repository, service,
  * controller, isolation test and documentation.

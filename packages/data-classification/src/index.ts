@@ -1,5 +1,5 @@
 /**
- * @trustos/data-classification
+ * @trustsystem/data-classification
  *
  * The five-level classification model, and what each level **obliges**.
  *

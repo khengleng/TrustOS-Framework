@@ -4,7 +4,7 @@ import {
   EVENT_HEADER,
   SIGNATURE_HEADER,
   verifySignature,
-} from '@trustos/webhooks';
+} from '@trustsystem/webhooks';
 import { MAX_RESPONSE_BYTES, buildHeaders, deliverWebhook } from './delivery';
 
 const SECRET = 'whsec_' + 'a'.repeat(64);

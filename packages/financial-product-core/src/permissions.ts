@@ -1,7 +1,7 @@
 /**
  * Financial product permissions.
  *
- * Declared here rather than in `@trustos/rbac` for the reason `@trustos/workflow-core` gives:
+ * Declared here rather than in `@trustsystem/rbac` for the reason `@trustsystem/workflow-core` gives:
  * these are the product layer's vocabulary, and the RBAC package should not have to know that a
  * product composer exists. `registerFinancialProductPermissions` merges them into an
  * application's catalog.

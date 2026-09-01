@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ConfigurationError, loadConfig, loadDotenv } from '@trustos/config';
-import { AllExceptionsFilter } from '@trustos/errors/nest';
-import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
-import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
-import { tenantScopeMiddleware } from '@trustos/tenancy';
+import { ConfigurationError, loadConfig, loadDotenv } from '@trustsystem/config';
+import { AllExceptionsFilter } from '@trustsystem/errors/nest';
+import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustsystem/logging';
+import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustsystem/observability';
+import { tenantScopeMiddleware } from '@trustsystem/tenancy';
 import { AppModule } from './app.module';
 
 /**

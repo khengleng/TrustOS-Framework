@@ -41,7 +41,7 @@ function frameworkSchema(): string | null {
       '..',
       '..',
       'node_modules',
-      '@trustos',
+      '@trustsystem',
       'database',
       'prisma',
       'schema.prisma',
@@ -53,7 +53,7 @@ function frameworkSchema(): string | null {
       '..',
       '..',
       'node_modules',
-      '@trustos',
+      '@trustsystem',
       'database',
       'prisma',
       'schema.prisma',
@@ -141,7 +141,7 @@ describe('the copied workflow schema', () => {
 
     expect(
       drifted,
-      `Copied workflow models have drifted from @trustos/database:\n  ${drifted.join('\n  ')}\n\n` +
+      `Copied workflow models have drifted from @trustsystem/database:\n  ${drifted.join('\n  ')}\n\n` +
         'Re-copy the phase-5 section of the framework schema into ' +
         'prisma/schema/05-workflow.prisma.',
     ).toEqual([]);

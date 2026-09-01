@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { AiRequestContext } from '@trustos/ai-sdk';
+import { ApiError } from '@trustsystem/errors';
+import type { AiRequestContext } from '@trustsystem/ai-sdk';
 
 /**
  * The AI policy engine.
@@ -100,7 +100,7 @@ export const aiPolicySchema = z
     /**
      * Output in these categories must be reviewed by a person before it is returned.
      *
-     * Matches the risk categories in `@trustos/content-filter`.
+     * Matches the risk categories in `@trustsystem/content-filter`.
      */
     reviewRequiredCategories: z.array(z.string().max(60)).max(50).default([]),
 
@@ -115,7 +115,7 @@ export const aiPolicySchema = z
      *
      * Off by default. A cache keyed on prompt text can return one tenant's answer to another if
      * the key is built carelessly, and "carelessly" is the default state of a cache key. See
-     * `@trustos/ai-cache`.
+     * `@trustsystem/ai-cache`.
      */
     allowCaching: z.boolean().default(false),
   })

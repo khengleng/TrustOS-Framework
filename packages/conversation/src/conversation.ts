@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { message, type Message, type ToolDefinition } from '@trustos/ai-sdk';
-import { TokenMeter } from '@trustos/token-meter';
+import { ApiError } from '@trustsystem/errors';
+import { message, type Message, type ToolDefinition } from '@trustsystem/ai-sdk';
+import { TokenMeter } from '@trustsystem/token-meter';
 
 /**
  * Conversation state and context-window fitting.

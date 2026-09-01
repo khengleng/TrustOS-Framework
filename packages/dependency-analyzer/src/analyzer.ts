@@ -1,4 +1,4 @@
-import { compareVersions, satisfies, isBreakingChange } from '@trustos/version-manager';
+import { compareVersions, satisfies, isBreakingChange } from '@trustsystem/version-manager';
 
 /**
  * Dependency analysis over the module graph.

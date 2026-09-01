@@ -1,5 +1,5 @@
 /**
- * @trustos/api-client-generator
+ * @trustsystem/api-client-generator
  *
  * OpenAPI to a client in TypeScript, JavaScript, Dart, Python, Java or C#.
  *

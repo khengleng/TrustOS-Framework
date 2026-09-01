@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import type { DataClassification } from '@trustos/governance-tool-core';
-import { MaskPolicy } from '@trustos/governance-pii-policy';
+import { ApiError } from '@trustsystem/errors';
+import type { DataClassification } from '@trustsystem/governance-tool-core';
+import { MaskPolicy } from '@trustsystem/governance-pii-policy';
 
 /**
  * Export governance.

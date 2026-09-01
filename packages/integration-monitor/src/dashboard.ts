@@ -1,4 +1,7 @@
-import type { IntegrationHealthReport, IntegrationHealthStatus } from '@trustos/integration-health';
+import type {
+  IntegrationHealthReport,
+  IntegrationHealthStatus,
+} from '@trustsystem/integration-health';
 
 /**
  * The integration dashboard.
@@ -9,7 +12,7 @@ import type { IntegrationHealthReport, IntegrationHealthStatus } from '@trustos/
  *
  * The thing this deliberately does *not* do is store a time series. Retaining per-minute counters
  * is a monitoring backend's job, and building a bad one into the framework would guarantee
- * everybody had a bad one. `@trustos/observability` already exposes the metrics seam; point it at
+ * everybody had a bad one. `@trustsystem/observability` already exposes the metrics seam; point it at
  * something that graphs.
  */
 

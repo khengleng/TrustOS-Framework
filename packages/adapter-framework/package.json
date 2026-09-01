@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/adapter-framework",
+  "name": "@trustsystem/adapter-framework",
   "version": "0.1.0",
   "description": "The provider registry and lifecycle: registration, resolution, health roll-up.",
   "license": "UNLICENSED",
@@ -18,12 +18,12 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/observability": "0.1.0",
-    "@trustos/provider-sdk": "0.1.0",
-    "@trustos/retry": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/observability": "0.1.0",
+    "@trustsystem/provider-sdk": "0.1.0",
+    "@trustsystem/retry": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

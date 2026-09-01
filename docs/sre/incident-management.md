@@ -4,7 +4,7 @@ An append-only timeline, a closing gate, and a severity nothing derives.
 
 ## Severity is never derived
 
-`@trustos/incident-management` will not guess a severity from symptoms. Severity is a judgement
+`@trustsystem/incident-management` will not guess a severity from symptoms. Severity is a judgement
 about impact, and a rule that derived it would be wrong often enough that people would start
 overriding it — at which point the recorded severity means nothing.
 

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { DEFAULT_SLA_MS, ReviewService } from './review';
 import { InMemoryReviewStore } from './testing';
 

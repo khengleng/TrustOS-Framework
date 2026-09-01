@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
-import { HealthRegistry } from '@trustos/observability';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
+import { HealthRegistry } from '@trustsystem/observability';
 import type { ModuleAuditPort } from './context';
 import { alwaysHealthy, moduleHealthIndicator } from './health';
 

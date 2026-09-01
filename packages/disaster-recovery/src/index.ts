@@ -1,5 +1,5 @@
 /**
- * @trustos/disaster-recovery
+ * @trustsystem/disaster-recovery
  *
  * DR plans: trigger, decision authority and deputy, procedure, communication, validation,
  * failback and evidence.

@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
 import {
   addMoney,
   formatMoney,
@@ -12,7 +12,7 @@ import {
   zeroMoney,
   type CurrencyRegistry,
   type Money,
-} from '@trustos/financial-core';
+} from '@trustsystem/financial-core';
 import {
   assertBalanced,
   journalEntrySchema,
@@ -92,7 +92,7 @@ export interface AccountBalance {
   currency: string;
   debits: Money;
   credits: Money;
-  /** debits − credits. Its meaning depends on the account's normal side — see `@trustos/accounts`. */
+  /** debits − credits. Its meaning depends on the account's normal side — see `@trustsystem/accounts`. */
   balance: Money;
   entryCount: number;
 }
@@ -573,7 +573,7 @@ export class Ledger {
    *
    * `debits − credits`, which is positive for an asset or expense account with a normal balance
    * and negative for a liability, equity or revenue one. The interpretation belongs to
-   * `@trustos/accounts`, which knows each account's normal side; the ledger reports the raw
+   * `@trustsystem/accounts`, which knows each account's normal side; the ledger reports the raw
    * arithmetic and does not guess.
    */
   async balances(input: Parameters<LedgerStore['balances']>[0]): Promise<AccountBalance[]> {

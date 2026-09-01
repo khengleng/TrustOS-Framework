@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { isSameActor } from '@trustos/workflow-core';
+import { ApiError } from '@trustsystem/errors';
+import { isSameActor } from '@trustsystem/workflow-core';
 
 /**
  * The approval and case experience.
@@ -218,7 +218,7 @@ export function approvalProgress(view: ApprovalView): {
  * The case view.
  *
  * The same shape and the same rule: a view, with a version, and no authoritative state. Cases are
- * `@trustos/case-management`'s; this describes what a console renders.
+ * `@trustsystem/case-management`'s; this describes what a console renders.
  */
 export const caseViewSchema = z
   .object({

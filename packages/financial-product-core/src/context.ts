@@ -10,7 +10,7 @@ import { z } from 'zod';
  * The ports are the deliberate hole in the middle of this layer. The framework ships **no**
  * event bus binding, **no** audit sink, **no** metric exporter and **no** clock — a deployment
  * wires the ones it already has. That is not minimalism: an event publisher shipped here would
- * be a second one beside `@trustos/event-bus`, and the two would have different delivery
+ * be a second one beside `@trustsystem/event-bus`, and the two would have different delivery
  * guarantees while looking identical at the call site.
  */
 
@@ -160,7 +160,7 @@ export interface ProductEvent {
  * Where events go.
  *
  * A port, and the framework ships only an in-memory implementation for tests. A deployment wires
- * `@trustos/event-bus`. Publishing is `void` rather than `Promise` at the call sites that matter:
+ * `@trustsystem/event-bus`. Publishing is `void` rather than `Promise` at the call sites that matter:
  * the runtime records the event as part of its own step record first, so a publisher that throws
  * cannot lose the fact that the step happened.
  */
@@ -192,7 +192,7 @@ export interface ProductAuditRecorder {
  * Metrics.
  *
  * Bounded, low-cardinality dimensions only — the type says so, and
- * `@trustos/financial-product-observability` enforces it. A metric dimension carrying a customer
+ * `@trustsystem/financial-product-observability` enforces it. A metric dimension carrying a customer
  * id produces a time series per customer, which is how a metrics bill becomes the largest line
  * in an infrastructure budget and how tenant data ends up somewhere nobody classified.
  */

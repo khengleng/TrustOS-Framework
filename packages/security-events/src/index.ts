@@ -1,5 +1,5 @@
 /**
- * @trustos/security-events
+ * @trustsystem/security-events
  *
  * Structured security events: what happened to the perimeter.
  *

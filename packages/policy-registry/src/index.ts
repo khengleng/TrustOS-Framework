@@ -1,5 +1,5 @@
 /**
- * @trustos/policy-registry
+ * @trustsystem/policy-registry
  *
  * Policies as versioned, immutable documents.
  *
@@ -9,7 +9,7 @@
  * "restricted exports need two approvals here and one there". Configuration with consequences,
  * which needs versions, approval and a decision log.
  *
- * The condition language is `@trustos/workflow-definition`'s predicate tree, imported whole. A
+ * The condition language is `@trustsystem/workflow-definition`'s predicate tree, imported whole. A
  * third condition language in this repository would be a third place to get it wrong.
  *
  * The default effect is `deny` and the schema refuses anything else. A policy whose default is

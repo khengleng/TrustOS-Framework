@@ -30,7 +30,7 @@ import { GOVERNANCE_PERMISSIONS } from './permissions';
 /**
  * Canonical resource ids.
  *
- * Shared with `@trustos/governance-resource-policy`, which classifies them. Two lists that had to
+ * Shared with `@trustsystem/governance-resource-policy`, which classifies them. Two lists that had to
  * agree by convention would disagree within a month, and the symptom would be a console whose
  * data source resolves to nothing.
  */
@@ -853,7 +853,7 @@ export function platformAdminConsole(): InternalApplication {
       /*
        * Key *metadata*. Never a key.
        *
-       * `@trustos/api-keys` stores a prefix, a hash and metadata, and there is no code path that
+       * `@trustsystem/api-keys` stores a prefix, a hash and metadata, and there is no code path that
        * produces the plaintext after creation — so there is nothing here to expose even if
        * somebody added a field for it.
        */
@@ -974,7 +974,7 @@ export function approvalWorkbench(): InternalApplication {
     /*
      * These are **gateway** operations, not the Governance Tool's own routes.
      *
-     * Each one is declared in `@trustos/governance-tool-integration`'s operation
+     * Each one is declared in `@trustsystem/governance-tool-integration`'s operation
      * catalog, and an integration test asserts that every path a console calls is
      * declared there. That is a two-sided contract, which is worth stating because I
      * changed one side of it and the test caught me: pointing these at the Governance

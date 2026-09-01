@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { ApiError } from '@trustos/errors';
-import type { OrganizationId, UserId } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { OrganizationId, UserId } from '@trustsystem/shared-types';
 
 /**
  * The tenant a unit of work belongs to.
@@ -26,7 +26,7 @@ export interface TenantContext {
  *
  * So the middleware opens an empty holder for the whole request, and the guard
  * fills it in once the tenant is known. Everything downstream reads the same
- * object. (This is the same shape `setRequestActor` uses in @trustos/logging,
+ * object. (This is the same shape `setRequestActor` uses in @trustsystem/logging,
  * for the same reason.)
  */
 interface TenantContextHolder {

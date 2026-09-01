@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   DATA_CLASSIFICATION_LEVELS,
   classificationRank,
   type DataClassificationLevel,
-} from '@trustos/data-classification';
-import type { DataCatalog } from '@trustos/data-catalog';
+} from '@trustsystem/data-classification';
+import type { DataCatalog } from '@trustsystem/data-catalog';
 
 /**
  * Who may reach governed data, for what purpose, and the review that proves it.

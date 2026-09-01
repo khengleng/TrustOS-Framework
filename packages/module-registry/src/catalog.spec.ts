@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { environmentPrefix } from '@trustos/module-sdk';
+import { environmentPrefix } from '@trustsystem/module-sdk';
 import { MODULE_CATALOG, assertCatalogConsistency } from './catalog';
 import { BUILT_IN_MODULE_IDS } from './schema';
 import {
@@ -174,7 +174,7 @@ describe('assertCatalogConsistency', () => {
     if (!base) throw new Error('catalog is empty');
     const clone = structuredClone(base);
     clone.metadata.id = 'other';
-    clone.packaging.packageName = '@trustos/module-other';
+    clone.packaging.packageName = '@trustsystem/module-other';
     clone.packaging.directory = 'packages/modules/other';
 
     // The danger is not the duplicate itself: it is that one role grant would
@@ -200,14 +200,14 @@ describe('assertCatalogConsistency', () => {
     const right = structuredClone(base);
 
     left.metadata.id = 'left';
-    left.packaging.packageName = '@trustos/module-left';
+    left.packaging.packageName = '@trustsystem/module-left';
     left.packaging.directory = 'packages/modules/left';
     left.dependencies = [
       { moduleId: 'right', versionRange: '^0.1.0', optional: false, reason: 'x' },
     ];
 
     right.metadata.id = 'right';
-    right.packaging.packageName = '@trustos/module-right';
+    right.packaging.packageName = '@trustsystem/module-right';
     right.packaging.directory = 'packages/modules/right';
     right.permissions = [];
     right.routes = [];

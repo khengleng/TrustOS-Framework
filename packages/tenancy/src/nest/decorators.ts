@@ -1,5 +1,5 @@
 import { ExecutionContext, createParamDecorator } from '@nestjs/common';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import type { TenantContext } from '../tenant-context';
 
 /**

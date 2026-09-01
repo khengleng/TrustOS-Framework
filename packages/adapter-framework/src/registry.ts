@@ -1,13 +1,18 @@
-import { ApiError } from '@trustos/errors';
-import type { LoggerPort } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
-import { CircuitBreakerRegistry, RETRY_PRESETS, withRetry, type RetryPolicy } from '@trustos/retry';
+import { ApiError } from '@trustsystem/errors';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
+import {
+  CircuitBreakerRegistry,
+  RETRY_PRESETS,
+  withRetry,
+  type RetryPolicy,
+} from '@trustsystem/retry';
 import type {
   Provider,
   ProviderCapabilities,
   ProviderConfigurationView,
   ProviderHealth,
-} from '@trustos/provider-sdk';
+} from '@trustsystem/provider-sdk';
 
 /**
  * The provider registry.

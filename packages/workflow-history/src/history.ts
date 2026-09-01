@@ -1,11 +1,11 @@
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
 import {
   crossTenant,
   type WorkflowEventRecord,
   type WorkflowEventType,
-} from '@trustos/workflow-core';
-import type { ActorType } from '@trustos/shared-types';
+} from '@trustsystem/workflow-core';
+import type { ActorType } from '@trustsystem/shared-types';
 
 /**
  * Workflow history.
@@ -38,7 +38,7 @@ import type { ActorType } from '@trustos/shared-types';
  * licence. The primary control is that callers pass ids and states rather than payloads;
  * this catches the case where somebody passes an instance-data object wholesale.
  *
- * Deliberately not reusing `redactSecrets` from `@trustos/security-policy`: that
+ * Deliberately not reusing `redactSecrets` from `@trustsystem/security-policy`: that
  * function's allow-list is tuned for security events, and history has different fields
  * it must keep — `stepKey`, `fromState`, `approverKey`. A shared list would have to
  * satisfy both and would end up satisfying neither.

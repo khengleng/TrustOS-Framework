@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { isValidVersion, satisfies } from '@trustos/version-manager';
+import { ApiError } from '@trustsystem/errors';
+import { isValidVersion, satisfies } from '@trustsystem/version-manager';
 
 /**
  * Licensing and feature entitlements.

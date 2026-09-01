@@ -143,7 +143,7 @@ question a security review asks first.
 ## 6. Writing one
 
 ```ts
-import type { PluginManifest } from '@trustos/plugin-framework';
+import type { PluginManifest } from '@trustsystem/plugin-framework';
 
 export const manifest: PluginManifest = {/* as above */};
 

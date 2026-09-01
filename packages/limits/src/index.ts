@@ -1,5 +1,5 @@
 /**
- * @trustos/limits
+ * @trustsystem/limits
  *
  * The limit engine: per-transaction, daily, monthly, rolling, wallet and organization limits.
  *

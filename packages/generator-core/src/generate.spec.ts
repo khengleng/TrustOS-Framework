@@ -347,13 +347,13 @@ describe('generateApplication', () => {
 describe('buildFrameworkDependencies', () => {
   it('uses a version range by default', () => {
     const deps = buildFrameworkDependencies('0.1.0');
-    expect(deps['@trustos/config']).toBe('^0.1.0');
-    expect(Object.keys(deps)).toContain('@trustos/tenancy');
+    expect(deps['@trustsystem/config']).toBe('^0.1.0');
+    expect(Object.keys(deps)).toContain('@trustsystem/tenancy');
   });
 
   it('links to a local checkout when a framework path is given', () => {
     const deps = buildFrameworkDependencies('0.1.0', '/opt/trustos');
-    expect(deps['@trustos/config']).toBe('file:/opt/trustos/packages/config');
+    expect(deps['@trustsystem/config']).toBe('file:/opt/trustos/packages/config');
   });
 
   it('covers every package a generated application imports', () => {
@@ -371,7 +371,7 @@ describe('buildFrameworkDependencies', () => {
       'audit',
       'shared-types',
     ]) {
-      expect(deps).toContain(`@trustos/${name}`);
+      expect(deps).toContain(`@trustsystem/${name}`);
     }
   });
 });

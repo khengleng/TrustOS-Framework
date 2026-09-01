@@ -1,15 +1,15 @@
 import { Body, Controller, Get, Inject, Optional, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { HumanActorsOnly } from '@trustos/identity/nest';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
-import { ApiError } from '@trustos/errors';
-import { GOVERNANCE_PERMISSIONS } from '@trustos/governance-tool-core';
-import { toWorkflowActor } from '@trustos/workflow-core';
-import type { ApprovalWorkbenchService } from '@trustos/approval-workbench';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { HumanActorsOnly } from '@trustsystem/identity/nest';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
+import { ApiError } from '@trustsystem/errors';
+import { GOVERNANCE_PERMISSIONS } from '@trustsystem/governance-tool-core';
+import { toWorkflowActor } from '@trustsystem/workflow-core';
+import type { ApprovalWorkbenchService } from '@trustsystem/approval-workbench';
 import { APPROVAL_WORKBENCH } from '../tokens';
 
 /**

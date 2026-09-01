@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import type { AppConfig } from '@trustos/config';
-import { ApiError } from '@trustos/errors';
+import type { AppConfig } from '@trustsystem/config';
+import { ApiError } from '@trustsystem/errors';
 import type {
   AuthResponse,
   OrganizationSummary,
   TokenPair,
   UserSummary,
-} from '@trustos/shared-types';
-import { emailSchema, parseOrThrow, passwordSchema } from '@trustos/validation';
+} from '@trustsystem/shared-types';
+import { emailSchema, parseOrThrow, passwordSchema } from '@trustsystem/validation';
 import { NOOP_EVENT_SINK, type AuthEvent, type AuthEventSink } from './events';
 import { hashPassword, needsRehash, verifyPassword, verifyPasswordAgainstDummy } from './password';
 import { TokenService, hashRefreshToken } from './tokens';

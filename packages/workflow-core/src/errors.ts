@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import type { WorkflowAction, WorkflowState } from './entities';
 
 /**

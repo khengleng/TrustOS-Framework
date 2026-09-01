@@ -1,11 +1,11 @@
-# AGENTS.md — @trustos/module-reconciliation
+# AGENTS.md — @trustsystem/module-reconciliation
 
 Internal and external reconciliation with tolerance rules, an exception queue and resolution history.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/financial-core`, `@trustos/reconciliation` does the work.
+   wires; `@trustsystem/financial-core`, `@trustsystem/reconciliation` does the work.
 2. **Never modify a posted journal.** A correction is a reversal or an adjustment, both of which
    post a new journal and leave the original standing.
 3. **Never use floating-point arithmetic for money.** Every amount is a fixed-point decimal, and

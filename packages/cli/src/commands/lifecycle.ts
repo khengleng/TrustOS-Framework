@@ -1,7 +1,11 @@
-import { PluginRegistry, type InstalledPlugin } from '@trustos/plugin-framework';
-import { runQualityGates, type GateInput } from '@trustos/quality-gates';
-import { ReleaseManager } from '@trustos/release-manager';
-import { generateCliDocs, generateIndex, type DocumentPage } from '@trustos/documentation-center';
+import { PluginRegistry, type InstalledPlugin } from '@trustsystem/plugin-framework';
+import { runQualityGates, type GateInput } from '@trustsystem/quality-gates';
+import { ReleaseManager } from '@trustsystem/release-manager';
+import {
+  generateCliDocs,
+  generateIndex,
+  type DocumentPage,
+} from '@trustsystem/documentation-center';
 import type { Output } from '../output';
 import { formatRows, style } from '../output';
 

@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-simulator
+ * @trustsystem/financial-product-simulator
  *
  * Deterministic simulation at volume: path distribution, fee and limit totals, SLA timing and
  * exception counts.

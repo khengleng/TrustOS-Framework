@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { redactSecrets } from '@trustos/security-policy';
-import type { ActorType } from '@trustos/shared-types';
+import { redactSecrets } from '@trustsystem/security-policy';
+import type { ActorType } from '@trustsystem/shared-types';
 
 /**
  * Security events.

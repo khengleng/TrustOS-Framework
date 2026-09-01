@@ -3,7 +3,7 @@ import type { AuthRequestMeta } from './ports';
 /**
  * Authentication events.
  *
- * The auth package does not depend on @trustos/audit — it emits events and
+ * The auth package does not depend on @trustsystem/audit — it emits events and
  * lets the application decide where they go. That keeps the dependency graph
  * acyclic and means an auth failure cannot be caused by an audit failure.
  */

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/payments",
+  "name": "@trustsystem/payments",
   "version": "0.1.0",
   "description": "Payment requests: expiry, status, callbacks, idempotency and provider references. No providers.",
   "license": "UNLICENSED",
@@ -17,12 +17,12 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/audit": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-core": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/transactions": "0.1.0",
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-core": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/transactions": "0.1.0",
     "zod": "^3.24.1"
   }
 }

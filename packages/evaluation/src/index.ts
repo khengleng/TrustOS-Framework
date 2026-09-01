@@ -1,5 +1,5 @@
 /**
- * @trustos/evaluation
+ * @trustsystem/evaluation
  *
  * Scoring AI output: groundedness, relevance, citations, schema compliance, safety, cost, latency.
  *

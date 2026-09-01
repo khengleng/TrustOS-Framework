@@ -1,18 +1,18 @@
 import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
 import {
   GOVERNANCE_PERMISSIONS,
   type Environment,
   type InternalAppCatalog,
-} from '@trustos/governance-tool-core';
-import type { GovernanceActorContext } from '@trustos/governance-auth-context';
-import type { GovernanceToolRuntime } from '@trustos/governance-tool-runtime';
-import { requireOperation } from '@trustos/governance-tool-integration';
+} from '@trustsystem/governance-tool-core';
+import type { GovernanceActorContext } from '@trustsystem/governance-auth-context';
+import type { GovernanceToolRuntime } from '@trustsystem/governance-tool-runtime';
+import { requireOperation } from '@trustsystem/governance-tool-integration';
 import { APP_CATALOG, GOVERNANCE_RUNTIME } from '../tokens';
 
 /**
@@ -30,7 +30,7 @@ import { APP_CATALOG, GOVERNANCE_RUNTIME } from '../tokens';
  * declaration is the thing security reviewed.
  *
  * The eight `/internal/v1/*` namespaces the specification lists are the *action* paths, declared
- * in `@trustos/governance-tool-integration` and dispatched by `execute` below. They are not
+ * in `@trustsystem/governance-tool-integration` and dispatched by `execute` below. They are not
  * separate controllers, because a namespace with its own controller is a namespace that
  * eventually grows its own auth.
  */

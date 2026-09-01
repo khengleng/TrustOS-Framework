@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-feature-flags",
+  "name": "@trustsystem/module-feature-flags",
   "version": "0.1.0",
   "description": "TrustOS Feature Flags module. Boolean flags with percentage rollout, tenant overrides, environment scoping and expiry.",
   "license": "UNLICENSED",
@@ -21,13 +21,13 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/module-sdk": "0.1.0",
-    "@trustos/rbac": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
-    "@trustos/tenancy": "0.1.0",
-    "@trustos/validation": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/module-sdk": "0.1.0",
+    "@trustsystem/rbac": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
+    "@trustsystem/tenancy": "0.1.0",
+    "@trustsystem/validation": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

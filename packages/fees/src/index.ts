@@ -1,5 +1,5 @@
 /**
- * @trustos/fees
+ * @trustsystem/fees
  *
  * The fee engine: flat, percentage, tiered, capped, tax, discount and promotional fees.
  *

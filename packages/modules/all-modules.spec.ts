@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createTestModuleContext, type TrustosModule } from '@trustos/module-sdk';
+import { createTestModuleContext, type TrustosModule } from '@trustsystem/module-sdk';
 import {
   BUILT_IN_MODULE_IDS,
   MODULE_CATALOG,
@@ -7,30 +7,30 @@ import {
   moduleIds,
   requireModule,
   resolveInstallOrder,
-} from '@trustos/module-registry';
-import { documentModule } from '@trustos/module-document';
-import { featureFlagsModule } from '@trustos/module-feature-flags';
-import { fileStorageModule } from '@trustos/module-file-storage';
-import { notificationModule } from '@trustos/module-notification';
-import { reportingModule } from '@trustos/module-reporting';
-import { searchModule } from '@trustos/module-search';
-import { workflowModule } from '@trustos/module-workflow';
-import { adapterModule } from '@trustos/module-adapter';
-import { eventsModule } from '@trustos/module-events';
-import { exportModule } from '@trustos/module-export';
-import { importModule } from '@trustos/module-import';
-import { jobsModule } from '@trustos/module-jobs';
-import { schedulerModule } from '@trustos/module-scheduler';
-import { syncModule } from '@trustos/module-sync';
-import { webhookModule } from '@trustos/module-webhook';
-import { agentModule } from '@trustos/module-agent';
-import { aiModule } from '@trustos/module-ai';
-import { ragModule } from '@trustos/module-rag';
-import { ledgerModule } from '@trustos/module-ledger';
-import { reconciliationModule } from '@trustos/module-reconciliation';
-import { settlementModule } from '@trustos/module-settlement';
-import { transactionsModule } from '@trustos/module-transactions';
-import { walletModule } from '@trustos/module-wallet';
+} from '@trustsystem/module-registry';
+import { documentModule } from '@trustsystem/module-document';
+import { featureFlagsModule } from '@trustsystem/module-feature-flags';
+import { fileStorageModule } from '@trustsystem/module-file-storage';
+import { notificationModule } from '@trustsystem/module-notification';
+import { reportingModule } from '@trustsystem/module-reporting';
+import { searchModule } from '@trustsystem/module-search';
+import { workflowModule } from '@trustsystem/module-workflow';
+import { adapterModule } from '@trustsystem/module-adapter';
+import { eventsModule } from '@trustsystem/module-events';
+import { exportModule } from '@trustsystem/module-export';
+import { importModule } from '@trustsystem/module-import';
+import { jobsModule } from '@trustsystem/module-jobs';
+import { schedulerModule } from '@trustsystem/module-scheduler';
+import { syncModule } from '@trustsystem/module-sync';
+import { webhookModule } from '@trustsystem/module-webhook';
+import { agentModule } from '@trustsystem/module-agent';
+import { aiModule } from '@trustsystem/module-ai';
+import { ragModule } from '@trustsystem/module-rag';
+import { ledgerModule } from '@trustsystem/module-ledger';
+import { reconciliationModule } from '@trustsystem/module-reconciliation';
+import { settlementModule } from '@trustsystem/module-settlement';
+import { transactionsModule } from '@trustsystem/module-transactions';
+import { walletModule } from '@trustsystem/module-wallet';
 
 /**
  * Module registration, validated across the whole set.

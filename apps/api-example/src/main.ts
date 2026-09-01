@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustos/config';
-import { AllExceptionsFilter } from '@trustos/errors/nest';
-import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustos/logging';
-import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustos/observability';
-import { SecurityPolicyError, loadSecurityPolicy } from '@trustos/security-policy';
-import { securityHeadersMiddleware } from '@trustos/session-security';
-import { tenantScopeMiddleware } from '@trustos/tenancy';
+import { ConfigurationError, loadConfig, loadDotenv, redactSecrets } from '@trustsystem/config';
+import { AllExceptionsFilter } from '@trustsystem/errors/nest';
+import { NestPinoLogger, createLogger, requestContextMiddleware } from '@trustsystem/logging';
+import { InMemoryMetricsRecorder, recordHttpRequest } from '@trustsystem/observability';
+import { SecurityPolicyError, loadSecurityPolicy } from '@trustsystem/security-policy';
+import { securityHeadersMiddleware } from '@trustsystem/session-security';
+import { tenantScopeMiddleware } from '@trustsystem/tenancy';
 import { AppModule } from './app.module';
 
 /**
@@ -31,7 +31,7 @@ async function bootstrap(): Promise<void> {
   /*
    * The security policy, validated before a port is bound.
    *
-   * This application predates `@trustos/security-policy` and went without it until a smoke test
+   * This application predates `@trustsystem/security-policy` and went without it until a smoke test
    * against a running instance found no `X-Content-Type-Options` and no `X-Frame-Options` on any
    * response. Every other application in the repository mounts the headers; the reference API —
    * the one people copy — did not.

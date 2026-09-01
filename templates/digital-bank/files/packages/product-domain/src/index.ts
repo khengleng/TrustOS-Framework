@@ -6,7 +6,7 @@
  * reaches every child without anybody editing the child.
  */
 
-import type { PermissionDefinition } from '@trustos/template-sdk';
+import type { PermissionDefinition } from '@trustsystem/template-sdk';
 import { WALLET_PERMISSIONS_LIST, WALLET_PERMISSIONS_ROLES } from './wallet';
 import { DIGITAL_BANK_PERMISSIONS_LIST, DIGITAL_BANK_PERMISSIONS_ROLES } from './digital-bank';
 

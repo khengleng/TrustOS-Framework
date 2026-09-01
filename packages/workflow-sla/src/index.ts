@@ -1,5 +1,5 @@
 /**
- * @trustos/workflow-sla
+ * @trustsystem/workflow-sla
  *
  * SLA rules, the business-calendar abstraction, and SLA state.
  *

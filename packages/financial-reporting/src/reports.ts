@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { LoggerPort } from '@trustsystem/logging';
 import {
   addMoney,
   divide,
@@ -12,9 +12,14 @@ import {
   zeroMoney,
   type CurrencyRegistry,
   type Money,
-} from '@trustos/financial-core';
-import { NORMAL_SIDE, normalBalance, type Account, type AccountService } from '@trustos/accounts';
-import type { Ledger } from '@trustos/ledger';
+} from '@trustsystem/financial-core';
+import {
+  NORMAL_SIDE,
+  normalBalance,
+  type Account,
+  type AccountService,
+} from '@trustsystem/accounts';
+import type { Ledger } from '@trustsystem/ledger';
 
 /**
  * Financial reports.
@@ -314,7 +319,7 @@ function parseAmount(value: string): { units: bigint; scale: number } {
  *
  * **Every cell is escaped against formula injection.** A value beginning `=`, `+`, `-` or `@` is a
  * formula that executes when the file is opened, and a financial export is the one file guaranteed
- * to be opened in a spreadsheet. This is the same rule as `@trustos/export` and it is repeated
+ * to be opened in a spreadsheet. This is the same rule as `@trustsystem/export` and it is repeated
  * here rather than imported, because a report that skipped it would be a report somebody opens.
  */
 export function toCsv(

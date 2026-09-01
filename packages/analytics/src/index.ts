@@ -1,5 +1,5 @@
 /**
- * @trustos/analytics
+ * @trustsystem/analytics
  *
  * Summaries over collected telemetry: adoption, module popularity, upgrade uptake, error trends
  * and latency percentiles.

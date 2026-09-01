@@ -1,6 +1,6 @@
 import { SetMetadata, type CustomDecorator } from '@nestjs/common';
-import type { AuthenticationLevel } from '@trustos/security-policy';
-import type { ActorType } from '@trustos/shared-types';
+import type { AuthenticationLevel } from '@trustsystem/security-policy';
+import type { ActorType } from '@trustsystem/shared-types';
 import { IDENTITY_METADATA } from './metadata';
 
 /**

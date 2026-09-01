@@ -28,7 +28,7 @@ npm run build:packages
 node packages/cli/bin/trustos.js --help
 
 # …or link it onto your PATH:
-npm link -w @trustos/cli
+npm link -w @trustsystem/cli
 trustos --help
 ```
 
@@ -39,14 +39,14 @@ where the framework lives:
 trustos new merchant --framework-path /path/to/trustos-framework
 ```
 
-That rewrites the `@trustos/*` dependencies to `file:` links so the generated
+That rewrites the `@trustsystem/*` dependencies to `file:` links so the generated
 project installs and builds immediately. Without it, `npm install` in the
-generated project fails to resolve `@trustos/config`.
+generated project fails to resolve `@trustsystem/config`.
 
 ### From npm (once published)
 
 ```bash
-npm install -g @trustos/cli
+npm install -g @trustsystem/cli
 trustos new merchant
 ```
 
@@ -135,7 +135,7 @@ trustos new merchant \
 | `-y, --yes`                             | Never prompt                                          |
 | `--target-dir <path>`                   | Where to create the project directory                 |
 | `--templates-root <path>`               | Use a different templates directory                   |
-| `--framework-path <path>`               | Link `@trustos/*` to a local framework checkout       |
+| `--framework-path <path>`               | Link `@trustsystem/*` to a local framework checkout   |
 | `--generated-at <iso>`                  | Fix the generation timestamp, for reproducible output |
 
 `--dry-run` runs the identical code path as a real run and stops before the
@@ -215,7 +215,7 @@ Ten checks per template, exiting non-zero if any fails:
 | deployment configuration   | the template claims Railway support but ships no `railway.toml`                                                     |
 | no unresolved placeholders | a template references a variable the manifest does not declare                                                      |
 | no committed secrets       | a private key, cloud token or hardcoded JWT secret is present                                                       |
-| valid package references   | the template imports a `@trustos/*` package it did not declare                                                      |
+| valid package references   | the template imports a `@trustsystem/*` package it did not declare                                                  |
 
 Warnings are reported but do not fail the command.
 
@@ -335,18 +335,18 @@ Exit status is `0` unless something `FAIL`ed.
 
 ## Troubleshooting
 
-| Symptom                                                              | Cause and fix                                                                                                                      |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `Could not locate the templates directory`                           | Running outside a framework checkout. Pass `--templates-root`, or run from the repository.                                         |
-| `npm error could not resolve @trustos/config` in a generated project | The packages are unpublished. Regenerate with `--framework-path /path/to/trustos-framework`, or add the links by hand.             |
-| `Cannot find module '@prisma/client'` in a generated project         | `postinstall` did not run. Use `npm install`, not `npm install --ignore-scripts`.                                                  |
-| `Directory … already exists and is not empty`                        | Choose another name, remove the directory, or pass `--force`.                                                                      |
-| `Invalid application name`                                           | Lowercase letters, digits and single hyphens only, e.g. `merchant-portal`.                                                         |
-| `Template … failed to render: "x" not defined`                       | A template references an undeclared variable. Add it to the manifest's `requiredVariables`, then `trustos validate-template <id>`. |
-| `needs framework 0.2.0 or newer`                                     | The template is newer than this checkout. Pull the framework.                                                                      |
-| Generation created the project in the wrong place                    | `--target-dir` sets the parent directory; the project is created inside it.                                                        |
-| The CLI hangs with no prompt                                         | stdin is not a TTY and `--yes` was not passed. Add `--yes`.                                                                        |
-| `Generation failed and was rolled back`                              | Something could not be written — usually a permissions problem. Nothing was left behind; fix the cause and re-run.                 |
+| Symptom                                                                  | Cause and fix                                                                                                                      |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `Could not locate the templates directory`                               | Running outside a framework checkout. Pass `--templates-root`, or run from the repository.                                         |
+| `npm error could not resolve @trustsystem/config` in a generated project | The packages are unpublished. Regenerate with `--framework-path /path/to/trustos-framework`, or add the links by hand.             |
+| `Cannot find module '@prisma/client'` in a generated project             | `postinstall` did not run. Use `npm install`, not `npm install --ignore-scripts`.                                                  |
+| `Directory … already exists and is not empty`                            | Choose another name, remove the directory, or pass `--force`.                                                                      |
+| `Invalid application name`                                               | Lowercase letters, digits and single hyphens only, e.g. `merchant-portal`.                                                         |
+| `Template … failed to render: "x" not defined`                           | A template references an undeclared variable. Add it to the manifest's `requiredVariables`, then `trustos validate-template <id>`. |
+| `needs framework 0.2.0 or newer`                                         | The template is newer than this checkout. Pull the framework.                                                                      |
+| Generation created the project in the wrong place                        | `--target-dir` sets the parent directory; the project is created inside it.                                                        |
+| The CLI hangs with no prompt                                             | stdin is not a TTY and `--yes` was not passed. Add `--yes`.                                                                        |
+| `Generation failed and was rolled back`                                  | Something could not be written — usually a permissions problem. Nothing was left behind; fix the cause and re-run.                 |
 
 ### Reproducing a generated project exactly
 

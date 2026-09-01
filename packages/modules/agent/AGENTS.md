@@ -1,12 +1,12 @@
-# AGENTS.md — @trustos/module-agent
+# AGENTS.md — @trustsystem/module-agent
 
 Agents that take actions: declarative agent definitions, the tool loop with per-actor permission checks, memory, conversation state, stop conditions and human review.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/agent-framework`, `@trustos/agent-memory`, `@trustos/agent-runtime`, `@trustos/conversation`, `@trustos/function-calling`, `@trustos/human-review`, `@trustos/tool-execution` does the work.
-2. **Never bypass the gateway.** Every model call goes through `@trustos/ai-gateway`, which is
+   wires; `@trustsystem/agent-framework`, `@trustsystem/agent-memory`, `@trustsystem/agent-runtime`, `@trustsystem/conversation`, `@trustsystem/function-calling`, `@trustsystem/human-review`, `@trustsystem/tool-execution` does the work.
+2. **Never bypass the gateway.** Every model call goes through `@trustsystem/ai-gateway`, which is
    where policy, guardrails, cost accounting and audit are applied.
 3. **Never bypass guardrails**, and never add a flag that does. A caller who needs different
    thresholds configures a guardrail profile.

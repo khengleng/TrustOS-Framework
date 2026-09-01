@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { filterNavigation, permissionsFrom, type NavigationItem } from '@trustos/template-sdk';
+import { filterNavigation, permissionsFrom, type NavigationItem } from '@trustsystem/template-sdk';
 import { API_BASE_URL } from '../lib/api';
 import { FALLBACK_MENU, fetchMenu } from '../lib/menu';
 import { startSession, type MiniAppSession } from '../lib/launch';

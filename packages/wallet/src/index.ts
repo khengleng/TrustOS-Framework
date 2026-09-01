@@ -1,5 +1,5 @@
 /**
- * @trustos/wallet
+ * @trustsystem/wallet
  *
  * Ledger-backed wallets: available, held and reserved balances, freeze, holds and history.
  *

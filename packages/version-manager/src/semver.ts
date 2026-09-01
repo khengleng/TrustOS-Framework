@@ -1,11 +1,11 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * Semantic versioning.
  *
  * A fourth `compareSemver` in this repository, and the last one — the other three exist because
- * `@trustos/template-registry` must stay dependency-free for the CLI, `@trustos/module-sdk`
- * needed ranges, and `@trustos/financial-core` needed neither. This one is the complete
+ * `@trustsystem/template-registry` must stay dependency-free for the CLI, `@trustsystem/module-sdk`
+ * needed ranges, and `@trustsystem/financial-core` needed neither. This one is the complete
  * implementation: prerelease identifiers, ranges, and the precedence rules the others do not
  * need. The plan recorded in `docs/platform-governance.md` is that those three collapse into this
  * one at the next major version, when the dependency direction can change without breaking the

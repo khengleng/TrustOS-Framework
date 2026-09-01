@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { CONSOLE_TEMPLATES } from './consoles';
 import {
   parseInternalApplication,
@@ -62,6 +62,19 @@ export class InternalAppCatalog {
     return app;
   }
 
+  /**
+   * Registers an application durably.
+   *
+   * In memory here, because that is all this class has. It exists as its own method so a
+   * deployment can substitute a catalog that records the application before serving it —
+   * without every caller having to know which one it holds. See `register` for why the
+   * distinction matters: an application that exists until the next restart is a governance
+   * record that silently disappears, not a cache that goes cold.
+   */
+  async create(input: unknown): Promise<InternalApplication> {
+    return this.register(input);
+  }
+
   list(environment: Environment): InternalApplication[] {
     return [...this.apps.values()]
       .filter((app) => app.environment === environment)
@@ -78,21 +91,50 @@ function keyOf(environment: Environment, appId: string): string {
 }
 
 /**
- * The ten console templates, registered for an environment.
+ * The console templates, registered for an environment.
  *
- * A starting point for a deployment, and what the boot test runs against. In production the
- * schema refuses a highly-restricted application that has never had a security review — which is
- * correct, and means a deployment registering these for production records a real review date
- * rather than inheriting a placeholder from here.
+ * A starting point for a deployment, and what the boot test runs against.
+ *
+ * **No review date is invented here.** The schema refuses a highly-restricted application in
+ * production that has never had a security review, and this function used to satisfy that check
+ * by stamping a hardcoded date — so the one highly-restricted console passed a governance
+ * control on the strength of a constant in library code. That is the control reporting a
+ * fiction, which is worse than the control failing.
+ *
+ * A template that cannot be registered honestly is now withheld instead. An application that is
+ * not registered does not exist, every request naming it is refused, and that is the truthful
+ * state until someone registers it with a real review date. Ask
+ * {@link templatesWithheldFrom} which ones, and say so at start-up rather than letting a
+ * console go quietly missing.
  */
 export function consoleCatalogFor(environment: Environment): InternalAppCatalog {
   return new InternalAppCatalog(
-    CONSOLE_TEMPLATES.map((template) =>
-      parseInternalApplication({
-        ...template.build(),
-        environment,
-        lastSecurityReview: environment === 'prod' ? '2026-01-01T00:00:00.000Z' : null,
-      }),
-    ),
+    CONSOLE_TEMPLATES.map((template) => ({ ...template.build(), environment }))
+      .filter((app) => !requiresReviewNobodyHasDone(app, environment))
+      .map((app) => parseInternalApplication({ ...app, lastSecurityReview: null })),
   );
+}
+
+/**
+ * Which templates this environment cannot honestly register, and why.
+ *
+ * Empty for every environment but production. Reported at start-up so a withheld console is a
+ * stated fact rather than an absence someone notices later.
+ */
+export function templatesWithheldFrom(environment: Environment): string[] {
+  return CONSOLE_TEMPLATES.map((template) => ({ ...template.build(), environment }))
+    .filter((app) => requiresReviewNobodyHasDone(app, environment))
+    .map((app) => app.appId);
+}
+
+/**
+ * A production application whose classification demands a security review that no one has
+ * recorded. The classification is the reason the review is required, so the classification is
+ * what decides this.
+ */
+function requiresReviewNobodyHasDone(
+  app: { dataClassification: string },
+  environment: Environment,
+): boolean {
+  return environment === 'prod' && app.dataClassification === 'highly_restricted';
 }

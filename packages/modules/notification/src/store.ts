@@ -1,4 +1,4 @@
-import { ModuleRepository, type ModuleContext } from '@trustos/module-sdk';
+import { ModuleRepository, type ModuleContext } from '@trustsystem/module-sdk';
 import type { ChannelId } from './channels';
 import type { NotificationConfig } from './config';
 import type { DeliveryStatus } from './delivery';

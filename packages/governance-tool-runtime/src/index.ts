@@ -1,5 +1,5 @@
 /**
- * @trustos/governance-tool-runtime
+ * @trustsystem/governance-tool-runtime
  *
  * Executes an internal application definition: seven steps, in one order, documented on the class.
  *

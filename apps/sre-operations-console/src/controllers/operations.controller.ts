@@ -1,20 +1,25 @@
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
-import { TIER_EXPECTATIONS, type ServiceRegistry } from '@trustos/sre-core';
-import { aggregate, sufficientToJudge, type SliMeasurement, type SliRegistry } from '@trustos/sli';
-import { burnAlert, burnRate, errorBudget, evaluateSlo, type Slo } from '@trustos/slo';
-import type { DependencyHealthBoard } from '@trustos/dependency-health';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
+import { TIER_EXPECTATIONS, type ServiceRegistry } from '@trustsystem/sre-core';
+import {
+  aggregate,
+  sufficientToJudge,
+  type SliMeasurement,
+  type SliRegistry,
+} from '@trustsystem/sli';
+import { burnAlert, burnRate, errorBudget, evaluateSlo, type Slo } from '@trustsystem/slo';
+import type { DependencyHealthBoard } from '@trustsystem/dependency-health';
 import {
   incidentMetrics,
   overdueActions,
   type Incident,
   type IncidentManager,
-} from '@trustos/incident-management';
+} from '@trustsystem/incident-management';
 import {
   HEALTH_BOARD,
   INCIDENT_MANAGER,

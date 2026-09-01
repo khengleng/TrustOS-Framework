@@ -29,7 +29,7 @@ export const METRIC_KINDS = [
   'measurement',
   /** Scored by a model. Needs a port. */
   'model_graded',
-  /** Scored by a person. Needs a port, usually `@trustos/human-review`. */
+  /** Scored by a person. Needs a port, usually `@trustsystem/human-review`. */
   'human',
 ] as const;
 export type MetricKind = (typeof METRIC_KINDS)[number];
@@ -382,7 +382,7 @@ export function excludesForbidden(answer: string, forbidden: string[]): MetricRe
  * Safety, from a guardrail scan.
  *
  * Takes the result rather than doing the scanning, so evaluation does not become a second place
- * where safety rules live. One set of rules, one implementation, in `@trustos/guardrails`.
+ * where safety rules live. One set of rules, one implementation, in `@trustsystem/guardrails`.
  */
 export function safetyScore(scan: {
   outcome: 'allowed' | 'blocked' | 'needs_review';

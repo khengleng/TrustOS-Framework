@@ -1,5 +1,5 @@
 /**
- * @trustos/resilience-testing
+ * @trustsystem/resilience-testing
  *
  * Controlled failure injection: what may be tested, where, by whose approval, and what may never
  * be tested automatically.

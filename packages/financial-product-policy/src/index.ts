@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-policy
+ * @trustsystem/financial-product-policy
  *
  * Financial product separation of duties, as policies on the phase 4 authorization engine.
  *

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { describeGeneration, generateSlice, parseSlice, sliceSchema } from './index';
 
 /** `toThrow(/…/)` sees only the summary; the useful text is in the details. */

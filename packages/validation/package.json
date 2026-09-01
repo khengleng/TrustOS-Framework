@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/validation",
+  "name": "@trustsystem/validation",
   "version": "0.1.0",
   "description": "Shared Zod schemas and the single conversion point from schema failures to API errors.",
   "license": "UNLICENSED",
@@ -18,7 +18,7 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {

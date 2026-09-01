@@ -1,5 +1,5 @@
-import type { EventEnvelope } from '@trustos/event-sdk';
-import type { RetryPolicy } from '@trustos/retry';
+import type { EventEnvelope } from '@trustsystem/event-sdk';
+import type { RetryPolicy } from '@trustsystem/retry';
 
 /**
  * The bus contract.
@@ -60,7 +60,7 @@ export interface SubscriptionOptions {
    */
   id: string;
 
-  /** Event name patterns — see `matchesPattern` in `@trustos/event-sdk`. */
+  /** Event name patterns — see `matchesPattern` in `@trustsystem/event-sdk`. */
   events: string[];
 
   handler: EventHandler;

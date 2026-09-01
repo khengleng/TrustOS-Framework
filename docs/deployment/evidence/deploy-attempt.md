@@ -26,7 +26,7 @@ The application will not start with an unsafe security policy.
 ```
 
 The service has no `IDENTITY_PROVIDER` variable, so it defaults to `local`. The build that has been
-running since 2026-08-12 predates `@trustos/security-policy` being wired into `api-example`, so it
+running since 2026-08-12 predates `@trustsystem/security-policy` being wired into `api-example`, so it
 never made this check. The new build does, and refuses.
 
 **This is the control working, not a defect.** A framework that started with a development identity

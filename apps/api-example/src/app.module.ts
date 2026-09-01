@@ -1,16 +1,16 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import type { AppConfig } from '@trustos/config';
-import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustos/database';
-import { JwtAuthGuard, TokenService } from '@trustos/auth';
-import { PermissionsGuard } from '@trustos/rbac';
-import { TenantGuard } from '@trustos/tenancy';
+import type { AppConfig } from '@trustsystem/config';
+import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustsystem/database';
+import { JwtAuthGuard, TokenService } from '@trustsystem/auth';
+import { PermissionsGuard } from '@trustsystem/rbac';
+import { TenantGuard } from '@trustsystem/tenancy';
 import {
   ObservabilityModule,
   databaseHealthIndicator,
   type MetricsRecorder,
-} from '@trustos/observability';
-import { setRequestActor, type Logger } from '@trustos/logging';
+} from '@trustsystem/observability';
+import { setRequestActor, type Logger } from '@trustsystem/logging';
 import { CoreModule } from './core/core.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';

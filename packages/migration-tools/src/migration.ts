@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { compareVersions, isValidVersion } from '@trustos/version-manager';
+import { ApiError } from '@trustsystem/errors';
+import { compareVersions, isValidVersion } from '@trustsystem/version-manager';
 
 /**
  * Migrations across every surface an upgrade touches.

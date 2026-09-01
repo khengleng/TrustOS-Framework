@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { emailSchema, organizationNameSchema, slugSchema, z } from '@trustos/validation';
-import { SYSTEM_ROLE_NAMES } from '@trustos/rbac';
+import { emailSchema, organizationNameSchema, slugSchema, z } from '@trustsystem/validation';
+import { SYSTEM_ROLE_NAMES } from '@trustsystem/rbac';
 
 /** Role names an organization endpoint will accept. `super_admin` is excluded. */
 const assignableRoleSchema = z

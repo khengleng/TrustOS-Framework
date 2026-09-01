@@ -1,5 +1,5 @@
 /**
- * @trustos/human-review
+ * @trustsystem/human-review
  *
  * The review queue for AI output: approve, reject, request changes, escalate.
  *

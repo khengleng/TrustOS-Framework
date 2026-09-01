@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/data-governance",
+  "name": "@trustsystem/data-governance",
   "version": "0.1.0",
   "description": "Ownership, residency, and the governance assessment that reports what is not in good standing.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/data-catalog": "0.1.0",
-    "@trustos/data-classification": "0.1.0",
-    "@trustos/data-retention": "0.1.0",
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/data-catalog": "0.1.0",
+    "@trustsystem/data-classification": "0.1.0",
+    "@trustsystem/data-retention": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

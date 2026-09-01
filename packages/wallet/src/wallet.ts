@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   compareMoney,
   formatMoney,
   moneySchema,
   subtractMoney,
   type Money,
-} from '@trustos/financial-core';
+} from '@trustsystem/financial-core';
 
 /**
  * Wallets.

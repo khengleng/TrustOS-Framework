@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   type ApiDefinition,
   type ApiOperation,
   compareSemver,
   semverSchema,
-} from '@trustos/api-catalog';
+} from '@trustsystem/api-catalog';
 
 /**
  * API versioning.

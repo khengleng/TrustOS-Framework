@@ -49,7 +49,7 @@ const pilotSpec = walk(PILOT, isSpec);
 /** Packages the pilot's runtime code imports directly. */
 const direct = new Set();
 for (const path of pilotSource) {
-  for (const match of readFileSync(path, 'utf8').matchAll(/@trustos\/([a-z-]+)/g)) {
+  for (const match of readFileSync(path, 'utf8').matchAll(/@trustsystem\/([a-z-]+)/g)) {
     direct.add(match[1]);
   }
 }
@@ -57,7 +57,7 @@ for (const path of pilotSource) {
 /** Packages the pilot's tests configure but its runtime does not import. */
 const configured = new Set();
 for (const path of pilotSpec) {
-  for (const match of readFileSync(path, 'utf8').matchAll(/@trustos\/([a-z-]+)/g)) {
+  for (const match of readFileSync(path, 'utf8').matchAll(/@trustsystem\/([a-z-]+)/g)) {
     if (!direct.has(match[1])) configured.add(match[1]);
   }
 }
@@ -80,7 +80,7 @@ function closure(roots) {
     }
 
     for (const dependency of Object.keys(manifest.dependencies ?? {})) {
-      if (dependency.startsWith('@trustos/')) queue.push(dependency.slice('@trustos/'.length));
+      if (dependency.startsWith('@trustsystem/')) queue.push(dependency.slice('@trustsystem/'.length));
     }
   }
 

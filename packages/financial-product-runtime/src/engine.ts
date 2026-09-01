@@ -1,5 +1,5 @@
-import { withRetry } from '@trustos/retry';
-import type { Logger } from '@trustos/logging';
+import { withRetry } from '@trustsystem/retry';
+import type { Logger } from '@trustsystem/logging';
 import {
   PRODUCT_AUDIT_ACTIONS,
   PRODUCT_EVENTS,
@@ -20,17 +20,17 @@ import {
   type UsageSnapshot,
   type RiskSnapshot,
   type ProductActor,
-} from '@trustos/financial-product-core';
-import { evaluateCondition } from '@trustos/workflow-definition';
-import { APPROVED_BLOCKS, type BlockRegistry } from '@trustos/financial-block-registry';
-import { ConnectorRegistry, type ConnectorDefinition } from '@trustos/connector-registry';
-import { buildFacts, evaluateRules, type RuleDecision } from '@trustos/financial-product-rules';
+} from '@trustsystem/financial-product-core';
+import { evaluateCondition } from '@trustsystem/workflow-definition';
+import { APPROVED_BLOCKS, type BlockRegistry } from '@trustsystem/financial-block-registry';
+import { ConnectorRegistry, type ConnectorDefinition } from '@trustsystem/connector-registry';
+import { buildFacts, evaluateRules, type RuleDecision } from '@trustsystem/financial-product-rules';
 import {
   EXECUTION_MACHINE,
   executionOutcome,
   type ExecutionState,
-} from '@trustos/financial-product-state-machine';
-import { bindVersion, type PublishedVersion } from '@trustos/financial-product-versioning';
+} from '@trustsystem/financial-product-state-machine';
+import { bindVersion, type PublishedVersion } from '@trustsystem/financial-product-versioning';
 import { BlockHandlerRegistry, type BlockOutputs, type BlockResult } from './handlers';
 import {
   InMemoryIdempotencyStore,
@@ -60,7 +60,7 @@ import {
  * **The runtime never re-resolves the active version.** It binds once, at step 2, and every
  * subsequent decision reads the bound definition. A payment authorized under a 0.5% fee and
  * captured after the product moved to 0.75% settles at 0.5%, because the merchant was quoted a
- * price. See `@trustos/financial-product-versioning`.
+ * price. See `@trustsystem/financial-product-versioning`.
  *
  * **The runtime never authorizes.** It receives an actor whose permissions were resolved
  * server-side, and the policy engine has already run. A runtime that authorized would be a second

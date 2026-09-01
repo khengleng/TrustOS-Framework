@@ -33,7 +33,7 @@ The numbers are small because the database is small — 4 users, 2 organizations
 They are the right shape and the wrong magnitude for a production estate, and the readiness
 scorecard does not treat them as an RTO.
 
-`@trustos/recovery`'s rule applies: the measured restore time should be taken from the **slowest**
+`@trustsystem/recovery`'s rule applies: the measured restore time should be taken from the **slowest**
 successful run, because that is the run that coincides with the incident. One run at this size
 establishes that the procedure works, not how long it takes.
 
@@ -91,7 +91,7 @@ with the schema, the data, the migration history and the append-only guarantee i
   backups and restoring one is a different procedure with different failure modes.
 - **How long a real restore takes.** 188ms on 244 KB says nothing about a production estate. Any
   RTO derived from it would be the "estimate that is always shorter than the run" that
-  `@trustos/recovery` warns about.
+  `@trustsystem/recovery` warns about.
 - That a **point-in-time** restore works. `pg_dump` is a snapshot; recovering to a moment between
   snapshots is Railway's WAL retention, and that has not been tested.
 

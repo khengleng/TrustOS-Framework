@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CompatibilityMatrix } from '@trustos/version-manager';
+import { CompatibilityMatrix } from '@trustsystem/version-manager';
 import { blockingFindings, checkCompatibility, summarize } from './index';
 
 /**

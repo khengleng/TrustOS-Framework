@@ -1,6 +1,6 @@
-import { hasPermission } from '@trustos/rbac';
-import { meetsAuthenticationLevel, type MfaPolicy } from '@trustos/security-policy';
-import { isMachineActor } from '@trustos/shared-types';
+import { hasPermission } from '@trustsystem/rbac';
+import { meetsAuthenticationLevel, type MfaPolicy } from '@trustsystem/security-policy';
+import { isMachineActor } from '@trustsystem/shared-types';
 import type { Policy, PolicyResult } from './decision';
 
 /**

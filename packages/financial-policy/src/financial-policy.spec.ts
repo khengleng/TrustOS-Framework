@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '@trustos/errors';
-import { CurrencyRegistry, money } from '@trustos/financial-core';
+import { ApiError } from '@trustsystem/errors';
+import { CurrencyRegistry, money } from '@trustsystem/financial-core';
 import { FinancialPolicyEngine } from './policy';
 
 const currencies = new CurrencyRegistry();

@@ -1,4 +1,4 @@
-import type { DocumentPage } from '@trustos/documentation-center';
+import type { DocumentPage } from '@trustsystem/documentation-center';
 
 /**
  * The developer portal.
@@ -31,7 +31,7 @@ export interface PortalInput {
   productName?: string;
   /** Hand-written guides, read from `docs/`. */
   guides?: readonly DocumentPage[];
-  /** Generated references from `@trustos/documentation-center`. */
+  /** Generated references from `@trustsystem/documentation-center`. */
   generated?: readonly DocumentPage[];
   modules?: ReadonlyArray<{
     id: string;

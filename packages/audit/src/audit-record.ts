@@ -1,4 +1,4 @@
-import type { ActorType, OrganizationId, RequestId, UserId } from '@trustos/shared-types';
+import type { ActorType, OrganizationId, RequestId, UserId } from '@trustsystem/shared-types';
 
 /**
  * What the caller supplies. Everything not given here is filled in from the

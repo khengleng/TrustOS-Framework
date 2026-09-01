@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import type { ActorContext, OrganizationId } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { ActorContext, OrganizationId } from '@trustsystem/shared-types';
 import { requireOrganizationId } from './tenant-context';
 
 /** Column carrying the tenant on every tenant-owned model. */

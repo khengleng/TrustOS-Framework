@@ -1,11 +1,11 @@
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 import { workflowConfigSchema, type WorkflowConfig } from './config';
 import { RecordingEscalationHook, type EscalationHook } from './escalation';
 import { PrismaWorkflowStore, type WorkflowStore } from './store';

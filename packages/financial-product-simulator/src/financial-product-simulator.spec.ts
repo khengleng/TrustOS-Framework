@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { merchantWalletBasicTemplate } from '@trustos/financial-product-composer';
-import { publishVersion, type PublishedVersion } from '@trustos/financial-product-versioning';
+import { merchantWalletBasicTemplate } from '@trustsystem/financial-product-composer';
+import { publishVersion, type PublishedVersion } from '@trustsystem/financial-product-versioning';
 import { formatReport, simulate } from './index';
 
 const NOW = new Date('2026-01-01T00:00:00.000Z');

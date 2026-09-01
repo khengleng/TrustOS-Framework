@@ -1,5 +1,5 @@
 /**
- * @trustos/prompt-registry
+ * @trustsystem/prompt-registry
  *
  * Versioned, approved, immutable prompts with typed variables and a restricted template language.
  *

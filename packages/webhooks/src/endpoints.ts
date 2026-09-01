@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
-import { assertValidPattern } from '@trustos/event-sdk';
-import type { EventRegistry } from '@trustos/event-registry';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
+import { assertValidPattern } from '@trustsystem/event-sdk';
+import type { EventRegistry } from '@trustsystem/event-registry';
 import {
   webhookUrlSchema,
   type WebhookEndpoint,

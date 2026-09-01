@@ -5,7 +5,7 @@
  * than another near-identical page component.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { MICROLOAN_RESOURCES } from './resources-microloan';
 
 export const RESOURCES: ResourceDefinition[] = [...MICROLOAN_RESOURCES];

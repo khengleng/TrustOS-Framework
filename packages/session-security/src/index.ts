@@ -1,5 +1,5 @@
 /**
- * @trustos/session-security
+ * @trustsystem/session-security
  *
  * Sessions, refresh-token rotation with reuse detection, the four session limits, and
  * the browser hardening that protects a session: security headers, CORS and CSRF.

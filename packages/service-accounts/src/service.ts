@@ -1,9 +1,9 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import { assertValidScopes, scopesSatisfyAll } from '@trustos/api-keys';
-import type { SecurityEventEmitter } from '@trustos/security-events';
-import type { ApiKeyPolicy } from '@trustos/security-policy';
-import type { ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import { assertValidScopes, scopesSatisfyAll } from '@trustsystem/api-keys';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
+import type { ApiKeyPolicy } from '@trustsystem/security-policy';
+import type { ActorContext } from '@trustsystem/shared-types';
 
 /**
  * Service accounts.
@@ -370,7 +370,7 @@ export class ServiceAccountService {
    * Resolves an actor for a subject the identity provider already authenticated by
    * the client-credentials grant.
    *
-   * The token was verified by `@trustos/identity`; this maps the provider's client id
+   * The token was verified by `@trustsystem/identity`; this maps the provider's client id
    * onto the local record that says what the account may do. The framework holds no
    * secret in this mode, which is why it is the production recommendation.
    */

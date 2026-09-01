@@ -1,5 +1,5 @@
 /**
- * @trustos/sre-core
+ * @trustsystem/sre-core
  *
  * Services, dependencies, runbooks and maintenance windows.
  *

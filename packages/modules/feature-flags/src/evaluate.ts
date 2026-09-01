@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { ModuleEnvironment } from '@trustos/module-sdk';
+import type { ModuleEnvironment } from '@trustsystem/module-sdk';
 
 /**
  * Flag evaluation.

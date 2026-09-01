@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { moneySchema, type FinancialStatus } from '@trustos/financial-core';
+import { ApiError } from '@trustsystem/errors';
+import { moneySchema, type FinancialStatus } from '@trustsystem/financial-core';
 
 /**
  * The transaction lifecycle.
@@ -103,7 +103,7 @@ export const transactionSchema = z
     amount: moneySchema,
     /** The fee charged on this transaction, if any. Separate, so net and gross are both visible. */
     feeAmount: moneySchema.nullable().default(null),
-    /** The fee calculation, stored whole. See `@trustos/fees` — it shows its working. */
+    /** The fee calculation, stored whole. See `@trustsystem/fees` — it shows its working. */
     feeBreakdown: z.record(z.unknown()).nullable().default(null),
 
     /** Where the money came from and went. Wallet ids, account ids, or an external marker. */

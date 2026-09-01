@@ -2,7 +2,7 @@
 
 ## A consumer is not a credential
 
-`@trustos/api-consumer` holds _who is allowed to call what_. Keys live in `@trustos/api-keys`.
+`@trustsystem/api-consumer` holds _who is allowed to call what_. Keys live in `@trustsystem/api-keys`.
 
 A consumer outlives its credentials: keys rotate, expire and get revoked, and the entitlement —
 this partner may read merchants in production — survives all of that.

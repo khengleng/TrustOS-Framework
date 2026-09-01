@@ -1,5 +1,5 @@
 /**
- * @trustos/payments
+ * @trustsystem/payments
  *
  * Payment requests: expiry, status, callbacks, idempotency and provider references.
  *

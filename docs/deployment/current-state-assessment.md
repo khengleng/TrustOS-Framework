@@ -22,12 +22,12 @@ that does nothing.
 
 Three packages have names that suggest otherwise and are **also libraries**:
 
-| Package                     | Why it is not a service                                                                                                       |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `@trustos/job-runtime`      | Provides `Worker`, `Queue` and a registry. A deployment hosts the worker inside its own process; the package ships no `main`. |
-| `@trustos/scheduler`        | Provides cron parsing and a scheduler class. Same shape.                                                                      |
-| `@trustos/workflow-runtime` | Provides the engine and its stores. The engine runs inside whatever service advances a workflow.                              |
-| `@trustos/ai-gateway`       | Provides the gateway class, provider ports and metrics. It holds no HTTP server.                                              |
+| Package                         | Why it is not a service                                                                                                       |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `@trustsystem/job-runtime`      | Provides `Worker`, `Queue` and a registry. A deployment hosts the worker inside its own process; the package ships no `main`. |
+| `@trustsystem/scheduler`        | Provides cron parsing and a scheduler class. Same shape.                                                                      |
+| `@trustsystem/workflow-runtime` | Provides the engine and its stores. The engine runs inside whatever service advances a workflow.                              |
+| `@trustsystem/ai-gateway`       | Provides the gateway class, provider ports and metrics. It holds no HTTP server.                                              |
 
 This matters because the readiness specification's example topology names
 `workflow-worker`, `job-worker` and `ai-gateway` as services. **Those services do not exist in this
@@ -72,8 +72,8 @@ anything new.
 | CI                       | One workflow, `ci.yml`, with five jobs: verify, templates, modules, generated, security                  |
 | Migrations               | Nine, version-controlled, with a `migration_lock.toml`                                                   |
 | Migration safety checks  | **None**                                                                                                 |
-| Health endpoints         | `@trustos/observability` provides `/health` and `/ready`; every NestJS app mounts them                   |
-| Structured logging       | `@trustos/logging` — pino, with request and correlation ids                                              |
+| Health endpoints         | `@trustsystem/observability` provides `/health` and `/ready`; every NestJS app mounts them               |
+| Structured logging       | `@trustsystem/logging` — pino, with request and correlation ids                                          |
 | Deployment documentation | `docs/railway-deployment.md`, written for a generated application rather than for the framework          |
 
 ## What CI already does
@@ -143,16 +143,16 @@ name.
 ### What is deliberately absent
 
 **No Redis.** The specification says to use it only where the current implementation requires it.
-Nothing in the repository does: `@trustos/job-runtime` and `@trustos/scheduler` define ports and
+Nothing in the repository does: `@trustsystem/job-runtime` and `@trustsystem/scheduler` define ports and
 in-memory implementations, and the Prisma stores use PostgreSQL. Adding Redis would be adding an
 operational dependency to satisfy a diagram.
 
-**No object storage.** Same reasoning. `@trustos/export` writes to a port; no implementation in
+**No object storage.** Same reasoning. `@trustsystem/export` writes to a port; no implementation in
 this repository requires a bucket.
 
 **No worker services.** See above — they do not exist as applications.
 
-**No message broker.** `@trustos/event-bus` publishes through a port with an in-process
+**No message broker.** `@trustsystem/event-bus` publishes through a port with an in-process
 implementation. Kafka is named in the constraints as something not to build.
 
 ### Which services are public

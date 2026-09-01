@@ -1,5 +1,5 @@
 /**
- * @trustos/template-registry
+ * @trustsystem/template-registry
  *
  * The approved catalog of TrustOS application templates. Local and
  * version-controlled by design — there is no remote fetch and no plugin

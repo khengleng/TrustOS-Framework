@@ -1,4 +1,4 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import { conditionFields, describeCondition } from './conditions';
 import {
   BUILT_IN_ASSIGNMENT_STRATEGIES,

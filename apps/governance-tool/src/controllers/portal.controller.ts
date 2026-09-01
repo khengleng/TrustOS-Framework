@@ -1,8 +1,8 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Public } from '@trustos/auth';
-import type { Environment } from '@trustos/governance-tool-core';
-import { NoTenantRequired } from '@trustos/tenancy';
+import { Public } from '@trustsystem/auth';
+import type { Environment } from '@trustsystem/governance-tool-core';
+import { NoTenantRequired } from '@trustsystem/tenancy';
 import { GATEWAY_ENVIRONMENT, PORTAL_CONFIG } from '../tokens';
 
 /** What the browser needs before it can begin a login. */

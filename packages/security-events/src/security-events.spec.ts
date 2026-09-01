@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
-import { assertNoLeakedValues, assertSecretFieldsRedacted } from '@trustos/security-testing';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
+import { assertNoLeakedValues, assertSecretFieldsRedacted } from '@trustsystem/security-testing';
 import {
   InMemorySecurityEventSink,
   SecurityEventEmitter,

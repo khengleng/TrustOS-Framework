@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InMemoryVectorStore } from '@trustos/vector-store';
+import { InMemoryVectorStore } from '@trustsystem/vector-store';
 import { KnowledgeService } from './knowledge';
 import { InMemoryKnowledgeStore } from './testing';
 

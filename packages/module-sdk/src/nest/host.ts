@@ -1,5 +1,5 @@
 import type { Provider } from '@nestjs/common';
-import { HEALTH_REGISTRY, type HealthRegistry } from '@trustos/observability';
+import { HEALTH_REGISTRY, type HealthRegistry } from '@trustsystem/observability';
 import {
   createModuleContext,
   InMemoryTenantSettingsStore,
@@ -10,7 +10,7 @@ import {
   type TenantSettingsStore,
 } from '../context';
 import type { ModuleInstance, TrustosModule } from '../definition';
-import type { LoggerPort } from '@trustos/logging';
+import type { LoggerPort } from '@trustsystem/logging';
 
 /**
  * Wiring a module into a NestJS application.

@@ -12,27 +12,27 @@ import prettier from 'eslint-config-prettier';
  */
 
 const FRAMEWORK_PACKAGES = [
-  '@trustos/audit',
-  '@trustos/auth',
-  '@trustos/config',
-  '@trustos/database',
-  '@trustos/errors',
-  '@trustos/logging',
-  '@trustos/api-keys',
-  '@trustos/authorization',
-  '@trustos/identity',
-  '@trustos/module-registry',
-  '@trustos/module-sdk',
-  '@trustos/security-events',
-  '@trustos/security-policy',
-  '@trustos/security-testing',
-  '@trustos/service-accounts',
-  '@trustos/session-security',
-  '@trustos/observability',
-  '@trustos/rbac',
-  '@trustos/shared-types',
-  '@trustos/tenancy',
-  '@trustos/validation',
+  '@trustsystem/audit',
+  '@trustsystem/auth',
+  '@trustsystem/config',
+  '@trustsystem/database',
+  '@trustsystem/errors',
+  '@trustsystem/logging',
+  '@trustsystem/api-keys',
+  '@trustsystem/authorization',
+  '@trustsystem/identity',
+  '@trustsystem/module-registry',
+  '@trustsystem/module-sdk',
+  '@trustsystem/security-events',
+  '@trustsystem/security-policy',
+  '@trustsystem/security-testing',
+  '@trustsystem/service-accounts',
+  '@trustsystem/session-security',
+  '@trustsystem/observability',
+  '@trustsystem/rbac',
+  '@trustsystem/shared-types',
+  '@trustsystem/tenancy',
+  '@trustsystem/validation',
 ];
 
 /**
@@ -40,37 +40,37 @@ const FRAMEWORK_PACKAGES = [
  * one, and so a leaf package cannot depend on one.
  */
 const MODULE_PACKAGES = [
-  '@trustos/module-document',
-  '@trustos/module-feature-flags',
-  '@trustos/module-file-storage',
-  '@trustos/module-notification',
-  '@trustos/module-reporting',
-  '@trustos/module-search',
-  '@trustos/module-workflow',
+  '@trustsystem/module-document',
+  '@trustsystem/module-feature-flags',
+  '@trustsystem/module-file-storage',
+  '@trustsystem/module-notification',
+  '@trustsystem/module-reporting',
+  '@trustsystem/module-search',
+  '@trustsystem/module-workflow',
 ];
 
 /** Packages that must never be imported into browser-executed code. */
 const SERVER_ONLY_PACKAGES = [
-  '@trustos/config',
-  '@trustos/database',
-  '@trustos/auth',
-  '@trustos/audit',
-  '@trustos/logging',
-  '@trustos/observability',
-  '@trustos/tenancy',
-  '@trustos/rbac',
-  '@trustos/module-sdk',
-  '@trustos/module-registry',
-  '@trustos/identity',
-  '@trustos/authorization',
-  '@trustos/api-keys',
-  '@trustos/service-accounts',
-  '@trustos/session-security',
-  '@trustos/security-events',
-  '@trustos/security-policy',
+  '@trustsystem/config',
+  '@trustsystem/database',
+  '@trustsystem/auth',
+  '@trustsystem/audit',
+  '@trustsystem/logging',
+  '@trustsystem/observability',
+  '@trustsystem/tenancy',
+  '@trustsystem/rbac',
+  '@trustsystem/module-sdk',
+  '@trustsystem/module-registry',
+  '@trustsystem/identity',
+  '@trustsystem/authorization',
+  '@trustsystem/api-keys',
+  '@trustsystem/service-accounts',
+  '@trustsystem/session-security',
+  '@trustsystem/security-events',
+  '@trustsystem/security-policy',
 ];
 
-const APP_PACKAGES = ['@trustos/api-example', '@trustos/admin-example', '@trustos/saas-starter'];
+const APP_PACKAGES = ['@trustsystem/api-example', '@trustsystem/admin-example', '@trustsystem/saas-starter'];
 
 export default tseslint.config(
   {
@@ -106,7 +106,7 @@ export default tseslint.config(
         setInterval: 'readonly',
         clearInterval: 'readonly',
         fetch: 'readonly',
-        // Node 20 web globals. `AbortController` is used by @trustos/retry's timeout handling and
+        // Node 20 web globals. `AbortController` is used by @trustsystem/retry's timeout handling and
         // by the smoke script; `performance` by the pilot's measurements.
         AbortController: 'readonly',
         AbortSignal: 'readonly',
@@ -129,7 +129,7 @@ export default tseslint.config(
             {
               group: ['../../*/src/*', '../../../*/src/*'],
               message:
-                'Cross-package deep imports are forbidden. Import the package by name (e.g. "@trustos/errors").',
+                'Cross-package deep imports are forbidden. Import the package by name (e.g. "@trustsystem/errors").',
             },
           ],
           paths: APP_PACKAGES.map((name) => ({
@@ -151,18 +151,18 @@ export default tseslint.config(
         'error',
         {
           paths: [...FRAMEWORK_PACKAGES, ...MODULE_PACKAGES]
-            .filter((p) => p !== '@trustos/shared-types' && p !== '@trustos/errors')
+            .filter((p) => p !== '@trustsystem/shared-types' && p !== '@trustsystem/errors')
             .map((name) => ({
               name,
               message:
-                '@trustos/shared-types and @trustos/errors are leaf packages and must stay dependency-free.',
+                '@trustsystem/shared-types and @trustsystem/errors are leaf packages and must stay dependency-free.',
             })),
         },
       ],
     },
   },
 
-  // --- Only @trustos/config may read process.env.
+  // --- Only @trustsystem/config may read process.env.
   {
     files: ['packages/**/*.ts'],
     ignores: [
@@ -178,7 +178,7 @@ export default tseslint.config(
           object: 'process',
           property: 'env',
           message:
-            'Read configuration through @trustos/config so every variable is validated exactly once.',
+            'Read configuration through @trustsystem/config so every variable is validated exactly once.',
         },
       ],
     },
@@ -229,7 +229,7 @@ export default tseslint.config(
           paths: [...SERVER_ONLY_PACKAGES, ...MODULE_PACKAGES].map((name) => ({
             name,
             message:
-              'Server-only package. The admin app may only use @trustos/shared-types and @trustos/errors.',
+              'Server-only package. The admin app may only use @trustsystem/shared-types and @trustsystem/errors.',
           })),
         },
       ],

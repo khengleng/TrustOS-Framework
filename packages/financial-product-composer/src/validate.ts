@@ -5,19 +5,19 @@ import {
   type ProductDefinition,
   type ProductBlock,
   type ReferenceDataRegistry,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 import {
   APPROVED_BLOCKS,
   type BlockCategory,
   type BlockRegistry,
-} from '@trustos/financial-block-registry';
-import { ConnectorRegistry } from '@trustos/connector-registry';
-import { validateRules } from '@trustos/financial-product-rules';
+} from '@trustsystem/financial-block-registry';
+import { ConnectorRegistry } from '@trustsystem/connector-registry';
+import { validateRules } from '@trustsystem/financial-product-rules';
 
 /**
  * Product validation.
  *
- * The schema in `@trustos/financial-product-core` checks that a definition is well-formed. This
+ * The schema in `@trustsystem/financial-product-core` checks that a definition is well-formed. This
  * checks that it is *correct*, which is a different question and the one that matters: every
  * finding below describes a product that parses, validates against the schema, deploys, and moves
  * money wrongly.

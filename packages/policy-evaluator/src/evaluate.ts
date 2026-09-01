@@ -1,10 +1,10 @@
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 import {
   conditionFields,
   describeCondition,
   evaluateCondition,
-} from '@trustos/workflow-definition';
-import type { Obligation, PolicyDocument, PolicyRule } from '@trustos/policy-registry';
+} from '@trustsystem/workflow-definition';
+import type { Obligation, PolicyDocument, PolicyRule } from '@trustsystem/policy-registry';
 
 /**
  * Policy evaluation.

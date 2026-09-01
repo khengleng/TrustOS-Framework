@@ -34,11 +34,11 @@ const MODULES = [
     summary:
       'Double-entry bookkeeping: journals, accounts, reversal, trial balance and reporting. Posted journals are immutable and every journal must balance.',
     framework: [
-      '@trustos/accounts',
-      '@trustos/financial-core',
-      '@trustos/financial-policy',
-      '@trustos/financial-reporting',
-      '@trustos/ledger',
+      '@trustsystem/accounts',
+      '@trustsystem/financial-core',
+      '@trustsystem/financial-policy',
+      '@trustsystem/financial-reporting',
+      '@trustsystem/ledger',
     ],
     healthDetail: 'The ledger is reachable and its trial balance balances.',
     note:
@@ -52,7 +52,7 @@ const MODULES = [
     title: 'Wallets',
     summary:
       'Ledger-backed customer wallets: available, held and reserved balances, holds, freeze and history.',
-    framework: ['@trustos/financial-core', '@trustos/limits', '@trustos/wallet'],
+    framework: ['@trustsystem/financial-core', '@trustsystem/limits', '@trustsystem/wallet'],
     healthDetail: 'Wallet balances are readable and no hold has outlived its expiry unswept.',
     note:
       'A wallet is a view over a ledger account, never a balance of its own. A wallet with its own\n * balance column has two sources of truth, they disagree within a month, and the one everybody\n * reads is the wrong one.',
@@ -66,13 +66,13 @@ const MODULES = [
     summary:
       'The transaction lifecycle with idempotency, fees, limits, risk hooks and payment requests.',
     framework: [
-      '@trustos/fees',
-      '@trustos/financial-core',
-      '@trustos/financial-risk',
-      '@trustos/fx',
-      '@trustos/limits',
-      '@trustos/payments',
-      '@trustos/transactions',
+      '@trustsystem/fees',
+      '@trustsystem/financial-core',
+      '@trustsystem/financial-risk',
+      '@trustsystem/fx',
+      '@trustsystem/limits',
+      '@trustsystem/payments',
+      '@trustsystem/transactions',
     ],
     healthDetail: 'The transaction store is reachable and nothing is stuck in authorized.',
     note:
@@ -86,7 +86,7 @@ const MODULES = [
     title: 'Settlement',
     summary:
       'Settlement batches, instructions and windows, with partial confirmation and returns. Asynchronous by construction.',
-    framework: ['@trustos/financial-core', '@trustos/settlement'],
+    framework: ['@trustsystem/financial-core', '@trustsystem/settlement'],
     healthDetail: 'No batch has been in transit longer than its window allows.',
     note:
       'The settlement account is the whole mechanism: money leaves a merchant and sits there until\n * the counterparty confirms. That balance is exactly what has been instructed and not paid, and\n * it is the number to check against a bank statement.',
@@ -99,7 +99,7 @@ const MODULES = [
     title: 'Reconciliation',
     summary:
       'Internal and external reconciliation with tolerance rules, an exception queue and resolution history.',
-    framework: ['@trustos/financial-core', '@trustos/reconciliation'],
+    framework: ['@trustsystem/financial-core', '@trustsystem/reconciliation'],
     healthDetail: 'The exception queue is being worked and nothing has been open too long.',
     note:
       'The output is a queue, not a number. "£3.42 out" is not actionable; "these four are on the\n * statement and not in the ledger" is. Matching is by reference first, because amount-only\n * matching pairs two unrelated payments and reports a clean run.',
@@ -108,12 +108,12 @@ const MODULES = [
 ];
 
 const SHARED_DEPENDENCIES = [
-  '@trustos/errors',
-  '@trustos/logging',
-  '@trustos/module-registry',
-  '@trustos/module-sdk',
-  '@trustos/observability',
-  '@trustos/shared-types',
+  '@trustsystem/errors',
+  '@trustsystem/logging',
+  '@trustsystem/module-registry',
+  '@trustsystem/module-sdk',
+  '@trustsystem/observability',
+  '@trustsystem/shared-types',
 ];
 
 const NEST_PEERS = {
@@ -133,14 +133,14 @@ function packageJson(module) {
   for (const name of [
     ...SHARED_DEPENDENCIES,
     ...module.framework,
-    ...module.dependsOn.map((id) => `@trustos/module-${id}`),
+    ...module.dependsOn.map((id) => `@trustsystem/module-${id}`),
   ].sort()) {
     dependencies[name] = '0.1.0';
   }
 
   return `${JSON.stringify(
     {
-      name: `@trustos/module-${module.id}`,
+      name: `@trustsystem/module-${module.id}`,
       version: '0.1.0',
       private: true,
       description: `TrustOS ${module.title} module. ${module.summary}`,
@@ -159,8 +159,8 @@ function packageJson(module) {
 
 function tsconfig(module) {
   const references = [
-    ...SHARED_DEPENDENCIES.map((name) => `../../${name.replace('@trustos/', '')}`),
-    ...module.framework.map((name) => `../../${name.replace('@trustos/', '')}`),
+    ...SHARED_DEPENDENCIES.map((name) => `../../${name.replace('@trustsystem/', '')}`),
+    ...module.framework.map((name) => `../../${name.replace('@trustsystem/', '')}`),
     ...module.dependsOn.map((id) => `../${id}`),
   ]
     .sort()
@@ -185,14 +185,14 @@ function tsconfig(module) {
 
 function moduleSource(module) {
   return `import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The ${module.title.toLowerCase()} module.
@@ -272,7 +272,7 @@ export const ${camel(module.id)}Module = defineModule<${module.pascal}Config>({
 
 function indexSource(module) {
   return `/**
- * @trustos/module-${module.id}
+ * @trustsystem/module-${module.id}
  *
  * ${module.summary}
  *
@@ -287,7 +287,7 @@ function nestSource(module) {
   const definitionName = `${camel(module.id)}Module`;
 
   return `import { DynamicModule, Module } from '@nestjs/common';
-import { moduleProviders, type ModuleHostBinding } from '@trustos/module-sdk/nest';
+import { moduleProviders, type ModuleHostBinding } from '@trustsystem/module-sdk/nest';
 import { ${definitionName} } from '../${module.id}.module';
 
 /**
@@ -311,7 +311,7 @@ export class ${module.className} {
 
 function nestIndex(module) {
   return `/**
- * @trustos/module-${module.id}/nest
+ * @trustsystem/module-${module.id}/nest
  *
  * NestJS bindings, behind a subpath so importing the module does not pull \`@nestjs/common\` into
  * a worker or a test.
@@ -323,8 +323,8 @@ export * from './${module.id}.nest-module';
 function nestStub(module) {
   return `${JSON.stringify(
     {
-      '//': `Subpath stub: keeps NestJS bindings out of consumers that import '@trustos/module-${module.id}'.`,
-      name: `@trustos/module-${module.id}-nest`,
+      '//': `Subpath stub: keeps NestJS bindings out of consumers that import '@trustsystem/module-${module.id}'.`,
+      name: `@trustsystem/module-${module.id}-nest`,
       private: true,
       main: '../dist/nest/index.js',
       types: '../dist/nest/index.d.ts',
@@ -335,7 +335,7 @@ function nestStub(module) {
 }
 
 function readme(module) {
-  return `# @trustos/module-${module.id}
+  return `# @trustsystem/module-${module.id}
 
 ${module.summary}
 
@@ -356,7 +356,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 \`\`\`ts
-import { ${module.className} } from '@trustos/module-${module.id}/nest';
+import { ${module.className} } from '@trustsystem/module-${module.id}/nest';
 
 @Module({ imports: [${module.className}.forRoot(binding)] })
 export class AppModule {}
@@ -373,7 +373,7 @@ integration and no scheme implementation.
 }
 
 function agents(module) {
-  return `# AGENTS.md — @trustos/module-${module.id}
+  return `# AGENTS.md — @trustsystem/module-${module.id}
 
 ${module.summary}
 

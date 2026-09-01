@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { DATA_CLASSIFICATION_LEVELS, obligationsFor } from '@trustos/data-classification';
+import { ApiError } from '@trustsystem/errors';
+import { DATA_CLASSIFICATION_LEVELS, obligationsFor } from '@trustsystem/data-classification';
 
 /**
  * The backup inventory.

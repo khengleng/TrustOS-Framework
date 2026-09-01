@@ -1,5 +1,5 @@
 import pino, { type Logger, type LoggerOptions } from 'pino';
-import type { AppConfig } from '@trustos/config';
+import type { AppConfig } from '@trustsystem/config';
 import { PINO_REDACT_PATHS, REDACTED, deepRedact } from './redaction';
 import { getRequestContext, requestLogFields } from './request-context';
 

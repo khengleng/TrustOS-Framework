@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The provider adapters module.
  *
  * The five-method provider contract with a registry, circuit-breaker-guarded calls and lifecycle management.
  *
- * A thin wrapper. The implementation is in `@trustos/adapter-framework`, `@trustos/provider-sdk` — this
+ * A thin wrapper. The implementation is in `@trustsystem/adapter-framework`, `@trustsystem/provider-sdk` — this
  * package contributes the declarations the platform needs (permissions, routes, audit events,
  * health) and the start/stop lifecycle.
  *

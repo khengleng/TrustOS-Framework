@@ -5,7 +5,7 @@
  * than another near-identical page component.
  */
 
-import type { ResourceDefinition } from '@trustos/template-sdk';
+import type { ResourceDefinition } from '@trustsystem/template-sdk';
 import { HELPDESK_RESOURCES } from './resources-helpdesk';
 
 export const RESOURCES: ResourceDefinition[] = [...HELPDESK_RESOURCES];

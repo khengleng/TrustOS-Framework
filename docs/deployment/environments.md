@@ -29,7 +29,7 @@ trace in development and withholds it in production.
 
 `TRUSTOS_ENVIRONMENT` can, and three things read it:
 
-- `@trustos/governance-environment-config` refuses a lower-environment credential in a higher
+- `@trustsystem/governance-environment-config` refuses a lower-environment credential in a higher
   environment — refused at load, not at first use, because by first use it has already worked once.
 - The audit trail records which environment an action happened in.
 - The security policy's residency rules read it.
@@ -105,7 +105,7 @@ three.
 
 `production` reports `TRUSTOS_ENVIRONMENT=dev`. That was the honest label when it was the only
 environment; now that a real `dev` exists it is actively confusing. Changing it to `prod` is not a
-cosmetic edit — it is what `@trustos/governance-environment-config` reads to enforce the production
+cosmetic edit — it is what `@trustsystem/governance-environment-config` reads to enforce the production
 identity rules, and every service currently carries
 `SECURITY_ALLOW_LOCAL_IDENTITY_IN_PRODUCTION=true`. Flipping the label on a live environment
 serving a public domain, without first configuring OIDC, is a change to make deliberately and

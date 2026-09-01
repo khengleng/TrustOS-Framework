@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/disaster-recovery",
+  "name": "@trustsystem/disaster-recovery",
   "version": "0.1.0",
   "description": "DR plans: trigger, owner, decision authority, procedure, validation, failback and evidence.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/recovery": "0.1.0",
-    "@trustos/sre-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/recovery": "0.1.0",
+    "@trustsystem/sre-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

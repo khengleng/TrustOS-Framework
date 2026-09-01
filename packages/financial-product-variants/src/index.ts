@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-variants
+ * @trustsystem/financial-product-variants
  *
  * Variants by controlled override, with provenance.
  *

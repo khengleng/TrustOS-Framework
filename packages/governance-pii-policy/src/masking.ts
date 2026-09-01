@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * Masking, and controlled reveal.
@@ -170,7 +170,7 @@ export class MaskPolicy {
    * and somebody works around it by exporting instead.
    *
    * The safety net that makes it acceptable is `isForbiddenField` in
-   * `@trustos/governance-tool-core`, which refuses credential-shaped columns at registration —
+   * `@trustsystem/governance-tool-core`, which refuses credential-shaped columns at registration —
    * so what passes through unmasked is business data, not a secret.
    */
   maskRow(row: Readonly<Record<string, unknown>>): Record<string, unknown> {

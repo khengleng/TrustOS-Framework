@@ -1,19 +1,19 @@
 import { z } from 'zod';
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 
 /**
  * The event bus module.
  *
  * Typed, versioned domain events with a schema registry, ordering per aggregate, retry, dead letters and replay.
  *
- * A thin wrapper. The implementation is in `@trustos/event-bus`, `@trustos/event-registry`, `@trustos/event-sdk` — this
+ * A thin wrapper. The implementation is in `@trustsystem/event-bus`, `@trustsystem/event-registry`, `@trustsystem/event-sdk` — this
  * package contributes the declarations the platform needs (permissions, routes, audit events,
  * health) and the start/stop lifecycle.
  *

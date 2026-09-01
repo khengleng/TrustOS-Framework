@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import { definitionImmutable } from '@trustos/workflow-core';
-import type { WorkflowDefinitionStatus } from '@trustos/workflow-core';
+import { ApiError } from '@trustsystem/errors';
+import { definitionImmutable } from '@trustsystem/workflow-core';
+import type { WorkflowDefinitionStatus } from '@trustsystem/workflow-core';
 import { SEMVER_PATTERN, type WorkflowDefinitionDocument } from './schema';
 
 /**

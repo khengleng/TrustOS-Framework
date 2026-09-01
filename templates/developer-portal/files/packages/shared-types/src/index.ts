@@ -33,7 +33,7 @@ export interface ApiApplication {
   updatedAt: IsoDateTime;
 }
 
-/** The record of a key issued by @trustos/api-keys. Holds the prefix so a developer can recognize */
+/** The record of a key issued by @trustsystem/api-keys. Holds the prefix so a developer can recognize */
 /** it and never the secret — see the migration note. */
 export interface ApiKeyRecord {
   id: string;

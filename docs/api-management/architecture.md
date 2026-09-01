@@ -70,9 +70,9 @@ Overage prices are minor-unit strings and the arithmetic is `BigInt`. A month of
 sub-cent unit price is exactly where a float loses a digit, and the number is on somebody's
 invoice.
 
-## Credentials stay in `@trustos/api-keys`
+## Credentials stay in `@trustsystem/api-keys`
 
-`@trustos/api-consumer` holds `credentialIds` — references — and never a key or a hash. The
+`@trustsystem/api-consumer` holds `credentialIds` — references — and never a key or a hash. The
 separation matters beyond avoiding duplication: a consumer outlives its credentials, and modelling
 entitlement on the key means the entitlement is re-granted at every rotation, usually by copying
 whatever the old key had. That is how scopes accumulate and never shrink.

@@ -1,5 +1,5 @@
 /**
- * @trustos/module-document
+ * @trustsystem/module-document
  *
  * Categorised documents with metadata, append-only version history and soft
  * delete. Content is held through the file-storage module's `StorageProvider`

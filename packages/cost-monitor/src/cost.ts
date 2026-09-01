@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import type { LoggerPort } from '@trustos/logging';
-import { AiError, type AiRequestContext, type Usage } from '@trustos/ai-sdk';
-import { computeCost, type ModelRegistry } from '@trustos/model-registry';
+import type { LoggerPort } from '@trustsystem/logging';
+import { AiError, type AiRequestContext, type Usage } from '@trustsystem/ai-sdk';
+import { computeCost, type ModelRegistry } from '@trustsystem/model-registry';
 
 /**
  * Cost accounting.

@@ -1,4 +1,4 @@
-import type { ActorContext, ActorType } from '@trustos/shared-types';
+import type { ActorContext, ActorType } from '@trustsystem/shared-types';
 
 /**
  * What a workflow package needs to know about the caller.
@@ -10,7 +10,7 @@ import type { ActorContext, ActorType } from '@trustos/shared-types';
  * package that accepted the full request body would eventually read one of them
  * from it.
  *
- * `@trustos/shared-types` already guarantees the fields that are here were
+ * `@trustsystem/shared-types` already guarantees the fields that are here were
  * resolved server-side: `roles` and `permissions` come from the membership tables,
  * never from a token claim.
  */
@@ -72,7 +72,7 @@ export function toWorkflowActor(
  * Whether the actor holds a permission.
  *
  * Wildcard-aware, so platform staff are not special-cased at every call site. The
- * wildcard belongs to `super_admin` alone — see `@trustos/rbac`.
+ * wildcard belongs to `super_admin` alone — see `@trustsystem/rbac`.
  */
 export function actorHasPermission(actor: WorkflowActor, permission: string): boolean {
   return actor.permissions.includes('*') || actor.permissions.includes(permission);

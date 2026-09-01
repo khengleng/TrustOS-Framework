@@ -1,16 +1,16 @@
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
-import { toWorkflowActor, WORKFLOW_PERMISSIONS } from '@trustos/workflow-core';
-import { describeSla, type SlaService } from '@trustos/workflow-sla';
-import type { EscalationService } from '@trustos/workflow-escalation';
-import type { TaskService } from '@trustos/workflow-tasks';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
+import { toWorkflowActor, WORKFLOW_PERMISSIONS } from '@trustsystem/workflow-core';
+import { describeSla, type SlaService } from '@trustsystem/workflow-sla';
+import type { EscalationService } from '@trustsystem/workflow-escalation';
+import type { TaskService } from '@trustsystem/workflow-tasks';
 import { ESCALATION_SERVICE, SLA_SERVICE, TASK_SERVICE } from '../tokens';
 
 /*

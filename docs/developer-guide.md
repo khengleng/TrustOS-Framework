@@ -32,16 +32,16 @@ version-controlled; nothing fetches.
 The most expensive mistake on this platform is rebuilding something that exists. A hand-written
 permission check is a second, worse one that will disagree with the first.
 
-| You need                 | Use                        | Never                                  |
-| ------------------------ | -------------------------- | -------------------------------------- |
-| Authentication, sessions | `@trustos/auth`            | A custom token format                  |
-| Permissions              | `@trustos/rbac`            | An `if (user.role === …)`              |
-| Tenant isolation         | `@trustos/tenancy`         | A `where` clause you remember to add   |
-| An audit trail           | `@trustos/audit`           | A log line                             |
-| Money                    | `@trustos/financial-core`  | A `number`                             |
-| Approvals                | `@trustos/workflow-*`      | A status column                        |
-| Screens, forms, filters  | `@trustos/template-sdk`    | A second description of the same table |
-| Versions, ranges         | `@trustos/version-manager` | String comparison                      |
+| You need                 | Use                            | Never                                  |
+| ------------------------ | ------------------------------ | -------------------------------------- |
+| Authentication, sessions | `@trustsystem/auth`            | A custom token format                  |
+| Permissions              | `@trustsystem/rbac`            | An `if (user.role === …)`              |
+| Tenant isolation         | `@trustsystem/tenancy`         | A `where` clause you remember to add   |
+| An audit trail           | `@trustsystem/audit`           | A log line                             |
+| Money                    | `@trustsystem/financial-core`  | A `number`                             |
+| Approvals                | `@trustsystem/workflow-*`      | A status column                        |
+| Screens, forms, filters  | `@trustsystem/template-sdk`    | A second description of the same table |
+| Versions, ranges         | `@trustsystem/version-manager` | String comparison                      |
 
 ---
 

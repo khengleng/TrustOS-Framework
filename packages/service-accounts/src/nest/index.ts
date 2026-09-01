@@ -1,5 +1,5 @@
 /**
- * @trustos/service-accounts/nest
+ * @trustsystem/service-accounts/nest
  *
  * NestJS bindings, behind a subpath.
  */

@@ -3,7 +3,7 @@ import {
   idempotencyInProgress,
   idempotencyKeyReused,
   type IdempotencyRecord,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 
 /**
  * Idempotency for externally triggered workflow actions.

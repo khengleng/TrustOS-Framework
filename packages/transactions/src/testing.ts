@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import type { FinancialStatus } from '@trustos/financial-core';
+import { ApiError } from '@trustsystem/errors';
+import type { FinancialStatus } from '@trustsystem/financial-core';
 import type { Transaction, TransactionEvent, TransactionType } from './transaction';
 import type { TransactionStore } from './service';
 

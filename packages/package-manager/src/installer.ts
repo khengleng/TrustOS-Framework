@@ -1,6 +1,10 @@
-import { ApiError } from '@trustos/errors';
-import { analyzeDependencies, dependants, type GraphModule } from '@trustos/dependency-analyzer';
-import { compareVersions, maxSatisfying, satisfies } from '@trustos/version-manager';
+import { ApiError } from '@trustsystem/errors';
+import {
+  analyzeDependencies,
+  dependants,
+  type GraphModule,
+} from '@trustsystem/dependency-analyzer';
+import { compareVersions, maxSatisfying, satisfies } from '@trustsystem/version-manager';
 import { assertIntegrity, lookup, normalize, type Lockfile, type LockedPackage } from './lockfile';
 
 /**
@@ -341,7 +345,7 @@ export function applyPlan(
  *
  * Called rollback because that is the word people use, but it is a *restore*: the artefacts named
  * by the previous lockfile are reinstated. Anything a migration did to the database is not undone
- * here — `@trustos/migration-tools` owns that, and it needs a backup rather than a reversal.
+ * here — `@trustsystem/migration-tools` owns that, and it needs a backup rather than a reversal.
  */
 export function rollback(previous: Lockfile, now: Date): Lockfile {
   return normalize({ ...previous, generatedAt: now.toISOString() });

@@ -1,16 +1,16 @@
 import { existsSync } from 'node:fs';
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { MODULE_CATALOG } from '@trustos/module-registry';
-import { ModelRegistry, isUsable, pricingAgeDays, type Model } from '@trustos/model-registry';
-import { AgentRegistry } from '@trustos/agent-framework';
+import { MODULE_CATALOG } from '@trustsystem/module-registry';
+import { ModelRegistry, isUsable, pricingAgeDays, type Model } from '@trustsystem/model-registry';
+import { AgentRegistry } from '@trustsystem/agent-framework';
 import {
   promptVersionSchema,
   referencedComponents,
   referencedVariables,
   validateTemplateSyntax,
-} from '@trustos/prompt-registry';
-import { EvaluationService, evaluationSuiteSchema } from '@trustos/evaluation';
+} from '@trustsystem/prompt-registry';
+import { EvaluationService, evaluationSuiteSchema } from '@trustsystem/evaluation';
 import { formatRows, style, type Output } from '../output';
 
 /**
@@ -78,7 +78,7 @@ export async function runAiDoctor(options: AiCommandOptions, output: Output): Pr
     ...((packageJson?.devDependencies as Record<string, string>) ?? {}),
   };
 
-  const installed = AI_MODULE_IDS.filter((id) => `@trustos/module-${id}` in dependencies);
+  const installed = AI_MODULE_IDS.filter((id) => `@trustsystem/module-${id}` in dependencies);
   const findings: AiFinding[] = [];
 
   if (installed.length === 0) {
@@ -365,7 +365,7 @@ async function checkAgents(applicationRoot: string, installed: string[]): Promis
         detail:
           `${needsReview.map((agent) => agent.id).join(', ')} require human review, and no review ` +
           'service is wired. Their output would go out unchecked.',
-        remediation: 'Wire ReviewService from @trustos/human-review. See docs/human-review.md.',
+        remediation: 'Wire ReviewService from @trustsystem/human-review. See docs/human-review.md.',
       });
     }
   }
@@ -540,7 +540,7 @@ export async function runAiListAgents(options: AiCommandOptions, output: Output)
     output.blank();
     output.detail(`  Looked in: ${LOCATIONS.agents.join(', ')}`);
     output.detail(
-      '  @trustos/agent-framework ships nine example definitions to copy from. They are examples,',
+      '  @trustsystem/agent-framework ships nine example definitions to copy from. They are examples,',
     );
     output.detail('  not defaults: nothing is registered until an application registers it.');
     return 0;

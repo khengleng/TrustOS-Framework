@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/analytics",
+  "name": "@trustsystem/analytics",
   "version": "0.1.0",
   "description": "Summaries over collected telemetry: adoption, popularity, error trends.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/telemetry": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/telemetry": "0.1.0",
     "zod": "^3.24.1"
   }
 }

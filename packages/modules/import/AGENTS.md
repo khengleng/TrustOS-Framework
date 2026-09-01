@@ -1,11 +1,11 @@
-# AGENTS.md — @trustos/module-import
+# AGENTS.md — @trustsystem/module-import
 
 Bulk import with CSV and JSON parsing, per-row validation, preview, dry run, apply and rollback.
 
 ## Rules
 
 1. **The implementation belongs in the framework package**, not here. This package declares and
-   wires; `@trustos/import` does the work. Logic added
+   wires; `@trustsystem/import` does the work. Logic added
    here is logic no other consumer of that package gets.
 2. **Never widen a permission key.** Keys are permanent. Add one; never rename or repurpose.
 3. **Always validate the tenant.** Every store call takes `organizationId` explicitly, and a

@@ -1,18 +1,18 @@
 import { Controller, Get, Inject, Param, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Authorize } from '@trustos/authorization/nest';
-import { CurrentUser } from '@trustos/auth';
-import { RequirePermissions } from '@trustos/rbac';
-import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
-import { FINANCIAL_PRODUCT_PERMISSIONS } from '@trustos/financial-product-core';
+import { Authorize } from '@trustsystem/authorization/nest';
+import { CurrentUser } from '@trustsystem/auth';
+import { RequirePermissions } from '@trustsystem/rbac';
+import type { ActorContext } from '@trustsystem/shared-types';
+import { OrganizationId } from '@trustsystem/tenancy';
+import { FINANCIAL_PRODUCT_PERMISSIONS } from '@trustsystem/financial-product-core';
 import {
   catalogEntry,
   catalogSummary,
   searchCatalog,
   type ProductRegistry,
-} from '@trustos/financial-product-registry';
-import { productOpenApi, productRoutes } from '@trustos/financial-product-api';
+} from '@trustsystem/financial-product-registry';
+import { productOpenApi, productRoutes } from '@trustsystem/financial-product-api';
 import { PRODUCT_REGISTRY } from '../tokens';
 
 /**
@@ -24,7 +24,7 @@ import { PRODUCT_REGISTRY } from '../tokens';
  * parameter.
  *
  * The catalog entries are **derived** from the live definition on every request rather than
- * stored. See the header of `catalog.ts` in `@trustos/financial-product-registry`: a catalog with
+ * stored. See the header of `catalog.ts` in `@trustsystem/financial-product-registry`: a catalog with
  * its own copy of a product's owner and status disagrees with the product within a month, and the
  * disagreement is discovered by whoever trusted the catalog.
  */

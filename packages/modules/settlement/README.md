@@ -1,10 +1,10 @@
-# @trustos/module-settlement
+# @trustsystem/module-settlement
 
 Settlement batches, instructions and windows, with partial confirmation and returns. Asynchronous by construction.
 
 ## What this package is
 
-A thin module wrapper. The implementation is in `@trustos/financial-core`, `@trustos/settlement`; this package contributes the declarations the platform needs — permissions,
+A thin module wrapper. The implementation is in `@trustsystem/financial-core`, `@trustsystem/settlement`; this package contributes the declarations the platform needs — permissions,
 audit events and a health indicator — and the start/stop lifecycle.
 
 ## Installing
@@ -17,7 +17,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 ```ts
-import { SettlementModule } from '@trustos/module-settlement/nest';
+import { SettlementModule } from '@trustsystem/module-settlement/nest';
 
 @Module({ imports: [SettlementModule.forRoot(binding)] })
 export class AppModule {}

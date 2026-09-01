@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/quality-gates",
+  "name": "@trustsystem/quality-gates",
   "version": "0.1.0",
   "description": "The gates a change must clear: architecture, security, performance, docs, tests, coverage, lint, format, OpenAPI, configuration, accessibility.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/architecture-validator": "0.1.0",
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/architecture-validator": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

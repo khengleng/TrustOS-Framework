@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { policyDocumentSchema } from '@trustos/policy-registry';
+import { policyDocumentSchema } from '@trustsystem/policy-registry';
 import {
   analysePolicy,
   assertObligationsUnderstood,

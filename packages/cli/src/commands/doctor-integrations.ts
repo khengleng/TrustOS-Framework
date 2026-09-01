@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { MODULE_CATALOG } from '@trustos/module-registry';
+import { MODULE_CATALOG } from '@trustsystem/module-registry';
 import { formatRows, style, type Output } from '../output';
 
 /**
@@ -70,7 +70,9 @@ export async function runDoctorIntegrations(
     ...((packageJson?.devDependencies as Record<string, string>) ?? {}),
   };
 
-  const installed = INTEGRATION_MODULE_IDS.filter((id) => `@trustos/module-${id}` in dependencies);
+  const installed = INTEGRATION_MODULE_IDS.filter(
+    (id) => `@trustsystem/module-${id}` in dependencies,
+  );
 
   if (installed.length === 0) {
     findings.push({

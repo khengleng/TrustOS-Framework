@@ -1,7 +1,7 @@
-import { ApiError } from '@trustos/errors';
-import type { Authorizer } from '@trustos/authorization';
-import type { MetricsRecorder } from '@trustos/observability';
-import type { SecurityEventEmitter } from '@trustos/security-events';
+import { ApiError } from '@trustsystem/errors';
+import type { Authorizer } from '@trustsystem/authorization';
+import type { MetricsRecorder } from '@trustsystem/observability';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
 import {
   actorHasPermission,
   crossTenant,
@@ -17,27 +17,27 @@ import {
   type WorkflowPriority,
   type WorkflowTaskRecord,
   type WorkflowVersionRecord,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 import {
   assertApproverEligible,
   decisionRequiresReason,
   evaluateApproval,
   type ApprovalProgress,
-} from '@trustos/workflow-approvals';
+} from '@trustsystem/workflow-approvals';
 import {
   assertDefinitionUntampered,
   type WorkflowApprovalSpec,
   type WorkflowDefinitionDocument,
-} from '@trustos/workflow-definition';
-import { HistoryRecorder } from '@trustos/workflow-history';
-import { workflowResource, WORKFLOW_RESOURCE_TYPES } from '@trustos/workflow-policy';
-import { SlaService } from '@trustos/workflow-sla';
+} from '@trustsystem/workflow-definition';
+import { HistoryRecorder } from '@trustsystem/workflow-history';
+import { workflowResource, WORKFLOW_RESOURCE_TYPES } from '@trustsystem/workflow-policy';
+import { SlaService } from '@trustsystem/workflow-sla';
 import {
   resolveAssignment,
   TaskService,
   type AssignmentContext,
   type TaskStore,
-} from '@trustos/workflow-tasks';
+} from '@trustsystem/workflow-tasks';
 import {
   applyEditableFields,
   checkStepRequirements,
@@ -178,7 +178,7 @@ export interface WorkflowEngineOptions {
   /**
    * Whether a step has live evidence attached.
    *
-   * A callback rather than a dependency on `@trustos/workflow-history`, so the engine
+   * A callback rather than a dependency on `@trustsystem/workflow-history`, so the engine
    * runs in a deployment without the document module. Absent, it returns false — which
    * means a step requiring evidence cannot be satisfied, and that is the correct and
    * visible outcome rather than a requirement that silently passes.

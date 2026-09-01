@@ -9,7 +9,7 @@
  * with another template layered beneath this one.
  */
 
-import { definePermission, type PermissionDefinition } from '@trustos/template-sdk';
+import { definePermission, type PermissionDefinition } from '@trustsystem/template-sdk';
 
 export const ADMIN_PORTAL_PERMISSIONS = {
   SYSTEM_SETTING_READ: definePermission('adminportal.system-setting.read', 'View configuration.'),

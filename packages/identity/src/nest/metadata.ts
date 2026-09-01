@@ -1,7 +1,7 @@
 /**
  * Route metadata for identity requirements.
  *
- * Separate keys from `@trustos/rbac`'s, because they answer a different question:
+ * Separate keys from `@trustsystem/rbac`'s, because they answer a different question:
  * RBAC asks "may this actor do this", identity asks "did this actor prove who they
  * are strongly enough". A route can pass one and fail the other.
  */

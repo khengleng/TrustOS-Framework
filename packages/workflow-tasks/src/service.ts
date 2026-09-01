@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import type { SecurityEventEmitter } from '@trustos/security-events';
+import { ApiError } from '@trustsystem/errors';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
 import {
   actorHasPermission,
   alreadyClaimed,
@@ -12,7 +12,7 @@ import {
   type WorkflowPriority,
   type WorkflowTaskRecord,
   type WorkflowTaskStatus,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 import { isEligibleForTask } from './assignment';
 
 /**
@@ -116,7 +116,7 @@ export interface TaskStore {
 /**
  * Where a task lifecycle record goes.
  *
- * A narrow callback rather than a dependency on `@trustos/workflow-history`, so this
+ * A narrow callback rather than a dependency on `@trustsystem/workflow-history`, so this
  * package does not have to know how history is stored — and so the composition root
  * decides whether a record goes to history, to the audit trail, or to both. The
  * runtime wires it to both.

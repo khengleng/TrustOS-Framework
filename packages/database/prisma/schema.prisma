@@ -28,7 +28,7 @@ datasource db {
 
 model User {
   id           String    @id @default(cuid())
-  /// Stored lowercase; normalization happens in @trustos/validation.
+  /// Stored lowercase; normalization happens in @trustsystem/validation.
   email        String    @unique
   /// The identity provider's subject (`sub`), for an account that signs in through one.
   ///
@@ -255,7 +255,7 @@ model AuditLog {
   /// Null for platform-level events that belong to no organization.
   organizationId String?
 
-  /// Redacted snapshots. Never contains credentials — see @trustos/audit.
+  /// Redacted snapshots. Never contains credentials — see @trustsystem/audit.
   before Json?
   after  Json?
 
@@ -315,7 +315,7 @@ model SecurityEvent {
 
   /// Risk signals, when something upstream produced them.
   risk    Json?
-  /// Non-sensitive detail. Redacted by @trustos/security-events before it lands.
+  /// Non-sensitive detail. Redacted by @trustsystem/security-events before it lands.
   context Json?
 
   occurredAt DateTime @default(now())
@@ -424,7 +424,7 @@ model UserSession {
   /// Human-readable device label, derived from the user agent. Not a fingerprint.
   deviceLabel String?
   userAgent   String?
-  /// Correlation hash of the address, not the address. See @trustos/security-policy.
+  /// Correlation hash of the address, not the address. See @trustsystem/security-policy.
   ipHash      String?
 
   organizationId String?
@@ -1600,7 +1600,7 @@ model AiPromptVersion {
   /// draft, in_review, approved, published, retired.
   status  String @default("draft")
 
-  /// The template. Rendered by the restricted renderer in `@trustos/prompt-registry`.
+  /// The template. Rendered by the restricted renderer in `@trustsystem/prompt-registry`.
   template      String  @db.Text
   /// Declared variables, with types and whether each is trusted.
   variables     Json    @default("[]")
@@ -1634,7 +1634,7 @@ model AiPromptVersion {
 
 /// What a tenant is allowed to do with AI.
 ///
-/// Never merged — see `@trustos/ai-policy`. The most specific policy applies whole, so "why was
+/// Never merged — see `@trustsystem/ai-policy`. The most specific policy applies whole, so "why was
 /// this allowed" always has one answer.
 model AiPolicy {
   id             String  @id @default(cuid())
@@ -1677,8 +1677,8 @@ model AiPolicy {
 
 /// One AI request: what it cost and what happened.
 ///
-/// **One table, two readers.** `@trustos/cost-monitor` aggregates the money columns and
-/// `@trustos/ai-observability` aggregates the rest. Two tables would let them disagree about
+/// **One table, two readers.** `@trustsystem/cost-monitor` aggregates the money columns and
+/// `@trustsystem/ai-observability` aggregates the rest. Two tables would let them disagree about
 /// what a request cost, and reconciling a cost report against an invoice is hard enough with one
 /// source of truth.
 ///
@@ -1896,7 +1896,7 @@ model AiAgentRunStep {
 
 /// Output waiting for a person.
 ///
-/// `status` is the gate: `@trustos/human-review` refuses to return the content of anything that
+/// `status` is the gate: `@trustsystem/human-review` refuses to return the content of anything that
 /// is not `approved`, so a pending item cannot be read and rendered by accident.
 model AiReviewRequest {
   id             String  @id @default(cuid())
@@ -2043,7 +2043,7 @@ model AiVectorRecord {
 
 /// A cached AI response.
 ///
-/// `cacheKey` is built by `@trustos/ai-cache` from a context that includes the organization
+/// `cacheKey` is built by `@trustsystem/ai-cache` from a context that includes the organization
 /// structurally — a key that omits the tenant cannot be constructed. The unique constraint is on
 /// the key alone because the key already carries the tenant.
 model AiCacheEntry {
@@ -2273,7 +2273,7 @@ model FinancialAccount {
   @@map("financial_account")
 }
 
-/// A view over a ledger account. No balance column — see `@trustos/wallet`.
+/// A view over a ledger account. No balance column — see `@trustsystem/wallet`.
 model Wallet {
   id             String  @id @default(cuid())
   organizationId String?
@@ -2362,7 +2362,7 @@ model FinancialTransaction {
 
   /// Separate from the amount, so net and gross are both visible.
   feeAmount    Decimal? @db.Decimal(28, 8)
-  /// The fee calculation, stored whole. It shows its working — see `@trustos/fees`.
+  /// The fee calculation, stored whole. It shows its working — see `@trustsystem/fees`.
   feeBreakdown Json?
 
   sourceWalletId       String?
@@ -2454,7 +2454,7 @@ model PaymentRequest {
 
   allowPartial Boolean @default(false)
 
-  /// A URL the application calls. Delivery, retry and signing are `@trustos/webhooks`.
+  /// A URL the application calls. Delivery, retry and signing are `@trustsystem/webhooks`.
   callbackUrl String?
 
   /// The provider's own id. Recorded, never interpreted.
@@ -2936,4 +2936,42 @@ model SuspiciousActivity {
 
   @@index([organizationId, status, createdAt])
   @@map("suspicious_activity")
+}
+
+// -----------------------------------------------------------------------------
+// Internal application catalog
+// -----------------------------------------------------------------------------
+
+/// A registered internal application, per environment.
+///
+/// The catalog is itself the control: an application that is not registered does not
+/// exist, so a request naming an unknown app is refused before its declared data
+/// sources and actions are consulted. Holding registrations here rather than in the
+/// gateway's memory is what makes one survive a restart — an in-memory catalog loses
+/// every application created through the API the next time the container moves, which
+/// is a governance record disappearing, not a cache miss.
+///
+/// `definition` is the whole validated application document rather than a column per
+/// field. Its shape is owned by `internalApplicationSchema` in
+/// `@trustsystem/governance-tool-core` and re-parsed on the way in and on the way out;
+/// mirroring it in columns would put one schema in two places and let them drift.
+///
+/// No `deletedAt`, deliberately. The catalog has no unregister operation, so a
+/// soft-delete column would describe a lifecycle that does not exist — and it would
+/// collide with the unique constraint the moment anyone added one.
+model InternalApplication {
+  id          String   @id @default(cuid())
+  /// `dev`, `uat` or `prod`. Scoped by environment as well as by `appId`, because the
+  /// same `appId` in two environments is two applications with two blast radii.
+  environment String
+  appId       String
+  /// The validated application document. Re-parsed on read: a row written by an older
+  /// build must not enter the catalog unchecked.
+  definition  Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([environment, appId])
+  @@index([environment])
+  @@map("internal_application")
 }

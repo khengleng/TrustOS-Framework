@@ -7,15 +7,15 @@ import {
   type ProductAuditRecord,
   type ProductEvent,
   type ProductDefinition,
-} from '@trustos/financial-product-core';
-import { fromMinorUnits, type Money } from '@trustos/financial-core';
+} from '@trustsystem/financial-product-core';
+import { fromMinorUnits, type Money } from '@trustsystem/financial-core';
 import {
   BlockHandlerRegistry,
   InMemoryIdempotencyStore,
   ProductRuntime,
   type ExecutionRecord,
-} from '@trustos/financial-product-runtime';
-import type { PublishedVersion } from '@trustos/financial-product-versioning';
+} from '@trustsystem/financial-product-runtime';
+import type { PublishedVersion } from '@trustsystem/financial-product-versioning';
 import {
   SANDBOX_CURRENCIES,
   bindSandboxConnectors,

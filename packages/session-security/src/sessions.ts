@@ -1,8 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { SecurityEventEmitter } from '@trustos/security-events';
-import type { SessionPolicy } from '@trustos/security-policy';
-import type { ActorAuthenticationLevel } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
+import type { SessionPolicy } from '@trustsystem/security-policy';
+import type { ActorAuthenticationLevel } from '@trustsystem/shared-types';
 
 /**
  * The session registry.

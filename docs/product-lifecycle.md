@@ -1,8 +1,8 @@
 # Product lifecycle
 
 Eleven states, the transitions between them, and what each one requires. Everything here is
-declared as data in `@trustos/financial-product-core`'s `lifecycle.ts` and executed by
-`@trustos/financial-product-state-machine`.
+declared as data in `@trustsystem/financial-product-core`'s `lifecycle.ts` and executed by
+`@trustsystem/financial-product-state-machine`.
 
 - [The states](#the-states)
 - [The transition table](#the-transition-table)
@@ -142,7 +142,7 @@ compliant.
 ## Version binding
 
 **A transaction started on v2.1 runs on v2.1 until it ends.** That sentence is the whole of
-`@trustos/financial-product-versioning`'s `binding.ts`.
+`@trustsystem/financial-product-versioning`'s `binding.ts`.
 
 The failure it prevents is specific. A payment authorized under a 0.5% fee and captured an hour
 later, after the product moved to 0.75%, must settle at 0.5% — the merchant was quoted a price. A

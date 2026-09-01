@@ -1,23 +1,27 @@
 import { DynamicModule, Global, Module, type Provider } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import { AuditService, PrismaAuditSink } from '@trustos/audit';
-import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
-import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
-import type { AppConfig } from '@trustos/config';
-import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustos/database';
-import { ObservabilityModule, databaseHealthIndicator } from '@trustos/observability';
-import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
-import type { AccessResolver, CredentialAuthenticator, IdentityProvider } from '@trustos/identity';
-import type { Logger } from '@trustos/logging';
-import { canGrantRole, PermissionsGuard } from '@trustos/rbac';
+import { AuditService, PrismaAuditSink } from '@trustsystem/audit';
+import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustsystem/authorization';
+import { PolicyAuthorizationGuard } from '@trustsystem/authorization/nest';
+import type { AppConfig } from '@trustsystem/config';
+import { DatabaseModule, PrismaService, checkDatabaseConnection } from '@trustsystem/database';
+import { ObservabilityModule, databaseHealthIndicator } from '@trustsystem/observability';
+import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustsystem/identity/nest';
+import type {
+  AccessResolver,
+  CredentialAuthenticator,
+  IdentityProvider,
+} from '@trustsystem/identity';
+import type { Logger } from '@trustsystem/logging';
+import { canGrantRole, PermissionsGuard } from '@trustsystem/rbac';
 import {
   LoggerSecurityEventSink,
   PersistentSecurityEventSink,
   SecurityEventEmitter,
   type SecurityEventSink,
-} from '@trustos/security-events';
-import type { SecurityPolicy } from '@trustos/security-policy';
-import { TenantGuard } from '@trustos/tenancy';
+} from '@trustsystem/security-events';
+import type { SecurityPolicy } from '@trustsystem/security-policy';
+import { TenantGuard } from '@trustsystem/tenancy';
 import {
   collectingAuditRecorder,
   collectingEventPublisher,
@@ -25,17 +29,17 @@ import {
   type ProductAuditRecorder,
   type ProductEventPublisher,
   type ReferenceDataRegistry,
-} from '@trustos/financial-product-core';
-import { FINANCIAL_PRODUCT_POLICIES } from '@trustos/financial-product-policy';
-import { APPROVED_BLOCKS, BlockRegistry } from '@trustos/financial-block-registry';
-import { ConnectorRegistry } from '@trustos/connector-registry';
+} from '@trustsystem/financial-product-core';
+import { FINANCIAL_PRODUCT_POLICIES } from '@trustsystem/financial-product-policy';
+import { APPROVED_BLOCKS, BlockRegistry } from '@trustsystem/financial-block-registry';
+import { ConnectorRegistry } from '@trustsystem/connector-registry';
 import {
   InMemoryProductStore,
   ProductRegistry,
   type ProductStore,
-} from '@trustos/financial-product-registry';
-import { BlockHandlerRegistry, ProductRuntime } from '@trustos/financial-product-runtime';
-import { MetricCollector, guardedSink } from '@trustos/financial-product-observability';
+} from '@trustsystem/financial-product-registry';
+import { BlockHandlerRegistry, ProductRuntime } from '@trustsystem/financial-product-runtime';
+import { MetricCollector, guardedSink } from '@trustsystem/financial-product-observability';
 import { CatalogController } from './controllers/catalog.controller';
 import { ComposerController } from './controllers/composer.controller';
 import { DesignerController } from './controllers/designer.controller';
@@ -101,9 +105,9 @@ export interface FinancialProductAdminOptions {
     auditService: AuditService;
     /** The persistent store a deployment supplies. */
     productStore: ProductStore;
-    /** Where product audit records go. Defaults to a collector; a deployment wires @trustos/audit. */
+    /** Where product audit records go. Defaults to a collector; a deployment wires @trustsystem/audit. */
     productAudit: ProductAuditRecorder;
-    /** Where product events go. Defaults to a collector; a deployment wires @trustos/event-bus. */
+    /** Where product events go. Defaults to a collector; a deployment wires @trustsystem/event-bus. */
     productEvents: ProductEventPublisher;
     blocks: BlockRegistry;
     connectors: ConnectorRegistry;
@@ -112,7 +116,7 @@ export interface FinancialProductAdminOptions {
      * Block handlers.
      *
      * Empty by default, and that is the seam. The framework ships no handler for any block: a
-     * deployment binds `wallet.debit` to `@trustos/wallet`, `ledger.*` to `@trustos/ledger` and
+     * deployment binds `wallet.debit` to `@trustsystem/wallet`, `ledger.*` to `@trustsystem/ledger` and
      * the rest, and the runtime refuses an unbound block rather than skipping it.
      */
     handlers: BlockHandlerRegistry;

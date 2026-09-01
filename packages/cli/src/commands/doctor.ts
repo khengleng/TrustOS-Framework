@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process';
 import { accessSync, constants } from 'node:fs';
 import { promisify } from 'node:util';
-import { compareSemver } from '@trustos/template-registry';
-import { readFrameworkVersion, resolveTemplatesRoot } from '@trustos/generator-core';
+import { compareSemver } from '@trustsystem/template-registry';
+import { readFrameworkVersion, resolveTemplatesRoot } from '@trustsystem/generator-core';
 
 const execFileAsync = promisify(execFile);
 

@@ -1,5 +1,5 @@
 /**
- * @trustos/security-testing
+ * @trustsystem/security-testing
  *
  * Helpers for the tests that matter: the ones where an almost-correct credential must
  * be refused.

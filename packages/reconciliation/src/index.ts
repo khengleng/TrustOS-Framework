@@ -1,5 +1,5 @@
 /**
- * @trustos/reconciliation
+ * @trustsystem/reconciliation
  *
  * Internal and external reconciliation: matching, tolerance rules, exception queue and resolution.
  *

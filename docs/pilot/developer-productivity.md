@@ -39,7 +39,7 @@ produces a product with no limits.
 decision that evaluated zero limits should be distinguishable from one that passed them all. The
 current `LimitDecision` cannot express "no limit applied", so the caller cannot tell.
 
-### 2. `@trustos/workflow-approvals` is hard to find from outside a workflow
+### 2. `@trustsystem/workflow-approvals` is hard to find from outside a workflow
 
 **Severity: medium.** The pilot wrote its own approver-eligibility check because the framework's
 lives in a package named for workflows, and the pilot's approval is not a workflow step.
@@ -69,7 +69,7 @@ yourself" — would have prevented it.
 **Severity: medium — two packages that were meant to reference each other could not.**
 
 `internalApplicationSchema.aiFeatures` required `[a-z][a-z0-9-]{2,59}` — kebab-case. Every feature
-in `@trustos/governance-ai-bridge` is named `summarize_case`, `explain_policy` and so on —
+in `@trustsystem/governance-ai-bridge` is named `summarize_case`, `explain_policy` and so on —
 snake_case.
 
 So a console declaring the AI features it offers could not name one of them, and the mismatch was

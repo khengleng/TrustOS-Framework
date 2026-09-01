@@ -9,11 +9,11 @@ import type {
   WorkflowSlaRecord,
   WorkflowTaskRecord,
   WorkflowVersionRecord,
-} from '@trustos/workflow-core';
-import type { EscalationStore } from '@trustos/workflow-escalation';
-import type { HistoryPage, HistoryQuery, HistoryStore } from '@trustos/workflow-history';
-import type { SlaStore } from '@trustos/workflow-sla';
-import type { TaskListQuery, TaskPage, TaskStore } from '@trustos/workflow-tasks';
+} from '@trustsystem/workflow-core';
+import type { EscalationStore } from '@trustsystem/workflow-escalation';
+import type { HistoryPage, HistoryQuery, HistoryStore } from '@trustsystem/workflow-history';
+import type { SlaStore } from '@trustsystem/workflow-sla';
+import type { TaskListQuery, TaskPage, TaskStore } from '@trustsystem/workflow-tasks';
 import type { DecisionStore, InstanceStore, VersionStore } from './engine';
 import type { DefinitionStore, DefinitionVersionStore } from './definition-service';
 

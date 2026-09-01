@@ -19,7 +19,7 @@ recovery procedure against.
 
 ## What the framework would say
 
-`@trustos/backup` requires four independent claims before a backup is `fullyValidated`:
+`@trustsystem/backup` requires four independent claims before a backup is `fullyValidated`:
 
 ```text
 completed        the job finished
@@ -35,7 +35,7 @@ This pilot can make **none** of them.
 > the job completed. The bytes have not been read back and compared. The contents have not been
 > inspected. Nothing has ever been restored from it, so it is a hypothesis rather than a backup.
 
-`capabilityStatement` in `@trustos/disaster-recovery`, given no plans, returns:
+`capabilityStatement` in `@trustsystem/disaster-recovery`, given no plans, returns:
 
 > No region-failure plan exists. Multi-region recovery is not a capability this platform has.
 
@@ -53,10 +53,10 @@ claim a backup works without a restore in the first report that uses it.
 ## What has to happen before the next pilot
 
 1. **Bind the Prisma stores** and run the pilot against a real database.
-2. **Take a backup.** Record it in `@trustos/backup` with its source, scope, location, encryption
+2. **Take a backup.** Record it in `@trustsystem/backup` with its source, scope, location, encryption
    method, classification and retention.
 3. **Verify it.** Read the bytes back and compare the checksum; inspect the contents.
-4. **Restore it** into an isolated target — never production, which `@trustos/recovery` refuses —
+4. **Restore it** into an isolated target — never production, which `@trustsystem/recovery` refuses —
    and run the nine checks, including `ledger_balances` and `audit_chain_intact`.
 5. **Record the restore test**, which moves the backup to `fullyValidated` and moves Backup off
    FAIL.

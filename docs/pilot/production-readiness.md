@@ -130,7 +130,7 @@ _Evidence:_ [`evidence/performance-results.json`](evidence/performance-results.j
 
 **Not performed.** There is no database in this pilot, so there was nothing to back up.
 
-This is FAIL and not PARTIAL. `@trustos/backup` requires four independent claims before a backup is
+This is FAIL and not PARTIAL. `@trustsystem/backup` requires four independent claims before a backup is
 `fullyValidated` — completed, checksummed, inspected, restored from — and this pilot can make none
 of them. Scoring it PARTIAL on the strength of the framework having a backup package would be
 exactly the rounding-up the framework's own `describeAssurance` was written to prevent.
@@ -139,7 +139,7 @@ exactly the rounding-up the framework's own `describeAssurance` was written to p
 
 **Not performed.** No deployment exists to fail over.
 
-`capabilityStatement` in `@trustos/disaster-recovery` would report _"No region-failure plan exists.
+`capabilityStatement` in `@trustsystem/disaster-recovery` would report _"No region-failure plan exists.
 Multi-region recovery is not a capability this platform has."_ That sentence is the honest one and
 it is the one this scorecard carries.
 
@@ -183,5 +183,5 @@ discoverability problems rather than design ones.
 **NOT go for production banking use**, and the two FAIL scores are the reason rather than a caveat.
 A platform whose backup has never been restored and whose recovery has never been rehearsed is not
 a platform to put customer money on, however good the rest of the scorecard looks. That is the
-position `@trustos/backup` and `@trustos/disaster-recovery` were written to force, and it would be
+position `@trustsystem/backup` and `@trustsystem/disaster-recovery` were written to force, and it would be
 incoherent to build those packages and then round up in the first report that uses them.

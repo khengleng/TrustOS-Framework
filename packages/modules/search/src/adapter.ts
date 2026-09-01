@@ -1,4 +1,4 @@
-import { scopedDelegate } from '@trustos/tenancy';
+import { scopedDelegate } from '@trustsystem/tenancy';
 import { z } from 'zod';
 
 /**

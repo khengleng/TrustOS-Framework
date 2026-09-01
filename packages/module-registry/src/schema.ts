@@ -9,7 +9,7 @@ import {
   moduleMigrationSchema,
   modulePermissionSchema,
   moduleRouteSchema,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 import { z } from 'zod';
 
 /**
@@ -42,7 +42,7 @@ export const modulePackagingSchema = z
     /** npm package name, added to a host application's dependencies. */
     packageName: z
       .string()
-      .regex(/^@trustos\/module-[a-z][a-z0-9-]*$/, 'Must be @trustos/module-<id>.'),
+      .regex(/^@trustsystem\/module-[a-z][a-z0-9-]*$/, 'Must be @trustsystem/module-<id>.'),
     /** Path from the framework root, e.g. `packages/modules/notification`. */
     directory: z
       .string()
@@ -103,10 +103,10 @@ export const moduleCatalogEntrySchema = z
       }
     }
 
-    if (entry.packaging.packageName !== `@trustos/module-${id}`) {
+    if (entry.packaging.packageName !== `@trustsystem/module-${id}`) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `packaging.packageName must be "@trustos/module-${id}".`,
+        message: `packaging.packageName must be "@trustsystem/module-${id}".`,
       });
     }
     if (entry.packaging.directory !== `packages/modules/${id}`) {

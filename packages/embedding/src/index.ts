@@ -1,5 +1,5 @@
 /**
- * @trustos/embedding
+ * @trustsystem/embedding
  *
  * Embedding provider abstraction with dimension, metric and version tracking.
  *

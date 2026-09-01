@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import type { AuditService } from '@trustos/audit';
-import type { Environment } from '@trustos/governance-tool-core';
+import type { AuditService } from '@trustsystem/audit';
+import type { Environment } from '@trustsystem/governance-tool-core';
 
 /**
  * The audit bridge.

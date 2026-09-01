@@ -1,5 +1,5 @@
 /**
- * @trustos/data-lineage
+ * @trustsystem/data-lineage
  *
  * Where governed data came from and where it goes.
  *

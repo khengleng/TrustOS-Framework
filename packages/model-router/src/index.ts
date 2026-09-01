@@ -1,5 +1,5 @@
 /**
- * @trustos/model-router
+ * @trustsystem/model-router
  *
  * Turns a requirement into a model, with fallbacks and tenant policy applied.
  *

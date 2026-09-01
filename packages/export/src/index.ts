@@ -1,5 +1,5 @@
 /**
- * @trustos/export
+ * @trustsystem/export
  *
  * Streaming export: CSV, JSON and newline-delimited JSON, page by page, with a bounded row count.
  * Excel and PDF are ports.

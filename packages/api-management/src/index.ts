@@ -1,5 +1,5 @@
 /**
- * @trustos/api-management
+ * @trustsystem/api-management
  *
  * The gate: catalog, entitlement, policy, rate, quota — in that order.
  *

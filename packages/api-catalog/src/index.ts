@@ -1,5 +1,5 @@
 /**
- * @trustos/api-catalog
+ * @trustsystem/api-catalog
  *
  * Which APIs exist, who owns each one, what they return, and what happens to their callers when
  * one is withdrawn.

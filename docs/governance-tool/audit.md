@@ -17,7 +17,7 @@ With the bridge it says:
 
 The second sentence is the one an investigation can act on.
 
-This required extending `@trustos/audit` with a `metadata` column — provenance is not state, and
+This required extending `@trustsystem/audit` with a `metadata` column — provenance is not state, and
 putting it in `after` would have meant `after` no longer means "state after the change". The
 migration is `20261201000000_audit_metadata`, nullable, with no backfill: a guessed audit record
 is worse than an absent field.

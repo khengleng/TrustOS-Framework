@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
-import { BACKUP_SOURCES, type BackupRecord, type BackupSource } from '@trustos/backup';
+import { ApiError } from '@trustsystem/errors';
+import { BACKUP_SOURCES, type BackupRecord, type BackupSource } from '@trustsystem/backup';
 
 /**
  * Restore procedures, and restore *tests*.
@@ -253,7 +253,7 @@ export function evaluateRestoreTest(
 /**
  * Whether a backup may be marked restore-tested by this test.
  *
- * The gate between the two packages, and the reason `recordRestoreTest` in `@trustos/backup` takes
+ * The gate between the two packages, and the reason `recordRestoreTest` in `@trustsystem/backup` takes
  * a test id: a backup's strongest claim can only be set from an event that actually happened.
  */
 export function assertTestValidates(input: {

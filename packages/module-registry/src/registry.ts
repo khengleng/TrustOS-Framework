@@ -8,7 +8,7 @@ import type {
   ModulePermission,
   ModuleRoute,
   TrustosModule,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 import { ModuleRegistryError } from './errors';
 import { topologicalIds } from './resolve';
 

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/financial-product-simulator",
+  "name": "@trustsystem/financial-product-simulator",
   "version": "0.1.0",
   "description": "Deterministic product simulation at volume: path distribution, fee and limit totals, SLA timing and exception counts.",
   "license": "UNLICENSED",
@@ -17,12 +17,12 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-core": "0.1.0",
-    "@trustos/financial-product-core": "0.1.0",
-    "@trustos/financial-product-runtime": "0.1.0",
-    "@trustos/financial-product-sandbox": "0.1.0",
-    "@trustos/financial-product-versioning": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-core": "0.1.0",
+    "@trustsystem/financial-product-core": "0.1.0",
+    "@trustsystem/financial-product-runtime": "0.1.0",
+    "@trustsystem/financial-product-sandbox": "0.1.0",
+    "@trustsystem/financial-product-versioning": "0.1.0",
     "zod": "^3.24.1"
   }
 }

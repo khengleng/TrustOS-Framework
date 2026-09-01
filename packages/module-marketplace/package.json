@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/module-marketplace",
+  "name": "@trustsystem/module-marketplace",
   "version": "0.1.0",
   "description": "Browse, search, rate and verify modules from the local signed catalog. No remote fetch.",
   "license": "UNLICENSED",
@@ -17,10 +17,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/compatibility-engine": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/module-registry": "0.1.0",
-    "@trustos/version-manager": "0.1.0",
+    "@trustsystem/compatibility-engine": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/module-registry": "0.1.0",
+    "@trustsystem/version-manager": "0.1.0",
     "zod": "^3.24.1"
   }
 }

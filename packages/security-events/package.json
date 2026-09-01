@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/security-events",
+  "name": "@trustsystem/security-events",
   "version": "0.1.0",
   "description": "Structured security events with a sink port, so authentication, authorization and credential activity land somewhere durable.",
   "license": "UNLICENSED",
@@ -18,10 +18,10 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/logging": "0.1.0",
-    "@trustos/security-policy": "0.1.0",
-    "@trustos/shared-types": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/logging": "0.1.0",
+    "@trustsystem/security-policy": "0.1.0",
+    "@trustsystem/shared-types": "0.1.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {
@@ -39,7 +39,7 @@
   "devDependencies": {
     "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.1.28",
-    "@trustos/audit": "0.1.0",
-    "@trustos/security-testing": "0.1.0"
+    "@trustsystem/audit": "0.1.0",
+    "@trustsystem/security-testing": "0.1.0"
   }
 }

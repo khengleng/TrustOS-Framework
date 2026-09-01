@@ -1,11 +1,11 @@
-import { moduleDeclarations } from '@trustos/module-registry';
+import { moduleDeclarations } from '@trustsystem/module-registry';
 import {
   defineModule,
   moduleHealthIndicator,
   type HealthIndicator,
   type ModuleContext,
   type ModuleInstance,
-} from '@trustos/module-sdk';
+} from '@trustsystem/module-sdk';
 import { featureFlagsConfigSchema, type FeatureFlagsConfig } from './config';
 import { FeatureFlagsService } from './feature-flags.service';
 import { PrismaFeatureFlagStore, type FeatureFlagStore } from './store';

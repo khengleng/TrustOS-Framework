@@ -1,5 +1,5 @@
 /**
- * @trustos/ai-sdk
+ * @trustsystem/ai-sdk
  *
  * The shared AI vocabulary: messages, model selection, requests, results, usage and errors.
  *

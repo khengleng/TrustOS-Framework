@@ -176,7 +176,7 @@ somehow lacks one fails validation, because tenant leakage is the quietest failu
 application can have.
 
 **10. Decisions belong in the engine, not in a column.** If your domain has an approval, use
-`@trustos/workflow-*` and store a `workflowInstanceId`. A status column beside a workflow is a
+`@trustsystem/workflow-*` and store a `workflowInstanceId`. A status column beside a workflow is a
 second source of truth about whether something was approved.
 
 ## Validation
@@ -200,7 +200,7 @@ npx trustos validate-template clinic
 | required modules           | A declared app ships no files                                             |
 | no unresolved placeholders | A `{{variable}}` nobody declared                                          |
 | no committed secrets       | A key, token or real JWT secret in a template file                        |
-| valid package references   | A `@trustos/*` import the manifest did not declare                        |
+| valid package references   | A `@trustsystem/*` import the manifest did not declare                    |
 | monetary precision         | A monetary column declared `Float`, or `Int` without saying "minor units" |
 | tenant scope               | A product model with no `organizationId`                                  |
 

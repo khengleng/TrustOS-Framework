@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CHANGE_REQUEST_APPROVAL, SIMPLE_APPROVAL } from '@trustos/workflow-definition';
+import { CHANGE_REQUEST_APPROVAL, SIMPLE_APPROVAL } from '@trustsystem/workflow-definition';
 import { createCapturingOutput } from '../output';
 import { runWorkflowList, runWorkflowSimulate, runWorkflowValidate } from './workflow';
 

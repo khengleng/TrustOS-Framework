@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { message } from '@trustos/ai-sdk';
+import { message } from '@trustsystem/ai-sdk';
 import {
   AiCache,
   InMemoryCacheStore,

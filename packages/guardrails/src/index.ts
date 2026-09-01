@@ -1,5 +1,5 @@
 /**
- * @trustos/guardrails
+ * @trustsystem/guardrails
  *
  * The safety pipeline: input checks, output validation and human-review hooks.
  *

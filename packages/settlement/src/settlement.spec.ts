@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CurrencyRegistry, formatMoney, money } from '@trustos/financial-core';
-import { AccountService, InMemoryAccountStore } from '@trustos/accounts';
-import { InMemoryLedgerStore, Ledger, credit, debit } from '@trustos/ledger';
+import { CurrencyRegistry, formatMoney, money } from '@trustsystem/financial-core';
+import { AccountService, InMemoryAccountStore } from '@trustsystem/accounts';
+import { InMemoryLedgerStore, Ledger, credit, debit } from '@trustsystem/ledger';
 import { SettlementService, settlementDifference } from './settlement';
 import { InMemorySettlementStore } from './testing';
 

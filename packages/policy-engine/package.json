@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/policy-engine",
+  "name": "@trustsystem/policy-engine",
   "version": "0.1.0",
   "description": "The centralized decision point: registry plus evaluator plus decision log, defaulting to deny.",
   "license": "UNLICENSED",
@@ -17,11 +17,11 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/authorization": "0.1.0",
-    "@trustos/errors": "0.1.0",
-    "@trustos/policy-decision-log": "0.1.0",
-    "@trustos/policy-evaluator": "0.1.0",
-    "@trustos/policy-registry": "0.1.0",
+    "@trustsystem/authorization": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/policy-decision-log": "0.1.0",
+    "@trustsystem/policy-evaluator": "0.1.0",
+    "@trustsystem/policy-registry": "0.1.0",
     "zod": "^3.24.1"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/resilience",
+  "name": "@trustsystem/resilience",
   "version": "0.1.0",
   "description": "Fallbacks, bulkheads and degradation modes, declared per service rather than improvised per incident.",
   "license": "UNLICENSED",
@@ -17,9 +17,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/retry": "0.1.0",
-    "@trustos/sre-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/retry": "0.1.0",
+    "@trustsystem/sre-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

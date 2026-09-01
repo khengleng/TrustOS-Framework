@@ -114,7 +114,7 @@ const breached = await reviews.overdue(organizationId);
 ```
 
 Nothing here escalates on a schedule. `overdue()` returns what has breached, and a job in
-[`@trustos/scheduler`](scheduler.md) decides what to do with it.
+[`@trustsystem/scheduler`](scheduler.md) decides what to do with it.
 
 The reason is short: the only automatic action a review queue could take on timeout is approving
 the items nobody had time to look at. Every other action — alerting, escalating, reassigning —

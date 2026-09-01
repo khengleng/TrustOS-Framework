@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { ApiError } from '@trustos/errors';
+import { ApiError } from '@trustsystem/errors';
 
 /**
  * The SDK an internal application is built against.
  *
- * Headless, like `@trustos/template-sdk` and for the same reason: one deployment renders React
+ * Headless, like `@trustsystem/template-sdk` and for the same reason: one deployment renders React
  * and another renders something else, and an SDK that imported a renderer would be unusable in
  * half of them.
  *

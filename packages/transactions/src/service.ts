@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { ApiError } from '@trustos/errors';
-import type { AuditService } from '@trustos/audit';
-import type { LoggerPort } from '@trustos/logging';
+import { ApiError } from '@trustsystem/errors';
+import type { AuditService } from '@trustsystem/audit';
+import type { LoggerPort } from '@trustsystem/logging';
 import {
   addMoney,
   compareMoney,
@@ -14,12 +14,12 @@ import {
   type CurrencyRegistry,
   type FinancialStatus,
   type Money,
-} from '@trustos/financial-core';
-import type { AccountService } from '@trustos/accounts';
-import type { Journal, Ledger } from '@trustos/ledger';
-import type { WalletService } from '@trustos/wallet';
-import type { FeeService } from '@trustos/fees';
-import type { RiskAssessor } from '@trustos/financial-risk';
+} from '@trustsystem/financial-core';
+import type { AccountService } from '@trustsystem/accounts';
+import type { Journal, Ledger } from '@trustsystem/ledger';
+import type { WalletService } from '@trustsystem/wallet';
+import type { FeeService } from '@trustsystem/fees';
+import type { RiskAssessor } from '@trustsystem/financial-risk';
 import {
   assertTransition,
   transactionSchema,
@@ -232,7 +232,7 @@ export class TransactionService {
    * Authorizes: places a hold on the source wallet.
    *
    * Money does not move. The hold is what makes the authorization mean something — see
-   * `@trustos/wallet`.
+   * `@trustsystem/wallet`.
    */
   async authorize(input: {
     id: string;

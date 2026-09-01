@@ -1,13 +1,13 @@
 import { DynamicModule, Global, Module, type Provider } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import { ApiKeyAuthenticator, ApiKeyService, PrismaApiKeyStore } from '@trustos/api-keys';
-import { ScopeGuard } from '@trustos/api-keys/nest';
-import { AuditService, PrismaAuditSink } from '@trustos/audit';
-import { TokenService } from '@trustos/auth';
-import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustos/authorization';
-import { PolicyAuthorizationGuard } from '@trustos/authorization/nest';
-import type { AppConfig } from '@trustos/config';
-import { DatabaseModule, PrismaService } from '@trustos/database';
+import { ApiKeyAuthenticator, ApiKeyService, PrismaApiKeyStore } from '@trustsystem/api-keys';
+import { ScopeGuard } from '@trustsystem/api-keys/nest';
+import { AuditService, PrismaAuditSink } from '@trustsystem/audit';
+import { TokenService } from '@trustsystem/auth';
+import { Authorizer, createAuthorizer, roleGrantPolicy } from '@trustsystem/authorization';
+import { PolicyAuthorizationGuard } from '@trustsystem/authorization/nest';
+import type { AppConfig } from '@trustsystem/config';
+import { DatabaseModule, PrismaService } from '@trustsystem/database';
 import {
   BearerTokenAuthenticator,
   LocalIdentityProvider,
@@ -22,27 +22,27 @@ import {
   type LocalAccessResolver,
   type LocalTokenPort,
   type LocalUserPort,
-} from '@trustos/identity';
-import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustos/identity/nest';
-import type { Logger } from '@trustos/logging';
-import { canGrantRole } from '@trustos/rbac';
-import { PermissionsGuard } from '@trustos/rbac';
+} from '@trustsystem/identity';
+import { AuthenticationAssuranceGuard, AuthenticationGuard } from '@trustsystem/identity/nest';
+import type { Logger } from '@trustsystem/logging';
+import { canGrantRole } from '@trustsystem/rbac';
+import { PermissionsGuard } from '@trustsystem/rbac';
 import {
   InMemorySecurityEventSink,
   LoggerSecurityEventSink,
   PersistentSecurityEventSink,
   SecurityEventEmitter,
   type SecurityEventSink,
-} from '@trustos/security-events';
-import type { SecurityPolicy } from '@trustos/security-policy';
+} from '@trustsystem/security-events';
+import type { SecurityPolicy } from '@trustsystem/security-policy';
 import {
   PrismaServiceAccountStore,
   ServiceAccountAuthenticator,
   ServiceAccountService,
-} from '@trustos/service-accounts';
-import { InteractiveRouteGuard } from '@trustos/service-accounts/nest';
-import { SessionService } from '@trustos/session-security';
-import { TenantGuard } from '@trustos/tenancy';
+} from '@trustsystem/service-accounts';
+import { InteractiveRouteGuard } from '@trustsystem/service-accounts/nest';
+import { SessionService } from '@trustsystem/session-security';
+import { TenantGuard } from '@trustsystem/tenancy';
 import { ApiKeyController } from './controllers/api-key.controller';
 import { IdentityController } from './controllers/identity.controller';
 import { SecurityEventController } from './controllers/security-event.controller';

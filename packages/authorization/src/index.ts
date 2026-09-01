@@ -1,5 +1,5 @@
 /**
- * @trustos/authorization
+ * @trustsystem/authorization
  *
  * Policy-based authorization over RBAC. Default deny.
  *

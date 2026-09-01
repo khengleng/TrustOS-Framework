@@ -1,18 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { AuditService, InMemoryAuditSink } from '@trustos/audit';
-import { GovernanceAuditBridge } from '@trustos/governance-audit-bridge';
+import { AuditService, InMemoryAuditSink } from '@trustsystem/audit';
+import { GovernanceAuditBridge } from '@trustsystem/governance-audit-bridge';
 import {
   EnvironmentRegistry,
   environmentConfigSchema,
-} from '@trustos/governance-environment-config';
-import { ResourceRegistry, resourceRegistrationSchema } from '@trustos/governance-resource-policy';
+} from '@trustsystem/governance-environment-config';
+import {
+  ResourceRegistry,
+  resourceRegistrationSchema,
+} from '@trustsystem/governance-resource-policy';
 import {
   CONSOLE_TEMPLATES,
   GOVERNANCE_PERMISSIONS,
   findConsoleTemplate,
   type InternalApplication,
-} from '@trustos/governance-tool-core';
-import type { GovernanceActorContext } from '@trustos/governance-auth-context';
+} from '@trustsystem/governance-tool-core';
+import type { GovernanceActorContext } from '@trustsystem/governance-auth-context';
 import { GovernanceToolRuntime, pagePermissions } from './index';
 
 function resource(resourceId: string, accessClass: 'read_only' | 'api_only', fields: string[]) {

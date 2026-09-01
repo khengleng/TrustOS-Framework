@@ -4,7 +4,7 @@ import {
   productDefinitionSchema,
   productErrorCode,
   type ProductDefinition,
-} from '@trustos/financial-product-core';
+} from '@trustsystem/financial-product-core';
 import {
   applyRollback,
   assertBindingIntact,

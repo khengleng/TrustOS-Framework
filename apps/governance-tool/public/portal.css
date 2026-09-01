@@ -62,11 +62,22 @@ body {
 }
 
 .mark {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  background: var(--accent);
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  /*
+   * The accent colour is painted underneath the artwork, not replaced by it. If
+   * `/brand/icon.png` is absent the mark renders as the plain accent square the portal
+   * used before, rather than as a broken image — a missing brand asset should look
+   * unbranded, not broken.
+   */
+  background-color: var(--accent);
+  background-image: url('/brand/icon.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: inline-block;
+  flex: none;
 }
 
 .env {

@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/financial-product-state-machine",
+  "name": "@trustsystem/financial-product-state-machine",
   "version": "0.1.0",
   "description": "Deterministic product state machines: the governance lifecycle and the runtime execution states.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/financial-product-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/financial-product-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

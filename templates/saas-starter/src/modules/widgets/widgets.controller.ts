@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions } from '@trustos/rbac';
-import { OrganizationId } from '@trustos/tenancy';
-import { z } from '@trustos/validation';
-import { ZodValidationPipe } from '@trustos/validation/nest';
+import { RequirePermissions } from '@trustsystem/rbac';
+import { OrganizationId } from '@trustsystem/tenancy';
+import { z } from '@trustsystem/validation';
+import { ZodValidationPipe } from '@trustsystem/validation/nest';
 import { WIDGET_PERMISSIONS } from './widgets.permissions';
 import { WidgetsService } from './widgets.service';
 import type { Widget } from './widgets.repository';

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EventEnvelope } from '@trustos/event-sdk';
-import { InMemoryReviewStore, ReviewService } from '@trustos/human-review';
+import type { EventEnvelope } from '@trustsystem/event-sdk';
+import { InMemoryReviewStore, ReviewService } from '@trustsystem/human-review';
 import { AI_EVENTS, AiWorkflowStep } from './steps';
 
 /**
@@ -271,7 +271,7 @@ describe('failure', () => {
   it('carries a guardrail refusal through as its own reason', async () => {
     const { step } = setup();
 
-    const { AiError } = await import('@trustos/ai-sdk');
+    const { AiError } = await import('@trustsystem/ai-sdk');
 
     const result = await step.execute(
       input({

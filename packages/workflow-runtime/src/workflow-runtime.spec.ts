@@ -1,23 +1,23 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createAuthorizer } from '@trustos/authorization';
-import { InMemoryAuditSink, AuditService } from '@trustos/audit';
-import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustos/security-events';
-import { securityPolicySchema } from '@trustos/security-policy';
+import { createAuthorizer } from '@trustsystem/authorization';
+import { InMemoryAuditSink, AuditService } from '@trustsystem/audit';
+import { InMemorySecurityEventSink, SecurityEventEmitter } from '@trustsystem/security-events';
+import { securityPolicySchema } from '@trustsystem/security-policy';
 import {
   WORKFLOW_PERMISSIONS,
   type WorkflowActor,
   type WorkflowVersionRecord,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 import {
   CHANGE_REQUEST_APPROVAL,
   SIMPLE_APPROVAL,
   hashDefinition,
   type WorkflowDefinitionDocument,
-} from '@trustos/workflow-definition';
-import { HistoryRecorder } from '@trustos/workflow-history';
-import { WORKFLOW_POLICIES } from '@trustos/workflow-policy';
-import { CalendarRegistry, SlaService } from '@trustos/workflow-sla';
-import { TaskService } from '@trustos/workflow-tasks';
+} from '@trustsystem/workflow-definition';
+import { HistoryRecorder } from '@trustsystem/workflow-history';
+import { WORKFLOW_POLICIES } from '@trustsystem/workflow-policy';
+import { CalendarRegistry, SlaService } from '@trustsystem/workflow-sla';
+import { TaskService } from '@trustsystem/workflow-tasks';
 import {
   InMemoryDecisionStore,
   InMemoryDefinitionStore,
@@ -126,7 +126,7 @@ function build(): Rig {
       mfa: policy.mfa,
       events,
       // The framework's own policies plus the workflow set. Order matters for the reason
-      // documented in @trustos/workflow-policy: the message somebody acts on.
+      // documented in @trustsystem/workflow-policy: the message somebody acts on.
       additional: WORKFLOW_POLICIES,
     }),
     sla: new SlaService({ store: slaStore, calendars: new CalendarRegistry(), now }),
@@ -1066,7 +1066,7 @@ describe('definition integrity', () => {
     // A second engine reading that row must refuse rather than execute rules nobody
     // approved. Verified through the definition hash helper, which is what the engine
     // calls on every compile.
-    const { assertDefinitionUntampered } = await import('@trustos/workflow-definition');
+    const { assertDefinitionUntampered } = await import('@trustsystem/workflow-definition');
     expect(() =>
       assertDefinitionUntampered({
         definition: tampered,
@@ -1077,7 +1077,7 @@ describe('definition integrity', () => {
   });
 
   it('accepts a definition whose hash matches', async () => {
-    const { assertDefinitionUntampered } = await import('@trustos/workflow-definition');
+    const { assertDefinitionUntampered } = await import('@trustsystem/workflow-definition');
     expect(() =>
       assertDefinitionUntampered({
         definition: SIMPLE_APPROVAL,

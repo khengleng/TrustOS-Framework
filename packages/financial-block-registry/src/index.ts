@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-block-registry
+ * @trustsystem/financial-block-registry
  *
  * The approved catalog of reusable financial blocks, and the registry that resolves them.
  *
@@ -13,7 +13,7 @@
  * valid and collectively wrong.
  *
  * **The framework ships no handler for any block here.** Every entry is a contract; the
- * deployment binds it to `@trustos/wallet`, `@trustos/ledger`, `@trustos/fees` and the rest, and
+ * deployment binds it to `@trustsystem/wallet`, `@trustsystem/ledger`, `@trustsystem/fees` and the rest, and
  * the sandbox binds it to mocks. The seam is the deliverable.
  */
 export * from './schema';

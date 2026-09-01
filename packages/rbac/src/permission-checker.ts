@@ -1,5 +1,5 @@
-import { ApiError } from '@trustos/errors';
-import type { ActorContext } from '@trustos/shared-types';
+import { ApiError } from '@trustsystem/errors';
+import type { ActorContext } from '@trustsystem/shared-types';
 import { WILDCARD_PERMISSION } from './permissions';
 
 /**

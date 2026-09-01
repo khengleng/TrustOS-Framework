@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/recovery",
+  "name": "@trustsystem/recovery",
   "version": "0.1.0",
   "description": "Restore procedures and restore *tests*, because a backup that has never been restored is not validated.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/backup": "0.1.0",
-    "@trustos/errors": "0.1.0",
+    "@trustsystem/backup": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
     "zod": "^3.24.1"
   }
 }

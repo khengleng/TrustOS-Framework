@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { IntegrationHealthService } from '@trustos/integration-health';
+import { IntegrationHealthService } from '@trustsystem/integration-health';
 import { IntegrationMonitor, type MonitorSource } from './dashboard';
 
 function source(overrides: Partial<MonitorSource> = {}): MonitorSource {

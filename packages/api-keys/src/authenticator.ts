@@ -1,12 +1,16 @@
-import type { SecurityEventEmitter } from '@trustos/security-events';
-import { enforceRateLimit, type RateLimitPolicy, type RateLimiter } from '@trustos/security-policy';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
+import {
+  enforceRateLimit,
+  type RateLimitPolicy,
+  type RateLimiter,
+} from '@trustsystem/security-policy';
 import {
   readAuthorizationCredential,
   readHeader,
   type CredentialAuthenticator,
   type CredentialRequest,
-} from '@trustos/identity';
-import type { ActorContext } from '@trustos/shared-types';
+} from '@trustsystem/identity';
+import type { ActorContext } from '@trustsystem/shared-types';
 import { parseApiKey } from './key';
 import type { ApiKeyService } from './service';
 

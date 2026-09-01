@@ -1,6 +1,6 @@
-import { ApiError } from '@trustos/errors';
-import type { Authorizer } from '@trustos/authorization';
-import type { SecurityEventEmitter } from '@trustos/security-events';
+import { ApiError } from '@trustsystem/errors';
+import type { Authorizer } from '@trustsystem/authorization';
+import type { SecurityEventEmitter } from '@trustsystem/security-events';
 import {
   actorHasPermission,
   crossTenant,
@@ -10,7 +10,7 @@ import {
   type WorkflowDefinitionRecord,
   type WorkflowDefinitionStatus,
   type WorkflowVersionRecord,
-} from '@trustos/workflow-core';
+} from '@trustsystem/workflow-core';
 import {
   assertEditable,
   assertStatusTransition,
@@ -22,9 +22,9 @@ import {
   type DefinitionComparison,
   type ValidationFinding,
   type WorkflowDefinitionDocument,
-} from '@trustos/workflow-definition';
-import type { HistoryRecorder } from '@trustos/workflow-history';
-import { workflowResource, WORKFLOW_RESOURCE_TYPES } from '@trustos/workflow-policy';
+} from '@trustsystem/workflow-definition';
+import type { HistoryRecorder } from '@trustsystem/workflow-history';
+import { workflowResource, WORKFLOW_RESOURCE_TYPES } from '@trustsystem/workflow-policy';
 
 /**
  * The definition lifecycle.

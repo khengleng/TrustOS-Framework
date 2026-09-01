@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/governance-environment-config",
+  "name": "@trustsystem/governance-environment-config",
   "version": "0.1.0",
   "description": "DEV, UAT and PROD as separate configurations with separate credentials, and the promotion that moves between them.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/governance-tool-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/governance-tool-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

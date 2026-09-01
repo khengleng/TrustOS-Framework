@@ -1,8 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import type { LoggerPort } from '@trustos/logging';
-import type { MetricsRecorder } from '@trustos/observability';
-import { matchesAny, redactEnvelope, serializeEvent, type EventEnvelope } from '@trustos/event-sdk';
-import type { WebhookDeliveryStore, WebhookEndpointStore } from '@trustos/webhooks';
+import type { LoggerPort } from '@trustsystem/logging';
+import type { MetricsRecorder } from '@trustsystem/observability';
+import {
+  matchesAny,
+  redactEnvelope,
+  serializeEvent,
+  type EventEnvelope,
+} from '@trustsystem/event-sdk';
+import type { WebhookDeliveryStore, WebhookEndpointStore } from '@trustsystem/webhooks';
 import { WEBHOOK_METRICS } from './metrics';
 
 /**

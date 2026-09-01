@@ -1,5 +1,5 @@
 {
-  "name": "@trustos/sli",
+  "name": "@trustsystem/sli",
   "version": "0.1.0",
   "description": "Service level indicators: what is measured, how, and over which window.",
   "license": "UNLICENSED",
@@ -17,8 +17,8 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@trustos/errors": "0.1.0",
-    "@trustos/sre-core": "0.1.0",
+    "@trustsystem/errors": "0.1.0",
+    "@trustsystem/sre-core": "0.1.0",
     "zod": "^3.24.1"
   }
 }

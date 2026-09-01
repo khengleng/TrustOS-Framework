@@ -1,10 +1,10 @@
-# @trustos/module-transactions
+# @trustsystem/module-transactions
 
 The transaction lifecycle with idempotency, fees, limits, risk hooks and payment requests.
 
 ## What this package is
 
-A thin module wrapper. The implementation is in `@trustos/fees`, `@trustos/financial-core`, `@trustos/financial-risk`, `@trustos/fx`, `@trustos/limits`, `@trustos/payments`, `@trustos/transactions`; this package contributes the declarations the platform needs — permissions,
+A thin module wrapper. The implementation is in `@trustsystem/fees`, `@trustsystem/financial-core`, `@trustsystem/financial-risk`, `@trustsystem/fx`, `@trustsystem/limits`, `@trustsystem/payments`, `@trustsystem/transactions`; this package contributes the declarations the platform needs — permissions,
 audit events and a health indicator — and the start/stop lifecycle.
 
 ## Installing
@@ -17,7 +17,7 @@ That adds the dependency and the documentation. Wiring is a Nest module import i
 application's composition root:
 
 ```ts
-import { TransactionsModule } from '@trustos/module-transactions/nest';
+import { TransactionsModule } from '@trustsystem/module-transactions/nest';
 
 @Module({ imports: [TransactionsModule.forRoot(binding)] })
 export class AppModule {}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { MODULE_CATALOG } from '@trustos/module-registry';
+import { MODULE_CATALOG } from '@trustsystem/module-registry';
 
 /**
  * Every module package, exercised as a contract.

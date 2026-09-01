@@ -5,7 +5,7 @@ import {
   type InjectionToken,
   type ModuleMetadata,
 } from '@nestjs/common';
-import type { AppConfig } from '@trustos/config';
+import type { AppConfig } from '@trustsystem/config';
 import { HealthRegistry, type HealthIndicator } from '../health';
 import { NoopMetricsRecorder, type MetricsRecorder } from '../metrics';
 import { NoopTracer, type Tracer } from '../tracing';

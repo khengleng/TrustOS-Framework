@@ -1,5 +1,5 @@
 /**
- * @trustos/module-file-storage
+ * @trustsystem/module-file-storage
  *
  * Object storage behind a provider port, with checksums, version history and a
  * per-organization key namespace.

@@ -1,4 +1,4 @@
-import type { OrganizationId } from '@trustos/shared-types';
+import type { OrganizationId } from '@trustsystem/shared-types';
 
 export interface FakeRow extends Record<string, unknown> {
   id: string;

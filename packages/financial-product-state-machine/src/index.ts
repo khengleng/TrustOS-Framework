@@ -1,5 +1,5 @@
 /**
- * @trustos/financial-product-state-machine
+ * @trustsystem/financial-product-state-machine
  *
  * Two deterministic state machines: the governance lifecycle a product definition passes
  * through, and the execution states one transaction passes through.
