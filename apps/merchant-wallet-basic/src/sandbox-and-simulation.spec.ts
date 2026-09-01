@@ -253,7 +253,9 @@ describe('simulation at three volumes', () => {
     // Deterministic: the same seed produces the same report, which is what lets two runs be
     // compared at all.
     expect(report.seed).toBe(1);
-  }, 120_000);
+    // A hundred thousand simulated payments, sharing a machine with the rest of the
+    // suite. Two minutes was enough when this file ran alone and not when it did not.
+  }, 300_000);
 
   it('refuses more as consumption accumulates, which is the daily limit working', async () => {
     /*

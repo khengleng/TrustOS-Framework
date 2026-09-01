@@ -1,0 +1,122 @@
+{
+  "generatedAt": "2026-08-29T13:36:47.435Z",
+  "environment": "dev",
+  "totals": {
+    "checks": 21,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 1
+  },
+  "measurements": {
+    "backupMs": 850,
+    "restoreMs": 2787
+  },
+  "verdict": "PARTIAL",
+  "results": [
+    {
+      "check": "dataset: a controlled two-tenant dataset exists",
+      "status": "PASS",
+      "detail": "orgs=2 (A=ktvong, B=6trzny) users=3 instance=cmtefccof000fs6e1xnv4lu3q tasks=2"
+    },
+    {
+      "check": "database failure: a read fails safely rather than returning nothing",
+      "status": "PASS",
+      "detail": "refused: connection terminated"
+    },
+    {
+      "check": "database failure: an approval is not recorded when the write fails",
+      "status": "PASS",
+      "detail": "refused; state stayed manager_review; decisions 0 -> 1"
+    },
+    {
+      "check": "mid-operation: a failed state write leaves no approved request",
+      "status": "PASS",
+      "detail": "0 approved instance(s), every one with at least one decision"
+    },
+    {
+      "check": "mid-operation: a retry after a failed write converges, without duplicating",
+      "status": "PASS",
+      "detail": "decisions after failure 0, after retry 1; state approved"
+    },
+    {
+      "check": "identity failure: an unreachable JWKS refuses rather than admits",
+      "status": "PASS",
+      "detail": "refused as unauthorized"
+    },
+    {
+      "check": "identity failure: it does not fall back to local authentication",
+      "status": "PASS",
+      "detail": "refused: password_authentication_not_supported"
+    },
+    {
+      "check": "identity failure: readiness degrades on key retrieval, and recovers",
+      "status": "PASS",
+      "detail": "degraded ok=false (\"6 consecutive token verification failures\"), recovered ok=true"
+    },
+    {
+      "check": "identity: invalid caller tokens do not degrade readiness",
+      "status": "PASS",
+      "detail": "40 invalid tokens refused; identity health ok=true"
+    },
+    {
+      "check": "restart: a new runtime finds the instance, its version pin and its decisions",
+      "status": "PASS",
+      "detail": "reloaded manager_review, pinned to 1.0.0, 1 decision(s)"
+    },
+    {
+      "check": "restart: pending tasks survive",
+      "status": "PASS",
+      "detail": "2 pending task(s) reloaded from Postgres"
+    },
+    {
+      "check": "restart: idempotency semantics still refuse a stale version",
+      "status": "PASS",
+      "detail": "refused: stale_version"
+    },
+    {
+      "check": "backup: a controlled backup was produced, with rows in it",
+      "status": "PASS",
+      "detail": "30 row(s) in 850ms — Organization=2 User=3 OrganizationMember=3 WorkflowDefinition=1 WorkflowVersion=1 WorkflowInstance=3 WorkflowTask=6 WorkflowDecision=2 AuditLog=9"
+    },
+    {
+      "check": "backup: it contains no credential material",
+      "status": "PASS",
+      "detail": "no credential-shaped values"
+    },
+    {
+      "check": "restore: rows restored into an isolated schema",
+      "status": "PASS",
+      "detail": "every table matched, in 2787ms"
+    },
+    {
+      "check": "restore: tenant ownership survived",
+      "status": "PASS",
+      "detail": "1 owning tenant(s), all expected"
+    },
+    {
+      "check": "restore: the approval trail survived, decision for decision",
+      "status": "PASS",
+      "detail": "2 restored vs 2 live"
+    },
+    {
+      "check": "restore: the version pin survived, so restored requests keep their rules",
+      "status": "PASS",
+      "detail": "3 instance(s), each joined to its own version and hash"
+    },
+    {
+      "check": "restore: the audit trail survived",
+      "status": "PASS",
+      "detail": "9 restored vs 9 live"
+    },
+    {
+      "check": "restore: a domain read against restored data returns the same request",
+      "status": "PASS",
+      "detail": "identical on currentState, status, organizationId, workflowVersion, initiatedById, version (state=manager_review)"
+    },
+    {
+      "check": "backup: a platform-level snapshot was exercised",
+      "status": "SKIP",
+      "detail": "NOT_REACHED — pg_dump 14 refuses PostgreSQL 18, and no container runtime is available. Railway exposes no backup variables on the service. This run proves logical backup and restore only."
+    }
+  ]
+}

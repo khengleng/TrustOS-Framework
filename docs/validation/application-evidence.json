@@ -1,0 +1,16 @@
+{
+  "approval-workbench": {
+    "appId": "approval-workbench",
+    "status": "pass",
+    "environment": "dev",
+    "suite": "npm run validate:approval-workbench",
+    "commit": "205cd5e801521f6c03bd84d40e5ba4bbdea93bc6",
+    "validatedAt": "2026-08-30T06:22:48.215Z",
+    "checks": {
+      "total": 33,
+      "passed": 33,
+      "failed": 0
+    },
+    "evidenceRef": "docs/validation/approval-workbench-latest.json"
+  }
+}

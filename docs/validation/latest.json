@@ -1,0 +1,372 @@
+{
+  "generatedAt": "2026-08-29T11:08:28.836Z",
+  "totals": {
+    "tests": 5740,
+    "passed": 5740,
+    "failed": 0,
+    "suites": 1529
+  },
+  "capabilities": [
+    {
+      "id": "identity",
+      "name": "Identity",
+      "critical": true,
+      "sourceFiles": 14,
+      "specFiles": 2,
+      "tests": {
+        "total": 70,
+        "passed": 70,
+        "failed": 0,
+        "files": 2
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "tenancy",
+      "name": "Multi-tenancy",
+      "critical": true,
+      "sourceFiles": 7,
+      "specFiles": 2,
+      "tests": {
+        "total": 34,
+        "passed": 34,
+        "failed": 0,
+        "files": 2
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "rbac",
+      "name": "RBAC",
+      "critical": true,
+      "sourceFiles": 7,
+      "specFiles": 2,
+      "tests": {
+        "total": 26,
+        "passed": 26,
+        "failed": 0,
+        "files": 2
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "authorization",
+      "name": "Authorization",
+      "critical": true,
+      "sourceFiles": 8,
+      "specFiles": 1,
+      "tests": {
+        "total": 30,
+        "passed": 30,
+        "failed": 0,
+        "files": 1
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "audit",
+      "name": "Audit",
+      "critical": true,
+      "sourceFiles": 6,
+      "specFiles": 1,
+      "tests": {
+        "total": 16,
+        "passed": 16,
+        "failed": 0,
+        "files": 1
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "workflow",
+      "name": "Workflow",
+      "critical": false,
+      "sourceFiles": 23,
+      "specFiles": 4,
+      "tests": {
+        "total": 165,
+        "passed": 165,
+        "failed": 0,
+        "files": 4
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "maker-checker",
+      "name": "Maker-checker",
+      "critical": false,
+      "sourceFiles": 4,
+      "specFiles": 2,
+      "tests": {
+        "total": 64,
+        "passed": 64,
+        "failed": 0,
+        "files": 2
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "policy",
+      "name": "Policy engine",
+      "critical": false,
+      "sourceFiles": 6,
+      "specFiles": 3,
+      "tests": {
+        "total": 48,
+        "passed": 48,
+        "failed": 0,
+        "files": 3
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "case-management",
+      "name": "Case management",
+      "critical": false,
+      "sourceFiles": 3,
+      "specFiles": 1,
+      "tests": {
+        "total": 33,
+        "passed": 33,
+        "failed": 0,
+        "files": 1
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "ai-gateway",
+      "name": "AI gateway",
+      "critical": false,
+      "sourceFiles": 8,
+      "specFiles": 3,
+      "tests": {
+        "total": 115,
+        "passed": 115,
+        "failed": 0,
+        "files": 3
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "financial",
+      "name": "Financial primitives",
+      "critical": true,
+      "sourceFiles": 16,
+      "specFiles": 5,
+      "tests": {
+        "total": 184,
+        "passed": 184,
+        "failed": 0,
+        "files": 5
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "financial-product",
+      "name": "Financial product layer",
+      "critical": false,
+      "sourceFiles": 13,
+      "specFiles": 3,
+      "tests": {
+        "total": 83,
+        "passed": 83,
+        "failed": 0,
+        "files": 3
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "api-management",
+      "name": "API management",
+      "critical": false,
+      "sourceFiles": 8,
+      "specFiles": 4,
+      "tests": {
+        "total": 86,
+        "passed": 86,
+        "failed": 0,
+        "files": 4
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "data-governance",
+      "name": "Data governance",
+      "critical": false,
+      "sourceFiles": 8,
+      "specFiles": 4,
+      "tests": {
+        "total": 71,
+        "passed": 71,
+        "failed": 0,
+        "files": 4
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "observability",
+      "name": "Observability",
+      "critical": false,
+      "sourceFiles": 6,
+      "specFiles": 1,
+      "tests": {
+        "total": 18,
+        "passed": 18,
+        "failed": 0,
+        "files": 1
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "security",
+      "name": "Security controls",
+      "critical": true,
+      "sourceFiles": 13,
+      "specFiles": 3,
+      "tests": {
+        "total": 100,
+        "passed": 100,
+        "failed": 0,
+        "files": 3
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "backup",
+      "name": "Backup",
+      "critical": false,
+      "sourceFiles": 2,
+      "specFiles": 1,
+      "tests": {
+        "total": 20,
+        "passed": 20,
+        "failed": 0,
+        "files": 1
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "restore",
+      "name": "Restore",
+      "critical": false,
+      "sourceFiles": 2,
+      "specFiles": 1,
+      "tests": {
+        "total": 20,
+        "passed": 20,
+        "failed": 0,
+        "files": 1
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "governance-tool",
+      "name": "Governance Tool",
+      "critical": false,
+      "sourceFiles": 7,
+      "specFiles": 2,
+      "tests": {
+        "total": 49,
+        "passed": 49,
+        "failed": 0,
+        "files": 2
+      },
+      "status": "IMPLEMENTED"
+    },
+    {
+      "id": "cli",
+      "name": "CLI and generator",
+      "critical": false,
+      "sourceFiles": 37,
+      "specFiles": 15,
+      "tests": {
+        "total": 408,
+        "passed": 408,
+        "failed": 0,
+        "files": 15
+      },
+      "status": "IMPLEMENTED"
+    }
+  ],
+  "deployment": {
+    "baseUrl": "https://governance-tool-dev.up.railway.app",
+    "checks": [
+      {
+        "check": "health",
+        "pass": true,
+        "detail": "GET /health -> 200"
+      },
+      {
+        "check": "readiness",
+        "pass": true,
+        "detail": "GET /ready -> 200"
+      },
+      {
+        "check": "health-discloses-nothing",
+        "pass": true,
+        "detail": "no credential-shaped keys"
+      },
+      {
+        "check": "protected-route-refuses-anonymous",
+        "pass": true,
+        "detail": "GET /api/governance/apps -> 401"
+      },
+      {
+        "check": "forged-token-refused",
+        "pass": true,
+        "detail": "bearer \"not-a-token\" -> 401"
+      },
+      {
+        "check": "auth-untrusted-signature-refused",
+        "pass": true,
+        "detail": "valid claims, untrusted key -> 401"
+      },
+      {
+        "check": "header-hsts",
+        "pass": true,
+        "detail": "max-age=31536000; includeSubDomains"
+      },
+      {
+        "check": "header-content-type-options",
+        "pass": true,
+        "detail": "nosniff"
+      },
+      {
+        "check": "header-frame-options",
+        "pass": true,
+        "detail": "DENY"
+      },
+      {
+        "check": "header-content-security-policy",
+        "pass": true,
+        "detail": "default-src 'none'; script-src 'self'; style-src 'self'; img"
+      },
+      {
+        "check": "cors-refuses-unapproved-origin",
+        "pass": true,
+        "detail": "Access-Control-Allow-Origin: absent"
+      },
+      {
+        "check": "auth-valid-token-accepted",
+        "pass": null,
+        "detail": "NOT_REACHED — TRUSTOS_VALIDATION_ISSUER, _CLIENT_ID and _CLIENT_SECRET are required"
+      },
+      {
+        "check": "auth-anonymous-refused",
+        "pass": null,
+        "detail": "NOT_REACHED — TRUSTOS_VALIDATION_ISSUER, _CLIENT_ID and _CLIENT_SECRET are required"
+      },
+      {
+        "check": "auth-forged-token-refused",
+        "pass": null,
+        "detail": "NOT_REACHED — TRUSTOS_VALIDATION_ISSUER, _CLIENT_ID and _CLIENT_SECRET are required"
+      },
+      {
+        "check": "auth-actor-resolved",
+        "pass": null,
+        "detail": "NOT_REACHED — TRUSTOS_VALIDATION_ISSUER, _CLIENT_ID and _CLIENT_SECRET are required"
+      }
+    ]
+  },
+  "verdict": "PARTIAL"
+}

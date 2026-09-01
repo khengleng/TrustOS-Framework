@@ -1,0 +1,133 @@
+{
+  "generatedAt": "2026-08-29T05:02:29.284Z",
+  "correlationId": "val_1d350ec8-99bb-4174-b59e-a1bcd852486f",
+  "environment": "dev",
+  "results": [
+    {
+      "check": "tenancy: a scoped delegate reads its own tenant rows",
+      "status": "PASS",
+      "detail": "found membership cmtdwz3hn0007s6gafpuz20pb"
+    },
+    {
+      "check": "tenancy: a scoped delegate refuses a cross-tenant read by id",
+      "status": "PASS",
+      "detail": "returned nothing for the other tenant"
+    },
+    {
+      "check": "tenancy: a membership in A does not resolve in B",
+      "status": "PASS",
+      "detail": "own=resolved other=null"
+    },
+    {
+      "check": "tenancy: the reverse direction also refuses",
+      "status": "PASS",
+      "detail": "null"
+    },
+    {
+      "check": "maker-checker: the requester cannot approve their own request",
+      "status": "PASS",
+      "detail": "refused: self_approval_forbidden"
+    },
+    {
+      "check": "maker-checker: a different person may approve",
+      "status": "PASS",
+      "detail": "eligible"
+    },
+    {
+      "check": "workflow: the change-request definition has the required states",
+      "status": "PASS",
+      "detail": "submit, route_to_manager, escalate_to_compliance, approve, reject, return_for_rework, resubmit, cancel"
+    },
+    {
+      "check": "workflow: an unknown transition is not in the definition",
+      "status": "PASS",
+      "detail": "draft cannot be approved"
+    },
+    {
+      "check": "workflow: a request starts in draft and persists",
+      "status": "PASS",
+      "detail": "instance cmtdwz5tb000os6gaw1frdie1 in draft"
+    },
+    {
+      "check": "workflow: the maker submits it and it reaches review",
+      "status": "PASS",
+      "detail": "state manager_review"
+    },
+    {
+      "check": "maker-checker: the engine refuses the maker's approval",
+      "status": "PASS",
+      "detail": "reasonCode=self_approval_forbidden, event=self_approval_forbidden"
+    },
+    {
+      "check": "rbac: a viewer cannot approve",
+      "status": "PASS",
+      "detail": "reasonCode=transition_permission_missing"
+    },
+    {
+      "check": "tenancy: a checker in another organization cannot approve",
+      "status": "PASS",
+      "detail": "reasonCode=none (not_found)"
+    },
+    {
+      "check": "workflow: the checker approves it",
+      "status": "PASS",
+      "detail": "state approved"
+    },
+    {
+      "check": "persistence: the instance is in Postgres, in its final state",
+      "status": "PASS",
+      "detail": "row cmtdwz5tb000os6gaw1frdie1 state=approved org=A"
+    },
+    {
+      "check": "persistence: a decision was recorded against it",
+      "status": "PASS",
+      "detail": "1 decision row(s)"
+    },
+    {
+      "check": "persistence: a restarted runtime finds the instance",
+      "status": "PASS",
+      "detail": "reloaded in state approved"
+    },
+    {
+      "check": "persistence: a restarted runtime resolves its definition and version",
+      "status": "PASS",
+      "detail": "change-request-approval v1.0.0"
+    },
+    {
+      "check": "persistence: the instance stays pinned to the version it started on",
+      "status": "PASS",
+      "detail": "instance references its own version"
+    },
+    {
+      "check": "audit: the scenario produced a trail",
+      "status": "PASS",
+      "detail": "3 record(s): workflow.workflow.started, workflow.workflow.transitioned"
+    },
+    {
+      "check": "audit: every record names what acted, and in which tenant",
+      "status": "PASS",
+      "detail": "all 3 name an actor or the system, in tenant A"
+    },
+    {
+      "check": "audit: the trail is scoped to the acting organization",
+      "status": "PASS",
+      "detail": "all in tenant A"
+    },
+    {
+      "check": "policy: refusals were recorded as security events",
+      "status": "PASS",
+      "detail": "2 blocked: self_approval_forbidden, transition_permission_missing"
+    },
+    {
+      "check": "audit: the log has no update path through the client",
+      "status": "PASS",
+      "detail": "refused: "
+    }
+  ],
+  "totals": {
+    "checks": 24,
+    "passed": 24,
+    "failed": 0
+  },
+  "verdict": "PASS"
+}

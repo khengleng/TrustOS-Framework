@@ -111,6 +111,8 @@ export default tseslint.config(
         AbortController: 'readonly',
         AbortSignal: 'readonly',
         performance: 'readonly',
+        // Used by the validation scripts to build form-encoded token requests.
+        URLSearchParams: 'readonly',
       },
     },
     rules: {
@@ -151,10 +153,10 @@ export default tseslint.config(
           paths: [...FRAMEWORK_PACKAGES, ...MODULE_PACKAGES]
             .filter((p) => p !== '@trustos/shared-types' && p !== '@trustos/errors')
             .map((name) => ({
-            name,
-            message:
-              '@trustos/shared-types and @trustos/errors are leaf packages and must stay dependency-free.',
-          })),
+              name,
+              message:
+                '@trustos/shared-types and @trustos/errors are leaf packages and must stay dependency-free.',
+            })),
         },
       ],
     },
@@ -179,6 +181,41 @@ export default tseslint.config(
             'Read configuration through @trustos/config so every variable is validated exactly once.',
         },
       ],
+    },
+  },
+
+  /*
+   * The governance portal: browser code, served as static assets.
+   *
+   * Linted with Node's globals until this existed, so every `document`, `window` and
+   * `sessionStorage` was reported as undefined — 23 errors that would have failed CI. It
+   * is not TypeScript and not part of a workspace, so it needs its own entry rather than
+   * inheriting one.
+   */
+  {
+    files: ['apps/*/public/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        sessionStorage: 'readonly',
+        localStorage: 'readonly',
+        crypto: 'readonly',
+        fetch: 'readonly',
+        atob: 'readonly',
+        btoa: 'readonly',
+        escape: 'readonly',
+        TextEncoder: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        console: 'readonly',
+      },
+    },
+    rules: {
+      // The portal reports failures to whoever is looking at it, not to a log.
+      'no-console': 'off',
     },
   },
 

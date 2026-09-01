@@ -316,30 +316,53 @@ describe('health', () => {
   });
 
   it('checks providers concurrently rather than serially', async () => {
-    const registry = makeRegistry();
+    /*
+     * Compared against one provider rather than against the clock.
+     *
+     * A serial check takes as long as the sum of the timeouts, which is exactly when
+     * the endpoint is most likely to be scraped. The old form asserted an absolute
+     * 60ms for two 30ms providers and failed at 69ms under a loaded machine, on code
+     * that was checking them concurrently perfectly well. Timing one provider in the
+     * same conditions gives a baseline that moves with the load, and four providers
+     * make the serial case four times the baseline instead of twice — far enough
+     * outside the noise to tell the two apart.
+     */
+    const DELAY_MS = 30;
 
     class Slow extends TestProvider {
-      override readonly key = 'test.slow';
+      // Assigned in the constructor, not as a field initializer: the base class sets
+      // `key` as an own property during super(), which would shadow anything declared
+      // on the subclass prototype and register every instance under the same key.
+      override readonly key: string;
+
+      constructor(suffix: string) {
+        super();
+        this.key = `test.slow_${suffix}`;
+      }
+
       protected override async checkHealth() {
-        await new Promise((resolve) => setTimeout(resolve, 30));
+        await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
         return { status: 'healthy' as const, detail: 'slow but fine' };
       }
     }
 
-    class AlsoSlow extends Slow {
-      override readonly key = 'test.also_slow';
-    }
+    const timeHealthAll = async (count: number) => {
+      const registry = makeRegistry();
+      for (let index = 0; index < count; index += 1) {
+        await registry.register(new Slow(String(index)), validConfig);
+      }
 
-    await registry.register(new Slow(), validConfig);
-    await registry.register(new AlsoSlow(), validConfig);
+      const startedAt = Date.now();
+      await registry.healthAll();
+      return Date.now() - startedAt;
+    };
 
-    const startedAt = Date.now();
-    await registry.healthAll();
+    const one = await timeHealthAll(1);
+    const four = await timeHealthAll(4);
 
-    // A serial check would take as long as the sum of the timeouts, which is exactly when the
-    // endpoint is most likely to be scraped.
-    expect(Date.now() - startedAt).toBeLessThan(60);
-  });
+    // Concurrent: about the same as one. Serial: about four times it.
+    expect(four).toBeLessThan(Math.max(one, DELAY_MS) * 2.5);
+  }, 30_000);
 
   it('records the last health in describe', async () => {
     const registry = makeRegistry();

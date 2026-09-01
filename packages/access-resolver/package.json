@@ -1,0 +1,25 @@
+{
+  "name": "@trustos/access-resolver",
+  "version": "0.1.0",
+  "description": "Resolves a verified subject to the roles and permissions it holds in an organization.",
+  "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "!dist/**/*.tsbuildinfo"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@trustos/errors": "0.1.0",
+    "@trustos/identity": "0.1.0",
+    "@trustos/rbac": "0.1.0",
+    "@trustos/shared-types": "0.1.0"
+  }
+}

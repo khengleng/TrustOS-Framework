@@ -154,19 +154,36 @@ export class OidcIdentityProvider implements IdentityProvider {
       this.lastKeyFetchAt = new Date();
       this.keyFetchFailures = 0;
     } catch (error) {
-      this.keyFetchFailures += 1;
+      // Only a failure to *retrieve* the provider's keys says anything about the
+      // provider's health. A token that was refused is this working, and counting
+      // refusals here meant anyone who could reach the API could mark identity
+      // unhealthy — and, because the readiness indicator is critical, take the
+      // instance out of rotation — by sending a handful of invalid bearer tokens.
+      if (isKeyRetrievalFailure(error)) this.keyFetchFailures += 1;
+
       // The caller learns only that the token did not work. Which of the four
       // checks failed is operator detail, and telling an attacker which one is
       // how a token is iteratively repaired.
       throw ApiError.unauthorized(undefined, {
         reason: 'oidc_token_rejected',
+        // Which of the checks refused. Operator detail: it is recorded in the log
+        // context and never returned to the caller, for the reason above.
+        //
+        // Without it, evidence has to be inferred from timing, and inference gets it
+        // wrong: a token with a deliberately wrong issuer and an unpublished signing
+        // key is refused at key resolution, and recording that as "the issuer check
+        // works" claims something never observed.
+        rejectionLayer: rejectionLayerOf(error),
         detail: error instanceof Error ? error.message : 'verification failed',
         issuer: this.config.issuerUrl,
       });
     }
 
     if (!payload.sub) {
-      throw ApiError.unauthorized(undefined, { reason: 'oidc_token_without_subject' });
+      throw ApiError.unauthorized(undefined, {
+        reason: 'oidc_token_without_subject',
+        rejectionLayer: 'subject_missing' satisfies OidcRejectionLayer,
+      });
     }
 
     // `azp` is checked in addition to `aud`: Keycloak issues tokens whose `aud`
@@ -177,6 +194,7 @@ export class OidcIdentityProvider implements IdentityProvider {
     if (azp !== null && !this.audiences.includes(azp)) {
       throw ApiError.unauthorized(undefined, {
         reason: 'oidc_authorized_party_rejected',
+        rejectionLayer: 'authorized_party' satisfies OidcRejectionLayer,
         authorizedParty: azp,
       });
     }
@@ -360,6 +378,116 @@ export class OidcIdentityProvider implements IdentityProvider {
       providerKind: this.kind,
     };
   }
+}
+
+/**
+ * Whether the provider's key material could not be retrieved.
+ *
+ * Distinct from a token that was checked against keys we hold and correctly refused:
+ * an expired token, a bad signature, a `kid` the realm does not publish. Those say the
+ * provider is working, and treating them as provider faults turns readiness into
+ * something an anonymous caller can switch off.
+ *
+ * The classification is deliberately narrow — an unrecognised error does not count as
+ * an outage. A real outage produces a timeout or a network error reliably, so nothing
+ * is missed by refusing to guess; whereas defaulting the unknown case to "unhealthy"
+ * restores exactly the denial of service this exists to prevent.
+ */
+/**
+ * The layers a token can be refused at, in the order they are reached.
+ *
+ * Ordered deliberately: a token is only ever refused at the *first* check it fails, so
+ * a claim later in this list cannot be said to have been exercised by a token that
+ * fails an earlier one. That is the whole reason this exists.
+ */
+export const OIDC_REJECTION_LAYERS = [
+  /** Not a JWT, or a shape the parser refuses before any key is fetched. */
+  'format',
+  /** The header names an algorithm this deployment does not accept. */
+  'algorithm',
+  /** No key in the provider's JWKS matches the token's `kid`. */
+  'key_resolution',
+  /** The provider's keys could not be fetched at all. The only provider-health signal. */
+  'key_retrieval',
+  /** Keys resolved; the signature did not verify against them. */
+  'signature',
+  'issuer',
+  'audience',
+  'expiry',
+  'not_before',
+  /** `azp` names a client this deployment does not accept. Checked after `jwtVerify`. */
+  'authorized_party',
+  'subject_missing',
+  'unknown',
+] as const;
+
+export type OidcRejectionLayer = (typeof OIDC_REJECTION_LAYERS)[number];
+
+/**
+ * Attributes a verification failure to the check that produced it.
+ *
+ * Reads jose's own error code and claim rather than matching on message text, which is
+ * not a contract and changes between releases.
+ */
+export function rejectionLayerOf(error: unknown): OidcRejectionLayer {
+  const code = (error as { code?: string } | null)?.code;
+  const claim = (error as { claim?: string } | null)?.claim;
+
+  switch (code) {
+    case 'ERR_JWKS_NO_MATCHING_KEY':
+    case 'ERR_JWKS_MULTIPLE_MATCHING_KEYS':
+      return 'key_resolution';
+    case 'ERR_JWKS_TIMEOUT':
+      return 'key_retrieval';
+    case 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED':
+      return 'signature';
+    case 'ERR_JWT_EXPIRED':
+      return 'expiry';
+    case 'ERR_JOSE_ALG_NOT_ALLOWED':
+      return 'algorithm';
+    case 'ERR_JWS_INVALID':
+    case 'ERR_JWT_INVALID':
+    case 'ERR_JOSE_GENERIC':
+      return 'format';
+    case 'ERR_JWT_CLAIM_VALIDATION_FAILED':
+      if (claim === 'iss') return 'issuer';
+      if (claim === 'aud') return 'audience';
+      if (claim === 'nbf') return 'not_before';
+      if (claim === 'exp') return 'expiry';
+      return 'unknown';
+    default:
+      // A network failure reaching the JWKS endpoint carries no jose code.
+      if (
+        error instanceof Error &&
+        /fetch failed|ECONN|ENOTFOUND|EAI_AGAIN|socket hang up/i.test(error.message)
+      ) {
+        return 'key_retrieval';
+      }
+      return 'unknown';
+  }
+}
+
+function isKeyRetrievalFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const code = (error as Error & { code?: string }).code;
+
+  // jose signals a JWKS endpoint that did not answer in time.
+  if (code === 'ERR_JWKS_TIMEOUT') return true;
+
+  // An unreachable endpoint surfaces as the runtime's own fetch failure, which
+  // carries no jose code.
+  if (
+    error.name === 'TypeError' &&
+    /fetch failed|network|ECONN|ENOTFOUND|EAI_AGAIN/i.test(error.message)
+  ) {
+    return true;
+  }
+
+  return Boolean(
+    code === undefined &&
+    /fetch failed|ECONN|ENOTFOUND|EAI_AGAIN|socket hang up/i.test(error.message),
+  );
 }
 
 function readRealmRoles(payload: JWTPayload): string[] {

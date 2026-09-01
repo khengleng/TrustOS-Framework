@@ -1,0 +1,186 @@
+{
+  "generatedAt": "2026-08-29T11:15:00.000Z",
+  "release": "v0.1",
+  "commit": "97a58b28452bcd31fb0f553dee1913da74593e0f",
+  "branch": "foundation/phase-1",
+  "mergedToMain": false,
+  "environment": "dev",
+  "devUrl": "https://governance-tool-dev.up.railway.app",
+  "artifact": null,
+  "identity": {
+    "provider": "https://id.cambobia.com",
+    "realm": "trustos-dev",
+    "mode": "oidc"
+  },
+  "gates": {
+    "foundation": {
+      "result": "PARTIAL",
+      "reason": "Authentication positive deployed path unreachable; DEV validation client is public (TOS-003)"
+    },
+    "deployedBoundary": {
+      "result": "NOT_REACHED",
+      "reason": "Requires a machine token from gate 1"
+    },
+    "security": {
+      "result": "PASS",
+      "checks": {
+        "checks": 49,
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    "recovery": {
+      "result": "PARTIAL",
+      "checks": {
+        "checks": 21,
+        "passed": 20,
+        "failed": 0,
+        "skipped": 1
+      },
+      "measurements": {
+        "backupMs": 1052,
+        "restoreMs": 3208
+      }
+    },
+    "uatReadiness": {
+      "result": "PARTIAL",
+      "reason": "Manual promotion, no immutable artifact, PROD deploys on merge (TOS-006, TOS-007)"
+    }
+  },
+  "foundationMatrix": {
+    "authentication": "PARTIAL",
+    "multiTenancy": "PASS",
+    "rbac": "PASS",
+    "policy": "PASS",
+    "workflow": "PASS",
+    "makerChecker": "PASS",
+    "audit": "PASS"
+  },
+  "regression": {
+    "tests": {
+      "tests": 5740,
+      "passed": 5740,
+      "failed": 0,
+      "suites": 1529
+    },
+    "formatCheck": "pass",
+    "lintErrors": 0,
+    "buildExitCode": 0,
+    "foundationValidator": "24/24 PASS",
+    "approvalWorkbenchValidator": {
+      "checks": 33,
+      "passed": 33,
+      "failed": 0
+    },
+    "adversarialValidator": {
+      "checks": 49,
+      "passed": 49,
+      "failed": 0
+    },
+    "recoveryValidator": {
+      "checks": 21,
+      "passed": 20,
+      "failed": 0,
+      "skipped": 1
+    },
+    "ci": {
+      "status": "success",
+      "jobs": 11,
+      "failures": 0
+    }
+  },
+  "rejectionLayerEvidence": {
+    "measuredAt": "2026-08-29",
+    "source": "deployed DEV, attributed from the service log by request id",
+    "layers": [
+      {
+        "test": "anonymous",
+        "expected": "guard",
+        "observed": "guard",
+        "http": 401,
+        "result": "exercised"
+      },
+      {
+        "test": "malformed bearer",
+        "expected": "format",
+        "observed": "format",
+        "http": 401,
+        "result": "exercised"
+      },
+      {
+        "test": "unpublished kid",
+        "expected": "key_resolution",
+        "observed": "key_resolution",
+        "http": 401,
+        "result": "exercised"
+      },
+      {
+        "test": "expired",
+        "expected": "expiry",
+        "observed": "key_resolution",
+        "http": 401,
+        "result": "not_exercised"
+      },
+      {
+        "test": "wrong issuer",
+        "expected": "issuer",
+        "observed": "key_resolution",
+        "http": 401,
+        "result": "not_exercised"
+      },
+      {
+        "test": "wrong audience",
+        "expected": "audience",
+        "observed": "key_resolution",
+        "http": 401,
+        "result": "not_exercised"
+      }
+    ],
+    "note": "The last three cannot reach their claim check without a token the realm signed. Covered at cryptographic-integration level only; not promoted to deployed evidence."
+  },
+  "applications": {
+    "approval-workbench": {
+      "validation": "pass",
+      "environment": "dev",
+      "lifecycle": "draft"
+    }
+  },
+  "prod": {
+    "touched": false,
+    "deployed": false,
+    "healthCheck": "200",
+    "openFinding": "TOS-001"
+  },
+  "overall": "TRUSTOS v0.1 PARTIALLY READY",
+  "safeToStartCaseManagement": false,
+  "lastGateAttempt": {
+    "date": "2026-08-29",
+    "gate1": "PARTIAL \u2014 stopped at task 1",
+    "gate2": "NOT_REACHED",
+    "clientCredentialsFlow": "FAIL",
+    "oauthError": {
+      "http": 401,
+      "error": "unauthorized_client",
+      "description": "Invalid client or Invalid client credentials"
+    },
+    "diagnosis": "Keycloak returns unauthorized_client for a client it can resolve but that is not permitted the grant. Client authentication is off and/or service accounts are off. A confidential client with a wrong secret returns invalid_client.",
+    "control": {
+      "client": "definitely-not-a-client-xyz",
+      "error": "invalid_client"
+    },
+    "secretConfigured": false,
+    "evidenceRef": "docs/validation/releases/v0.1/gate-1-attempt-2026-08-29.md"
+  },
+  "realm": {
+    "issuer": "https://id.cambobia.com/realms/trustos-dev",
+    "issuerMatches": true,
+    "signingKeys": 2,
+    "clientCredentialsAdvertised": true,
+    "clients": {
+      "trustos-foundation-validator": "present, public",
+      "trustos-web": "present, no accepted redirect URI for the DEV portal",
+      "trustos-api": "absent as a client"
+    }
+  }
+}

@@ -11,7 +11,14 @@
 export interface AuthUserRecord {
   id: string;
   email: string;
-  passwordHash: string;
+  /**
+   * Null for an account provisioned through an identity provider.
+   *
+   * Such an account has no local password and must not be able to sign in with one.
+   * `AuthService.login` refuses a null hash with the same message a wrong password
+   * gets, so the response does not reveal which kind of account an address belongs to.
+   */
+  passwordHash: string | null;
   displayName: string | null;
   isActive: boolean;
   isSuperAdmin: boolean;

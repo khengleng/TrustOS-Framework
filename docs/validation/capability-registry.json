@@ -1,0 +1,470 @@
+{
+  "generatedAt": "2026-08-29T11:08:27.837Z",
+  "frameworkVersion": "0.1.0",
+  "capabilities": [
+    {
+      "id": "identity",
+      "name": "Identity",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "restricted",
+      "dependencies": [
+        "packages/identity"
+      ],
+      "interface": [
+        "@trustos/identity"
+      ],
+      "testCoverage": {
+        "tests": 70,
+        "specFiles": 2
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "governance-tool",
+      "critical": true
+    },
+    {
+      "id": "tenancy",
+      "name": "Multi-tenancy",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/tenancy"
+      ],
+      "interface": [
+        "@trustos/tenancy"
+      ],
+      "testCoverage": {
+        "tests": 34,
+        "specFiles": 2
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": true
+    },
+    {
+      "id": "rbac",
+      "name": "RBAC",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/rbac"
+      ],
+      "interface": [
+        "@trustos/rbac"
+      ],
+      "testCoverage": {
+        "tests": 26,
+        "specFiles": 2
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": true
+    },
+    {
+      "id": "authorization",
+      "name": "Authorization",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/authorization"
+      ],
+      "interface": [
+        "@trustos/authorization"
+      ],
+      "testCoverage": {
+        "tests": 30,
+        "specFiles": 1
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": true
+    },
+    {
+      "id": "audit",
+      "name": "Audit",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/audit"
+      ],
+      "interface": [
+        "@trustos/audit"
+      ],
+      "testCoverage": {
+        "tests": 16,
+        "specFiles": 1
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": true
+    },
+    {
+      "id": "workflow",
+      "name": "Workflow",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/workflow-core",
+        "packages/workflow-runtime",
+        "packages/workflow-definition",
+        "packages/workflow-tasks"
+      ],
+      "interface": [
+        "@trustos/workflow-core",
+        "@trustos/workflow-runtime",
+        "@trustos/workflow-definition",
+        "@trustos/workflow-tasks"
+      ],
+      "testCoverage": {
+        "tests": 165,
+        "specFiles": 4
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "maker-checker",
+      "name": "Maker-checker",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/workflow-approvals",
+        "packages/workflow-policy"
+      ],
+      "interface": [
+        "@trustos/workflow-approvals",
+        "@trustos/workflow-policy"
+      ],
+      "testCoverage": {
+        "tests": 64,
+        "specFiles": 2
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "policy",
+      "name": "Policy engine",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/policy-engine",
+        "packages/policy-registry",
+        "packages/policy-evaluator"
+      ],
+      "interface": [
+        "@trustos/policy-engine",
+        "@trustos/policy-registry",
+        "@trustos/policy-evaluator"
+      ],
+      "testCoverage": {
+        "tests": 48,
+        "specFiles": 3
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "case-management",
+      "name": "Case management",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/case-management"
+      ],
+      "interface": [
+        "@trustos/case-management"
+      ],
+      "testCoverage": {
+        "tests": 33,
+        "specFiles": 1
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "ai-gateway",
+      "name": "AI gateway",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/ai-gateway",
+        "packages/ai-policy",
+        "packages/guardrails"
+      ],
+      "interface": [
+        "@trustos/ai-gateway",
+        "@trustos/ai-policy",
+        "@trustos/guardrails"
+      ],
+      "testCoverage": {
+        "tests": 115,
+        "specFiles": 3
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "financial",
+      "name": "Financial primitives",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/financial-core",
+        "packages/ledger",
+        "packages/wallet",
+        "packages/limits"
+      ],
+      "interface": [
+        "@trustos/financial-core",
+        "@trustos/ledger",
+        "@trustos/wallet",
+        "@trustos/limits"
+      ],
+      "testCoverage": {
+        "tests": 184,
+        "specFiles": 5
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": true
+    },
+    {
+      "id": "financial-product",
+      "name": "Financial product layer",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/financial-product-composer",
+        "packages/financial-product-runtime",
+        "packages/financial-product-simulator"
+      ],
+      "interface": [
+        "@trustos/financial-product-composer",
+        "@trustos/financial-product-runtime",
+        "@trustos/financial-product-simulator"
+      ],
+      "testCoverage": {
+        "tests": 83,
+        "specFiles": 3
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "api-management",
+      "name": "API management",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/api-catalog",
+        "packages/api-versioning",
+        "packages/api-rate-limit",
+        "packages/api-quota"
+      ],
+      "interface": [
+        "@trustos/api-catalog",
+        "@trustos/api-versioning",
+        "@trustos/api-rate-limit",
+        "@trustos/api-quota"
+      ],
+      "testCoverage": {
+        "tests": 86,
+        "specFiles": 4
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "data-governance",
+      "name": "Data governance",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/data-classification",
+        "packages/data-masking",
+        "packages/data-access-policy",
+        "packages/data-retention"
+      ],
+      "interface": [
+        "@trustos/data-classification",
+        "@trustos/data-masking",
+        "@trustos/data-access-policy",
+        "@trustos/data-retention"
+      ],
+      "testCoverage": {
+        "tests": 71,
+        "specFiles": 4
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "observability",
+      "name": "Observability",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/observability"
+      ],
+      "interface": [
+        "@trustos/observability"
+      ],
+      "testCoverage": {
+        "tests": 18,
+        "specFiles": 1
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "security",
+      "name": "Security controls",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/session-security",
+        "packages/security-policy",
+        "packages/security-events"
+      ],
+      "interface": [
+        "@trustos/session-security",
+        "@trustos/security-policy",
+        "@trustos/security-events"
+      ],
+      "testCoverage": {
+        "tests": 100,
+        "specFiles": 3
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": true
+    },
+    {
+      "id": "backup",
+      "name": "Backup",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/backup"
+      ],
+      "interface": [
+        "@trustos/backup"
+      ],
+      "testCoverage": {
+        "tests": 20,
+        "specFiles": 1
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "restore",
+      "name": "Restore",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/recovery"
+      ],
+      "interface": [
+        "@trustos/recovery"
+      ],
+      "testCoverage": {
+        "tests": 20,
+        "specFiles": 1
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "governance-tool",
+      "name": "Governance Tool",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/governance-tool-core"
+      ],
+      "interface": [
+        "@trustos/governance-tool-core"
+      ],
+      "testCoverage": {
+        "tests": 49,
+        "specFiles": 2
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    },
+    {
+      "id": "cli",
+      "name": "CLI and generator",
+      "version": "0.1.0",
+      "owner": "role:platform-engineering",
+      "status": "IMPLEMENTED",
+      "securityClassification": "internal",
+      "dependencies": [
+        "packages/cli",
+        "packages/generator-core"
+      ],
+      "interface": [
+        "@trustos/cli",
+        "@trustos/generator-core"
+      ],
+      "testCoverage": {
+        "tests": 408,
+        "specFiles": 15
+      },
+      "documentation": "docs/validation/framework-current-state.md",
+      "deploymentRequirement": "in-process library, no deployed service",
+      "critical": false
+    }
+  ]
+}

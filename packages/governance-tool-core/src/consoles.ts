@@ -971,6 +971,36 @@ export function approvalWorkbench(): InternalApplication {
         operation: 'read',
       }),
     ],
+    /*
+     * These are **gateway** operations, not the Governance Tool's own routes.
+     *
+     * Each one is declared in `@trustos/governance-tool-integration`'s operation
+     * catalog, and an integration test asserts that every path a console calls is
+     * declared there. That is a two-sided contract, which is worth stating because I
+     * changed one side of it and the test caught me: pointing these at the Governance
+     * Tool's own `/api/governance/approvals` routes left four console actions calling
+     * operations nobody had declared.
+     *
+     * The Governance Tool serves the workbench today at `/api/governance/approvals`,
+     * documented in docs/applications/approval-workbench.md. The two surfaces are
+     * deliberately separate: one is what an internal application is permitted to call
+     * through the gateway, the other is what this deployment happens to serve.
+     */
+    /*
+     * The routes the Governance Tool actually serves.
+     *
+     * Approve, reject and return share one endpoint because they differ only in the
+     * action and the reason, while the authorization, freshness and maker-checker
+     * questions are identical — three routes would be three places to forget that an
+     * approval must come from a person.
+     *
+     * The paths stay on the `/internal/v1` gateway convention the descriptor schema
+     * enforces — these describe the gateway contract, not the Governance Tool's own
+     * `/api/governance/approvals` routes that serve it today. What changed is the shape:
+     * they previously declared three separate per-task endpoints, and the application
+     * has one decision endpoint, because approve, reject and return differ only in the
+     * action and the reason.
+     */
     actions: [
       action(
         'approve',

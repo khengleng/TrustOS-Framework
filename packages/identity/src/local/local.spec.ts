@@ -359,6 +359,33 @@ describe('local authentication', () => {
     expect(sink.byType('auth.failed')[0]?.context).toMatchObject({ detail: 'account_inactive' });
   });
 
+  it('refuses an account that has no local password, indistinguishably', async () => {
+    /*
+     * An account provisioned through an external identity provider has no password
+     * hash. It must not authenticate here, and it must not be identifiable as
+     * different from a wrong password — otherwise the endpoint reports which of the
+     * organisation's accounts are federated.
+     */
+    const passwordless = await build({ passwordHash: null });
+    const wrongPassword = await build();
+
+    const federated = await passwordless.provider
+      .authenticate({ email: 'ada@example.test', password: PASSWORD }, meta)
+      .catch((error) => error as ApiError);
+    const wrong = await wrongPassword.provider
+      .authenticate({ email: 'ada@example.test', password: 'WrongPassword12345' }, meta)
+      .catch((error) => error as ApiError);
+
+    // Same status, same code and the same words, character for character.
+    expect(federated.message).toBe(wrong.message);
+    expect(federated.code).toBe(wrong.code);
+
+    // The difference is recorded where only an operator sees it.
+    expect(passwordless.sink.byType('auth.failed')[0]?.context).toMatchObject({
+      detail: 'no_local_password',
+    });
+  });
+
   it('refuses a soft-deleted account', async () => {
     const { provider } = await build({ deletedAt: new Date('2025-01-01T00:00:00.000Z') });
 

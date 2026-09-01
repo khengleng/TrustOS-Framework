@@ -91,7 +91,7 @@ export class AuthenticationAssuranceGuard implements CanActivate {
       targets,
     );
     if (requireMfa && !authentication?.mfa) {
-      await this.deny(actor, 'mfa_required', context);
+      await this.deny(actor, 'mfa_required', context, presented(authentication));
       throw mfaRequired();
     }
 
@@ -123,7 +123,10 @@ export class AuthenticationAssuranceGuard implements CanActivate {
     if (privileged.length > 0 && !authentication?.mfa) {
       // The check that catches the route nobody decorated: a privileged role
       // cannot act at all without a second factor.
-      await this.deny(actor, 'privileged_role_requires_mfa', context, { roles: privileged });
+      await this.deny(actor, 'privileged_role_requires_mfa', context, {
+        roles: privileged,
+        ...presented(authentication),
+      });
       throw mfaRequired();
     }
 
@@ -154,6 +157,27 @@ export class AuthenticationAssuranceGuard implements CanActivate {
       },
     });
   }
+}
+
+/**
+ * What the token actually presented, for the refusal record.
+ *
+ * "Multi-factor authentication is required" says what was wanted and nothing about
+ * what arrived, and the difference matters: a token carrying no `amr` at all means
+ * the identity provider is not reporting authentication methods, while an `amr` the
+ * policy does not recognise means the two are configured against each other. Those
+ * have completely different fixes, and without this an operator cannot tell them
+ * apart from the outside.
+ *
+ * None of it is sensitive. `acr` and `amr` describe how someone authenticated, not
+ * who they are or what they hold.
+ */
+function presented(authentication: ActorContext['authentication']): Record<string, unknown> {
+  return {
+    presentedLevel: authentication?.level ?? 'low',
+    presentedMethods: authentication?.methods ?? [],
+    presentedAcr: authentication?.acr ?? null,
+  };
 }
 
 /**

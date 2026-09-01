@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { join } from 'node:path';
 import { TEMPLATES } from '@trustos/template-registry';
 import { validateTemplate } from './validate-template';
@@ -14,9 +14,48 @@ import { validateTemplate } from './validate-template';
 
 const TEMPLATES_ROOT = join(__dirname, '..', '..', '..', 'templates');
 
+type Report = Awaited<ReturnType<typeof validateTemplate>>;
+
+/*
+ * Every template is validated once and the reports shared.
+ *
+ * Each aggregate test below asks a different question of the same evidence, and
+ * each used to re-validate all 24 templates to ask it — roughly ninety full
+ * validations where twenty-four answer everything. That was slow enough to
+ * exceed the five-second default whenever the suite ran in parallel with the
+ * rest of the repository, so `npm run validate` reported the CLI capability
+ * BROKEN on a tree where every one of these assertions passes in isolation. A
+ * validator that cries wolf is not a validator.
+ *
+ * The assertions are unchanged; only the redundant work is gone.
+ */
+const reports = new Map<string, Report>();
+
+beforeAll(async () => {
+  const validated = await Promise.all(
+    TEMPLATES.map(async (template) => {
+      return [
+        template.id,
+        await validateTemplate(template.id, { templatesRoot: TEMPLATES_ROOT }),
+      ] as const;
+    }),
+  );
+
+  for (const [id, report] of validated) reports.set(id, report);
+}, 120_000);
+
+/** Fails loudly rather than letting a missing report read as a template with no failures. */
+function reportFor(templateId: string): Report {
+  const report = reports.get(templateId);
+  if (!report) {
+    throw new Error(`No validation report for ${templateId} — the shared setup did not run`);
+  }
+  return report;
+}
+
 describe('validateTemplate', () => {
-  it.each(TEMPLATES.map((template) => template.id))('%s passes every check', async (templateId) => {
-    const report = await validateTemplate(templateId, { templatesRoot: TEMPLATES_ROOT });
+  it.each(TEMPLATES.map((template) => template.id))('%s passes every check', (templateId) => {
+    const report = reportFor(templateId);
 
     const failures = report.checks.filter((check) => check.status === 'fail');
     expect(
@@ -26,8 +65,8 @@ describe('validateTemplate', () => {
     expect(report.ok).toBe(true);
   });
 
-  it('runs the full set of checks, not a subset', async () => {
-    const report = await validateTemplate('merchant', { templatesRoot: TEMPLATES_ROOT });
+  it('runs the full set of checks, not a subset', () => {
+    const report = reportFor('merchant');
 
     expect(report.checks.map((check) => check.name).sort()).toEqual([
       'build configuration',
@@ -50,31 +89,37 @@ describe('validateTemplate', () => {
     ]);
   });
 
-  it('confirms every template ships tenant-isolation tests', async () => {
+  it('confirms every template ships tenant-isolation tests', () => {
     for (const template of TEMPLATES) {
-      const report = await validateTemplate(template.id, { templatesRoot: TEMPLATES_ROOT });
-      const check = report.checks.find((entry) => entry.name === 'test configuration');
+      const check = reportFor(template.id).checks.find(
+        (entry) => entry.name === 'test configuration',
+      );
 
       expect(check?.status, template.id).toBe('pass');
       expect(check?.detail, template.id).toContain('tenant isolation');
     }
   });
 
-  it('confirms every template ships AGENTS.md and the generated docs', async () => {
+  it('confirms every template ships AGENTS.md and the generated docs', () => {
     for (const template of TEMPLATES) {
-      const report = await validateTemplate(template.id, { templatesRoot: TEMPLATES_ROOT });
-      const check = report.checks.find((entry) => entry.name === 'required files');
+      const check = reportFor(template.id).checks.find((entry) => entry.name === 'required files');
 
       expect(check?.status, template.id).toBe('pass');
     }
   });
 
-  it('confirms every Railway-capable template ships railway.toml', async () => {
-    for (const template of TEMPLATES.filter((entry) =>
+  it('confirms every Railway-capable template ships railway.toml', () => {
+    const railwayTemplates = TEMPLATES.filter((entry) =>
       entry.deploymentTargets.includes('railway'),
-    )) {
-      const report = await validateTemplate(template.id, { templatesRoot: TEMPLATES_ROOT });
-      const check = report.checks.find((entry) => entry.name === 'deployment configuration');
+    );
+
+    // A filter that matched nothing would make this test vacuous.
+    expect(railwayTemplates.length).toBeGreaterThan(0);
+
+    for (const template of railwayTemplates) {
+      const check = reportFor(template.id).checks.find(
+        (entry) => entry.name === 'deployment configuration',
+      );
 
       expect(check?.status, template.id).toBe('pass');
     }

@@ -57,6 +57,7 @@ export default defineConfig({
       ),
 
       '@trustos/api-keys': pkg('api-keys'),
+      '@trustos/approval-workbench': pkg('approval-workbench'),
       '@trustos/audit': pkg('audit'),
       '@trustos/authorization': pkg('authorization'),
       '@trustos/identity': pkg('identity'),
@@ -76,6 +77,7 @@ export default defineConfig({
       '@trustos/session-security': pkg('session-security'),
       '@trustos/shared-types': pkg('shared-types'),
       '@trustos/tenancy': pkg('tenancy'),
+      '@trustos/access-resolver': pkg('access-resolver'),
       '@trustos/workflow-core': pkg('workflow-core'),
       '@trustos/workflow-definition': pkg('workflow-definition'),
       '@trustos/workflow-policy': pkg('workflow-policy'),
@@ -238,7 +240,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['packages/**/*.spec.ts', 'apps/**/*.spec.ts', 'templates/**/*.spec.ts'],
+    include: [
+      'packages/**/*.spec.ts',
+      'apps/**/*.spec.ts',
+      'templates/**/*.spec.ts',
+      // The validator is tested too. Its bugs are the expensive kind — they say "PASS".
+      'scripts/**/*.spec.mjs',
+    ],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',

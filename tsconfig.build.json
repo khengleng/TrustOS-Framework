@@ -1,17 +1,12 @@
 {
   "files": [],
   "references": [
+    { "path": "./packages/approval-workbench" },
+    {
+      "path": "./packages/access-resolver"
+    },
     {
       "path": "./packages/accounts"
-    },
-    {
-      "path": "./packages/modules/adapter"
-    },
-    {
-      "path": "packages/adapter-framework"
-    },
-    {
-      "path": "./packages/modules/agent"
     },
     {
       "path": "./packages/agent-framework"
@@ -21,9 +16,6 @@
     },
     {
       "path": "./packages/agent-runtime"
-    },
-    {
-      "path": "./packages/modules/ai"
     },
     {
       "path": "./packages/ai-cache"
@@ -42,6 +34,150 @@
     },
     {
       "path": "./packages/ai-workflows"
+    },
+    {
+      "path": "./packages/content-filter"
+    },
+    {
+      "path": "./packages/conversation"
+    },
+    {
+      "path": "./packages/cost-monitor"
+    },
+    {
+      "path": "./packages/embedding"
+    },
+    {
+      "path": "./packages/evaluation"
+    },
+    {
+      "path": "./packages/fees"
+    },
+    {
+      "path": "./packages/financial-core"
+    },
+    {
+      "path": "./packages/financial-events"
+    },
+    {
+      "path": "./packages/financial-policy"
+    },
+    {
+      "path": "./packages/financial-reporting"
+    },
+    {
+      "path": "./packages/financial-risk"
+    },
+    {
+      "path": "./packages/function-calling"
+    },
+    {
+      "path": "./packages/fx"
+    },
+    {
+      "path": "./packages/guardrails"
+    },
+    {
+      "path": "./packages/human-review"
+    },
+    {
+      "path": "./packages/knowledge"
+    },
+    {
+      "path": "./packages/ledger"
+    },
+    {
+      "path": "./packages/limits"
+    },
+    {
+      "path": "./packages/model-registry"
+    },
+    {
+      "path": "./packages/model-router"
+    },
+    {
+      "path": "./packages/modules/adapter"
+    },
+    {
+      "path": "./packages/modules/agent"
+    },
+    {
+      "path": "./packages/modules/ai"
+    },
+    {
+      "path": "./packages/modules/events"
+    },
+    {
+      "path": "./packages/modules/export"
+    },
+    {
+      "path": "./packages/modules/import"
+    },
+    {
+      "path": "./packages/modules/jobs"
+    },
+    {
+      "path": "./packages/modules/ledger"
+    },
+    {
+      "path": "./packages/modules/rag"
+    },
+    {
+      "path": "./packages/modules/reconciliation"
+    },
+    {
+      "path": "./packages/modules/scheduler"
+    },
+    {
+      "path": "./packages/modules/settlement"
+    },
+    {
+      "path": "./packages/modules/sync"
+    },
+    {
+      "path": "./packages/modules/transactions"
+    },
+    {
+      "path": "./packages/modules/wallet"
+    },
+    {
+      "path": "./packages/modules/webhook"
+    },
+    {
+      "path": "./packages/payments"
+    },
+    {
+      "path": "./packages/prompt-registry"
+    },
+    {
+      "path": "./packages/prompt-security"
+    },
+    {
+      "path": "./packages/rag"
+    },
+    {
+      "path": "./packages/reconciliation"
+    },
+    {
+      "path": "./packages/settlement"
+    },
+    {
+      "path": "./packages/token-meter"
+    },
+    {
+      "path": "./packages/tool-execution"
+    },
+    {
+      "path": "./packages/transactions"
+    },
+    {
+      "path": "./packages/vector-store"
+    },
+    {
+      "path": "./packages/wallet"
+    },
+    {
+      "path": "packages/adapter-framework"
     },
     {
       "path": "packages/analytics"
@@ -107,16 +243,7 @@
       "path": "packages/connector-registry"
     },
     {
-      "path": "./packages/content-filter"
-    },
-    {
       "path": "packages/continuity"
-    },
-    {
-      "path": "./packages/conversation"
-    },
-    {
-      "path": "./packages/cost-monitor"
     },
     {
       "path": "packages/data-access-policy"
@@ -158,19 +285,10 @@
       "path": "packages/disaster-recovery"
     },
     {
-      "path": "packages/modules/document"
-    },
-    {
       "path": "packages/documentation-center"
     },
     {
-      "path": "./packages/embedding"
-    },
-    {
       "path": "packages/errors"
-    },
-    {
-      "path": "./packages/evaluation"
     },
     {
       "path": "packages/event-bus"
@@ -182,34 +300,10 @@
       "path": "packages/event-sdk"
     },
     {
-      "path": "./packages/modules/events"
-    },
-    {
-      "path": "./packages/modules/export"
-    },
-    {
       "path": "packages/export"
     },
     {
-      "path": "packages/modules/feature-flags"
-    },
-    {
-      "path": "./packages/fees"
-    },
-    {
-      "path": "packages/modules/file-storage"
-    },
-    {
       "path": "packages/financial-block-registry"
-    },
-    {
-      "path": "./packages/financial-core"
-    },
-    {
-      "path": "./packages/financial-events"
-    },
-    {
-      "path": "./packages/financial-policy"
     },
     {
       "path": "packages/financial-product-api"
@@ -254,19 +348,7 @@
       "path": "packages/financial-product-versioning"
     },
     {
-      "path": "./packages/financial-reporting"
-    },
-    {
-      "path": "./packages/financial-risk"
-    },
-    {
       "path": "packages/framework-health"
-    },
-    {
-      "path": "./packages/function-calling"
-    },
-    {
-      "path": "./packages/fx"
     },
     {
       "path": "packages/generator-core"
@@ -311,16 +393,7 @@
       "path": "packages/governance-workflow-bridge"
     },
     {
-      "path": "./packages/guardrails"
-    },
-    {
-      "path": "./packages/human-review"
-    },
-    {
       "path": "packages/identity"
-    },
-    {
-      "path": "./packages/modules/import"
     },
     {
       "path": "packages/import"
@@ -338,34 +411,13 @@
       "path": "packages/job-runtime"
     },
     {
-      "path": "./packages/modules/jobs"
-    },
-    {
-      "path": "./packages/knowledge"
-    },
-    {
-      "path": "./packages/ledger"
-    },
-    {
-      "path": "./packages/modules/ledger"
-    },
-    {
       "path": "packages/license-manager"
-    },
-    {
-      "path": "./packages/limits"
     },
     {
       "path": "packages/logging"
     },
     {
       "path": "packages/migration-tools"
-    },
-    {
-      "path": "./packages/model-registry"
-    },
-    {
-      "path": "./packages/model-router"
     },
     {
       "path": "packages/module-marketplace"
@@ -377,16 +429,31 @@
       "path": "packages/module-sdk"
     },
     {
+      "path": "packages/modules/document"
+    },
+    {
+      "path": "packages/modules/feature-flags"
+    },
+    {
+      "path": "packages/modules/file-storage"
+    },
+    {
       "path": "packages/modules/notification"
+    },
+    {
+      "path": "packages/modules/reporting"
+    },
+    {
+      "path": "packages/modules/search"
+    },
+    {
+      "path": "packages/modules/workflow"
     },
     {
       "path": "packages/observability"
     },
     {
       "path": "packages/package-manager"
-    },
-    {
-      "path": "./packages/payments"
     },
     {
       "path": "packages/platform-manager"
@@ -407,40 +474,19 @@
       "path": "packages/policy-registry"
     },
     {
-      "path": "./packages/prompt-registry"
-    },
-    {
-      "path": "./packages/prompt-security"
-    },
-    {
       "path": "packages/provider-sdk"
     },
     {
       "path": "packages/quality-gates"
     },
     {
-      "path": "./packages/modules/rag"
-    },
-    {
-      "path": "./packages/rag"
-    },
-    {
       "path": "packages/rbac"
-    },
-    {
-      "path": "./packages/modules/reconciliation"
-    },
-    {
-      "path": "./packages/reconciliation"
     },
     {
       "path": "packages/recovery"
     },
     {
       "path": "packages/release-manager"
-    },
-    {
-      "path": "packages/modules/reporting"
     },
     {
       "path": "packages/resilience"
@@ -452,13 +498,7 @@
       "path": "packages/retry"
     },
     {
-      "path": "./packages/modules/scheduler"
-    },
-    {
       "path": "packages/scheduler"
-    },
-    {
-      "path": "packages/modules/search"
     },
     {
       "path": "packages/security-events"
@@ -476,12 +516,6 @@
       "path": "packages/session-security"
     },
     {
-      "path": "./packages/modules/settlement"
-    },
-    {
-      "path": "./packages/settlement"
-    },
-    {
       "path": "packages/shared-types"
     },
     {
@@ -492,9 +526,6 @@
     },
     {
       "path": "packages/sre-core"
-    },
-    {
-      "path": "./packages/modules/sync"
     },
     {
       "path": "packages/sync"
@@ -512,46 +543,19 @@
       "path": "packages/tenancy"
     },
     {
-      "path": "./packages/token-meter"
-    },
-    {
-      "path": "./packages/tool-execution"
-    },
-    {
-      "path": "./packages/modules/transactions"
-    },
-    {
-      "path": "./packages/transactions"
-    },
-    {
       "path": "packages/upgrade-manager"
     },
     {
       "path": "packages/validation"
     },
     {
-      "path": "./packages/vector-store"
-    },
-    {
       "path": "packages/version-manager"
-    },
-    {
-      "path": "./packages/modules/wallet"
-    },
-    {
-      "path": "./packages/wallet"
-    },
-    {
-      "path": "./packages/modules/webhook"
     },
     {
       "path": "packages/webhook-runtime"
     },
     {
       "path": "packages/webhooks"
-    },
-    {
-      "path": "packages/modules/workflow"
     },
     {
       "path": "packages/workflow-approvals"

@@ -258,18 +258,42 @@ describe('the next occurrence', () => {
   });
 
   it('searches years ahead without walking every minute', () => {
-    // Both of these once stepped minute by minute across the whole search window and
-    // took eight seconds each, which timed out in CI. The bound is deliberately loose
-    // — it is here to catch a return to minute-stepping, not to measure the machine.
-    const started = process.hrtime.bigint();
+    /*
+     * A ratio, not a stopwatch reading.
+     *
+     * Both of these once stepped minute by minute across the whole search window and
+     * took eight seconds each, which timed out in CI. The guard against that returning
+     * used to be an absolute bound — and an absolute bound also fails when the machine
+     * is merely busy, which is what happened: it asserted under 3,000ms and saw
+     * 11,678ms during a full-suite run, on code that had not changed and was not slow.
+     * A perf test that fails for want of a spare core teaches people to ignore it.
+     *
+     * Reaching 29 February from July means about 2.1 million minutes, against roughly
+     * 1,500 day comparisons once whole non-firing days are skipped. So the regression
+     * is three orders of magnitude, while the honest ratio between a rare-date search
+     * and an ordinary daily one sits near 50. Contention inflates both measurements
+     * together and leaves the ratio alone.
+     */
+    const perCallMs = (expression: string, iterations: number) => {
+      const cron = parseCron(expression);
+      const from = new Date('2026-07-01T00:00:00Z');
 
-    nextCronOccurrence(parseCron('0 0 29 2 *'), new Date('2026-07-01T00:00:00Z'), 'UTC');
-    nextCronOccurrence(parseCron('0 0 30 2 *'), new Date('2026-07-01T00:00:00Z'), 'UTC');
+      // One warm-up call so the first iteration does not pay for JIT on behalf of the rest.
+      nextCronOccurrence(cron, from, 'UTC');
 
-    const elapsedMs = Number(process.hrtime.bigint() - started) / 1_000_000;
+      const started = process.hrtime.bigint();
+      for (let index = 0; index < iterations; index += 1) nextCronOccurrence(cron, from, 'UTC');
+      return Number(process.hrtime.bigint() - started) / 1_000_000 / iterations;
+    };
 
-    expect(elapsedMs).toBeLessThan(3_000);
-  });
+    // Iterations are scaled to cost: a rare-date search is worth roughly a thousand
+    // daily ones, and averaging twenty of them would make this test the slow thing.
+    const daily = perCallMs('0 0 * * *', 20);
+    // 30 February never arrives, so this one walks the entire search window.
+    const rareDate = Math.max(perCallMs('0 0 29 2 *', 2), perCallMs('0 0 30 2 *', 2));
+
+    expect(rareDate / daily).toBeLessThan(300);
+  }, 60_000);
 
   it('finds a weekday fire', () => {
     // 2026-07-01 is a Wednesday, so the next Monday is the 6th.
@@ -369,18 +393,34 @@ describe('describeCron', () => {
 });
 
 describe('performance', () => {
-  it('finds a daily occurrence in well under a millisecond of budget', () => {
-    // The search is minute-by-minute and deliberately so: obviously correct across daylight-saving
-    // transitions, where cleverer arithmetic has to special-case the gap and the overlap and
-    // usually gets one wrong. A daily schedule is ~1,440 integer comparisons.
-    const cron = parseCron('0 3 * * *');
-    const started = process.hrtime.bigint();
+  it('costs a daily search about what a day of minutes should cost', () => {
+    /*
+     * The search within a firing day is minute-by-minute and deliberately so: obviously
+     * correct across daylight-saving transitions, where cleverer arithmetic has to
+     * special-case the gap and the overlap and usually gets one wrong.
+     *
+     * So the work is proportional to the minutes examined, and that is what is asserted.
+     * An hourly schedule examines about 60 of them and a daily one about 1,440 — a
+     * factor of 24. Measuring the two in the same conditions and comparing them keeps
+     * this honest on a loaded machine, where the absolute figure this used to assert
+     * (under 20ms per call) was seen at 65ms with nothing wrong.
+     */
+    const perCallMs = (expression: string) => {
+      const cron = parseCron(expression);
+      const from = new Date('2026-07-01T10:00:00Z');
 
-    for (let i = 0; i < 100; i += 1) {
-      nextCronOccurrence(cron, new Date('2026-07-01T10:00:00Z'), 'UTC');
-    }
+      nextCronOccurrence(cron, from, 'UTC');
 
-    const perCallMs = Number(process.hrtime.bigint() - started) / 1e6 / 100;
-    expect(perCallMs).toBeLessThan(20);
-  });
+      const started = process.hrtime.bigint();
+      for (let index = 0; index < 20; index += 1) nextCronOccurrence(cron, from, 'UTC');
+      return Number(process.hrtime.bigint() - started) / 1_000_000 / 20;
+    };
+
+    const hourly = perCallMs('0 * * * *');
+    const daily = perCallMs('0 3 * * *');
+
+    // 24x is the work; 100x leaves room for measurement noise and still catches a
+    // search that has started scanning far more than the day it needs.
+    expect(daily / hourly).toBeLessThan(100);
+  }, 60_000);
 });

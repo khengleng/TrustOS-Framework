@@ -4,7 +4,7 @@ import { Authorize } from '@trustos/authorization/nest';
 import { CurrentUser } from '@trustos/auth';
 import { RequirePermissions } from '@trustos/rbac';
 import type { ActorContext } from '@trustos/shared-types';
-import { OrganizationId } from '@trustos/tenancy';
+import { CrossOrganization, OrganizationId } from '@trustos/tenancy';
 import { DEFAULT_MASK_RULES, type MaskRule } from '@trustos/governance-pii-policy';
 import { DEFAULT_EXPORT_POLICIES } from '@trustos/governance-export-control';
 import {
@@ -40,7 +40,21 @@ export class ConsoleController {
     @Inject(GATEWAY_ENVIRONMENT) private readonly environment: Environment,
   ) {}
 
+  /*
+   * Platform-level, not tenant data.
+   *
+   * The internal application catalog is keyed by environment and appId — there is no
+   * organization column on it and `catalog.list()` takes no organization. Requiring a
+   * tenant scope over data that has none meant these reads were refused for every
+   * caller, including the platform staff they exist for.
+   *
+   * `CrossOrganization` is the framework's primitive for this and it is not a
+   * loosening: TenantGuard refuses it outright unless the actor is `isSuperAdmin`, so
+   * this narrows the audience to platform staff rather than widening it. The writes
+   * below are deliberately left alone.
+   */
   @Get(':appId')
+  @CrossOrganization()
   @ApiOperation({ summary: 'The console a specific person sees' })
   @RequirePermissions(GOVERNANCE_PERMISSIONS.APP_READ.key)
   @Authorize(GOVERNANCE_PERMISSIONS.APP_READ.key)
@@ -106,6 +120,7 @@ export class ConsoleController {
   }
 
   @Get(':appId/masking')
+  @CrossOrganization()
   @ApiOperation({ summary: 'Which fields are masked, and which can be revealed' })
   @RequirePermissions(GOVERNANCE_PERMISSIONS.APP_READ.key)
   @Authorize(GOVERNANCE_PERMISSIONS.APP_READ.key)
@@ -130,6 +145,7 @@ export class ConsoleController {
   }
 
   @Get(':appId/export-policy')
+  @CrossOrganization()
   @ApiOperation({ summary: 'What an export of this application’s data would need' })
   @RequirePermissions(GOVERNANCE_PERMISSIONS.EXPORT_READ.key)
   @Authorize(GOVERNANCE_PERMISSIONS.EXPORT_READ.key)
@@ -150,6 +166,7 @@ export class ConsoleController {
   }
 
   @Get('reference/operations')
+  @CrossOrganization()
   @ApiOperation({ summary: 'Every gateway operation, and the API permission each one needs' })
   @RequirePermissions(GOVERNANCE_PERMISSIONS.RESOURCE_READ.key)
   @Authorize(GOVERNANCE_PERMISSIONS.RESOURCE_READ.key)
@@ -168,6 +185,7 @@ export class ConsoleController {
   }
 
   @Get('reference/roles')
+  @CrossOrganization()
   @ApiOperation({ summary: 'The ten internal roles and what each one sees' })
   @RequirePermissions(GOVERNANCE_PERMISSIONS.APP_READ.key)
   @Authorize(GOVERNANCE_PERMISSIONS.APP_READ.key)

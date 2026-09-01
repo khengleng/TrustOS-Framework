@@ -1,3 +1,5 @@
+export * from './recorded-evidence';
+export * from './application-evidence';
 /**
  * @trustos/governance-tool-core
  *
