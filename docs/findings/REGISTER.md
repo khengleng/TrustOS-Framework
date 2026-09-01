@@ -3,27 +3,75 @@
 Every finding carries evidence and a status. A finding is closed only when something
 observable changed — not when it was discussed, and not because a later run was green.
 
-| ID                                                    | Title                                                            | Severity     | Environment | Status              |
-| ----------------------------------------------------- | ---------------------------------------------------------------- | ------------ | ----------- | ------------------- |
-| [TOS-001](2026-08-29-prod-environment-mislabelled.md) | PROD identifies itself as DEV                                    | **HIGH**     | production  | **OPEN**            |
-| [TOS-002](2026-08-29-rotate-resend-api-key.md)        | Resend API key passed through a transcript                       | MEDIUM       | all         | **OPEN**            |
-| TOS-003                                               | DEV validation client is public; machine authentication unproven | **HIGH**     | dev         | **OPEN**            |
-| TOS-004                                               | `trustos-web` not provisioned in `trustos-dev`; no browser SSO   | MEDIUM       | dev         | **OPEN**            |
-| TOS-005                                               | UAT has no identity configuration and no clients                 | MEDIUM       | uat         | **OPEN**            |
-| TOS-006                                               | Merging to `main` deploys PROD with no promotion gate            | **HIGH**     | pipeline    | **OPEN**            |
-| TOS-007                                               | No immutable artifact promotion between environments             | MEDIUM       | pipeline    | **OPEN**            |
-| TOS-008                                               | No platform-level backup identified or exercised for DEV         | MEDIUM       | dev         | **OPEN**            |
-| TOS-009                                               | Approval decision and state change are not one transaction       | LOW          | all         | **OPEN (accepted)** |
-| TOS-010                                               | Deployed runtime disclosed `X-Powered-By: Express`               | LOW          | dev         | **CLOSED**          |
-| TOS-011                                               | Invalid caller tokens marked identity unhealthy (DoS)            | **CRITICAL** | all         | **CLOSED**          |
-| TOS-012                                               | Approval detail queried an audit entity type nothing writes      | MEDIUM       | all         | **CLOSED**          |
-| TOS-013                                               | Local provider reached the hasher with a null password hash      | MEDIUM       | all         | **CLOSED**          |
-| TOS-014                                               | Validation evidence never reached the runtime                    | MEDIUM       | all         | **PARTIAL**         |
-| TOS-015                                               | Keycloak administrator credential in Railway is stale            | **HIGH**     | all         | **OPEN**            |
+**Two status words were added on 1 September 2026**, because the existing ones were being
+made to carry meanings they do not have:
+
+- **WITHDRAWN** — the thing the finding was about no longer exists. Not fixed. Nothing was
+  remediated; the scope went away. Kept rather than deleted so the record does not imply the
+  problem was solved.
+- **DEPLOYED** — the fix is running in the only environment there is. This exists because
+  **CLOSED turned out to mean "closed on a branch"** (see TOS-019), which is not what a reader
+  of this register would assume.
+
+| ID                                                    | Title                                                             | Severity     | Environment | Status                        |
+| ----------------------------------------------------- | ----------------------------------------------------------------- | ------------ | ----------- | ----------------------------- |
+| [TOS-001](2026-08-29-prod-environment-mislabelled.md) | Environment mislabelled as `dev` on all seven services            | **HIGH**     | production  | **FIXED**                     |
+| [TOS-002](2026-08-29-rotate-resend-api-key.md)        | Resend API key passed through a transcript                        | MEDIUM       | all         | **OPEN**                      |
+| TOS-003                                               | DEV validation client is public; machine authentication unproven  | **HIGH**     | dev         | **WITHDRAWN**                 |
+| TOS-004                                               | `trustos-web` accepts no redirect URI; no browser SSO             | MEDIUM       | dev         | **WITHDRAWN**                 |
+| TOS-005                                               | UAT has no identity configuration and no clients                  | MEDIUM       | uat         | **WITHDRAWN**                 |
+| TOS-006                                               | Merging to `main` deploys PROD with no promotion gate             | **HIGH**     | pipeline    | **CORRECTED — premise false** |
+| TOS-007                                               | No immutable artifact promotion between environments              | MEDIUM       | pipeline    | **OPEN — restated, worse**    |
+| TOS-008                                               | No platform-level backup identified or exercised                  | MEDIUM       | production  | **OPEN — escalated**          |
+| TOS-009                                               | Approval decision and state change are not one transaction        | LOW          | all         | **OPEN (accepted)**           |
+| TOS-010                                               | Deployed runtime disclosed `X-Powered-By: Express`                | LOW          | production  | **DEPLOYED**                  |
+| TOS-011                                               | Invalid caller tokens marked identity unhealthy (DoS)             | **CRITICAL** | all         | **CLOSED — never shipped**    |
+| TOS-012                                               | Approval detail queried an audit entity type nothing writes       | MEDIUM       | all         | **DEPLOYED**                  |
+| TOS-013                                               | Local provider reached the hasher with a null password hash       | MEDIUM       | all         | **DEPLOYED**                  |
+| TOS-014                                               | Validation evidence never reached the runtime                     | MEDIUM       | all         | **PARTIAL**                   |
+| TOS-015                                               | Keycloak administrator credential in Railway is stale             | **HIGH**     | all         | **OPEN**                      |
+| TOS-016                                               | `/health` publishes `NODE_ENV` under a field named `environment`  | LOW          | all         | **OPEN**                      |
+| TOS-017                                               | Deployed services have no deploy-time migration step              | MEDIUM       | production  | **OPEN**                      |
+| TOS-018                                               | Console seed fabricated a security review date                    | MEDIUM       | production  | **FIXED**                     |
+| TOS-019                                               | CLOSED meant closed on a branch; production ran 46 commits behind | **HIGH**     | process     | **FIXED — process gap open**  |
+| TOS-020                                               | Application catalog was in memory; registrations lost on restart  | MEDIUM       | all         | **FIXED**                     |
+
+---
+
+## Scope change — 1 September 2026
+
+**DEV and UAT were deleted** to reduce cost. Production is now the only environment.
+
+Sixteen of twenty-six running service instances were removed, along with both non-production
+Postgres volumes. This was a deliberate decision taken with the consequences stated, not an
+incident.
+
+It is recorded here because five findings in this register were scoped to environments that no
+longer exist. **None of them were fixed.** Deleting the environment a finding describes does not
+remediate it, and the register would be misleading if those rows read CLOSED. They read
+WITHDRAWN.
+
+What the deletion did **not** remove:
+
+- **The `trustos-dev` realm inside Keycloak.** Keycloak runs as a _production_ service, so its
+  realms survived. Cleaning them up needs the credential from TOS-015 and has not been done.
+- **TOS-015 itself**, for the same reason.
+- **The risk TOS-006 and TOS-007 describe.** With no environment below production, there is
+  nothing left to rehearse a change in. The pipeline findings did not shrink; their consequences
+  now land in one place.
 
 ---
 
 ## TOS-003 — DEV validation client is public
+
+> **WITHDRAWN — 1 September 2026. Not fixed.** The DEV environment was deleted, so the client
+> this finding is about no longer has an environment to authenticate to. Nothing was remediated:
+> the client was still refusing the grant when the environment was removed, and it was re-tested
+> and still failing on 31 August. The `trustos-foundation-validator` client itself **still exists**
+> inside the production Keycloak's `trustos-dev` realm, because Keycloak is a production service
+> and its realms survived the deletion. Cleaning that up is owed and needs TOS-015.
+>
+> Everything below is the record as it stood.
 
 **Severity** HIGH · **Environment** dev · **Status** OPEN · **Owner** operator with Keycloak administration
 
@@ -82,6 +130,24 @@ read -rs SECRET \
 
 ## TOS-006 — Merging to `main` deploys PROD with no promotion gate
 
+> **CORRECTED — 1 September 2026. The premise of this finding is false.**
+>
+> This was tested rather than reasoned about: 46 commits were merged to `main` via PR #5, and
+> **production did not deploy**. No build was queued, and the service's deployment list showed
+> nothing between 29 August and a build triggered by an unrelated variable change. Production
+> was still serving `x-powered-by: Express` — pre-merge code — afterwards.
+>
+> So Railway's GitHub integration is **not** watching `main` the way this finding claims, and the
+> stated consequence — "the only thing standing between a merged pull request and production is
+> that nobody merges it" — is wrong.
+>
+> **The truth is different, not milder.** Production updates only when a person runs
+> `railway up` from a working tree by hand. There is no gate _and_ no automation: a merge to
+> `main` changes nothing in production, so the repository's default branch and the running
+> system drift silently apart. That is what actually happened, and it is TOS-019.
+>
+> Severity stays HIGH and the finding stays open, for a different reason than it was raised.
+
 **Severity** HIGH · **Environment** pipeline · **Status** OPEN
 
 GitHub Actions contains one workflow, `ci.yml`, triggered on `push: [main]` and
@@ -105,6 +171,17 @@ PROD. Not attempted here; redesigning the pipeline was out of scope.
 
 ## TOS-007 — No immutable artifact promotion
 
+> **RESTATED — 1 September 2026. More true than when written, not less.**
+>
+> This finding said each environment builds its own image, so DEV evidence describes _a_ build
+> rather than _the_ build. With DEV and UAT deleted there is nothing left to promote — which
+> removes the comparison, not the problem.
+>
+> Production is now deployed by `railway up` from a working tree, which is precisely the
+> mechanism this finding objected to, and it is now the _only_ mechanism. The bytes running in
+> production correspond to whatever was on one machine's disk at upload time. That they matched a
+> commit on 1 September was verified by hand, not enforced by anything.
+
 **Severity** MEDIUM · **Environment** pipeline · **Status** OPEN
 
 Each environment builds its own image from its own source: DEV was deployed in this work
@@ -118,6 +195,18 @@ This is why DEV evidence is not promoted across environments anywhere in this re
 ---
 
 ## TOS-008 — No platform-level backup identified for DEV
+
+> **ESCALATED and RE-SCOPED to production — 1 September 2026.**
+>
+> This was scoped to DEV, where the consequence of an unproven restore was an inconvenience. DEV
+> is gone. The finding now applies to production, which holds the real data and is the only
+> environment there is, and where an unproven restore is the whole business.
+>
+> Nothing about production's backup posture has been established. The measurements below were
+> taken against the DEV database, which no longer exists, so they are no longer evidence of
+> anything about the running system.
+>
+> The blocker recorded below still holds: the local `pg_dump` is 14.18 against a server on 18.6.
 
 **Severity** MEDIUM · **Environment** dev · **Status** OPEN
 
@@ -163,6 +252,10 @@ the risk warrants. Recorded so the choice is visible rather than assumed.
 
 ## TOS-004 — `trustos-web` exists but accepts no redirect URI
 
+> **WITHDRAWN — 1 September 2026. Not fixed.** As with TOS-003: the DEV environment is gone, the
+> client remains in the surviving `trustos-dev` realm, and browser SSO was never made to work.
+> The remediation script could never run, because TOS-015 blocked it from the day it was written.
+
 **Severity** MEDIUM · **Environment** dev · **Status** OPEN, progressed
 
 The client has been created in `trustos-dev` since the last run — the authorization
@@ -184,6 +277,20 @@ step 3. It has not been able to run since the administrator credential stopped w
 ---
 
 ## TOS-014 — validation evidence never reached the runtime
+
+> **STILL PARTIAL — 1 September 2026, and its blocker changed.**
+>
+> The packaging fix is now genuinely deployed: production ran 46 commits behind until today, so
+> until the merge the compiled evidence module was not in production **at all** (see TOS-019).
+> It is now, and the start-up banner reports it.
+>
+> An earlier claim in this session that production was serving DEV's evidence as its own PASS was
+> **wrong**, and is corrected here: production did not have the evidence feature at all, so there
+> was no false green. The environment isolation rule was never defeated.
+>
+> What is still not reached: the registry _value_ read through the deployed API. The blocker used
+> to be TOS-003; with DEV deleted it is now that production's own API requires authentication that
+> nobody can provision, which is TOS-015.
 
 **Severity** MEDIUM · **Environment** all · **Status** PARTIAL · **Fixed in** `afc9359`
 
@@ -314,3 +421,198 @@ That is a workaround for the operator, not a fix for the finding.
 
 **Evidence** the run recorded above; reproduce with
 `bash scripts/operator/configure-dev-validation-client.sh`, which fails closed.
+
+---
+
+## TOS-005 — UAT had no identity configuration
+
+**Severity** MEDIUM · **Environment** uat · **Status** WITHDRAWN · **Raised** 2026-08-29
+
+The UAT environment had no identity configuration and no clients, so nothing could authenticate
+against it.
+
+**Withdrawn on 1 September 2026 because UAT was deleted, not because it was fixed.** Worth
+recording what it cost: all eight UAT services were running and being billed for the entire
+period this finding was open. An environment that could not authenticate anybody was consuming
+the same resources as one that could. That is the clearest waste this register found, and it was
+found by asking what was running rather than what was configured.
+
+---
+
+## TOS-016 — `/health` publishes `NODE_ENV` under a field named `environment`
+
+**Severity** LOW · **Environment** all · **Status** OPEN
+
+`GET /health` returns `"environment": "production"` on every service, in every environment. That
+value is `NODE_ENV`, taken from `config.env` in `packages/config/src/config.ts`. It is _correct_ —
+a UAT or DEV gateway legitimately runs `NODE_ENV=production` — but the field is named
+`environment`, and the platform's actual environment identity is `TRUSTOS_ENVIRONMENT`.
+
+The codebase is explicit that these must not be conflated, in a comment on the very function that
+reads the other one:
+
+> `TRUSTOS_ENVIRONMENT` rather than `NODE_ENV`: a UAT gateway runs with `NODE_ENV=production`
+> because that is what turns on production behaviour in the runtime, and conflating the two is
+> how a UAT instance ends up believing it is production or the reverse.
+
+The one endpoint an operator or an uptime monitor actually reads publishes the conflated value.
+The start-up log gets this right — it reports `env="production"` and `trustosEnvironment="prod"`
+as separate fields. `/health` does not.
+
+**How it misled, concretely.** During the DEV work on 31 August, `/health` on the DEV service
+reported `"environment":"production"`. That was read as a possible recurrence of TOS-001 and cost
+a detour to disprove.
+
+**Remediation.** Report both, named for what they are: `nodeEnv` and `environment`, the latter
+from `TRUSTOS_ENVIRONMENT`. A field called `environment` should answer the question its name asks.
+
+---
+
+## TOS-017 — Deployed services have no deploy-time migration step
+
+**Severity** MEDIUM · **Environment** production · **Status** OPEN
+
+The root `railway.json` — the one every deployed service builds through — has no
+`preDeployCommand`. The image's `CMD` is `node apps/${SERVICE}/dist/main.js` and nothing else.
+So a deploy starts new code against whatever schema the database already has.
+
+The repository knows the pattern. Both of these have it:
+
+- `apps/api-example/railway.json` → `"preDeployCommand": "npm run db:deploy"`
+- `templates/saas-starter/railway.json` → the same
+
+The services that actually run do not.
+
+**What made this visible rather than theoretical.** Before merging 46 commits containing the
+`20261215000000_external_identity` migration, production's schema was checked with
+`prisma migrate status`. It answered `Database schema is up to date!` — all ten migrations
+applied. Production was current because somebody had run them by hand, not because anything
+enforced it.
+
+**Consequence.** The next migration merged and deployed will run code against an unmigrated
+database. Prisma fails such queries at runtime (`P2022`), so the failure mode is a service that
+starts, passes its health check — `/health` touches no dependency by design — and then refuses
+real requests.
+
+**Remediation.** Add `"preDeployCommand": "npm run db:deploy"` to the root `railway.json`, the
+same string the examples already use. Note that Railway is retiring `railway.json` in favour of
+`.railway/railway.ts` on **1 December 2026**, so this lands twice unless the migration is done
+first.
+
+---
+
+## TOS-018 — The console seed fabricated a security review date
+
+**Severity** MEDIUM · **Environment** production · **Status** FIXED · **Fixed in** `3f7ba9c`
+
+`internalApplicationSchema` refuses a `highly_restricted` application in production that has
+never had a security review — the classification is the reason the review is required. The seed
+satisfied that check by stamping a constant:
+
+```ts
+lastSecurityReview: environment === 'prod' ? '2026-01-01T00:00:00.000Z' : null,
+```
+
+So `risk-compliance-console`, the one highly-restricted console, passed a governance control in
+production on the strength of a hardcoded date in library code. No such review took place.
+
+**This is the same shape as TOS-014**: a control that reports a fact it does not have. It failed
+in the _unsafe_ direction, which TOS-014 did not — a fabricated pass is worse than a false
+`not_tested`.
+
+It was hiding in plain sight. The function's own docstring said a deployment "records a real
+review date rather than inheriting a placeholder from here" — describing the correct behaviour
+while implementing the opposite, with nothing to make the first sentence true.
+
+**Fix.** No date is invented. A template that cannot be registered honestly is withheld, and
+`templatesWithheldFrom(environment)` names which; the gateway warns at start-up, because a
+console that quietly fails to appear is indistinguishable from one nobody asked for. Reinstating
+the placeholder fails two tests.
+
+**Consequence of the fix, stated plainly.** `risk-compliance-console` is no longer registered in
+production. That is a real reduction in what production serves. The route back is a recorded
+review date, not a re-added constant.
+
+---
+
+## TOS-019 — CLOSED meant closed on a branch
+
+**Severity** HIGH · **Environment** process · **Status** FIXED for the backlog; the gap that
+caused it is OPEN
+
+On 1 September 2026 production was found to be running `main` at `7b6ab71` — **46 commits
+behind** `foundation/phase-1`. Every fix behind every CLOSED row in this register lived only on
+the branch. This register said CLOSED; production had none of them.
+
+**Proven by observation, not by reading commits.** `trustos.cambobia.com` was serving
+`x-powered-by: Express` — TOS-010, recorded CLOSED since 29 August, live in production.
+Independently: `main` contained no `recorded-evidence.ts`, production's `/ready` had no identity
+indicator, and its start-up banner had no `validationEvidence` field.
+
+**One correction the same check produced.** TOS-011 is CRITICAL and was also branch-only — but
+`main` had no identity health-marking code at all, so the DoS never existed in production. That
+bug was introduced _and_ fixed inside the branch. A CRITICAL finding that never shipped is a
+materially different thing from one that shipped and was fixed, and the register did not
+distinguish them. It does now.
+
+**Root cause.** Two independent facts that were each individually reasonable:
+
+1. This register recorded a fix as CLOSED when the _code_ changed, and its own opening rule —
+   "closed only when something observable changed" — was satisfied by observing DEV, the
+   environment the work was done in.
+2. Merging to `main` does not deploy production (TOS-006, as corrected). So the branch could be
+   merged, or not, without production changing either way.
+
+Together they meant a register full of CLOSED rows describing a production environment that had
+none of the fixes.
+
+**What was done.** PR #5 was merged and all seven production services were deployed and verified
+by direct observation: `x-powered-by` gone, `/ready` reporting database _and_ identity, health 200
+across all seven. Statuses that mean "running in production" now read DEPLOYED.
+
+**What is still open.** Nothing prevents this recurring. There is no automated deploy, no
+non-production environment to stage in, and no check that the running system matches a commit.
+The container cannot report its own commit — `recorded-evidence.ts` says so explicitly, and
+carries a validated-at commit rather than pretending to verify it. Until a deploy is triggered by
+a merge, or a version endpoint reports the running commit, "is production current?" stays a
+question answered by hand.
+
+---
+
+## TOS-020 — The application catalog was in memory
+
+**Severity** MEDIUM · **Environment** all · **Status** FIXED · **Fixed in** `06062cb`
+
+Production's start-up log said it, unprompted, on every boot:
+
+```
+[WARN] The internal application catalog is in memory. Applications created here are
+       lost on restart
+[WARN] No resources are registered. Every read will be refused with "no approved
+       resource" until a deployment registers its own
+```
+
+Both were true and neither was a bug in the framework — they were a deployment that had never
+been wired. Together they meant a consumer of the deployed platform was refused on every read,
+and anything they created disappeared on the next deploy.
+
+**The catalog is fixed.** An `internal_application` table now holds registrations, and
+`PersistentAppCatalog` keeps reads in memory — the registration check is on every request's path
+— while the table is the record. The row is written before the map, so nothing is servable that is
+not also recorded; reversing that order fails three tests. A stored definition that no longer
+validates is refused and named rather than trusted, and one bad row does not stop the gateway
+serving the others. A single replica is a documented precondition, not an accident.
+
+**The resource half is not fixed, and cannot be by anyone reading this repository.** Resources
+are now declared in `apps/governance-tool/src/resource-registrations.ts` — a module the runtime
+image actually contains, rather than a file under `docs/`, which is the TOS-014 mistake. Every
+environment's list is **empty**, deliberately. A registration names an owner, a separate approver,
+an access class and a credential reference, and the schema refuses a production resource whose
+approver is its own owner: _"the registrant approved their own production resource. That is the
+control, collapsed."_ Those are facts about an organisation. Filling them in with plausible values
+would be a fabricated approval record — TOS-018, committed on purpose.
+
+**So production still refuses every read**, and will until someone with the authority to approve a
+data source does so. That is the honest state, and it is now visibly the honest state: the
+gateway reports what it has rather than warning unconditionally, because a warning that fired
+whether or not anything was registered could never be evidence of either.

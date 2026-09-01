@@ -1,12 +1,41 @@
-# FINDING — PROD identifies itself as DEV
+# FINDING — the platform identified itself as DEV
 
 |                 |                                                             |
 | --------------- | ----------------------------------------------------------- |
 | **Severity**    | HIGH                                                        |
-| **Status**      | OPEN — not remediated in this task, by instruction          |
+| **Status**      | **FIXED** — 1 September 2026, verified in the runtime       |
 | **Raised**      | 2026-08-29                                                  |
 | **Environment** | Railway environment `production`, service `governance-tool` |
 | **Observed on** | commit `a77b4d7` validation run                             |
+
+## Resolution — 1 September 2026
+
+`TRUSTOS_ENVIRONMENT=prod` is set on **all seven** production services, and the change was
+verified in the running process rather than in Railway's variable list:
+
+```
+trustosEnvironment="prod" registeredResources=0 appCatalog="database"
+```
+
+**The finding understated its own scope.** It recorded the `governance-tool` service. All seven
+carried `TRUSTOS_ENVIRONMENT=dev`: `governance-tool`, `trustos-api`, `internal-app-gateway`,
+`sre-operations-console`, `api-developer-portal`, `enterprise-governance-admin` and
+`financial-product-admin`. Fixing only the named one would have left six services lying and the
+finding closed.
+
+**One claim made while fixing this was wrong, and is corrected here.** It was asserted that
+production was serving DEV's validation evidence as its own PASS, because the evidence record was
+stamped `dev` and production's runtime environment also read `dev`, so the environment-isolation
+check would have matched. The reasoning was right about the code on the branch and wrong about
+production: production was 46 commits behind and had no evidence feature at all (TOS-019). There
+was no false green. The fix was still correct; the stated reason for its urgency was not.
+
+**Why it mattered anyway.** `TRUSTOS_ENVIRONMENT` selects the console catalog
+(`consoleCatalogFor`) and gates validation evidence by environment. A production gateway reading
+`dev` serves the development catalog and gates evidence as development — and once DEV and UAT were
+deleted, the only surviving environment would have been the one misreporting itself.
+
+---
 
 ## What was observed
 
