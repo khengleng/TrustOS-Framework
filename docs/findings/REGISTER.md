@@ -32,34 +32,48 @@ made to carry meanings they do not have:
 | TOS-015                                               | Keycloak administrator credential in Railway is stale             | **HIGH**     | all         | **OPEN**                      |
 | TOS-016                                               | `/health` publishes `NODE_ENV` under a field named `environment`  | LOW          | all         | **OPEN**                      |
 | TOS-017                                               | Deployed services have no deploy-time migration step              | MEDIUM       | production  | **OPEN**                      |
-| TOS-018                                               | Console seed fabricated a security review date                    | MEDIUM       | production  | **FIXED — not deployed**      |
+| TOS-018                                               | Console seed fabricated a security review date                    | MEDIUM       | production  | **DEPLOYED**                  |
 | TOS-019                                               | CLOSED meant closed on a branch; production ran 46 commits behind | **HIGH**     | process     | **FIXED — process gap open**  |
-| TOS-020                                               | Application catalog was in memory; registrations lost on restart  | MEDIUM       | all         | **FIXED — not deployed**      |
+| TOS-020                                               | Application catalog was in memory; registrations lost on restart  | MEDIUM       | all         | **DEPLOYED**                  |
 
 ---
 
-## Deployment gap — 1 September 2026, open
+## Deployment gap — resolved 2 September 2026
 
-**TOS-018 and TOS-020 are fixed in code and are not running in production.** Recorded this way
-deliberately: TOS-019 exists because this register once said CLOSED when it meant "closed on a
-branch", and writing FIXED here unqualified would repeat that error on the same day it was
-written up.
+**TOS-018 and TOS-020 are now running in production.** They were recorded as
+`FIXED — not deployed` for a day, deliberately: TOS-019 exists because this register once said
+CLOSED when it meant "closed on a branch", and the same error was available to make again.
 
-Production cannot take these commits yet. `PersistentAppCatalog` reads an
-`internal_application` table, and production has not applied
-`20261216000000_internal_application_catalog` — verified with `prisma migrate status`, which
-reports it as the one pending migration of eleven. Deploying the code first would have the
-gateway query a table that does not exist and crash-loop on boot.
+Production could not take the commits until `20261216000000_internal_application_catalog` was
+applied — `PersistentAppCatalog` reads a table that did not exist, so deploying first would have
+crash-looped the gateway on boot. The order was migrate, then deploy, and it was not automated,
+which is TOS-017.
 
-**Order matters and is not automated** (that is TOS-017):
+**How it was done.** The migration ran through `.github/workflows/migrate.yml` rather than from a
+workstation. The first attempt failed and applied nothing: `prisma migrate status` exits 1
+whenever migrations are pending — it is a check command — so an informational step killed the job
+before `Apply`. Worth recording because it failed _closed_. `Status before` now tolerates that
+exit; `Status after` stays strict, so its success is the evidence the database is in sync rather
+than merely that a command ran.
 
-1. `npm run db:deploy` against the production database — additive: one `CREATE TABLE`, two
-   indexes, nothing dropped or rewritten.
-2. Then `railway up -s governance-tool -e production`, then the other six services.
-3. Then confirm the start-up banner reports `appCatalog="database"` and the withheld console.
+The deploy was staged: `governance-tool` alone first, since it carries the code that needs the new
+table, gated on `/ready` returning 200 before the other six were touched. It returned 200 after
+135s; the remaining six followed and were on new code 20s later.
 
-Until step 1 happens, production keeps running the code from `eef1765`'s predecessor, where the
-catalog is in memory and `risk-compliance-console` is registered on a fabricated review date.
+**Verified from the running system, not from a green tick:**
+
+```
+trustosEnvironment="prod"  registeredResources=0  appCatalog="database"
+seeded=10   withheld=["risk-compliance-console"]
+```
+
+`appCatalog="database"` is TOS-020. `withheld=["risk-compliance-console"]` is TOS-018 — the one
+highly-restricted console, no longer registered in production on a fabricated review date, with
+the other ten seeded into the new table.
+
+`registeredResources=0` is unchanged and correct. Production still refuses every read, because no
+data source has an owner and a separate approver. That is the honest state, and it is the half of
+TOS-020 that no one reading this repository can fix.
 
 ## Scope change — 1 September 2026
 
